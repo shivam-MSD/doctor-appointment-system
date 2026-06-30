@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Application\Mappings\" />
+    <Folder Include="Application\DTOs\" />
+    <Folder Include="Application\Validators\" />
+    <Folder Include="Application\Services\" />
+    <Folder Include="Domain\Exceptions\" />
+    <Folder Include="Domain\Constants\" />
+    <Folder Include="Persistent\Configurations\" />
+    <Folder Include="Persistent\Migrations\" />
+    <Folder Include="Persistent\Repositories\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,58 @@
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Bb]uildLog.*
+
+## Visual Studio temporary files and caches
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## VS Code settings
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## JetBrains Rider
+.idea/
+*.sln.iml
+
+## Core dotnet files
+*.device.nut
+*.clog
+*.binlog
+*.MSBuild.rsp
+*.Directory.Build.rsp
+
+## Testing artifacts
+TestResult*/
+[Tt]est[Rr]esult*/
+*.VisualState.xml
+
+## NuGet Packages
+*.nupkg
+*.snupkg
+# Objective is to force restoration via dotnet restore
+packages/
+!packages/repositories.config
+
+## User Secrets & Local Environment Configs
+# Block sensitive local application configurations
+appsettings.Development.json
+appsettings.Local.json
+.microsoft/usersecrets/
+
+## OS-specific files
+.DS_Store
+Thumbs.db
