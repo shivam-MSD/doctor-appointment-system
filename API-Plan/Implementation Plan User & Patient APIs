@@ -1,0 +1,63 @@
+# Implementation Plan: User & Patient APIs
+
+We will implement the remaining CRUD and profile management API endpoints for **Users** and **Patients** in the application layer and API controllers layer.
+
+---
+
+## Proposed Changes
+
+### 1. Application Layer (Services)
+
+We will create service interfaces and implementations to handle retrieving and modifying User account settings and Patient demographics details.
+
+#### [NEW] [IUserService.cs & UserService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/UserService.cs)
+Provides:
+- `Task<UserDto> GetUserProfileAsync(Guid userId);`
+- `Task ChangePasswordAsync(Guid userId, string currentPassword, string newPassword);`
+
+#### [NEW] [IPatientService.cs & PatientService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/PatientService.cs)
+Provides:
+- `Task<PatientDto> GetPatientProfileAsync(Guid userId, Guid patientId);` (validates ownership/link in `UserPatients`)
+- `Task<PatientDto> UpdatePatientProfileAsync(Guid userId, Guid patientId, PatientUpdateDto dto);` (validates access, updates name, DOB, blood group, emergency contact)
+
+---
+
+### 2. Application Layer (DTOs)
+
+#### [NEW] [PatientUpdateDto.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/PatientUpdateDto.cs)
+Input fields for profile editing:
+- `FirstName`, `LastName`, `MobileNo`, `Gender`, `DOB`, `BloodGroup`, `EmergencyContactName`, `EmergencyContactNumber`.
+
+#### [NEW] [ChangePasswordDto.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/ChangePasswordDto.cs)
+Input fields for password changing:
+- `CurrentPassword`, `NewPassword`.
+
+---
+
+### 3. API Layer (Controllers)
+
+We will create the controllers to expose these services.
+
+#### [NEW] [UsersController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/UsersController.cs)
+Exposes:
+- `GET /api/users/profile` -> Gets current user profile (using header `X-User-Id`).
+- `POST /api/users/change-password` -> Changes password.
+
+#### [NEW] [PatientsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/PatientsController.cs)
+Exposes:
+- `GET /api/patients/{id}` -> Gets a specific patient profile.
+- `PUT /api/patients/{id}` -> Updates patient demographics.
+
+---
+
+### 4. Startup Registration
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+- Register `IUserService` and `IPatientService` with scoped lifetimes.
+
+---
+
+## Verification Plan
+We will verify that:
+1. The project builds without compilation errors.
+2. Endpoints appear correctly in the auto-launched Swagger UI.

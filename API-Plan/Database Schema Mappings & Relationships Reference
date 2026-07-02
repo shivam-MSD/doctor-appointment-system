@@ -1,0 +1,149 @@
+# Database Schema Mappings & Relationships Reference
+
+This document maps all the database tables, fields, constraints, and relationships for the **Doctor Appointment System**, highlighting the **Credentials-Demographics Separation** and **OTP-based Family Sharing Mappings**.
+
+---
+
+## 1. Table Definitions & Fields
+
+### A. Users
+- **Description:** Login credentials and authentication details.
+- **Table Name:** `Users`
+- **Fields:**
+  - `UserId` (Guid, PK)
+  - `Email` (string, `VARCHAR(150)`, `NOT NULL`, Unique)
+  - `PasswordHash` (string, `VARCHAR(500)`, `NOT NULL`)
+  - `IsActive` (bool, default `true`)
+  - `CreatedDate` (DateTime, default `GETUTCDATE()`)
+  - `LastLoginDate` (DateTime, nullable)
+  - `RoleId` (Guid, FK -> Roles, Shadow property)
+
+### B. Roles
+- **Description:** System authorization roles.
+- **Table Name:** `Roles`
+- **Fields:**
+  - `RoleId` (Guid, PK)
+  - `Role` (string, `VARCHAR(50)`, `NOT NULL`) - Enum: `SuperAdmin`, `Admin`, `Doctor`, `Patient`
+
+### C. Patients
+- **Description:** Demographic information and clinical profile details. (Independent of credentials, supporting multiple profiles linked to single log-in).
+- **Table Name:** `Patients`
+- **Fields:**
+  - `PatientId` (Guid, PK)
+  - `FirstName` (string, `VARCHAR(100)`, `NOT NULL`)
+  - `LastName` (string, `VARCHAR(100)`, `NOT NULL`)
+  - `MobileNo` (string, `VARCHAR(20)`, `NOT NULL`)
+  - `Gender` (string, `VARCHAR(10)`, `NOT NULL`)
+  - `DOB` (DateTime, `NOT NULL`)
+  - `BloodGroup` (string, `VARCHAR(20)`, nullable)
+  - `EmergencyConactName` (string, `VARCHAR(100)`, `NOT NULL`)
+  - `EmergencyConactNumber` (string, `VARCHAR(20)`, `NOT NULL`)
+  - `CreatedDate` (DateTime, default `GETUTCDATE()`)
+  - `UpdatedDate` (DateTime, nullable)
+
+### D. Doctors
+- **Description:** Demographic and professional details for care providers.
+- **Table Name:** `Doctors`
+- **Fields:**
+  - `DoctorId` (Guid, PK)
+  - `UserId` (Guid, FK -> Users, Shadow property, Unique)
+  - `SpecializationId` (Guid, FK -> Specializations, Shadow property)
+  - `FirstName` (string, `VARCHAR(100)`, `NOT NULL`)
+  - `LastName` (string, `VARCHAR(100)`, `NOT NULL`)
+  - `MobileNo` (string, `VARCHAR(20)`, `NOT NULL`)
+  - `Gender` (string, `VARCHAR(10)`, `NOT NULL`)
+  - `DOB` (DateTime, `NOT NULL`)
+  - `Qualification` (string, `VARCHAR(150)`, `NOT NULL`)
+  - `YearsOfExperience` (int, `NOT NULL`)
+  - `LicenceNumber` (string, `VARCHAR(50)`, `NOT NULL`)
+  - `ConsultationFee` (double, `NOT NULL`)
+  - `HospitalName` (string, `VARCHAR(150)`, `NOT NULL`)
+  - `VerificationStatus` (string, default `Pending`)
+  - `ProfileImage` (byte[], nullable)
+  - `AboutDoctor` (string, `VARCHAR(2000)`, nullable)
+  - `CreatedDate` (DateTime, default `GETUTCDATE()`)
+  - `UpdatedDate` (DateTime, nullable)
+
+### E. UserPatients (Join Table)
+- **Description:** Many-to-Many join table linking `Users` accounts to `Patients` profiles. Used for family access controls and sharing profiles.
+- **Table Name:** `UserPatients`
+- **Fields:**
+  - `UserId` (Guid, PK, FK -> Users)
+  - `PatientId` (Guid, PK, FK -> Patients)
+  - `RelationshipType` (string, `VARCHAR(50)`, `NOT NULL`) - Enum: `Self`, `Spouse`, `Child`, `Parent`, `Grandparent`, `Sibling`, `Other`
+  - `IsVerified` (bool, `NOT NULL`, default `false`)
+  - `CreatedDate` (DateTime, default `GETUTCDATE()`)
+
+### F. FamilyVerifications
+- **Description:** Temporary OTP records storing pending profile details.
+- **Table Name:** `FamilyVerifications`
+- **Fields:**
+  - `VerificationId` (Guid, PK)
+  - `UserId` (Guid, `NOT NULL`, initiator)
+  - `MobileNo` (string, `VARCHAR(20)`, `NOT NULL`, target phone)
+  - `OtpCode` (string, `VARCHAR(10)`, `NOT NULL`)
+  - `ExpiresAt` (DateTime, `NOT NULL`)
+  - `RelationshipType` (string, `VARCHAR(50)`, `NOT NULL`)
+  - `PatientDataJson` (string, `VARCHAR(2000)`, `NOT NULL`)
+
+---
+
+## 2. Diagrammatic Relationship Flow
+
+```mermaid
+erDiagram
+    Users ||--|| Doctors : "1 : 1 (User has Doctor profile)"
+    Users ||--o{ Addresses : "1 : N (User has addresses)"
+    Roles ||--o{ Users : "1 : N (Role has users)"
+    Users ||--o{ UserPatients : "1 : N (Account shares patient profiles)"
+    Patients ||--o{ UserPatients : "1 : N (Profile shared with accounts)"
+    Doctors ||--o{ Appointments : "1 : N (Doctor receives appointments)"
+    Patients ||--o{ Appointments : "1 : N (Patient registers appointments)"
+    Doctors ||--o{ DoctorSchedules : "1 : N (Doctor manages schedules)"
+    Doctors ||--o{ DoctorDocuments : "1 : N (Doctor uploads documents)"
+    Specializations ||--o{ Doctors : "1 : N (Specialization maps doctors)"
+```
+
+---
+
+## 3. Practical Business Scenarios
+
+### Scenario: The Family Member OTP Linking (INDmoney Style)
+
+#### Step 1: Mom Registers
+- **User Account Created:** Email: `mom@gmail.com`, `UserId = 0001-A`
+- **Patient Profile Created:** `PatientId = 9999-M`, Name: "Mary Doe", Mobile: `+1-555-0101`
+- **Linking:** Inserted into `UserPatients`:
+  - `UserId = 0001-A`
+  - `PatientId = 9999-M`
+  - `RelationshipType = Self`
+  - `IsVerified = true`
+
+#### Step 2: Mom adds Child (Sarah, has no email/phone)
+- Mom goes to "Add Dependent" inside the app, entering:
+  - Name: "Sarah Doe", DOB: "2018-05-10", Gender: "Female"
+  - Mom enters her own Mobile: `+1-555-0101` (since the child has no separate phone)
+  - **Relationship:** `Child`
+- **Verification:** An OTP is sent to `+1-555-0101`. Mom inputs the code.
+- **Result:**
+  - A new `Patient` profile is created: `PatientId = 9999-C`
+  - A record is created in `UserPatients`: `(0001-A, 9999-C, Relationship = Child, IsVerified = true)`.
+  - Mom can now view and book appointments for Sarah.
+
+#### Step 3: Mom adds Grandmother (has her own phone)
+- Mom enters Grandma's details: "Jane Doe", Mobile: `+1-555-0707`, Relationship: `Parent`
+- **Verification:** System triggers OTP code `1234` to Grandma's phone (`+1-555-0707`).
+- Grandma reads the code to Mom. Mom inputs `1234` in the app.
+- **Result:**
+  - System creates Grandma's profile: `PatientId = 9999-G`
+  - System links them in `UserPatients`: `(0001-A, 9999-G, Relationship = Parent, IsVerified = true)`.
+  - Mom can now book appointments for Grandma.
+
+#### Step 4: Grandma Gets Her Own Account Later
+- Grandma registers with email `grandma@gmail.com`, `UserId = 0002-B`.
+- System detects her mobile `+1-555-0707` already exists as `PatientId = 9999-G`.
+- It prompts for validation, sends OTP to `+1-555-0707`.
+- Grandma enters OTP.
+- **Result:**
+  - System inserts link in `UserPatients`: `(0002-B, 9999-G, Relationship = Self, IsVerified = true)`.
+  - Both Mom (`0001-A`) and Grandma (`0002-B`) now share secure access to `PatientId = 9999-G`.

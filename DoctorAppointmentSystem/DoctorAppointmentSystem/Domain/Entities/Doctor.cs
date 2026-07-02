@@ -1,18 +1,70 @@
-﻿namespace DoctorAppointmentSystem.Domain.Entities
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace DoctorAppointmentSystem.Domain.Entities
 {
+	[Table("Doctors")]
 	public class Doctor
 	{
-		public Guid UserId { get; set; }
+		[Key]
 		public Guid DoctorId { get; set; }
-		public Guid SpecializationId { get; set; }
-		public string Qualification {  get; set; }
+
+		[Required]
+		public User User { get; set; }
+
+		[Required]
+		public Specialization Specialization { get; set; }
+
+		[Required]
+		[MaxLength(100)]
+		public string FirstName { get; set; }
+
+		[Required]
+		[MaxLength(100)]
+		public string LastName { get; set; }
+
+		[Required]
+		[Phone]
+		[MaxLength(20)]
+		public string MobileNo { get; set; }
+
+		[Required]
+		[MaxLength(10)]
+		public string Gender { get; set; }
+
+		[Required]
+		public DateTime DOB { get; set; }
+
+		[Required]
+		[MaxLength(150)]
+		public string Qualification { get; set; }
+
+		[Required]
 		public int YearsOfExperience { get; set; }
+
+		[Required]
+		[MaxLength(50)]
 		public string LicenceNumber { get; set; }
-		public double ConsultationFee {  get; set; }
+
+		[Required]
+		public double ConsultationFee { get; set; }
+
+		[Required]
+		[MaxLength(150)]
 		public string HospitalName { get; set; }
+
+		[Required]
 		public EVerificationStatus VerificationStatus { get; set; }
-		public byte[] ProfileImage {  get; set; }
-		public string AboutDoctor {  get; set; }
+
+		public byte[] ProfileImage { get; set; }
+
+		[MaxLength(2000)]
+		public string AboutDoctor { get; set; }
+
+		[Required]
+		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+		public DateTime UpdatedDate { get; set; }
 	}
 
 	public enum EVerificationStatus

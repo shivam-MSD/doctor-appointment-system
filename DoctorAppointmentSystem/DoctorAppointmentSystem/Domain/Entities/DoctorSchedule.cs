@@ -1,13 +1,27 @@
-﻿namespace DoctorAppointmentSystem.Domain.Entities
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace DoctorAppointmentSystem.Domain.Entities
 {
+	[Table("DoctorSchedules")]
 	public class DoctorSchedule
 	{
+		[Key]
 		public Guid ScheduleId { get; set; }
-		public Guid DoctorId { get; set; }
-		public TimeSpan StartTime { get; set; }
-		public TimeSpan EndTime { get; set; }
-		public bool IsAvailable { get; set; }
-		public int DaysOfWeek { get; set; }
 
+		[Required]
+		public Doctor Doctor { get; set; }
+
+		[Required]
+		public TimeSpan StartTime { get; set; }
+
+		[Required]
+		public TimeSpan EndTime { get; set; }
+
+		[Required]
+		public bool IsAvailable { get; set; }
+
+		[Required]
+		public int DaysOfWeek { get; set; }
 	}
 }

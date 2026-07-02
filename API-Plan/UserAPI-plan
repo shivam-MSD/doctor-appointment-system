@@ -1,0 +1,60 @@
+# Implementation Plan: Authentication & User API
+
+This plan outlines the first step of creating our API layer, starting with expanding the `User` entity to support full profile details and implementing the Authentication Controller and Service (`Register` and `Login`).
+
+---
+
+## Proposed Changes
+
+### 1. Domain Layer (Entity Extension)
+
+The current C# [User.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/User.cs) is a stub and is missing fields displayed in the ER Diagram (such as `FirstName`, `LastName`, `MobileNo`, `Gender`, `DOB`, etc.). We will add these fields to make the authentication payload valid.
+
+#### [MODIFY] [User.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/User.cs)
+- Add `FirstName`, `LastName` (Required, MaxLength 100).
+- Add `MobileNo` (Required, MaxLength 20).
+- Add `Gender` (MaxLength 10).
+- Add `DOB` (DateTime).
+- Add `IsEmailVerified`, `IsMobileVerified` (bool, default false).
+- Add `CreatedDate`, `UpdatedDate`, `LastLoginDate` (DateTime).
+
+#### [MODIFY] [ApplicationDbContext.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Persistent/Context/ApplicationDbContext.cs)
+- Configure new fields in the `User` entity mappings.
+
+---
+
+### 2. Application Layer (Auth Service)
+
+We will implement the service that handles user registration (hashing passwords, validating roles, checking email duplicates) and login (comparing hashes and generating JWT claims).
+
+#### [NEW] [IAuthService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/IAuthService.cs)
+Declares contracts:
+- `Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto);`
+- `Task<AuthResponseDto> LoginAsync(LoginDto loginDto);`
+
+#### [NEW] [AuthService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AuthService.cs)
+Implements:
+- Role checks (validating whether selected role is Patient, Doctor, Admin).
+- Safe password hashing (using BCrypt or similar standard PBKDF2 hash, or standard ASP.NET Identity hashing helper).
+- Querying and inserting users using `ApplicationDbContext`.
+- Mock/Basic JWT Token generation (to be fully secured in the authentication phase later).
+
+---
+
+### 3. API Layer (Controllers)
+
+#### [NEW] [AuthController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AuthController.cs)
+Exposes endpoints:
+- `POST /api/auth/register` (returns `AuthResponseDto`)
+- `POST /api/auth/login` (returns `AuthResponseDto`)
+- Handled safely by our previously registered `GlobalExceptionHandler`.
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+- Register `IAuthService` with `builder.Services.AddScoped<IAuthService, AuthService>();`.
+
+---
+
+## Verification Plan
+We will verify that:
+1. The project compiles successfully.
+2. The registered routes are exposed.

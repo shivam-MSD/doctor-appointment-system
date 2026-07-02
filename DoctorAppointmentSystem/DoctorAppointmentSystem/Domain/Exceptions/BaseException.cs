@@ -2,12 +2,12 @@ using System.Net;
 
 namespace DoctorAppointmentSystem.Domain.Exceptions
 {
-	public abstract class BaseException : Exception
+	public class BaseException : Exception
 	{
 		public HttpStatusCode StatusCode { get; }
 		public string Title { get; }
 
-		protected BaseException(string message, HttpStatusCode statusCode, string title)
+		public BaseException(string message, HttpStatusCode statusCode, string title)
 			: base(message)
 		{
 			StatusCode = statusCode;
@@ -15,41 +15,41 @@ namespace DoctorAppointmentSystem.Domain.Exceptions
 		}
 	}
 
-	public abstract class NotFoundException : BaseException
+	public class NotFoundException : BaseException
 	{
-		protected NotFoundException(string message, string title = "Not Found")
+		public NotFoundException(string message, string title = "Not Found")
 			: base(message, HttpStatusCode.NotFound, title)
 		{
 		}
 	}
 
-	public abstract class BadRequestException : BaseException
+	public class BadRequestException : BaseException
 	{
-		protected BadRequestException(string message, string title = "Bad Request")
+		public BadRequestException(string message, string title = "Bad Request")
 			: base(message, HttpStatusCode.BadRequest, title)
 		{
 		}
 	}
 
-	public abstract class ConflictException : BaseException
+	public class ConflictException : BaseException
 	{
-		protected ConflictException(string message, string title = "Conflict")
+		public ConflictException(string message, string title = "Conflict")
 			: base(message, HttpStatusCode.Conflict, title)
 		{
 		}
 	}
 
-	public abstract class UnauthorizedException : BaseException
+	public class UnauthorizedException : BaseException
 	{
-		protected UnauthorizedException(string message, string title = "Unauthorized")
+		public UnauthorizedException(string message, string title = "Unauthorized")
 			: base(message, HttpStatusCode.Unauthorized, title)
 		{
 		}
 	}
 
-	public abstract class ForbiddenException : BaseException
+	public class ForbiddenException : BaseException
 	{
-		protected ForbiddenException(string message, string title = "Forbidden")
+		public ForbiddenException(string message, string title = "Forbidden")
 			: base(message, HttpStatusCode.Forbidden, title)
 		{
 		}

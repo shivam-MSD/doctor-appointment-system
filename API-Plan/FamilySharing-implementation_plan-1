@@ -1,0 +1,58 @@
+# Implementation Plan: Family Sharing & Many-to-Many User-Patient Relationship
+
+To support the family booking concept where a patient profile (e.g. a child) can be accessed and booked under multiple user accounts (e.g., Mom's login and Dad's login), we will refactor the relationship between `User` and `Patient` from One-to-Many to **Many-to-Many**.
+
+---
+
+## Architectural Idea Validation
+Your logic is correct and represents a common health booking system flow:
+* **Users** are login accounts (with emails).
+* **Patients** are clinical profiles (medical history, blood group, etc.).
+* By decoupling them into a **Many-to-Many** relationship, a child's clinical `Patient` profile can be linked to both the Mother's `User` account and the Father's `User` account. Both parents can view, update, and book appointments for that patient profile.
+
+---
+
+## Proposed Changes
+
+### 1. Domain Layer (Entities & Join Table)
+
+We will introduce a join entity class `UserPatient` to link `Users` and `Patients`.
+
+#### [NEW] [UserPatient.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/UserPatient.cs)
+- Represents the association. Contains reference properties:
+  - `User User`
+  - `Patient Patient`
+
+#### [MODIFY] [Patient.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/Patient.cs)
+- Remove `[Required] public User User { get; set; }` (as a patient is now linked to many users via the join entity).
+
+---
+
+### 2. Persistent Layer (Context Configuration)
+
+#### [MODIFY] [ApplicationDbContext.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Persistent/Context/ApplicationDbContext.cs)
+- Add `public DbSet<UserPatient> UserPatients { get; set; }`.
+- Configure `UserPatient` as a composite key: `(UserId, PatientId)`.
+- Update the relationship mappings.
+
+---
+
+### 3. Application Layer (DTOs & Service Updates)
+
+#### [MODIFY] [PatientDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/PatientDTOs.cs)
+- Update DTOs to support linking user IDs.
+
+---
+
+### 4. Create Documentation Artifact
+
+#### [NEW] [database_schema_mappings.md](file:///C:/Users/confi/.gemini/antigravity-ide/brain/ddcab4b2-108e-42fc-8bfb-068cdec8a729/database_schema_mappings.md)
+Create a comprehensive reference guide explaining:
+- Every table and its columns.
+- Primary and Foreign keys.
+- Diagrammatic flow of relationships.
+- Practical business logic scenarios (e.g., family booking walkthrough).
+
+## Verification Plan
+We will verify that:
+1. The project compiles successfully.
