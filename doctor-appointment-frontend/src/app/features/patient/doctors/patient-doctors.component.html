@@ -1,0 +1,146 @@
+<div class="dashboard-wrapper">
+  <!-- Greeting Banner -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>🩺 Find a Medical Specialist</h2>
+      <p>Search and browse all verified clinical doctors registered on HealSync.</p>
+    </div>
+    <div class="role-badge">Patient Directory</div>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">
+    <span>⚠️</span> {{ errorMessage }}
+  </div>
+
+  <!-- Filters Row -->
+  <div class="glass-card">
+    <h3 class="section-title">🔍 Search & Location Filters</h3>
+    <form (submit)="onFilterChange(); $event.preventDefault()" class="filter-form">
+      <div class="filter-col flex-2">
+        <label class="form-label">Search Name, Qualification, or Hospital</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Dr. Shivam, MD, General Hospital..."
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+          (ngModelChange)="onFilterChange()"
+        >
+      </div>
+
+      <div class="filter-col flex-1">
+        <label class="form-label">Specialization</label>
+        <select
+          class="form-control"
+          [(ngModel)]="selectedSpecializationId"
+          name="selectedSpecializationId"
+          (change)="onFilterChange()"
+        >
+          <option value="">All Specialities</option>
+          <option *ngFor="let spec of specializations" [value]="spec.specializationId">
+            {{ spec.specializationName }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-col flex-1">
+        <label class="form-label">State</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Maharashtra"
+          [(ngModel)]="stateFilter"
+          name="stateFilter"
+          (ngModelChange)="onFilterChange()"
+        >
+      </div>
+
+      <div class="filter-col flex-1">
+        <label class="form-label">City</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Mumbai"
+          [(ngModel)]="cityFilter"
+          name="cityFilter"
+          (ngModelChange)="onFilterChange()"
+        >
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn btn-secondary" (click)="clearFilters()">Reset</button>
+        <button type="submit" class="btn btn-primary">Filter</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Doctors Listing Cards -->
+  <div class="doctors-list" *ngIf="doctors.length > 0; else noDoctors">
+    <div class="glass-card doctor-card" *ngFor="let doctor of doctors">
+      <div class="doctor-avatar-section">
+        <div class="doctor-avatar-placeholder">🩺</div>
+        <span class="badge-specialization">{{ doctor.specializationName }}</span>
+      </div>
+
+      <div class="doctor-details-section">
+        <h3 class="doctor-name">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</h3>
+        <p class="doctor-qualification">{{ doctor.qualification }} &bull; {{ doctor.yearsOfExperience }} Years Experience</p>
+        
+        <div class="doctor-meta">
+          <div class="meta-item">
+            <span class="meta-icon">🏢</span>
+            <span><strong>Primary Hospital:</strong> {{ doctor.hospitalName }}</span>
+          </div>
+          <div class="meta-item" *ngIf="doctor.aboutDoctor">
+            <span class="meta-icon">📝</span>
+            <span class="about-text">
+              "{{ isExpanded(doctor.doctorId) || doctor.aboutDoctor.length <= 150 ? doctor.aboutDoctor : (doctor.aboutDoctor | slice:0:150) + '...' }}"
+              <button type="button" class="read-more-btn" *ngIf="doctor.aboutDoctor.length > 150" (click)="toggleExpand(doctor.doctorId)">
+                {{ isExpanded(doctor.doctorId) ? 'Read Less' : 'Read More' }}
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doctor-action-section">
+        <div class="fee-badge">
+          <span class="fee-label">Consultation Fee</span>
+          <span class="fee-val">Rs. {{ doctor.consultationFee }}</span>
+        </div>
+        <a [routerLink]="['/appointments/book']" [queryParams]="{ doctorId: doctor.doctorId }" class="btn btn-primary book-btn">
+          Book Appointment
+        </a>
+      </div>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="pagination-footer">
+      <button 
+        class="btn btn-secondary page-btn" 
+        [disabled]="page === 1" 
+        (click)="onPageChange(page - 1)"
+      >
+        &larr; Previous
+      </button>
+      <span class="page-info">Page <strong>{{ page }}</strong> of <strong>{{ totalPages }}</strong> ({{ totalCount }} doctors found)</span>
+      <button 
+        class="btn btn-secondary page-btn" 
+        [disabled]="page === totalPages" 
+        (click)="onPageChange(page + 1)"
+      >
+        Next &rarr;
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <ng-template #noDoctors>
+    <div class="glass-card empty-state">
+      <span class="empty-icon">📭</span>
+      <h4>No Doctors Found</h4>
+      <p>Try resetting the search criteria or trying a different location or specialization.</p>
+      <button class="btn btn-secondary" style="margin-top: 15px;" (click)="clearFilters()">Reset All Filters</button>
+    </div>
+  </ng-template>
+</div>

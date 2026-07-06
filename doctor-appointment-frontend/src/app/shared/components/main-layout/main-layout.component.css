@@ -1,0 +1,18 @@
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-body {
+  display: flex;
+  flex: 1;
+}
+
+.content-area {
+  flex: 1;
+  padding: 32px;
+  background: var(--bg-primary);
+  overflow-y: auto;
+  max-height: calc(100vh - 70px);
+}

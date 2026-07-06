@@ -29,8 +29,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public string MobileNo { get; set; }
 
 		[Required]
-		[MaxLength(10)]
-		public string Gender { get; set; }
+		public EGender Gender { get; set; }
 
 		[Required]
 		public DateTime DOB { get; set; }
@@ -56,10 +55,10 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		[Required]
 		public EVerificationStatus VerificationStatus { get; set; }
 
-		public byte[] ProfileImage { get; set; }
+		public byte[]? ProfileImage { get; set; }
 
 		[MaxLength(2000)]
-		public string AboutDoctor { get; set; }
+		public string? AboutDoctor { get; set; }
 
 		[Required]
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
@@ -69,7 +68,8 @@ namespace DoctorAppointmentSystem.Domain.Entities
 
 	public enum EVerificationStatus
 	{
+		Pending,
 		Verified,
-		Pending
+		Rejected
 	}
 }

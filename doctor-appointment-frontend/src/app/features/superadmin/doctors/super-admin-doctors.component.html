@@ -1,0 +1,107 @@
+<div class="dashboard-wrapper">
+  <!-- Greeting Banner -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>🩺 Manage Registered Doctors</h2>
+      <p>Review, filter, approve, or reject accounts from clinical doctors.</p>
+    </div>
+    <div class="role-badge">SuperAdmin Portal</div>
+  </div>
+
+  <div *ngIf="successMessage" class="success-banner">
+    <span>✓</span> {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="error-banner">
+    <span>⚠️</span> {{ errorMessage }}
+  </div>
+
+  <!-- Filters Row -->
+  <div class="glass-card">
+    <h3 class="section-title">🔍 Search & Filter Registry</h3>
+    <form (submit)="loadDoctors(); $event.preventDefault()" class="filter-form">
+      <div class="filter-input-group">
+        <label class="form-label">Search Doctor Name / Licence / Hospital</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search keywords..."
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+          (ngModelChange)="loadDoctors()"
+        >
+      </div>
+      <div class="filter-select-group">
+        <label class="form-label">Approval Status</label>
+        <select
+          class="form-control"
+          [(ngModel)]="statusFilter"
+          name="statusFilter"
+          (change)="loadDoctors()"
+        >
+          <option value="">All Statuses</option>
+          <option value="Verified">Verified / Approved</option>
+          <option value="Pending">Pending Verification</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary filter-btn">Search</button>
+    </form>
+  </div>
+
+  <!-- Doctors Directory Table Card -->
+  <div class="glass-card table-card">
+    <div class="table-header">
+      <h3>Doctors Roster</h3>
+    </div>
+    
+    <div class="table-responsive" *ngIf="doctors.length > 0; else noDoctors">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Doctor Details</th>
+            <th>Specialization</th>
+            <th>Licence Number</th>
+            <th>Hospital Name</th>
+            <th>Experience</th>
+            <th>Status</th>
+            <th>Registered Date</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let doctor of doctors">
+            <td class="bold">
+              Dr. {{ doctor.firstName }} {{ doctor.lastName }}
+              <div class="sub-text">{{ doctor.email }}</div>
+              <div class="sub-text">{{ doctor.mobileNo }}</div>
+            </td>
+            <td>{{ doctor.specializationName || 'General Medicine' }}</td>
+            <td><code>{{ doctor.licenceNumber }}</code></td>
+            <td>{{ doctor.hospitalName }}</td>
+            <td>{{ doctor.yearsOfExperience }} yrs</td>
+            <td>
+              <span class="badge badge-confirmed" *ngIf="doctor.verificationStatus === 'Verified'">Approved</span>
+              <span class="badge badge-pending" *ngIf="doctor.verificationStatus === 'Pending'">Pending</span>
+              <span class="badge badge-cancelled" *ngIf="doctor.verificationStatus === 'Rejected'">Rejected</span>
+            </td>
+            <td>{{ doctor.createdDate | date:'mediumDate' }}</td>
+            <td class="text-end">
+              <div class="action-buttons" *ngIf="doctor.verificationStatus === 'Pending'">
+                <button class="btn btn-confirm" (click)="approveDoctor(doctor.userId)">Approve</button>
+                <button class="btn btn-cancel" (click)="rejectDoctor(doctor.userId)">Reject</button>
+              </div>
+              <span class="text-muted small" *ngIf="doctor.verificationStatus !== 'Pending'">Action Locked</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noDoctors>
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <h4>No Doctors Found</h4>
+        <p>No registered doctor accounts matched your search queries.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+# Implementation Plan: Unified Dashboards, Bookings & Clinical Records
+
+This plan addresses your dashboard filtering requirements, sets up the double-booking validation rules, registers admin actions for doctor verification, and fills the clinical record gaps (Prescriptions and Medical Reports) by introducing new entities.
+
+---
+
+## Logic Critique & Corrections
+
+### 1. Delete vs. Cancel Appointments
+> [!WARNING]
+> In healthcare systems, **never physically delete** appointment records. Doing so destroys audit logs and medical history. Instead of "Delete Appointment," we will implement a **Cancel/Reject** workflow, changing the appointment status to `Cancelled`.
+
+### 2. Missing Entities for Prescriptions and Reports
+Your logic requires doctors to add prescriptions and patient reports, but these entities are missing in the C# domain. We will create:
+- `Prescription`: Link to appointment, doctor, and patient, containing medication details and instructions.
+- `MedicalRecord`: Holds document uploads (PDF/JPG) or doctor consultation notes.
+
+### 3. Double-Booking Validation (No-Overlap Rule)
+When a patient takes an appointment, the service must validate:
+1. **Doctor overlap:** The doctor has no other `Confirmed` or `Pending` appointments overlapping the selected `[StartTime, EndTime]` interval.
+2. **Patient overlap:** The patient has no other appointments scheduled at that same time.
+3. **Availability check:** The time slot falls within the doctor's weekly available working schedule (`DoctorSchedule`).
+
+---
+
+## Proposed Changes
+
+### 1. Domain Layer (New Entities & Configurations)
+
+#### [NEW] [Prescription.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/Prescription.cs)
+- Represents a clinical prescription: `PrescriptionId`, `AppointmentId` (FK), `DoctorId` (FK), `PatientId` (FK), `MedicationDetails` (string), `Instructions` (string), `CreatedDate`.
+
+#### [NEW] [MedicalRecord.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/MedicalRecord.cs)
+- Represents reports/medical documents: `MedicalRecordId`, `PatientId` (FK), `DoctorId` (FK), `Title` (string), `Description` (string), `FilePath` (string), `CreatedDate`.
+
+#### [MODIFY] [ApplicationDbContext.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Persistent/Context/ApplicationDbContext.cs)
+- Register `DbSet<Prescription>` and `DbSet<MedicalRecord>`.
+- Configure Fluent API keys, lengths, and cascade paths.
+
+---
+
+### 2. Application Layer (DTOs & Pagination)
+
+#### [NEW] [PagedResult.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/PagedResult.cs)
+A reusable wrapper for paginated endpoints:
+- `Items` (Collection of DTOs)
+- `TotalCount`, `PageNumber`, `PageSize`, `TotalPages`
+
+#### [NEW] [PrescriptionDTOs.cs & MedicalRecordDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/ClinicalDTOs.cs)
+- `CreatePrescriptionDto`, `PrescriptionDto`
+- `CreateMedicalRecordDto`, `MedicalRecordDto`
+
+---
+
+### 3. Application Layer (Services)
+
+#### [NEW] [IAdminService.cs & AdminService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AdminService.cs)
+Provides:
+- `Task VerifyDoctorAsync(Guid doctorId, string status);` (changes status to Verified/Rejected)
+
+#### [NEW] [IAppointmentService.cs & AppointmentService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AppointmentService.cs)
+Provides:
+- `Task<AppointmentDto> BookAppointmentAsync(CreateAppointmentDto dto);` (validates schedule, ensures no doctor/patient overlap, and throws custom conflicts)
+- `Task CancelAppointmentAsync(Guid userId, Guid appointmentId);` (cancels if allowed)
+- `Task<PagedResult<AppointmentDto>> GetPaginatedAppointmentsAsync(Guid userId, string role, string statusFilter, DateTime? dateFilter, int page, int size);`
+
+#### [NEW] [IClinicalService.cs & ClinicalService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/ClinicalService.cs)
+Provides:
+- `Task<PrescriptionDto> AddPrescriptionAsync(Guid doctorId, CreatePrescriptionDto dto);` (validates caller is the doctor on the appointment)
+- `Task<MedicalRecordDto> AddMedicalRecordAsync(Guid doctorId, CreateMedicalRecordDto dto);` (uploads/adds reports)
+- `Task<IEnumerable<PrescriptionDto>> GetPatientPrescriptionsAsync(Guid userId, Guid patientId);`
+
+---
+
+### 4. API Layer (Controllers)
+
+#### [NEW] [AdminController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AdminController.cs)
+Exposes:
+- `POST /api/admin/verify-doctor/{doctorId}` (SuperAdmin / Admin privilege)
+
+#### [NEW] [AppointmentsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AppointmentsController.cs)
+Exposes:
+- `POST /api/appointments/book`
+- `POST /api/appointments/cancel/{id}`
+- `GET /api/appointments/dashboard` (with filters & pagination)
+
+#### [NEW] [ClinicalController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/ClinicalController.cs)
+Exposes:
+- `POST /api/clinical/prescription`
+- `POST /api/clinical/report`
+- `GET /api/clinical/patient/{patientId}/prescriptions`
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+- Register new service dependencies.
+
+## Verification Plan
+We will verify that:
+1. The project compiles successfully.
+2. All endpoints are mapped correctly in Swagger.

@@ -1,0 +1,196 @@
+# Angular Frontend Architecture & Directory Layout
+
+This document outlines the structured architecture for the Angular frontend of the **Doctor Appointment System**, mapping cleanly to the decoupled ASP.NET Core backend APIs.
+
+---
+
+## 1. Directory Structure
+
+We follow the standard **Core-Shared-Feature** modular folder structure to ensure clean separation of concerns:
+
+```
+doctor-appointment-frontend/
+├── src/
+│   ├── app/
+│   │   ├── core/                      # Singleton Services, Guards, HTTP Interceptors
+│   │   │   ├── guards/
+│   │   │   │   ├── auth.guard.ts      # Verifies login state
+│   │   │   │   └── role.guard.ts      # Restricts pages by User Role
+│   │   │   ├── interceptors/
+│   │   │   │   └── auth.interceptor.ts# Automatically appends JWT and X-User-Id header
+│   │   │   ├── services/
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── appointment.service.ts
+│   │   │   │   ├── family.service.ts
+│   │   │   │   └── patient.service.ts
+│   │   │   └── models/                # TypeScript Interfaces representing backend DTOs
+│   │   │       ├── user.model.ts
+│   │   │       ├── patient.model.ts
+│   │   │       └── appointment.model.ts
+│   │   │
+│   │   ├── shared/                    # Reusable components, directives, pipes
+│   │   │   ├── components/
+│   │   │   │   ├── header/            # Navigation bar
+│   │   │   │   ├── sidebar/           # Dashboard side navigation
+│   │   │   │   └── paged-table/       # Reusable paginated table view
+│   │   │   └── pipes/
+│   │   │
+│   │   ├── features/                  # Lazy-loaded feature modules
+│   │   │   ├── auth/
+│   │   │   │   ├── login/
+│   │   │   │   └── register/
+│   │   │   │
+│   │   │   ├── patient-dashboard/
+│   │   │   │   ├── appointments/      # List & filter own/family bookings
+│   │   │   │   ├── doctors-consulted/ # Consultation group cards
+│   │   │   │   ├── book-appointment/  # Slot selection & validations
+│   │   │   │   └── family-members/    # Add dependents with OTP verification
+│   │   │   │
+│   │   │   ├── admin-dashboard/
+│   │   │   │   ├── verify-doctors/    # List and toggle doctor status
+│   │   │   │   └── all-appointments/  # View and cancel hospital bookings
+│   │   │
+│   │   ├── app-routing.module.ts      # Lazy-loaded routes
+│   │   ├── app.component.html
+│   │   ├── app.component.ts
+│   │   └── app.module.ts
+```
+
+---
+
+## 2. Models Definition (`core/models/`)
+
+### A. Patient Profile Model (`patient.model.ts`)
+```typescript
+export interface Patient {
+  patientId: string;
+  firstName: string;
+  lastName: string;
+  mobileNo: string;
+  gender: string;
+  dob: string;
+  bloodGroup?: string;
+  emergencyContactName: string;
+  emergencyContactNumber: string;
+}
+
+export interface FamilyVerification {
+  verificationId: string;
+  message: string;
+}
+```
+
+### B. Appointment Model (`appointment.model.ts`)
+```typescript
+export interface Appointment {
+  appointmentId: string;
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
+  reason: string;
+  consultationType: 'InPerson' | 'VideoConsultation';
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+}
+```
+
+---
+
+## 3. Core Services Definition (`core/services/`)
+
+### A. Auth Service (`auth.service.ts`)
+Manages login, token storage, and simulated roles:
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private currentUserSubject = new BehaviorSubject<any>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
+
+  login(credentials: any): Observable<any> {
+    return this.http.post<any>('/api/auth/login', credentials).pipe(
+      tap(user => {
+        localStorage.setItem('token', user.token);
+        localStorage.setItem('userId', user.userId);
+        localStorage.setItem('role', user.role);
+        this.currentUserSubject.next(user);
+      })
+    );
+  }
+
+  logout() {
+    localStorage.clear();
+    this.currentUserSubject.next(null);
+  }
+
+  getUserId(): string | null {
+    return localStorage.getItem('userId');
+  }
+
+  getRole(): string | null {
+    return localStorage.getItem('role');
+  }
+}
+```
+
+### B. Appointment Service (`appointment.service.ts`)
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Appointment, PagedResult } from '../models/appointment.model';
+
+@Injectable({ providedIn: 'root' })
+export class AppointmentService {
+  constructor(private http: HttpClient) {}
+
+  bookAppointment(dto: any): Observable<Appointment> {
+    return this.http.post<Appointment>('/api/appointments/book', dto);
+  }
+
+  cancelAppointment(id: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/cancel/${id}`, {});
+  }
+
+  getPatientDashboard(status?: string, page = 1, size = 10): Observable<PagedResult<Appointment>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (status) params = params.set('status', status);
+    return this.http.get<PagedResult<Appointment>>('/api/appointments/patient-dashboard', { params });
+  }
+
+  getAdminDoctorDashboard(filters: any, page = 1, size = 10): Observable<PagedResult<Appointment>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.search) params = params.set('search', filters.search);
+    return this.http.get<PagedResult<Appointment>>('/api/appointments/admin-doctor-dashboard', { params });
+  }
+}
+```
+
+---
+
+## 4. Feature Workflows
+
+### A. OTP Verification for Family Member
+1. User enters family member details in UI.
+2. Calls `POST /api/family/add`. API registers details in cache and returns a `verificationId`.
+3. UI opens a Modal asking for the OTP code.
+4. User inputs code. Calling `POST /api/family/verify` sends `verificationId` and `otpCode`.
+5. On success, modal closes, and dashboard updates family list.

@@ -1,0 +1,563 @@
+<div class="dashboard-wrapper">
+  <!-- Greeting Banner -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>Welcome Back, {{ role === 'Doctor' ? 'Dr. ' : '' }} {{ firstName }}!</h2>
+      <p>Here is an overview of your medical bookings and scheduled appointments.</p>
+    </div>
+    <div class="role-badge">{{ role }} Portal</div>
+  </div>
+
+  <!-- DOCTOR ONLY: Profile address completeness alert -->
+  <div class="glass-card warning-card clinic-alert" *ngIf="role === 'Doctor' && isDoctorAddressIncomplete" style="background: rgba(245, 158, 11, 0.05) !important; border: 1.5px solid rgba(245, 158, 11, 0.25) !important;">
+    <span class="alert-icon">⚠️</span>
+    <div class="alert-info">
+      <h4>Complete Your Profile Address</h4>
+      <p>You have not fully filled in your personal profile address details. Please update your address in the profile section to complete your profile.</p>
+      <a routerLink="/doctor/profile" class="btn btn-primary alert-btn" style="text-decoration: none;">Update Profile Address</a>
+    </div>
+  </div>
+
+  <!-- DOCTOR ONLY: Practice setup alert when clinic list is empty -->
+  <div class="glass-card warning-card clinic-alert" *ngIf="role === 'Doctor' && doctorClinics.length === 0">
+    <span class="alert-icon">🏢</span>
+    <div class="alert-info">
+      <h4>Complete Your Practice Setup</h4>
+      <p>Patients will only be able to view your details and schedule appointments after you add at least one practice
+        clinic, hospital, or physiotherapy center. Registered centers require verification by the Super Admin.</p>
+      <button class="btn btn-primary alert-btn" (click)="openClinicModal()">Register Clinic Location Now</button>
+    </div>
+  </div>
+
+  <!-- Statistic Stats Cards -->
+  <div class="stats-row" *ngIf="role !== 'SuperAdmin'">
+    <div class="glass-card stat-card">
+      <span class="stat-icon">📅</span>
+      <div class="stat-info">
+        <h3>{{ totalCount }}</h3>
+        <p>Total Bookings</p>
+      </div>
+    </div>
+    <div class="glass-card stat-card">
+      <span class="stat-icon text-success">✓</span>
+      <div class="stat-info">
+        <h3>Active</h3>
+        <p>System Online</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATIENT / DOCTOR / CLINIC ADMIN: Appointments Dashboard Grid -->
+  <div class="glass-card table-card" *ngIf="role !== 'SuperAdmin'">
+    <div class="table-header">
+      <h3>Upcoming Appointments</h3>
+
+      <div class="filters-row">
+        <!-- Clinic Multi-Select Checkboxes for Doctors -->
+        <div class="clinic-filter-group" *ngIf="role === 'Doctor' && doctorClinics.length > 0">
+          <span class="filter-label">Filter Clinics:</span>
+          <div class="checkbox-chips">
+            <label *ngFor="let clinic of doctorClinics" class="chip-label"
+              [class.active]="selectedClinicIds.includes(clinic.clinicId)">
+              <input type="checkbox" [checked]="selectedClinicIds.includes(clinic.clinicId)"
+                (change)="toggleClinicFilter(clinic.clinicId)" class="hidden-checkbox">
+              {{ clinic.clinicName }}
+            </label>
+          </div>
+        </div>
+
+        <select class="form-control filter-select" [ngModel]="statusFilter" (ngModelChange)="onFilterChange($event)">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Cancelled">Cancelled</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Error state -->
+    <div class="error-banner" *ngIf="errorMessage">
+      <span>⚠️</span> {{ errorMessage }}
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="table-responsive" *ngIf="appointments.length > 0; else emptyState">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Doctor</th>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Time Slot</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let app of getFilteredAppointments()">
+            <td class="bold">{{ app.doctorName }}</td>
+            <td>{{ app.patientName }}</td>
+            <td>{{ app.appointmentDate | date:'mediumDate' }}</td>
+            <td>{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }}</td>
+            <td>
+              <span class="type-indicator">{{ app.consultationType }}</span>
+            </td>
+            <td>
+              <span [class]="getStatusClass(app.status)">{{ app.status }}</span>
+            </td>
+            <td>
+              <button *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed'" class="btn btn-cancel"
+                (click)="cancelAppointment(app.appointmentId)">
+                Cancel
+              </button>
+              <span *ngIf="app.status === 'Cancelled' || app.status === 'Completed'" class="text-muted">-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <h4>No Appointments Found</h4>
+        <p>Try changing your filter settings or schedule a new booking.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- DOCTOR ONLY: Clinics Section -->
+  <div class="glass-card table-card" *ngIf="role === 'Doctor'">
+    <div class="table-header flex-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3>My Clinics & Centers</h3>
+      <button class="btn btn-primary" (click)="openClinicModal()">Add Clinic Location</button>
+    </div>
+
+    <div class="table-responsive" *ngIf="doctorClinics.length > 0; else noClinics">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Clinic Name</th>
+            <th>Type</th>
+            <th>City / State</th>
+            <th>Verification</th>
+            <th>Staff Admin</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let clinic of doctorClinics">
+            <td class="bold">{{ clinic.clinicName }}</td>
+            <td>{{ clinic.clinicType }}</td>
+            <td>{{ clinic.city }}, {{ clinic.state }}</td>
+            <td>
+              <span *ngIf="clinic.verificationStatus === 'Verified'" class="badge badge-confirmed">Verified</span>
+              <span *ngIf="clinic.verificationStatus === 'Pending'" class="badge badge-pending">Pending Verification</span>
+              <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 4px 8px; border-radius: 6px; font-weight: 500;" [title]="'Reason: ' + clinic.rejectionReason">
+                Rejected ⚠️
+              </span>
+              <div *ngIf="clinic.verificationStatus === 'Rejected' && clinic.rejectionReason" style="font-size: 0.8rem; color: #ef4444; margin-top: 4px; font-style: italic;">
+                Reason: {{ clinic.rejectionReason }}
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-confirmed" *ngIf="clinic.hasAdmin">Assigned</span>
+              <ng-container *ngIf="!clinic.hasAdmin">
+                <button *ngIf="clinic.isVerified" class="btn btn-sm-outline"
+                  (click)="openAdminModal(clinic.clinicId, clinic.clinicName)">
+                  + Add Admin
+                </button>
+                <span *ngIf="!clinic.isVerified" class="badge badge-pending"
+                  title="Awaiting clinic verification to register an admin">
+                  Self-Managed
+                </span>
+              </ng-container>
+            </td>
+            <td>
+              <button class="btn btn-sm-outline" (click)="openEditClinicModal(clinic)">
+                ✏️ Edit Details
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #noClinics>
+      <div class="empty-state">
+        <span class="empty-icon">🏢</span>
+        <h4>No Registered Clinics</h4>
+        <p>Register your first clinic location to allow admins and patient appointments.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- SUPERADMIN ONLY: Verification Queue Dashboard -->
+  <div *ngIf="role === 'SuperAdmin'" class="super-admin-dashboard">
+    <!-- Pending Doctors -->
+    <div class="glass-card table-card margin-bottom">
+      <div class="table-header">
+        <h3>Pending Doctor Verifications</h3>
+      </div>
+      <div class="table-responsive" *ngIf="pendingDoctors.length > 0; else noDoctors">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Doctor Name</th>
+              <th>Licence Number</th>
+              <th>Specialization</th>
+              <th>Qualification</th>
+              <th>Consultation Fee</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let doc of pendingDoctors">
+              <td class="bold">Dr. {{ doc.firstName }} {{ doc.lastName }}</td>
+              <td>{{ doc.licenceNumber }}</td>
+              <td>{{ doc.specializationName }}</td>
+              <td>{{ doc.qualification }}</td>
+              <td>₹{{ doc.consultationFee }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-confirm" (click)="verifyDoctor(doc.doctorId, 'Verified')">Approve</button>
+                  <button class="btn btn-cancel" (click)="verifyDoctor(doc.doctorId, 'Rejected')">Reject</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noDoctors>
+        <div class="empty-state">
+          <span class="empty-icon">✓</span>
+          <h4>No Doctors Pending Verification</h4>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Pending Clinics -->
+    <div class="glass-card table-card margin-bottom">
+      <div class="table-header">
+        <h3>Pending Clinic / Center Verifications</h3>
+      </div>
+      <div class="table-responsive" *ngIf="pendingClinics.length > 0; else noPendingClinics">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Clinic / Center Name</th>
+              <th>Type</th>
+              <th>Doctor Owner</th>
+              <th>City / State</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let clinic of pendingClinics">
+              <td class="bold">{{ clinic.clinicName }}</td>
+              <td>{{ clinic.clinicType }}</td>
+              <td>{{ clinic.doctorName }}</td>
+              <td>{{ clinic.city }}, {{ clinic.state }}</td>
+              <td>
+                <div class="action-buttons" style="display: flex; gap: 8px;">
+                  <button class="btn btn-confirm" (click)="verifyClinic(clinic.clinicId)">Approve</button>
+                  <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" (click)="openRejectClinicModal(clinic.clinicId)">Reject</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noPendingClinics>
+        <div class="empty-state">
+          <span class="empty-icon">✓</span>
+          <h4>No Clinics Pending Verification</h4>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Pending Admins -->
+    <div class="glass-card table-card">
+      <div class="table-header">
+        <h3>Pending Clinic Admin Verifications</h3>
+      </div>
+      <div class="table-responsive" *ngIf="pendingAdmins.length > 0; else noAdmins">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Admin Name</th>
+              <th>Mobile Number</th>
+              <th>Assigned Clinic</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let admin of pendingAdmins">
+              <td class="bold">{{ admin.firstName }} {{ admin.lastName }}</td>
+              <td>{{ admin.mobileNo }}</td>
+              <td>{{ admin.clinicName }}</td>
+              <td>
+                <button class="btn btn-confirm" (click)="verifyAdmin(admin.adminId)">Verify Admin</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noAdmins>
+        <div class="empty-state">
+          <span class="empty-icon">✓</span>
+          <h4>No Admins Pending Verification</h4>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- CLINIC REGISTRATION MODAL -->
+  <div class="modal-backdrop" *ngIf="showClinicModal">
+    <div class="glass-card modal-container">
+      <div class="modal-header">
+        <h3>Register New Clinic Location</h3>
+        <button class="close-modal" (click)="closeClinicModal()">&times;</button>
+      </div>
+
+      <form (submit)="submitClinicRegistration(); $event.preventDefault()">
+        <div class="modal-body scrollable-body">
+          <div class="error-banner" *ngIf="errorMessage">
+            <span>⚠️</span> {{ errorMessage }}
+          </div>
+
+          <h4 class="section-title">🏢 Center / Clinic Details</h4>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">Name</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.clinicName" name="clinicName" required
+                placeholder="e.g. City Care Physiotherapy">
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Type</label>
+              <select class="form-control" [(ngModel)]="clinicOnlyForm.clinicType" name="clinicType" required>
+                <option value="Clinic">Clinic</option>
+                <option value="PhysiotherapyCenter">Physiotherapy Center</option>
+                <option value="Hospital">Hospital</option>
+                <option value="WellnessCenter">Wellness Center</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="form-row">
+            <div class="form-group col-4">
+              <label class="form-label">Country</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.country" name="country" required>
+            </div>
+            <div class="form-group col-4">
+              <label class="form-label">State</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.state" name="state" required
+                placeholder="e.g. Maharashtra">
+            </div>
+            <div class="form-group col-4">
+              <label class="form-label">City</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.city" name="city" required
+                placeholder="e.g. Mumbai">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">Area</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.area" name="area" required
+                placeholder="e.g. Bandra West">
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Pincode *</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.pincode" name="pincode" required
+                placeholder="e.g. 400050">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Address Line 1</label>
+            <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.addressline1" name="addressline1"
+              required placeholder="e.g. 102 Park Avenue">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Address Line 2 (Optional)</label>
+            <input class="form-control" type="text" [(ngModel)]="clinicOnlyForm.addressline2" name="addressline2"
+              placeholder="e.g. Near Metro Station">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-cancel" (click)="closeClinicModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Register Clinic</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CLINIC ADMIN REGISTRATION MODAL -->
+  <div class="modal-backdrop" *ngIf="showAdminModal">
+    <div class="glass-card modal-container">
+      <div class="modal-header">
+        <h3>Register Clinic Staff Admin</h3>
+        <button class="close-modal" (click)="closeAdminModal()">&times;</button>
+      </div>
+
+      <form (submit)="submitAdminRegistration(); $event.preventDefault()">
+        <div class="modal-body scrollable-body">
+          <div class="error-banner" *ngIf="errorMessage">
+            <span>⚠️</span> {{ errorMessage }}
+          </div>
+
+          <h4 class="section-title">🏢 Assigned Clinic Location</h4>
+          <div class="form-group">
+            <input class="form-control" type="text" [value]="selectedClinicNameForAdmin" disabled>
+          </div>
+
+          <h4 class="section-title margin-top">👤 Clinic Admin Credentials</h4>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">Admin First Name</label>
+              <input class="form-control" type="text" [(ngModel)]="adminForm.adminFirstName" name="adminFirstName"
+                required placeholder="e.g. Rahul">
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Admin Last Name</label>
+              <input class="form-control" type="text" [(ngModel)]="adminForm.adminLastName" name="adminLastName"
+                required placeholder="e.g. Sharma">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Admin Email (Login ID)</label>
+            <input class="form-control" type="email" [(ngModel)]="adminForm.adminEmail" name="adminEmail" required
+              placeholder="e.g. rahul.sharma@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Admin Password</label>
+            <input class="form-control" type="password" [(ngModel)]="adminForm.adminPassword" name="adminPassword"
+              required placeholder="••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Admin Mobile Number</label>
+            <input class="form-control" type="text" [(ngModel)]="adminForm.adminMobileNo" name="adminMobileNo" required
+              placeholder="e.g. 9876543210">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-cancel" (click)="closeAdminModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Assign Admin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SUPER ADMIN REJECTION REASON MODAL -->
+  <div class="modal-backdrop" *ngIf="showRejectModal">
+    <div class="glass-card modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Reject Clinic Verification</h3>
+        <button class="close-modal" (click)="closeRejectModal()">&times;</button>
+      </div>
+      <form (submit)="submitClinicRejection(); $event.preventDefault()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="rejectionReason">Reason for Rejection *</label>
+            <textarea 
+              id="rejectionReason"
+              name="rejectionReason"
+              class="form-control" 
+              rows="4" 
+              [(ngModel)]="rejectionReason" 
+              required
+              placeholder="Provide specific feedback to the doctor so they can correct it (e.g. invalid license or incorrect address typo).">
+            </textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-cancel" (click)="closeRejectModal()">Cancel</button>
+          <button type="submit" class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white;">
+            Reject Clinic
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CLINIC EDIT MODAL -->
+  <div class="modal-backdrop" *ngIf="showEditClinicModal">
+    <div class="glass-card modal-container">
+      <div class="modal-header">
+        <h3>Edit Clinic Location Details</h3>
+        <button class="close-modal" (click)="closeEditClinicModal()">&times;</button>
+      </div>
+
+      <form (submit)="submitClinicEdit(); $event.preventDefault()">
+        <div class="modal-body scrollable-body">
+          <h4 class="section-title">🏢 Center / Clinic Details</h4>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">Name</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.clinicName" name="clinicName" required
+                placeholder="e.g. City Care Physiotherapy">
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Type</label>
+              <select class="form-control" [(ngModel)]="clinicEditForm.clinicType" name="clinicType" required>
+                <option value="Clinic">Clinic</option>
+                <option value="PhysiotherapyCenter">Physiotherapy Center</option>
+                <option value="Hospital">Hospital</option>
+                <option value="WellnessCenter">Wellness Center</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="form-row">
+            <div class="form-group col-4">
+              <label class="form-label">Country</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.country" name="country" required>
+            </div>
+            <div class="form-group col-4">
+              <label class="form-label">State</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.state" name="state" required
+                placeholder="e.g. Maharashtra">
+            </div>
+            <div class="form-group col-4">
+              <label class="form-label">City</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.city" name="city" required
+                placeholder="e.g. Mumbai">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label class="form-label">Area</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.area" name="area" required
+                placeholder="e.g. Bandra West">
+            </div>
+            <div class="form-group col-6">
+              <label class="form-label">Pincode *</label>
+              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.pincode" name="pincode" required
+                placeholder="e.g. 400050">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Address Line 1</label>
+            <input class="form-control" type="text" [(ngModel)]="clinicEditForm.addressline1" name="addressline1"
+              required placeholder="e.g. 102 Park Avenue">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Address Line 2 (Optional)</label>
+            <input class="form-control" type="text" [(ngModel)]="clinicEditForm.addressline2" name="addressline2"
+              placeholder="e.g. Near Metro Station">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-cancel" (click)="closeEditClinicModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

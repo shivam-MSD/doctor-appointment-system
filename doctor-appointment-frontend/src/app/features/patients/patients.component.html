@@ -1,0 +1,125 @@
+<div class="patients-wrapper">
+  <!-- Portal Title -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>Patients Directory</h2>
+      <p>Search, filter, and view demographic details of registered patients.</p>
+    </div>
+    <div class="role-badge">Directory</div>
+  </div>
+
+  <!-- Filters Dashboard Panel -->
+  <div class="glass-card filter-card">
+    <div class="filter-header">
+      <h3>🔍 Directory Filters</h3>
+      <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
+    </div>
+    
+    <div class="filters-grid">
+      <!-- Keyword search -->
+      <div class="form-group">
+        <label class="form-label">Search Patient</label>
+        <input class="form-control" type="text" [(ngModel)]="searchQuery" placeholder="e.g. Name, Phone number...">
+      </div>
+
+      <!-- Gender filter -->
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <select class="form-control" [(ngModel)]="genderFilter">
+          <option value="">All Genders</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Blood group filter -->
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <select class="form-control" [(ngModel)]="bloodGroupFilter">
+          <option value="">All Blood Groups</option>
+          <option value="APositive">A+</option>
+          <option value="ANegative">A-</option>
+          <option value="BPos">B+</option>
+          <option value="BPos">B-</option>
+          <option value="ABPositive">AB+</option>
+          <option value="ABNegative">AB-</option>
+          <option value="OPositive">O+</option>
+          <option value="ONegative">O-</option>
+        </select>
+      </div>
+
+      <!-- Age group filter -->
+      <div class="form-group">
+        <label class="form-label">Age Group</label>
+        <select class="form-control" [(ngModel)]="ageGroupFilter">
+          <option value="">All Ages</option>
+          <option value="under18">Under 18</option>
+          <option value="18to35">18 - 35</option>
+          <option value="36to60">36 - 60</option>
+          <option value="over60">60+</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading & Errors -->
+  <div class="error-banner" *ngIf="errorMessage">
+    <span>⚠️</span> {{ errorMessage }}
+  </div>
+  
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Retrieving directory database...</p>
+  </div>
+
+  <!-- Patients List Table -->
+  <div class="glass-card table-card" *ngIf="!isLoading">
+    <div class="table-header">
+      <h3>Patient Records ({{ getFilteredPatients().length }})</h3>
+    </div>
+
+    <div class="table-responsive" *ngIf="getFilteredPatients().length > 0; else emptyState">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Patient Name</th>
+            <th>Age</th>
+            <th>Gender</th>
+            <th>Blood Group</th>
+            <th>Phone</th>
+            <th>Emergency Contact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let patient of getFilteredPatients()">
+            <td class="bold">{{ patient.firstName }} {{ patient.lastName }}</td>
+            <td>{{ getAge(patient.dob) }} years</td>
+            <td>
+              <span class="badge badge-gender">{{ patient.gender }}</span>
+            </td>
+            <td>
+              <span class="badge badge-blood">{{ patient.bloodGroup }}</span>
+            </td>
+            <td>{{ patient.mobileNo }}</td>
+            <td>
+              <div class="emergency-info" *ngIf="patient.emergencyContactName; else none">
+                <span class="name">{{ patient.emergencyContactName }}</span>
+                <span class="phone">📞 {{ patient.emergencyContactNumber }}</span>
+              </div>
+              <ng-template #none><span class="text-muted">None</span></ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="empty-icon">👥</span>
+        <h4>No Patients Found</h4>
+        <p>No records match your selected keyword search or filter criteria.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

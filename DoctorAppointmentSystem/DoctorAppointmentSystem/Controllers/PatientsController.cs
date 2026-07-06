@@ -15,6 +15,19 @@ namespace DoctorAppointmentSystem.Controllers
 			_patientService = patientService;
 		}
 
+		[HttpGet("doctors")]
+		public async Task<IActionResult> GetDoctors(
+			[FromQuery] string? search,
+			[FromQuery] Guid? specializationId,
+			[FromQuery] string? state,
+			[FromQuery] string? city,
+			[FromQuery] int page = 1,
+			[FromQuery] int size = 10)
+		{
+			var result = await _patientService.GetDoctorsForPatientAsync(search, specializationId, state, city, page, size);
+			return Ok(result);
+		}
+
 		[HttpGet("{id:guid}")]
 		public async Task<IActionResult> GetProfile([FromHeader(Name = "X-User-Id")] Guid userId, Guid id)
 		{

@@ -22,7 +22,15 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public bool IsActive { get; set; } = true;
 
 		[Required]
+		public bool IsEmailVerified { get; set; } = false;
+
+		public string? EmailVerificationOtp { get; set; }
+
+		public DateTime? EmailVerificationOtpExpiry { get; set; }
+
+		[Required]
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
 
 		public DateTime LastLoginDate { get; set; }
 	}

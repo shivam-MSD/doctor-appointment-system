@@ -20,6 +20,9 @@ namespace DoctorAppointmentSystem.Persistent.Context
 		public DbSet<DoctorSchedule> DoctorSchedules { get; set; }
 		public DbSet<DoctorDocument> DoctorDocuments { get; set; }
 		public DbSet<UserPatient> UserPatients { get; set; }
+		public DbSet<Clinic> Clinics { get; set; }
+		public DbSet<Admin> Admins { get; set; }
+		public DbSet<Notification> Notifications { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -80,10 +83,10 @@ namespace DoctorAppointmentSystem.Persistent.Context
 				entity.Property(p => p.FirstName).IsRequired().HasMaxLength(100);
 				entity.Property(p => p.LastName).IsRequired().HasMaxLength(100);
 				entity.Property(p => p.MobileNo).IsRequired().HasMaxLength(20);
-				entity.Property(p => p.Gender).IsRequired().HasMaxLength(10);
+				entity.Property(p => p.Gender).HasConversion<string>().IsRequired();
 				entity.Property(p => p.BloodGroup).HasConversion<string>().HasMaxLength(20);
-				entity.Property(p => p.EmergencyConactName).IsRequired().HasMaxLength(100);
-				entity.Property(p => p.EmergencyConactNumber).IsRequired().HasMaxLength(20);
+				entity.Property(p => p.EmergencyConactName).HasMaxLength(100).IsRequired(false);
+				entity.Property(p => p.EmergencyConactNumber).HasMaxLength(20).IsRequired(false);
 			});
 
 			// 5. Specialization Entity Configuration
@@ -102,7 +105,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 				entity.Property(d => d.FirstName).IsRequired().HasMaxLength(100);
 				entity.Property(d => d.LastName).IsRequired().HasMaxLength(100);
 				entity.Property(d => d.MobileNo).IsRequired().HasMaxLength(20);
-				entity.Property(d => d.Gender).IsRequired().HasMaxLength(10);
+				entity.Property(d => d.Gender).HasConversion<string>().IsRequired();
 				entity.Property(d => d.Qualification).IsRequired().HasMaxLength(150);
 				entity.Property(d => d.LicenceNumber).IsRequired().HasMaxLength(50);
 				entity.Property(d => d.HospitalName).IsRequired().HasMaxLength(150);
@@ -170,6 +173,12 @@ namespace DoctorAppointmentSystem.Persistent.Context
 					.WithMany()
 					.HasForeignKey("DoctorId") // Shadow property FK
 					.OnDelete(DeleteBehavior.Restrict);
+
+				// Appointment to Clinic (Many to 1)
+				entity.HasOne(app => app.Clinic)
+					.WithMany()
+					.HasForeignKey("ClinicId") // Shadow property FK
+					.OnDelete(DeleteBehavior.SetNull);
 			});
 
 			// 10. UserPatient (Join Table) Configuration
@@ -192,6 +201,54 @@ namespace DoctorAppointmentSystem.Persistent.Context
 					.WithMany()
 					.HasForeignKey(up => up.PatientId)
 					.OnDelete(DeleteBehavior.Cascade);
+			});
+
+			// 11. Clinic Entity Configuration
+			modelBuilder.Entity<Clinic>(entity =>
+			{
+				entity.ToTable("Clinics");
+				entity.HasKey(c => c.ClinicId);
+				entity.Property(c => c.ClinicName).IsRequired().HasMaxLength(150);
+				entity.Property(c => c.ClinicType).IsRequired().HasMaxLength(50);
+				entity.Property(c => c.VerificationStatus)
+					.HasConversion<string>()
+					.HasDefaultValue(EVerificationStatus.Pending);
+				entity.Property(c => c.RejectionReason).HasMaxLength(500);
+
+				// Doctor to Clinic (1 to Many)
+				entity.HasOne(c => c.Doctor)
+					.WithMany()
+					.HasForeignKey("DoctorId")
+					.OnDelete(DeleteBehavior.Restrict);
+
+				// Address to Clinic (1 to 1)
+				entity.HasOne(c => c.Address)
+					.WithMany()
+					.HasForeignKey("AddressId")
+					.OnDelete(DeleteBehavior.Cascade);
+			});
+
+			// 12. Admin Entity Configuration
+			modelBuilder.Entity<Admin>(entity =>
+			{
+				entity.ToTable("Admins");
+				entity.HasKey(a => a.AdminId);
+				entity.Property(a => a.FirstName).IsRequired().HasMaxLength(100);
+				entity.Property(a => a.LastName).IsRequired().HasMaxLength(100);
+				entity.Property(a => a.MobileNo).IsRequired().HasMaxLength(20);
+				entity.Property(a => a.IsVerified).HasDefaultValue(false);
+
+				// User to Admin (1 to 1)
+				entity.HasOne(a => a.User)
+					.WithOne()
+					.HasForeignKey<Admin>("UserId")
+					.OnDelete(DeleteBehavior.Cascade);
+
+				// Clinic to Admin (Many to 1)
+				entity.HasOne(a => a.Clinic)
+					.WithMany()
+					.HasForeignKey("ClinicId")
+					.OnDelete(DeleteBehavior.Restrict);
 			});
 		}
 	}

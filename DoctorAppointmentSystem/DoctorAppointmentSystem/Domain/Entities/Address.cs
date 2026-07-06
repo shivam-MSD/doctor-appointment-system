@@ -29,6 +29,10 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public string Area { get; set; }	
 
 		[Required]
+		[MaxLength(20)]
+		public string Pincode { get; set; } = string.Empty;
+
+		[Required]
 		[MaxLength(250)]
 		public string Addressline1 { get; set; }
 

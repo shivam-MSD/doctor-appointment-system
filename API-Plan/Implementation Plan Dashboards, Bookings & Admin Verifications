@@ -1,0 +1,74 @@
+# Implementation Plan: Dashboards, Bookings & Admin Verifications
+
+We will implement the complete workflow for super admin registrations, doctor verification, paginated/filtered dashboards, and double-booking prevention. Clinical records (prescriptions/reports) have been omitted per your instructions.
+
+---
+
+## Logic Critique & Corrections
+
+### 1. Delete vs. Cancel Appointments
+* **Adjustment:** Instead of a hard database delete which breaks historical logs, the `Delete Appointment` request will set the appointment's `EAppointmentStatus` to `Cancelled`.
+
+### 2. Double-Booking Overlap Validation
+When booking an appointment at a specific time:
+* The system checks that the **Doctor** has no other appointment at the same date and time interval.
+* The system checks that the **Patient** has no other appointment at the same date and time interval.
+
+---
+
+## Proposed Changes
+
+### 1. Application Layer (DTOs & Pagination)
+
+#### [NEW] [PagedResult.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/PagedResult.cs)
+A reusable wrapper for paginated endpoints:
+- `Items` (Collection of DTOs)
+- `TotalCount`, `PageNumber`, `PageSize`, `TotalPages`
+
+#### [NEW] [AppointmentDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/AppointmentDTOs.cs)
+- `CreateAppointmentDto`: Maps input for bookings (`DoctorId`, `PatientId`, `AppointmentDate`, `StartTime`, `EndTime`, `EConsultationType`, `Reason`).
+- `ConsultedDoctorDto`: Doctor details where a patient has previously had appointments.
+
+---
+
+### 2. Application Layer (Services)
+
+#### [NEW] [IAdminService.cs & AdminService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AdminService.cs)
+Provides:
+- `Task VerifyDoctorAsync(Guid doctorId, string status);` (updates `VerificationStatus` to `Verified` or `Pending`).
+
+#### [NEW] [IAppointmentService.cs & AppointmentService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AppointmentService.cs)
+Provides:
+- `Task<AppointmentDto> BookAppointmentAsync(Guid userId, CreateAppointmentDto dto);` (validates that both the patient and doctor are free during the time interval, then inserts booking)
+- `Task CancelAppointmentAsync(Guid userId, Guid appointmentId);` (marks appointment status as `Cancelled`)
+- `Task<PagedResult<AppointmentDto>> GetAdminDoctorDashboardAppointmentsAsync(Guid userId, string? status, DateTime? startDate, DateTime? endDate, string? search, int page, int size);` (paginated list of appointments for admins/doctors)
+- `Task<PagedResult<PatientDto>> GetDashboardPatientsAsync(string? search, int page, int size);` (paginated list of patients)
+- `Task<PagedResult<AppointmentDto>> GetPatientDashboardAppointmentsAsync(Guid userId, string? status, int page, int size);` (paginated list of appointments from latest to oldest)
+- `Task<IEnumerable<ConsultedDoctorDto>> GetConsultedDoctorsAsync(Guid userId);` (returns list of doctors whom the patient has consulted, with nested appointments)
+
+---
+
+### 3. API Layer (Controllers)
+
+#### [NEW] [AdminController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AdminController.cs)
+Exposes:
+- `POST /api/admin/verify-doctor/{doctorId}` (SuperAdmin privilege)
+
+#### [NEW] [AppointmentsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AppointmentsController.cs)
+Exposes:
+- `POST /api/appointments/book` (verifies double-booking rules)
+- `POST /api/appointments/cancel/{id}` (sets status to Cancelled)
+- `GET /api/appointments/admin-doctor-dashboard` (with filters & pagination)
+- `GET /api/appointments/patient-dashboard` (latest to old, with pagination)
+- `GET /api/appointments/consulted-doctors` (returns consulted doctor sections)
+- `GET /api/appointments/patients-list` (paginated patient list for admin/doctor)
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+- Register `IAdminService` and `IAppointmentService` with scoped lifetimes.
+
+---
+
+## Verification Plan
+We will verify that:
+1. The project compiles successfully.
+2. All endpoints are mapped correctly in Swagger.

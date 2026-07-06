@@ -38,5 +38,53 @@ namespace DoctorAppointmentSystem.Controllers
 			await _userService.ChangePasswordAsync(userId, dto);
 			return Ok(new { Message = "Password changed successfully." });
 		}
+
+		[HttpGet("doctor-profile")]
+		public async Task<IActionResult> GetDoctorProfile([FromHeader(Name = "X-User-Id")] Guid userId)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			var result = await _userService.GetDoctorProfileAsync(userId);
+			return Ok(result);
+		}
+
+		[HttpPut("doctor-profile")]
+		public async Task<IActionResult> UpdateDoctorProfile([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] DoctorProfileDto dto)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			var result = await _userService.UpdateDoctorProfileAsync(userId, dto);
+			return Ok(result);
+		}
+
+		[HttpGet("admin-profile")]
+		public async Task<IActionResult> GetAdminProfile([FromHeader(Name = "X-User-Id")] Guid userId)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			var result = await _userService.GetAdminProfileAsync(userId);
+			return Ok(result);
+		}
+
+		[HttpPut("admin-profile")]
+		public async Task<IActionResult> UpdateAdminProfile([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] AdminProfileDto dto)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			var result = await _userService.UpdateAdminProfileAsync(userId, dto);
+			return Ok(result);
+		}
 	}
 }

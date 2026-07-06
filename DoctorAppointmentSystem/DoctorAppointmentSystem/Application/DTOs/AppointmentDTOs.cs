@@ -9,6 +9,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string PatientName { get; set; }
 		public Guid DoctorId { get; set; }
 		public string DoctorName { get; set; }
+		public Guid? ClinicId { get; set; }
+		public string? ClinicName { get; set; }
 		public DateTime AppointmentDate { get; set; }
 		public DateTime StartTime { get; set; }
 		public DateTime EndTime { get; set; }
@@ -25,6 +27,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 
 		[Required]
 		public Guid DoctorId { get; set; }
+
+		public Guid? ClinicId { get; set; }
 
 		[Required]
 		public DateTime AppointmentDate { get; set; }
@@ -47,5 +51,13 @@ namespace DoctorAppointmentSystem.Application.DTOs
 	{
 		[Required]
 		public string Status { get; set; } // e.g., "Confirmed", "Cancelled", "Completed"
+	}
+
+	public class ConsultedDoctorDto
+	{
+		public Guid DoctorId { get; set; }
+		public string DoctorName { get; set; }
+		public string Specialization { get; set; }
+		public IEnumerable<AppointmentDto> Appointments { get; set; } = Enumerable.Empty<AppointmentDto>();
 	}
 }

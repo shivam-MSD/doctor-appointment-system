@@ -1,0 +1,133 @@
+<aside class="sidebar">
+  <ul class="nav-list">
+    <!-- Patient-Specific Links -->
+    <ng-container *ngIf="authService.getRole() === 'Patient'">
+      <li>
+        <a class="nav-link" routerLink="/patient/dashboard" routerLinkActive="active">
+          <span class="icon">📊</span>
+          <span class="label">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/patient/book-appointment" routerLinkActive="active">
+          <span class="icon">📅</span>
+          <span class="label">Book Appointment</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/patient/profile" routerLinkActive="active">
+          <span class="icon">👤</span>
+          <span class="label">My Profile</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/patient/doctors" routerLinkActive="active">
+          <span class="icon">🩺</span>
+          <span class="label">Search Doctors</span>
+        </a>
+      </li>
+    </ng-container>
+
+    <!-- Doctor-Specific Links -->
+    <ng-container *ngIf="authService.getRole() === 'Doctor'">
+      <li>
+        <a class="nav-link" routerLink="/doctor/dashboard" routerLinkActive="active">
+          <span class="icon">📊</span>
+          <span class="label">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/doctor/patients" routerLinkActive="active">
+          <span class="icon">👤</span>
+          <span class="label">My Patients</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/doctor/clinics" routerLinkActive="active">
+          <span class="icon">🏢</span>
+          <span class="label">My Clinics</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/doctor/admins" routerLinkActive="active">
+          <span class="icon">👥</span>
+          <span class="label">Clinic Admins</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/doctor/profile" routerLinkActive="active">
+          <span class="icon">👤</span>
+          <span class="label">My Profile</span>
+        </a>
+      </li>
+    </ng-container>
+
+    <!-- Clinic Admin Links -->
+    <ng-container *ngIf="authService.getRole() === 'Admin'">
+      <li>
+        <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active">
+          <span class="icon">📊</span>
+          <span class="label">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/admin/profile" routerLinkActive="active">
+          <span class="icon">👤</span>
+          <span class="label">My Profile</span>
+        </a>
+      </li>
+    </ng-container>
+
+    <!-- Super Admin Links -->
+    <ng-container *ngIf="authService.getRole() === 'SuperAdmin'">
+      <li>
+        <a class="nav-link" routerLink="/superadmin/dashboard" routerLinkActive="active">
+          <span class="icon">📊</span>
+          <span class="label">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/superadmin/doctors" routerLinkActive="active">
+          <span class="icon">🩺</span>
+          <span class="label">Doctors</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/superadmin/clinics" routerLinkActive="active">
+          <span class="icon">🏢</span>
+          <span class="label">Clinics</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/superadmin/admins" routerLinkActive="active">
+          <span class="icon">🛡️</span>
+          <span class="label">Admins</span>
+        </a>
+      </li>
+    </ng-container>
+  </ul>
+
+  <!-- Sidebar Profile Completion Card -->
+  <div class="sidebar-completion-card" *ngIf="isProfileIncomplete()">
+    <div class="sidebar-circle-wrapper">
+      <svg viewBox="0 0 36 36" class="sidebar-circular-chart">
+        <path class="circle-bg"
+          d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+        <path class="circle"
+          [attr.stroke-dasharray]="getCompletionPercentage() + ', 100'"
+          d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+      </svg>
+      <span class="sidebar-circle-pct">{{ getCompletionPercentage() }}%</span>
+    </div>
+    <div class="sidebar-circle-text">
+      <span>Profile Setup</span>
+      <a routerLink="/profile" class="complete-link">Complete Now →</a>
+    </div>
+  </div>
+</aside>

@@ -9,8 +9,9 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<DoctorAppointmentSystem.Persistent.Context.ApplicationDbContext>(options =>
-	options.UseInMemoryDatabase("DoctorAppointmentDb"));
+	options.UseSqlServer(connectionString));
 
 builder.Services.AddExceptionHandler<DoctorAppointmentSystem.Middleware.GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -19,6 +20,11 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAuthSer
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IFamilyService, DoctorAppointmentSystem.Application.Services.FamilyService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IUserService, DoctorAppointmentSystem.Application.Services.UserService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IPatientService, DoctorAppointmentSystem.Application.Services.PatientService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAdminService, DoctorAppointmentSystem.Application.Services.AdminService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAppointmentService, DoctorAppointmentSystem.Application.Services.AppointmentService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IClinicService, DoctorAppointmentSystem.Application.Services.ClinicService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IEmailService, DoctorAppointmentSystem.Application.Services.EmailService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
 builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
@@ -41,5 +47,13 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Automatically apply pending database migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+	var db = scope.ServiceProvider.GetRequiredService<DoctorAppointmentSystem.Persistent.Context.ApplicationDbContext>();
+	db.Database.Migrate();
+	await DoctorAppointmentSystem.Persistent.DbInitializer.SeedAsync(db);
+}
 
 app.Run();

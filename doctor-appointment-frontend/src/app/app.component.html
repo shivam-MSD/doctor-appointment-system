@@ -1,0 +1,15 @@
+<router-outlet></router-outlet>
+
+<!-- Global Floating Top-Right Toast Notifications Overlay -->
+<div class="toast-container">
+  <div class="toast-card" 
+       *ngFor="let toast of toasts$ | async" 
+       [ngClass]="toast.type === 'error' ? 'toast-error' : 'toast-success'">
+    <span class="toast-icon">{{ toast.type === 'error' ? '⚠️' : '✓' }}</span>
+    <div class="toast-content">
+      <span class="toast-title">{{ toast.title }}</span>
+      <span class="toast-msg">{{ toast.message }}</span>
+    </div>
+    <button type="button" class="toast-close" (click)="removeToast(toast.id)">&times;</button>
+  </div>
+</div>

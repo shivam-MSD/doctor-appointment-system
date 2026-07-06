@@ -1,0 +1,279 @@
+<div class="dashboard-wrapper">
+  <!-- Greeting Banner -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>🏢 My Clinic Locations</h2>
+      <p>Register and manage your clinic or hospital branches.</p>
+    </div>
+    <button class="btn btn-primary" (click)="openClinicModal()">+ Register Clinic Branch</button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-banner">
+    <span>✓</span> {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="error-banner">
+    <span>⚠️</span> {{ errorMessage }}
+  </div>
+
+  <!-- Clinics Directory Table Card -->
+  <div class="glass-card table-card">
+    <div class="table-header">
+      <h3>Clinical Locations Registry</h3>
+    </div>
+    
+    <div class="table-responsive" *ngIf="doctorClinics.length > 0; else noClinics">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Clinic Name</th>
+            <th>Type</th>
+            <th>City & State</th>
+            <th>Pincode</th>
+            <th>Status</th>
+            <th>Admin Assignment</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let clinic of doctorClinics">
+            <td class="bold">{{ clinic.clinicName }}</td>
+            <td>
+              <span class="type-indicator text-uppercase">{{ clinic.clinicType }}</span>
+            </td>
+            <td>{{ clinic.city }}, {{ clinic.state }}</td>
+            <td><code>{{ clinic.pincode || 'N/A' }}</code></td>
+            <td>
+              <span *ngIf="clinic.verificationStatus === 'Verified'" class="badge badge-confirmed">Verified</span>
+              <span *ngIf="clinic.verificationStatus === 'Pending'" class="badge badge-pending">Pending Verification</span>
+              <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 4px 8px; border-radius: 6px; font-weight: 500;" [title]="'Reason: ' + clinic.rejectionReason">
+                Rejected ⚠️
+              </span>
+              <div *ngIf="clinic.verificationStatus === 'Rejected' && clinic.rejectionReason" style="font-size: 0.75rem; color: #ef4444; margin-top: 4px; font-style: italic;">
+                Reason: {{ clinic.rejectionReason }}
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-completed" *ngIf="clinic.hasAdmin">Admin Active</span>
+              <span class="badge badge-cancelled" *ngIf="!clinic.hasAdmin">No Admin Assigned</span>
+            </td>
+            <td class="text-end">
+              <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                <button
+                  *ngIf="clinic.verificationStatus === 'Verified' && !clinic.hasAdmin"
+                  class="btn btn-confirm"
+                  (click)="openAdminModal(clinic.clinicId, clinic.clinicName)"
+                >
+                  + Add Admin
+                </button>
+                <button class="btn btn-confirm" style="background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.2); color: var(--accent-cyan);" (click)="openEditClinicModal(clinic)">
+                  ✏️ Edit
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noClinics>
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <h4>No Clinic Branches Registered</h4>
+        <p>Click "+ Register Clinic Branch" to add your practice locations.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- REGISTER CLINIC MODAL -->
+<div class="modal-backdrop" *ngIf="showClinicModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>🏢 Register Clinic Location</h3>
+      <button class="close-modal" (click)="closeClinicModal()"></button>
+    </div>
+
+    <form (submit)="submitClinicOnly(); $event.preventDefault()">
+      <div class="scrollable-body">
+        <div class="form-group">
+          <label class="form-label">Clinic / Hospital Name *</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.clinicName" name="clinicName" required placeholder="e.g. City Dental Care">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">Clinic Type *</label>
+            <select class="form-control" [(ngModel)]="clinicOnlyForm.clinicType" name="clinicType" required>
+              <option value="Clinic">Clinic</option>
+              <option value="Center">Medical Center</option>
+              <option value="Hospital">Hospital</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Country *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.country" name="country" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-4">
+            <label class="form-label">State *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.state" name="state" required placeholder="e.g. Maharashtra">
+          </div>
+          <div class="form-group col-4">
+            <label class="form-label">City *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.city" name="city" required placeholder="e.g. Mumbai">
+          </div>
+          <div class="form-group col-4">
+            <label class="form-label">Pincode *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.pincode" name="pincode" required placeholder="e.g. 400050">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Area *</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.area" name="area" required placeholder="e.g. Bandra West">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address Line 1 *</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.addressline1" name="addressline1" required placeholder="e.g. Shop 4, Hill Road">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address Line 2 (Optional)</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.addressline2" name="addressline2" placeholder="e.g. Opposite National Bank">
+        </div>
+
+        <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+        <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeClinicModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Register Branch</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- REGISTER CLINIC ADMIN MODAL -->
+<div class="modal-backdrop" *ngIf="showAdminModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>👥 Add Clinic Admin</h3>
+      <button class="close-modal" (click)="closeAdminModal()"></button>
+    </div>
+
+    <form (submit)="submitAdmin(); $event.preventDefault()">
+      <div class="scrollable-body">
+        <div class="form-group">
+          <label class="form-label">Selected Clinic Location</label>
+          <input type="text" class="form-control text-muted bg-light" [value]="selectedClinicNameForAdmin" disabled style="opacity: 0.7;">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">Admin First Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="adminForm.adminFirstName" name="adminFirstName" required placeholder="e.g. John">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Admin Last Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="adminForm.adminLastName" name="adminLastName" required placeholder="e.g. Doe">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Admin Contact Mobile *</label>
+          <input type="tel" class="form-control" [(ngModel)]="adminForm.adminMobileNo" name="adminMobileNo" required placeholder="e.g. 9876543210">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Admin Email (Username for Login) *</label>
+          <input type="email" class="form-control" [(ngModel)]="adminForm.adminEmail" name="adminEmail" required placeholder="e.g. admin@clinic.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Admin Password *</label>
+          <input type="password" class="form-control" [(ngModel)]="adminForm.adminPassword" name="adminPassword" required placeholder="Min 6 characters">
+        </div>
+
+        <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
+        <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAdminModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Register Admin</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CLINIC EDIT MODAL -->
+<div class="modal-backdrop" *ngIf="showEditClinicModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>🏢 Edit Clinic Location Details</h3>
+      <button class="close-modal" (click)="closeEditClinicModal()"></button>
+    </div>
+
+    <form (submit)="submitClinicEdit(); $event.preventDefault()">
+      <div class="scrollable-body">
+        <div class="form-group">
+          <label class="form-label">Clinic / Hospital Name *</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.clinicName" name="clinicName" required placeholder="e.g. City Dental Care">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">Clinic Type *</label>
+            <select class="form-control" [(ngModel)]="clinicEditForm.clinicType" name="clinicType" required>
+              <option value="Clinic">Clinic</option>
+              <option value="Center">Medical Center</option>
+              <option value="Hospital">Hospital</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Country *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.country" name="country" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-4">
+            <label class="form-label">State *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.state" name="state" required placeholder="e.g. Maharashtra">
+          </div>
+          <div class="form-group col-4">
+            <label class="form-label">City *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.city" name="city" required placeholder="e.g. Mumbai">
+          </div>
+          <div class="form-group col-4">
+            <label class="form-label">Pincode *</label>
+            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.pincode" name="pincode" required placeholder="e.g. 400050">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Area *</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.area" name="area" required placeholder="e.g. Bandra West">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address Line 1 *</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.addressline1" name="addressline1" required placeholder="e.g. Shop 4, Hill Road">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address Line 2 (Optional)</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.addressline2" name="addressline2" placeholder="e.g. Opposite National Bank">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeEditClinicModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>

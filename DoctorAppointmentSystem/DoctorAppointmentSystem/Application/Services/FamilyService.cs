@@ -127,10 +127,10 @@ namespace DoctorAppointmentSystem.Application.Services
 					FirstName = pendingData.FirstName,
 					LastName = pendingData.LastName,
 					MobileNo = pendingData.MobileNo,
-					Gender = pendingData.Gender,
+					Gender = Enum.TryParse<EGender>(pendingData.Gender, true, out var genderEnum) ? genderEnum : EGender.Male,
 					DOB = pendingData.DOB,
-					EmergencyConactName = "Not Set",
-					EmergencyConactNumber = "Not Set",
+					EmergencyConactName = null,
+					EmergencyConactNumber = null,
 					CreatedDate = DateTime.UtcNow
 				};
 				_dbContext.Patients.Add(patient);
@@ -175,6 +175,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				PatientId = up.Patient.PatientId,
 				UserId = up.UserId,
 				Email = string.Empty,
+				FirstName = up.Patient.FirstName,
+				LastName = up.Patient.LastName,
+				MobileNo = up.Patient.MobileNo,
+				Gender = up.Patient.Gender.ToString(),
+				DOB = up.Patient.DOB,
 				BloodGroup = up.Patient.BloodGroup.ToString(),
 				EmergencyContactName = up.Patient.EmergencyConactName,
 				EmergencyContactNumber = up.Patient.EmergencyConactNumber

@@ -1,0 +1,178 @@
+<div class="booking-container">
+  <div class="glass-card booking-card">
+    <a routerLink="/dashboard" class="close-btn" title="Back to Dashboard">&times;</a>
+    
+    <div class="booking-header">
+      <span class="header-icon">📅</span>
+      <h2>Book Medical Appointment</h2>
+      <p>Filter by location and specialty to find and book your doctor.</p>
+    </div>
+
+    <form (submit)="onSubmit(); $event.preventDefault()">
+      <!-- Messages -->
+      <div class="error-banner" *ngIf="errorMessage">
+        <span>⚠️</span> {{ errorMessage }}
+      </div>
+
+      <div class="success-banner" *ngIf="successMessage">
+        <span>✓</span> {{ successMessage }}
+      </div>
+
+      <!-- Patient Select -->
+      <div class="form-group">
+        <label class="form-label" for="patient">Select Patient *</label>
+        <select class="form-control" id="patient" name="patientId" [(ngModel)]="patientId" required>
+          <option value="" disabled selected>-- Choose Patient Profile --</option>
+          <option *ngFor="let p of patients" [value]="p.patientId">
+            {{ p.firstName }} {{ p.lastName }} (Self)
+          </option>
+        </select>
+      </div>
+
+      <!-- Filters Section Title -->
+      <h3 class="section-title">Doctor Search Filters</h3>
+      
+      <!-- State & City Filters -->
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="state">State (Optional)</label>
+          <input 
+            class="form-control" 
+            type="text" 
+            id="state" 
+            name="state" 
+            [(ngModel)]="state" 
+            (ngModelChange)="onFilterChange()" 
+            placeholder="e.g. California">
+        </div>
+
+        <div class="form-group flex-1">
+          <label class="form-label" for="city">City (Optional)</label>
+          <input 
+            class="form-control" 
+            type="text" 
+            id="city" 
+            name="city" 
+            [(ngModel)]="city" 
+            (ngModelChange)="onFilterChange()" 
+            placeholder="e.g. San Francisco">
+        </div>
+      </div>
+
+      <!-- Specialization Filter -->
+      <div class="form-group">
+        <label class="form-label" for="specialization">Specialization (Optional)</label>
+        <select 
+          class="form-control" 
+          id="specialization" 
+          name="specializationId" 
+          [(ngModel)]="specializationId" 
+          (ngModelChange)="onFilterChange()">
+          <option value="" selected>-- All Specializations --</option>
+          <option *ngFor="let s of specializations" [value]="s.specializationId">
+            {{ s.specializationName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Custom Doctor Name Filter -->
+      <div class="form-group">
+        <label class="form-label" for="nameSearch">Doctor Name (Optional Custom Filter)</label>
+        <input 
+          class="form-control" 
+          type="text" 
+          id="nameSearch" 
+          name="nameSearch" 
+          [(ngModel)]="nameSearch" 
+          (ngModelChange)="onFilterChange()" 
+          placeholder="Type doctor's name...">
+      </div>
+
+      <!-- Filtered Doctor Select -->
+      <div class="form-group">
+        <label class="form-label" for="doctor">Select Practitioner *</label>
+        <select class="form-control" id="doctor" name="doctorId" [(ngModel)]="doctorId" (change)="onDoctorChange()" [disabled]="doctors.length === 0" required>
+          <option value="" disabled selected>
+            {{ doctors.length === 0 ? '-- No doctors found matching filters --' : '-- Choose Doctor --' }}
+          </option>
+          <option *ngFor="let d of doctors" [value]="d.doctorId">
+            Dr. {{ d.firstName }} {{ d.lastName }} (Fee: Rs. {{ d.consultationFee }} | Experience: {{ d.yearsOfExperience }} yrs)
+          </option>
+        </select>
+        <small class="form-text text-muted" *ngIf="doctors.length > 0">
+          Found {{ doctors.length }} doctors matching your filters.
+        </small>
+      </div>
+
+      <!-- Clinic Selection Dropdown -->
+      <div class="form-group animate-slide-down" *ngIf="clinics.length > 0">
+        <label class="form-label" for="clinic">Select Clinic / Visit Location *</label>
+        <select class="form-control" id="clinic" name="clinicId" [(ngModel)]="clinicId" required>
+          <option value="" disabled selected>-- Choose Clinic/Hospital --</option>
+          <option *ngFor="let c of clinics" [value]="c.clinicId">
+            {{ c.clinicName }} ({{ c.clinicType }}) - {{ c.addressline1 }} {{ c.addressline2 ? c.addressline2 + ', ' : '' }}{{ c.area ? c.area + ', ' : '' }}{{ c.city }}, {{ c.state }}
+          </option>
+        </select>
+        <small class="form-text text-muted">
+          Choose from the verified practice clinics/locations of this doctor.
+        </small>
+      </div>
+
+      <!-- Details Section -->
+      <h3 class="section-title">Appointment Timing & Details</h3>
+
+      <!-- Date Selection -->
+      <div class="form-group">
+        <label class="form-label" for="date">Appointment Date *</label>
+        <input class="form-control" type="date" id="date" name="appointmentDate" [(ngModel)]="appointmentDate" required>
+      </div>
+
+      <!-- Time Interval Selection -->
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="startTime">Start Time *</label>
+          <input class="form-control" type="time" id="startTime" name="startTime" [(ngModel)]="startTime" required>
+        </div>
+
+        <div class="form-group flex-1">
+          <label class="form-label" for="endTime">End Time *</label>
+          <input class="form-control" type="time" id="endTime" name="endTime" [(ngModel)]="endTime" required>
+        </div>
+      </div>
+
+      <!-- Consultation Mode -->
+      <div class="form-group">
+        <label class="form-label">Consultation Mode *</label>
+        <div class="type-selector">
+          <label class="type-option">
+            <input type="radio" name="consultationType" [(ngModel)]="consultationType" value="InPerson">
+            <span class="type-card">✙ In Person</span>
+          </label>
+          <label class="type-option">
+            <input type="radio" name="consultationType" [(ngModel)]="consultationType" value="VideoConsultation">
+            <span class="type-card">🎥 Video Consult</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Consultation Reason -->
+      <div class="form-group">
+        <label class="form-label" for="reason">Reason for Appointment *</label>
+        <textarea 
+          class="form-control text-area" 
+          id="reason" 
+          name="reason" 
+          [(ngModel)]="reason" 
+          placeholder="Briefly describe your symptoms or medical concern..." 
+          rows="3" 
+          required></textarea>
+      </div>
+
+      <!-- Submit & Navigation buttons -->
+      <div class="actions">
+        <button class="btn btn-primary w-100" type="submit">Confirm Reservation</button>
+        <a routerLink="/dashboard" class="btn btn-secondary w-100 cancel-link">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,167 @@
+<div class="dashboard-wrapper">
+  <!-- Greeting Banner -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>🏢 Manage Clinic Locations</h2>
+      <p>Review, filter, and verify clinics, centers, or hospital branches added by registered doctors.</p>
+    </div>
+    <div class="role-badge">SuperAdmin Portal</div>
+  </div>
+
+  <div *ngIf="successMessage" class="success-banner">
+    <span>✓</span> {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="error-banner">
+    <span>⚠️</span> {{ errorMessage }}
+  </div>
+
+  <!-- Filters Row -->
+  <div class="glass-card">
+    <h3 class="section-title">🔍 Search & Filter Registry</h3>
+    <form (submit)="loadClinics(); $event.preventDefault()" class="filter-form">
+      <div class="filter-col flex-2">
+        <label class="form-label">Search Clinic Name / Doctor</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search clinics..."
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+          (ngModelChange)="loadClinics()"
+        >
+      </div>
+      <div class="filter-col flex-1">
+        <label class="form-label">State</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Maharashtra"
+          [(ngModel)]="stateFilter"
+          name="stateFilter"
+          (ngModelChange)="loadClinics()"
+        >
+      </div>
+      <div class="filter-col flex-1">
+        <label class="form-label">City</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="e.g. Mumbai"
+          [(ngModel)]="cityFilter"
+          name="cityFilter"
+          (ngModelChange)="loadClinics()"
+        >
+      </div>
+      <div class="filter-col flex-1">
+        <label class="form-label">Status</label>
+        <select
+          class="form-control"
+          [(ngModel)]="verifiedFilter"
+          name="verifiedFilter"
+          (change)="loadClinics()"
+        >
+          <option [value]="undefined">All Statuses</option>
+          <option [value]="true">Verified</option>
+          <option [value]="false">Pending Verification</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary filter-btn">Search</button>
+    </form>
+  </div>
+
+  <!-- Clinics Directory Table Card -->
+  <div class="glass-card table-card">
+    <div class="table-header">
+      <h3>Clinics Roster</h3>
+    </div>
+    
+    <div class="table-responsive" *ngIf="clinics.length > 0; else noClinics">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Clinic Name</th>
+            <th>Clinic Type</th>
+            <th>Registered By</th>
+            <th>Location</th>
+            <th>Pincode</th>
+            <th>Admin Status</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let clinic of clinics">
+            <td class="bold">{{ clinic.clinicName }}</td>
+            <td>
+              <span class="type-indicator">{{ clinic.clinicType }}</span>
+            </td>
+            <td>{{ clinic.doctorName }}</td>
+            <td>{{ clinic.city }}, {{ clinic.state }}</td>
+            <td><code>{{ clinic.pincode || 'N/A' }}</code></td>
+            <td>
+              <span class="badge badge-completed" *ngIf="clinic.hasAdmin">Admin Active</span>
+              <span class="badge badge-cancelled" *ngIf="!clinic.hasAdmin">No Admin</span>
+            </td>
+            <td>
+              <span *ngIf="clinic.verificationStatus === 'Verified'" class="badge badge-confirmed">Verified</span>
+              <span *ngIf="clinic.verificationStatus === 'Pending'" class="badge badge-pending">Pending</span>
+              <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 4px 8px; border-radius: 6px; font-weight: 500;" [title]="'Reason: ' + clinic.rejectionReason">
+                Rejected ⚠️
+              </span>
+              <div *ngIf="clinic.verificationStatus === 'Rejected' && clinic.rejectionReason" style="font-size: 0.75rem; color: #ef4444; margin-top: 4px; font-style: italic;">
+                Reason: {{ clinic.rejectionReason }}
+              </div>
+            </td>
+            <td class="text-end">
+              <div *ngIf="clinic.verificationStatus === 'Pending'" class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn btn-confirm" (click)="verifyClinic(clinic.clinicId)">Approve</button>
+                <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" (click)="openRejectClinicModal(clinic.clinicId)">Reject</button>
+              </div>
+              <span class="badge badge-confirmed" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: var(--status-confirmed);" *ngIf="clinic.verificationStatus === 'Verified'">Approved</span>
+              <span class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" *ngIf="clinic.verificationStatus === 'Rejected'">Rejected</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noClinics>
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <h4>No Clinics Found</h4>
+        <p>No registered clinic locations matched your search filters.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- SUPER ADMIN REJECTION REASON MODAL -->
+  <div class="modal-backdrop" *ngIf="showRejectModal">
+    <div class="glass-card modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Reject Clinic Verification</h3>
+        <button class="close-modal" (click)="closeRejectModal()">&times;</button>
+      </div>
+      <form (submit)="submitClinicRejection(); $event.preventDefault()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="rejectionReason">Reason for Rejection *</label>
+            <textarea 
+              id="rejectionReason"
+              name="rejectionReason"
+              class="form-control" 
+              rows="4" 
+              [(ngModel)]="rejectionReason" 
+              required
+              placeholder="Provide specific feedback to the doctor so they can correct it (e.g. invalid license or incorrect address typo).">
+            </textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-cancel" (click)="closeRejectModal()">Cancel</button>
+          <button type="submit" class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white;">
+            Reject Clinic
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

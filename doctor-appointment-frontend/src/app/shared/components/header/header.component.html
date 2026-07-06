@@ -1,0 +1,54 @@
+<header class="navbar">
+  <div class="brand">
+    <div class="logo">✙</div>
+    <div class="title">HealSync</div>
+  </div>
+
+  <div class="actions">
+    <!-- Theme Toggle Switcher -->
+    <button class="icon-btn" (click)="toggleTheme()" title="Toggle Light/Dark Theme">
+      <span class="theme-icon">{{ themeService.getCurrentTheme() === 'dark' ? '☀️' : '🌙' }}</span>
+    </button>
+
+    <!-- User Information & Session Controls -->
+    <ng-container *ngIf="authService.currentUser$ | async as user; else authLinks">
+      <!-- Notification Bell -->
+      <div class="notification-container" style="position: relative; margin-right: 8px;">
+        <button class="icon-btn" (click)="toggleNotificationsPanel()" title="Notifications" style="position: relative;">
+          <span class="bell-icon">🔔</span>
+          <span class="badge" *ngIf="getUnreadCount() > 0" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; border: 1.5px solid var(--bg-card, #1e293b);">
+            {{ getUnreadCount() }}
+          </span>
+        </button>
+
+        <!-- Dropdown panel -->
+        <div class="notifications-panel glass-card" *ngIf="showNotificationsPanel" style="position: absolute; right: 0; top: 40px; width: 320px; max-height: 400px; overflow-y: auto; z-index: 1001; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1)); background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(16px); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+          <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1)); padding-bottom: 8px; margin-bottom: 8px;">
+            <h4 style="margin: 0; color: var(--text-primary);">Notifications</h4>
+            <button class="btn btn-link" *ngIf="getUnreadCount() > 0" (click)="markAllAsRead()" style="font-size: 0.8rem; background: none; border: none; color: var(--accent-cyan, #06b6d4); cursor: pointer; padding: 0;">Mark all read</button>
+          </div>
+          <div class="panel-body">
+            <div *ngIf="notifications.length === 0" class="text-muted text-center" style="font-size: 0.85rem; padding: 16px 0; text-align: center;">
+              No notifications yet.
+            </div>
+            <div *ngFor="let notification of notifications" class="notification-item" [style.opacity]="notification.isRead ? 0.6 : 1" style="padding: 8px; border-radius: 6px; margin-bottom: 6px; background: rgba(255,255,255,0.03); transition: all 0.2s ease;">
+              <p style="margin: 0; font-size: 0.85rem; color: var(--text-primary); text-align: left;">{{ notification.message }}</p>
+              <span class="text-muted" style="font-size: 0.72rem; display: block; text-align: left; margin-top: 4px;">{{ notification.createdDate | date:'short' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="user-info">
+        <span class="email">{{ user.firstName }} {{ user.lastName }}</span>
+        <span class="role-badge">{{ user.role }}</span>
+      </div>
+      <button class="btn btn-secondary logout-btn" (click)="logout()">Logout</button>
+    </ng-container>
+    
+    <ng-template #authLinks>
+      <a routerLink="/login" class="btn btn-secondary header-btn">Login</a>
+      <a routerLink="/register" class="btn btn-primary header-btn">Register</a>
+    </ng-template>
+  </div>
+</header>

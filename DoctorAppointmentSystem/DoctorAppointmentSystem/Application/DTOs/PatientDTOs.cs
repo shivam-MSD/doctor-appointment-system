@@ -7,9 +7,23 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public Guid PatientId { get; set; }
 		public Guid UserId { get; set; }
 		public string Email { get; set; }
+		public string FirstName { get; set; }
+		public string LastName { get; set; }
+		public string MobileNo { get; set; }
+		public string Gender { get; set; }
+		public DateTime DOB { get; set; }
 		public string BloodGroup { get; set; }
 		public string EmergencyContactName { get; set; }
 		public string EmergencyContactNumber { get; set; }
+
+		// Address fields
+		public string Country { get; set; } = string.Empty;
+		public string State { get; set; } = string.Empty;
+		public string City { get; set; } = string.Empty;
+		public string Area { get; set; } = string.Empty;
+		public string Pincode { get; set; } = string.Empty;
+		public string Addressline1 { get; set; } = string.Empty;
+		public string? Addressline2 { get; set; }
 	}
 
 	public class PatientRegisterDto

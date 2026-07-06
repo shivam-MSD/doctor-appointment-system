@@ -26,13 +26,26 @@ namespace DoctorAppointmentSystem.Application.DTOs
 
 		public string BloodGroup { get; set; } // e.g. "APositive", "ONegative"
 
-		[Required]
 		[MaxLength(100)]
-		public string EmergencyContactName { get; set; }
+		public string? EmergencyContactName { get; set; }
 
-		[Required]
 		[Phone]
 		[MaxLength(20)]
-		public string EmergencyContactNumber { get; set; }
+		public string? EmergencyContactNumber { get; set; }
+
+		// Address fields
+		[Required]
+		public string Country { get; set; } = "India";
+		[Required]
+		public string State { get; set; } = string.Empty;
+		[Required]
+		public string City { get; set; } = string.Empty;
+		[Required]
+		public string Area { get; set; } = string.Empty;
+		[Required]
+		public string Pincode { get; set; } = string.Empty;
+		[Required]
+		public string Addressline1 { get; set; } = string.Empty;
+		public string? Addressline2 { get; set; }
 	}
 }

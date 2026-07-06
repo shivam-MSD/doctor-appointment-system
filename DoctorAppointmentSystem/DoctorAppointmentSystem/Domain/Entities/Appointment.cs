@@ -15,6 +15,8 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		[Required]
 		public Doctor Doctor { get; set; }
 
+		public Clinic? Clinic { get; set; }
+
 		[Required]
 		public DateTime AppointmentDate { get; set; }
 

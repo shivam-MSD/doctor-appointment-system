@@ -23,21 +23,18 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public string MobileNo { get; set; }
 
 		[Required]
-		[MaxLength(10)]
-		public string Gender { get; set; }
+		public EGender Gender { get; set; }
 
 		[Required]
 		public DateTime DOB { get; set; }
 
 		public EBloodGroup BloodGroup { get; set; }
 
-		[Required]
 		[MaxLength(100)]
-		public string EmergencyConactName { get; set; }
+		public string? EmergencyConactName { get; set; }
 
-		[Required]
 		[MaxLength(20)]
-		public string EmergencyConactNumber { get; set; }
+		public string? EmergencyConactNumber { get; set; }
 
 		[Required]
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;

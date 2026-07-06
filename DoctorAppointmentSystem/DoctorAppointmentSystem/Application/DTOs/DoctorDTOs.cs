@@ -10,6 +10,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string Email { get; set; }
 		public Guid SpecializationId { get; set; }
 		public string SpecializationName { get; set; }
+		public string FirstName { get; set; }
+		public string LastName { get; set; }
+		public string MobileNo { get; set; }
 		public string Qualification { get; set; }
 		public int YearsOfExperience { get; set; }
 		public string LicenceNumber { get; set; }
@@ -18,6 +21,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string VerificationStatus { get; set; }
 		public string AboutDoctor { get; set; }
 		public byte[] ProfileImage { get; set; }
+		public DateTime CreatedDate { get; set; }
+		public DateTime UpdatedDate { get; set; }
 	}
 
 	public class DoctorRegisterDto

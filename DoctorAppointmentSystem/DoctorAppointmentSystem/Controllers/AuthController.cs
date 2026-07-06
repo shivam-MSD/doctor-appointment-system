@@ -22,10 +22,24 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(response);
 		}
 
+		[HttpPost("register-doctor")]
+		public async Task<IActionResult> RegisterDoctor([FromBody] DoctorSignUpDto doctorSignUpDto)
+		{
+			var response = await _authService.RegisterDoctorAsync(doctorSignUpDto);
+			return Ok(response);
+		}
+
 		[HttpPost("login")]
 		public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
 		{
 			var response = await _authService.LoginAsync(loginDto);
+			return Ok(response);
+		}
+
+		[HttpPost("verify-email")]
+		public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto)
+		{
+			var response = await _authService.VerifyEmailAsync(dto);
 			return Ok(response);
 		}
 	}

@@ -10,6 +10,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 
 		[Required]
 		public string Password { get; set; }
+
+		public string? Role { get; set; }
 	}
 
 	public class RegisterDto
@@ -36,6 +38,51 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string Role { get; set; } // e.g., "Doctor", "Patient"
 	}
 
+	public class DoctorSignUpDto
+	{
+		[Required]
+		[EmailAddress]
+		public string Email { get; set; }
+
+		[Required]
+		[MinLength(6, ErrorMessage = "Password must be at least 6 characters long.")]
+		public string Password { get; set; }
+
+		[Required]
+		public string FirstName { get; set; }
+
+		[Required]
+		public string LastName { get; set; }
+
+		[Required]
+		[Phone]
+		public string MobileNo { get; set; }
+
+		[Required]
+		public string Gender { get; set; }
+
+		[Required]
+		public DateTime DOB { get; set; }
+
+		[Required]
+		public string Qualification { get; set; }
+
+		[Required]
+		public string LicenceNumber { get; set; }
+
+		[Required]
+		public string HospitalName { get; set; }
+
+		[Required]
+		public int YearsOfExperience { get; set; }
+
+		[Required]
+		public double ConsultationFee { get; set; }
+
+		[Required]
+		public Guid SpecializationId { get; set; }
+	}
+
 	public class AuthResponseDto
 	{
 		public string Token { get; set; }
@@ -43,5 +90,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public Guid UserId { get; set; }
 		public string Email { get; set; }
 		public string Role { get; set; }
+		public string FirstName { get; set; }
+		public string LastName { get; set; }
+		public Guid? ProfileId { get; set; }
 	}
 }

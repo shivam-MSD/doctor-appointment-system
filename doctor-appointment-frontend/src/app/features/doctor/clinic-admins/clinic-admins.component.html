@@ -1,0 +1,47 @@
+<div class="dashboard-wrapper">
+  <!-- Greeting Banner -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>👥 Clinic Administrators</h2>
+      <p>View all administrators assigned to your clinic or hospital branches.</p>
+    </div>
+  </div>
+
+  <!-- Admins Directory Table Card -->
+  <div class="glass-card table-card">
+    <div class="table-header">
+      <h3>Clinic Staff Administrators</h3>
+    </div>
+    
+    <div class="table-responsive" *ngIf="clinicAdmins.length > 0; else noAdmins">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Admin Name</th>
+            <th>Clinic Branch</th>
+            <th>Contact Mobile</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let admin of clinicAdmins">
+            <td class="bold">{{ admin.firstName }} {{ admin.lastName }}</td>
+            <td class="text-primary">{{ admin.clinicName }}</td>
+            <td>{{ admin.mobileNo }}</td>
+            <td>
+              <span class="badge badge-confirmed" *ngIf="admin.isVerified">Active</span>
+              <span class="badge badge-pending" *ngIf="!admin.isVerified">Pending Verification</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noAdmins>
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <h4>No Administrators Found</h4>
+        <p>You can add clinic administrators directly from the "My Clinics" page.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

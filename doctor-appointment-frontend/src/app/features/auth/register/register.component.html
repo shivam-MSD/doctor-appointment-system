@@ -1,0 +1,89 @@
+<div class="auth-wrapper">
+  <div class="glass-card auth-card">
+    <a routerLink="/dashboard" class="close-btn" title="Close and return to Dashboard">&times;</a>
+    <div class="auth-header">
+      <span class="logo">✙</span>
+      <h2>Create Account</h2>
+      <p>Register to manage bookings with HealSync</p>
+    </div>
+
+    <form #registerForm="ngForm" (submit)="onSubmit(registerForm); $event.preventDefault()">
+      <!-- Status Messages -->
+      <div class="error-banner" *ngIf="errorMessage">
+        <span>⚠️</span> {{ errorMessage }}
+      </div>
+
+      <div class="success-banner" *ngIf="successMessage">
+        <span>✓</span> {{ successMessage }}
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="firstName">First Name</label>
+          <input 
+            class="form-control" 
+            type="text" 
+            id="firstName" 
+            name="firstName" 
+            [(ngModel)]="firstName" 
+            placeholder="John" 
+            required>
+        </div>
+
+        <div class="form-group flex-1">
+          <label class="form-label" for="lastName">Last Name</label>
+          <input 
+            class="form-control" 
+            type="text" 
+            id="lastName" 
+            name="lastName" 
+            [(ngModel)]="lastName" 
+            placeholder="Doe" 
+            required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input 
+          class="form-control" 
+          type="email" 
+          id="email" 
+          name="email" 
+          [(ngModel)]="email" 
+          placeholder="name@example.com" 
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input 
+          class="form-control" 
+          type="password" 
+          id="password" 
+          name="password" 
+          [(ngModel)]="password" 
+          placeholder="Min 6 characters" 
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="mobileNo">Mobile Number</label>
+        <input 
+          class="form-control" 
+          type="tel" 
+          id="mobileNo" 
+          name="mobileNo" 
+          [(ngModel)]="mobileNo" 
+          placeholder="+1 555-0199" 
+          required>
+      </div>
+
+      <button class="btn btn-primary w-100 submit-btn" type="submit">Sign Up</button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a routerLink="/login">Log In</a></p>
+    </div>
+  </div>
+</div>

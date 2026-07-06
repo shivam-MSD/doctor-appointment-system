@@ -1,0 +1,124 @@
+<div class="auth-wrapper">
+  <div class="glass-card auth-card">
+    <a routerLink="/dashboard" class="close-btn" title="Close and return to Dashboard">&times;</a>
+    <div class="auth-header">
+      <span class="logo">✙</span>
+      <h2>Doctor Onboarding</h2>
+      <p>Register your profile to start accepting appointments</p>
+    </div>
+
+    <form #docRegisterForm="ngForm" (submit)="onSubmit(docRegisterForm); $event.preventDefault()">
+      <!-- Status Messages -->
+      <div class="error-banner" *ngIf="errorMessage">
+        <span>⚠️</span> {{ errorMessage }}
+      </div>
+
+      <div class="success-banner" *ngIf="successMessage">
+        <span>✓</span> {{ successMessage }}
+      </div>
+
+      <!-- Account Info Section -->
+      <h3 class="section-title">1. Account Details</h3>
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="firstName">First Name *</label>
+          <input class="form-control" type="text" id="firstName" name="firstName" [(ngModel)]="firstName" placeholder="Dr. John" required>
+        </div>
+        <div class="form-group flex-1">
+          <label class="form-label" for="lastName">Last Name *</label>
+          <input class="form-control" type="text" id="lastName" name="lastName" [(ngModel)]="lastName" placeholder="Doe" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address *</label>
+        <input class="form-control" type="email" id="email" name="email" [(ngModel)]="email" placeholder="doctor@hospital.com" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="password">Password *</label>
+          <input class="form-control" type="password" id="password" name="password" [(ngModel)]="password" placeholder="••••••••" required>
+        </div>
+        <div class="form-group flex-1">
+          <label class="form-label" for="mobileNo">Mobile Number *</label>
+          <input class="form-control" type="tel" id="mobileNo" name="mobileNo" [(ngModel)]="mobileNo" placeholder="+1 555-0188" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="gender">Gender *</label>
+          <select class="form-control" id="gender" name="gender" [(ngModel)]="gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group flex-1">
+          <label class="form-label" for="dob">Date of Birth *</label>
+          <input class="form-control" type="date" id="dob" name="dob" [(ngModel)]="dob" required>
+        </div>
+      </div>
+
+      <!-- Professional Info Section -->
+      <h3 class="section-title">2. Professional Credentials</h3>
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="qualification">Qualification *</label>
+          <select class="form-control" id="qualification" name="qualification" [(ngModel)]="qualification" required>
+            <option value="" disabled selected>-- Select Qualification --</option>
+            <option value="MBBS">MBBS (Bachelor of Medicine, Bachelor of Surgery)</option>
+            <option value="MD">MD (Doctor of Medicine)</option>
+            <option value="MS">MS (Master of Surgery)</option>
+            <option value="BDS">BDS (Bachelor of Dental Surgery)</option>
+            <option value="MDS">MDS (Master of Dental Surgery)</option>
+            <option value="DM">DM (Doctorate of Medicine)</option>
+            <option value="MCh">MCh (Master of Chirurgiae)</option>
+            <option value="DNB">DNB (Diplomate of National Board)</option>
+            <option value="BAMS">BAMS (Bachelor of Ayurvedic Medicine & Surgery)</option>
+            <option value="BHMS">BHMS (Bachelor of Homeopathic Medicine & Surgery)</option>
+            <option value="BPT">BPT (Bachelor of Physiotherapy)</option>
+            <option value="MPT">MPT (Master of Physiotherapy)</option>
+            <option value="DO">DO (Doctor of Osteopathic Medicine)</option>
+            <option value="PhD">PhD (Doctor of Philosophy in Medicine)</option>
+          </select>
+        </div>
+        <div class="form-group flex-1">
+          <label class="form-label" for="specialization">Specialization *</label>
+          <select class="form-control" id="specialization" name="specializationId" [(ngModel)]="specializationId" required>
+            <option value="" disabled selected>-- Select Specialization --</option>
+            <option *ngFor="let spec of specializations" [value]="spec.specializationId">{{ spec.specializationName }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="licenceNumber">Medical License Number *</label>
+        <input class="form-control" type="text" id="licenceNumber" name="licenceNumber" [(ngModel)]="licenceNumber" placeholder="LIC-9831-29" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="hospitalName">Clinic / Hospital Name *</label>
+        <input class="form-control" type="text" id="hospitalName" name="hospitalName" [(ngModel)]="hospitalName" placeholder="City General Hospital" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label class="form-label" for="yearsOfExperience">Years of Experience *</label>
+          <input class="form-control" type="number" id="yearsOfExperience" name="yearsOfExperience" [(ngModel)]="yearsOfExperience" min="1" required>
+        </div>
+        <div class="form-group flex-1">
+          <label class="form-label" for="consultationFee">Consultation Fee (INR) *</label>
+          <input class="form-control" type="number" id="consultationFee" name="consultationFee" [(ngModel)]="consultationFee" min="0" required>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-100 submit-btn" type="submit">Submit Onboarding Application</button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have a doctor account? <a routerLink="/login">Log In</a></p>
+    </div>
+  </div>
+</div>
