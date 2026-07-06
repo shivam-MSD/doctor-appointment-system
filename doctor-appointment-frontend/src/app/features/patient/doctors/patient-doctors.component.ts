@@ -1,15 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PatientService } from '../../../core/services/patient.service';
 import { AppointmentService } from '../../../core/services/appointment.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-patient-doctors',
   templateUrl: './patient-doctors.component.html',
   styleUrls: ['./patient-doctors.component.css']
 })
-export class PatientDoctorsComponent implements OnInit {
+export class PatientDoctorsComponent implements OnInit, OnDestroy {
   doctors: any[] = [];
   specializations: any[] = [];
+  private signalrSub?: Subscription;
   
   // Search & Filter Parameters
   searchQuery = '';
@@ -30,7 +33,8 @@ export class PatientDoctorsComponent implements OnInit {
 
   constructor(
     private patientService: PatientService,
-    private appointmentService: AppointmentService
+    private appointmentService: AppointmentService,
+    private notificationService: NotificationService
   ) {}
 
   toggleExpand(doctorId: string): void {
@@ -44,6 +48,21 @@ export class PatientDoctorsComponent implements OnInit {
   ngOnInit(): void {
     this.loadSpecializations();
     this.loadDoctors();
+
+    // Auto-reload the doctors list in real-time when notifications or refresh signals are received
+    this.signalrSub = this.notificationService.refreshData$.subscribe({
+      next: (area) => {
+        if (area === 'Doctors') {
+          this.loadDoctors();
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.signalrSub) {
+      this.signalrSub.unsubscribe();
+    }
   }
 
   loadSpecializations(): void {

@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-clinics',
   templateUrl: './clinics.component.html',
   styleUrls: ['./clinics.component.css']
 })
-export class ClinicsComponent implements OnInit {
+export class ClinicsComponent implements OnInit, OnDestroy {
   doctorClinics: any[] = [];
   errorMessage = '';
   successMessage = '';
@@ -15,6 +17,7 @@ export class ClinicsComponent implements OnInit {
   showAdminModal = false;
   selectedClinicIdForAdmin = '';
   selectedClinicNameForAdmin = '';
+  private signalrSub?: Subscription;
 
   // Edit clinic states
   showEditClinicModal = false;
@@ -54,11 +57,27 @@ export class ClinicsComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.loadDoctorClinics();
+
+    // Auto-reload doctor clinics table in real-time when refresh signals are received
+    this.signalrSub = this.notificationService.refreshData$.subscribe({
+      next: (area) => {
+        if (area === 'Clinics') {
+          this.loadDoctorClinics();
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.signalrSub) {
+      this.signalrSub.unsubscribe();
+    }
   }
 
   loadDoctorClinics(): void {

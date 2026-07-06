@@ -11,10 +11,12 @@ namespace DoctorAppointmentSystem.Application.Services
 	public class UserService : IUserService
 	{
 		private readonly ApplicationDbContext _dbContext;
+		private readonly INotificationService _notificationService;
 
-		public UserService(ApplicationDbContext dbContext)
+		public UserService(ApplicationDbContext dbContext, INotificationService notificationService)
 		{
 			_dbContext = dbContext;
+			_notificationService = notificationService;
 		}
 
 		public async Task<UserDto> GetUserProfileAsync(Guid userId)
@@ -146,6 +148,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			await _dbContext.SaveChangesAsync();
+			await _notificationService.SendRefreshSignalAsync("Doctors");
 			return dto;
 		}
 

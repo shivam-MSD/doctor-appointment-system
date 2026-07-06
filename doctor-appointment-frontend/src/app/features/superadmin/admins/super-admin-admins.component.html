@@ -67,7 +67,9 @@
         <tbody>
           <tr *ngFor="let admin of admins">
             <td class="bold">{{ admin.firstName }} {{ admin.lastName }}</td>
-            <td class="text-primary">{{ admin.clinicName }}</td>
+            <td class="text-primary">
+              <span class="truncate-text" [title]="admin.clinicName">{{ admin.clinicName }}</span>
+            </td>
             <td>{{ admin.mobileNo }}</td>
             <td>
               <span class="badge badge-confirmed" *ngIf="admin.isVerified">Active</span>

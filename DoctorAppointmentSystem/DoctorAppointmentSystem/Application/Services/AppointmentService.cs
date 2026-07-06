@@ -128,6 +128,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					await _notificationService.CreateNotificationAsync(admin.User.UserId, msg);
 				}
 			}
+			await _notificationService.SendRefreshSignalAsync("Appointments");
 
 			return MapToDto(appointment, patient, doctor);
 		}
@@ -182,6 +183,7 @@ namespace DoctorAppointmentSystem.Application.Services
 							await _notificationService.CreateNotificationAsync(admin.User.UserId, msg);
 						}
 					}
+					await _notificationService.SendRefreshSignalAsync("Appointments");
 				}
 			}
 		}

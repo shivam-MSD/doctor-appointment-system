@@ -149,17 +149,22 @@
         </thead>
         <tbody>
           <tr *ngFor="let clinic of doctorClinics">
-            <td class="bold">{{ clinic.clinicName }}</td>
+            <td class="bold">
+              <span class="truncate-text" [title]="clinic.clinicName">{{ clinic.clinicName }}</span>
+            </td>
             <td>{{ clinic.clinicType }}</td>
             <td>{{ clinic.city }}, {{ clinic.state }}</td>
             <td>
               <span *ngIf="clinic.verificationStatus === 'Verified'" class="badge badge-confirmed">Verified</span>
-              <span *ngIf="clinic.verificationStatus === 'Pending'" class="badge badge-pending">Pending Verification</span>
-              <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 4px 8px; border-radius: 6px; font-weight: 500;" [title]="'Reason: ' + clinic.rejectionReason">
+              <span *ngIf="clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'UpdatedPending'" class="badge badge-pending">Pending Verification</span>
+              <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 4px 8px; border-radius: 6px; font-weight: 500;">
                 Rejected ⚠️
               </span>
-              <div *ngIf="clinic.verificationStatus === 'Rejected' && clinic.rejectionReason" style="font-size: 0.8rem; color: #ef4444; margin-top: 4px; font-style: italic;">
-                Reason: {{ clinic.rejectionReason }}
+              <div *ngIf="clinic.verificationStatus === 'Rejected' && clinic.rejectionReason" class="rejection-reason-container" style="font-size: 0.8rem; color: #ef4444; margin-top: 4px; font-style: italic;">
+                Reason: {{ clinic.rejectionReason | slice:0:30 }}{{ clinic.rejectionReason.length > 30 ? '...' : '' }}
+                <span class="reason-tooltip" *ngIf="clinic.rejectionReason.length > 30">
+                  {{ clinic.rejectionReason }}
+                </span>
               </div>
             </td>
             <td>
@@ -256,7 +261,9 @@
           </thead>
           <tbody>
             <tr *ngFor="let clinic of pendingClinics">
-              <td class="bold">{{ clinic.clinicName }}</td>
+              <td class="bold">
+                <span class="truncate-text" [title]="clinic.clinicName">{{ clinic.clinicName }}</span>
+              </td>
               <td>{{ clinic.clinicType }}</td>
               <td>{{ clinic.doctorName }}</td>
               <td>{{ clinic.city }}, {{ clinic.state }}</td>
@@ -297,7 +304,9 @@
             <tr *ngFor="let admin of pendingAdmins">
               <td class="bold">{{ admin.firstName }} {{ admin.lastName }}</td>
               <td>{{ admin.mobileNo }}</td>
-              <td>{{ admin.clinicName }}</td>
+              <td>
+                <span class="truncate-text" [title]="admin.clinicName">{{ admin.clinicName }}</span>
+              </td>
               <td>
                 <button class="btn btn-confirm" (click)="verifyAdmin(admin.adminId)">Verify Admin</button>
               </td>

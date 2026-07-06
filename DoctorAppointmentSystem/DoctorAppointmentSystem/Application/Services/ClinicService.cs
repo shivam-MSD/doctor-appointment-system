@@ -157,6 +157,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _dbContext.SaveChangesAsync();
 
 			await _notificationService.CreateNotificationForRoleAsync("SuperAdmin", $"Dr. {doctor.FirstName} {doctor.LastName} registered a new clinic branch '{dto.ClinicName}' and requires verification.");
+			await _notificationService.SendRefreshSignalAsync("Clinics");
 		}
 
 		public async Task RegisterAdminForClinicAsync(Guid doctorUserId, RegisterAdminForClinicDto dto)
@@ -235,6 +236,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _dbContext.SaveChangesAsync();
 
 			await _notificationService.CreateNotificationForRoleAsync("SuperAdmin", $"Dr. {doctor.FirstName} {doctor.LastName} registered a new clinic admin {dto.AdminFirstName} {dto.AdminLastName} for '{clinic.ClinicName}' requiring verification.");
+			await _notificationService.SendRefreshSignalAsync("Admins");
 		}
 
 		public async Task<IEnumerable<ClinicDto>> GetDoctorClinicsAsync(Guid doctorUserId)
@@ -290,7 +292,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			return await _dbContext.Clinics
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
-				.Where(c => c.VerificationStatus == EVerificationStatus.Pending)
+				.Where(c => c.VerificationStatus == EVerificationStatus.Pending || c.VerificationStatus == EVerificationStatus.UpdatedPending)
 				.Select(c => new ClinicDto
 				{
 					ClinicId = c.ClinicId,
@@ -348,6 +350,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _dbContext.SaveChangesAsync();
 
 			await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your clinic branch '{clinic.ClinicName}' has been verified and approved by the Super Admin.");
+			await _notificationService.SendRefreshSignalAsync("Clinics");
 		}
 
 		public async Task VerifyAdminAsync(Guid adminId)
@@ -370,6 +373,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _notificationService.CreateNotificationAsync(admin.User.UserId, $"Your Clinic Admin account for '{admin.Clinic.ClinicName}' has been approved and activated.");
 			// Notify Doctor user that their admin has been approved
 			await _notificationService.CreateNotificationAsync(admin.Clinic.Doctor.User.UserId, $"The Clinic Admin {admin.FirstName} {admin.LastName} assigned to '{admin.Clinic.ClinicName}' has been approved.");
+			await _notificationService.SendRefreshSignalAsync("Admins");
 		}
 
 		public async Task RejectClinicAsync(Guid clinicId, string rejectionReason)
@@ -387,7 +391,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			clinic.RejectionReason = rejectionReason;
 			await _dbContext.SaveChangesAsync();
 
-			await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your clinic branch '{clinic.ClinicName}' registration has been rejected. Reason: {rejectionReason}");
+			await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your clinic branch '{clinic.ClinicName}' registration has been rejected.<br><b>Reason: {rejectionReason}</b>");
+			await _notificationService.SendRefreshSignalAsync("Clinics");
 		}
 
 		public async Task UpdateClinicAsync(Guid clinicId, Guid doctorUserId, UpdateClinicDto dto)
@@ -410,7 +415,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			clinic.ClinicName = dto.ClinicName;
 			clinic.ClinicType = dto.ClinicType;
-			clinic.VerificationStatus = EVerificationStatus.Pending;
+			clinic.VerificationStatus = EVerificationStatus.UpdatedPending;
 			clinic.RejectionReason = null;
 
 			clinic.Address.State = dto.State;
@@ -421,6 +426,10 @@ namespace DoctorAppointmentSystem.Application.Services
 			clinic.Address.Addressline2 = dto.Addressline2 ?? string.Empty;
 
 			await _dbContext.SaveChangesAsync();
+
+			// Trigger notification to SuperAdmins
+			await _notificationService.CreateNotificationForRoleAsync("SuperAdmin", $"Dr. {clinic.Doctor.FirstName} {clinic.Doctor.LastName} updated clinic details for '{dto.ClinicName}' (requires re-verification).");
+			await _notificationService.SendRefreshSignalAsync("Clinics");
 		}
 
 		#region Password Hashing Helper

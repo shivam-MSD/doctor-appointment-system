@@ -93,3 +93,109 @@
   font-size: 0.85rem;
   text-decoration: none;
 }
+
+/* Real-Time Notifications Panel styling */
+.notification-container {
+  display: inline-block;
+}
+
+.bell-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.notifications-panel {
+  position: absolute;
+  right: 0;
+  top: 52px;
+  width: 340px;
+  max-height: 480px;
+  overflow-y: auto;
+  z-index: 1001;
+  padding: 16px;
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: dropdownFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.panel-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.btn-link {
+  font-size: 0.78rem;
+  background: transparent;
+  border: none;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.btn-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.notification-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid var(--accent-cyan);
+  transition: all 0.2s ease;
+}
+
+:host-context(body.light-theme) .notification-item {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.notification-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(2px);
+}
+
+:host-context(body.light-theme) .notification-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.notification-item p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.notification-item .text-muted {
+  font-size: 0.7rem;
+  color: var(--text-secondary) !important;
+  margin-top: 4px;
+  display: block;
+}

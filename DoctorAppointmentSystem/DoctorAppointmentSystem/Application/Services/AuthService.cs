@@ -336,6 +336,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			// Trigger notification to SuperAdmins
 			await _notificationService.CreateNotificationForRoleAsync("SuperAdmin", $"New doctor Dr. {dto.FirstName} {dto.LastName} has registered and requires profile verification.");
+			await _notificationService.SendRefreshSignalAsync("Doctors");
 
 			// Force verification check immediately
 			// await GenerateAndSendOtpAsync(user);

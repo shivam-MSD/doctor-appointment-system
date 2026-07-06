@@ -11,5 +11,6 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task CreateNotificationAsync(Guid userId, string message);
 		Task CreateNotificationForRoleAsync(string roleName, string message);
 		Task MarkAllAsReadAsync(Guid userId);
+		Task SendRefreshSignalAsync(string dataArea);
 	}
 }

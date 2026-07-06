@@ -1,22 +1,43 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-super-admin-admins',
   templateUrl: './super-admin-admins.component.html',
   styleUrls: ['./super-admin-admins.component.css']
 })
-export class SuperAdminAdminsComponent implements OnInit {
+export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
   admins: any[] = [];
   searchQuery = '';
   verifiedFilter: boolean | undefined = undefined;
   errorMessage = '';
   successMessage = '';
+  private signalrSub?: Subscription;
 
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.loadAdmins();
+
+    // Auto-reload the clinic admin applications roster in real-time when refresh signals are received
+    this.signalrSub = this.notificationService.refreshData$.subscribe({
+      next: (area) => {
+        if (area === 'Admins') {
+          this.loadAdmins();
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.signalrSub) {
+      this.signalrSub.unsubscribe();
+    }
   }
 
   loadAdmins(): void {

@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-super-admin-clinics',
   templateUrl: './super-admin-clinics.component.html',
   styleUrls: ['./super-admin-clinics.component.css']
 })
-export class SuperAdminClinicsComponent implements OnInit {
+export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
   clinics: any[] = [];
   searchQuery = '';
   stateFilter = '';
@@ -15,6 +17,7 @@ export class SuperAdminClinicsComponent implements OnInit {
   verifiedFilter: boolean | undefined = undefined;
   errorMessage = '';
   successMessage = '';
+  private signalrSub?: Subscription;
 
   // Reject clinic states
   showRejectModal = false;
@@ -23,11 +26,27 @@ export class SuperAdminClinicsComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.loadClinics();
+
+    // Auto-reload the list in real-time when silent refresh signals are received
+    this.signalrSub = this.notificationService.refreshData$.subscribe({
+      next: (area) => {
+        if (area === 'Clinics') {
+          this.loadClinics();
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.signalrSub) {
+      this.signalrSub.unsubscribe();
+    }
   }
 
   loadClinics(): void {

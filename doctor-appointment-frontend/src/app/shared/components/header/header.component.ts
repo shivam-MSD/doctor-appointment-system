@@ -13,7 +13,7 @@ import { Subscription, interval } from 'rxjs';
 export class HeaderComponent implements OnInit, OnDestroy {
   notifications: NotificationDto[] = [];
   showNotificationsPanel = false;
-  private pollSub?: Subscription;
+  private signalrSub?: Subscription;
 
   constructor(
     public authService: AuthService,
@@ -23,19 +23,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // 1. Initial load
-    this.loadNotifications();
-
-    // 2. Poll every 10 seconds for real-time notifications
-    this.pollSub = interval(10000).subscribe(() => {
+    const userId = this.authService.getUserId();
+    if (userId) {
+      // 1. Initial load
       this.loadNotifications();
-    });
+
+      // 2. Start SignalR real-time websocket channel
+      this.notificationService.startConnection(userId);
+
+      // 3. Listen to incoming push events
+      this.signalrSub = this.notificationService.notificationReceived$.subscribe({
+        next: (notification: NotificationDto) => {
+          this.notifications = [notification, ...this.notifications];
+        }
+      });
+    }
   }
 
   ngOnDestroy(): void {
-    if (this.pollSub) {
-      this.pollSub.unsubscribe();
+    if (this.signalrSub) {
+      this.signalrSub.unsubscribe();
     }
+    this.notificationService.stopConnection();
   }
 
   loadNotifications(): void {
@@ -77,6 +86,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   logout(): void {
     const role = this.authService.getRole();
+    this.notificationService.stopConnection();
     this.authService.logout();
 
     if (role === 'Doctor') {

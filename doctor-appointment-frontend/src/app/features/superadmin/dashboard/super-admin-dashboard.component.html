@@ -79,7 +79,17 @@
         </thead>
         <tbody>
           <tr *ngFor="let clinic of pendingClinics">
-            <td class="bold">{{ clinic.clinicName }}</td>
+            <td class="bold">
+              <span class="truncate-text" [title]="clinic.clinicName">{{ clinic.clinicName }}</span>
+              <div style="margin-top: 4px;">
+                <span class="badge" *ngIf="clinic.verificationStatus === 'Pending'" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                  New Record
+                </span>
+                <span class="badge" *ngIf="clinic.verificationStatus === 'UpdatedPending'" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                  Edit Request
+                </span>
+              </div>
+            </td>
             <td>{{ clinic.doctorName }}</td>
             <td>
               <span class="type-indicator">{{ clinic.clinicType }}</span>
@@ -125,7 +135,9 @@
         <tbody>
           <tr *ngFor="let admin of pendingAdmins">
             <td class="bold">{{ admin.firstName }} {{ admin.lastName }}</td>
-            <td class="text-primary">{{ admin.clinicName }}</td>
+            <td class="text-primary">
+              <span class="truncate-text" [title]="admin.clinicName">{{ admin.clinicName }}</span>
+            </td>
             <td>{{ admin.email }}</td>
             <td>{{ admin.mobileNo }}</td>
             <td class="text-end">

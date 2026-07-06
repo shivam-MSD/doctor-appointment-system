@@ -70,6 +70,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 	{
 		Pending,
 		Verified,
-		Rejected
+		Rejected,
+		UpdatedPending
 	}
 }

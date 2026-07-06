@@ -1,23 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { AppointmentService } from '../../core/services/appointment.service';
 import { AdminService } from '../../core/services/admin.service';
 import { PatientService } from '../../core/services/patient.service';
 import { ToastService } from '../../core/services/toast.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { Appointment } from '../../core/models/appointment.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   role = '';
   appointments: Appointment[] = [];
   totalCount = 0;
   statusFilter = '';
   firstName = '';
   errorMessage = '';
+  private signalrSub?: Subscription;
 
   // Doctor completeness state
   isDoctorAddressIncomplete = false;
@@ -81,13 +84,31 @@ export class DashboardComponent implements OnInit {
     private appointmentService: AppointmentService,
     private adminService: AdminService,
     private patientService: PatientService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.role = this.authService.getRole() || 'Patient';
     this.firstName = sessionStorage.getItem('firstName') || 'User';
     this.loadDashboardData();
+
+    // Listen for silent refresh signals to update the dashboard automatically in real-time
+    this.signalrSub = this.notificationService.refreshData$.subscribe({
+      next: (area) => {
+        // Patients only refresh for appointment events
+        if (this.role === 'Patient' && area !== 'Appointments') {
+          return;
+        }
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.signalrSub) {
+      this.signalrSub.unsubscribe();
+    }
   }
 
   loadDashboardData(): void {

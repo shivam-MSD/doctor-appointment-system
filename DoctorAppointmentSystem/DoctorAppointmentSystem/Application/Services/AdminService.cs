@@ -43,6 +43,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _dbContext.SaveChangesAsync();
 
 			await _notificationService.CreateNotificationAsync(doctor.User.UserId, $"Your doctor profile verification status has been updated to: {status}.");
+			await _notificationService.SendRefreshSignalAsync("Doctors");
 		}
 
 		public async Task<IEnumerable<DoctorDto>> GetPendingDoctorsAsync()

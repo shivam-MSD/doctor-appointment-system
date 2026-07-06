@@ -3,5 +3,11 @@
     "target": "http://localhost:5222",
     "secure": false,
     "changeOrigin": true
+  },
+  "/notificationHub": {
+    "target": "http://localhost:5222",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true
   }
 }

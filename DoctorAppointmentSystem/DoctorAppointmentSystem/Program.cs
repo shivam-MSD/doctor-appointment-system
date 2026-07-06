@@ -25,6 +25,7 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAppoint
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IClinicService, DoctorAppointmentSystem.Application.Services.ClinicService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IEmailService, DoctorAppointmentSystem.Application.Services.EmailService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
+builder.Services.AddSignalR();
 builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
@@ -47,6 +48,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<DoctorAppointmentSystem.Application.Hubs.NotificationHub>("/notificationHub");
 
 // Automatically apply pending database migrations on startup
 using (var scope = app.Services.CreateScope())

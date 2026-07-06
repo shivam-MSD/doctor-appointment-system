@@ -1,0 +1,58 @@
+# Implementation Plan - SignalR Real-Time Notifications
+
+We will implement a real-time event distribution network using **ASP.NET Core SignalR** on the backend and **@microsoft/signalr** on the Angular frontend. This replaces the 10-second API polling with immediate push notifications and adds dark/light theme polish to the notification dropdown UI.
+
+## Proposed Changes
+
+### 1. ASP.NET Core Backend Services
+
+#### [NEW] [NotificationHub.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Hubs/NotificationHub.cs)
+* Create a SignalR Hub class `NotificationHub : Hub`.
+* In `OnConnectedAsync()`, query the `userId` passed in connection parameters and map the Connection ID to a SignalR Group named after the `UserId`.
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+* Add SignalR services via `builder.Services.AddSignalR()`.
+* Configure endpoint mapping: `app.MapHub<NotificationHub>("/notificationHub")`.
+* Ensure CORS policies allow credential transmissions (`AllowCredentials()`) for WebSocket Handshakes.
+
+#### [MODIFY] [NotificationService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/NotificationService.cs)
+* Inject `IHubContext<NotificationHub>` in the constructor.
+* In `CreateNotificationAsync` and `CreateNotificationForRoleAsync`, after saving to the database, push the notification object to the recipient's SignalR group:
+  ```csharp
+  await _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", notificationDto);
+  ```
+
+---
+
+### 2. Angular Frontend Components
+
+#### [MODIFY] [package.json](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/package.json)
+* Install `@microsoft/signalr` dependency.
+
+#### [MODIFY] [notification.service.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/services/notification.service.ts)
+* Import `HubConnection` and `HubConnectionBuilder` from `@microsoft/signalr`.
+* Expose `startConnection(userId: string): void` and `stopConnection(): void`.
+* Expose `notificationReceived$` Observable wrapper to listen to push events.
+
+#### [MODIFY] [header.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/header/header.component.ts)
+* Start the SignalR connection on login/init.
+* Subscribe to `notificationReceived$` to prepend fresh notifications instantly.
+* Remove the previous 10-second polling interval logic.
+
+#### [MODIFY] [header.component.css](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/header/header.component.css)
+* Add and update theme-aware visual rules for the notification bell, unread count badges, and scrollable dropdown.
+* Use CSS theme variables (`var(--bg-card)`, `var(--text-primary)`, `var(--border-color)`) so the panel adapts between Light and Dark modes.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+* Build and compile backend: `dotnet build`
+* Build and compile frontend: `npx ng build --configuration=development`
+
+### Manual Verification
+1. Log in as a Doctor in one browser window and a Super Admin in another.
+2. Register a clinic from the Doctor view.
+3. Verify that the Super Admin immediately receives the real-time notification in the header bell without refreshing or waiting for polling.
+4. Toggle light and dark modes to check theme consistency.
