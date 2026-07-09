@@ -1,5 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Domain.Entities;
@@ -13,12 +17,18 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly ApplicationDbContext _dbContext;
 		private readonly IEmailService _emailService;
 		private readonly INotificationService _notificationService;
+		private readonly IConfiguration _configuration;
 
-		public AuthService(ApplicationDbContext dbContext, IEmailService emailService, INotificationService notificationService)
+		public AuthService(
+			ApplicationDbContext dbContext,
+			IEmailService emailService,
+			INotificationService notificationService,
+			IConfiguration configuration)
 		{
 			_dbContext = dbContext;
 			_emailService = emailService;
 			_notificationService = notificationService;
+			_configuration = configuration;
 		}
 
 		public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
@@ -144,7 +154,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				FirstName = registerDto.FirstName,
 				LastName = registerDto.LastName,
 				ProfileId = profileId,
-				Token = GenerateMockJwtToken(user.Email, parsedRole.ToString()),
+				Token = GenerateJwtToken(user, parsedRole.ToString()),
 				RefreshToken = Guid.NewGuid().ToString()
 			};
 		}
@@ -258,7 +268,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				FirstName = firstName,
 				LastName = lastName,
 				ProfileId = profileId,
-				Token = GenerateMockJwtToken(user.Email, roleName),
+				Token = GenerateJwtToken(user, roleName),
 				RefreshToken = Guid.NewGuid().ToString()
 			};
 		}
@@ -349,7 +359,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				FirstName = dto.FirstName,
 				LastName = dto.LastName,
 				ProfileId = doctor.DoctorId,
-				Token = GenerateMockJwtToken(user.Email, ERole.Doctor.ToString()),
+				Token = GenerateJwtToken(user, ERole.Doctor.ToString()),
 				RefreshToken = Guid.NewGuid().ToString()
 			};
 		}
@@ -367,9 +377,27 @@ namespace DoctorAppointmentSystem.Application.Services
 			return HashPassword(password) == passwordHash;
 		}
 
-		private string GenerateMockJwtToken(string email, string role)
+		private string GenerateJwtToken(User user, string role)
 		{
-			return $"mock-jwt-token-for-{email}-role-{role}-{DateTime.UtcNow.AddHours(2).Ticks}";
+			var tokenHandler = new JwtSecurityTokenHandler();
+			var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured."));
+
+			var tokenDescriptor = new SecurityTokenDescriptor
+			{
+				Subject = new ClaimsIdentity(new[]
+				{
+					new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+					new Claim(ClaimTypes.Email, user.Email),
+					new Claim(ClaimTypes.Role, role)
+				}),
+				Expires = DateTime.UtcNow.AddDays(7),
+				Issuer = _configuration["Jwt:Issuer"],
+				Audience = _configuration["Jwt:Audience"],
+				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+			};
+
+			var token = tokenHandler.CreateToken(tokenDescriptor);
+			return tokenHandler.WriteToken(token);
 		}
 
 		private async Task GenerateAndSendOtpAsync(User user)
@@ -485,7 +513,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				FirstName = firstName,
 				LastName = lastName,
 				ProfileId = profileId,
-				Token = GenerateMockJwtToken(user.Email, roleName),
+				Token = GenerateJwtToken(user, roleName),
 				RefreshToken = Guid.NewGuid().ToString()
 			};
 		}

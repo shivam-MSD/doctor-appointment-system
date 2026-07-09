@@ -19,6 +19,7 @@ import { SuperAdminDoctorsComponent } from './features/superadmin/doctors/super-
 import { SuperAdminClinicsComponent } from './features/superadmin/clinics/super-admin-clinics.component';
 import { SuperAdminAdminsComponent } from './features/superadmin/admins/super-admin-admins.component';
 import { PatientDoctorsComponent } from './features/patient/doctors/patient-doctors.component';
+import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
   // Separate Portal Routes
@@ -36,6 +37,7 @@ const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent }, // Shared fallback route

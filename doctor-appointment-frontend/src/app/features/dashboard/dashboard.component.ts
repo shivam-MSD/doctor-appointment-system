@@ -43,6 +43,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedClinicIdForRejection = '';
   rejectionReason = '';
 
+  // Weekday definitions
+  weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  selectedDaysRegister: string[] = [];
+  selectedDaysEdit: string[] = [];
+  selectedDaysAdmin: string[] = [];
+
+  // Split shift variables for Clinic Admin
+  isSplitShiftAdmin = false;
+  startTime1Admin = '';
+  endTime1Admin = '';
+  startTime2Admin = '';
+  endTime2Admin = '';
+  timingsErrorMessageAdmin = '';
+
   // Edit clinic states
   showEditClinicModal = false;
   selectedClinicIdForEdit = '';
@@ -55,7 +69,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     area: '',
     pincode: '',
     addressline1: '',
-    addressline2: ''
+    addressline2: '',
+    openDays: '',
+    startTime: '',
+    endTime: '',
+    isAvailable: true,
+    unavailabilityReason: ''
   };
 
   clinicOnlyForm = {
@@ -67,7 +86,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
     area: '',
     pincode: '',
     addressline1: '',
-    addressline2: ''
+    addressline2: '',
+    openDays: '',
+    startTime: '',
+    endTime: '',
+    isAvailable: true,
+    unavailabilityReason: ''
+  };
+
+  // Admin Clinic properties
+  adminClinic: any = null;
+  showAdminEditModal = false;
+  adminClinicForm = {
+    clinicName: '',
+    clinicType: 'Clinic',
+    country: 'India',
+    state: '',
+    city: '',
+    area: '',
+    pincode: '',
+    addressline1: '',
+    addressline2: '',
+    openDays: '',
+    startTime: '',
+    endTime: '',
+    isAvailable: true,
+    unavailabilityReason: '',
+    isDoctorAvailable: true,
+    doctorUnavailabilityReason: '',
+    bookingWindowStartDate: '',
+    bookingWindowEndDate: '',
+    supportInPerson: true,
+    supportVideo: false
   };
 
   adminForm = {
@@ -139,6 +189,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (this.role === 'Doctor') {
         this.loadDoctorClinics();
         this.checkDoctorProfileCompleteness();
+      }
+      if (this.role === 'Admin') {
+        this.loadAdminClinic();
       }
     }
   }
@@ -222,7 +275,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       area: '',
       pincode: '',
       addressline1: '',
-      addressline2: ''
+      addressline2: '',
+      openDays: '',
+      startTime: '',
+      endTime: '',
+      isAvailable: true,
+      unavailabilityReason: ''
     };
   }
 
@@ -367,6 +425,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Edit clinic methods
   openEditClinicModal(clinic: any): void {
     this.selectedClinicIdForEdit = clinic.clinicId;
+    this.selectedDaysEdit = clinic.openDays ? clinic.openDays.split(',').map((d: string) => d.trim()) : [];
     this.clinicEditForm = {
       clinicName: clinic.clinicName,
       clinicType: clinic.clinicType,
@@ -376,7 +435,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       area: clinic.area || '',
       pincode: clinic.pincode || '',
       addressline1: clinic.addressline1 || '',
-      addressline2: clinic.addressline2 || ''
+      addressline2: clinic.addressline2 || '',
+      openDays: clinic.openDays || '',
+      startTime: clinic.startTime || '',
+      endTime: clinic.endTime || '',
+      isAvailable: clinic.isAvailable !== false,
+      unavailabilityReason: clinic.unavailabilityReason || ''
     };
     this.showEditClinicModal = true;
   }
@@ -384,6 +448,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   closeEditClinicModal(): void {
     this.showEditClinicModal = false;
     this.selectedClinicIdForEdit = '';
+    this.selectedDaysEdit = [];
   }
 
   submitClinicEdit(): void {
@@ -399,5 +464,213 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.toastService.showError(err?.error?.detail || 'Failed to update clinic details.');
       }
     });
+  }
+
+  toggleDayRegister(day: string): void {
+    const index = this.selectedDaysRegister.indexOf(day);
+    if (index > -1) {
+      this.selectedDaysRegister.splice(index, 1);
+    } else {
+      this.selectedDaysRegister.push(day);
+    }
+    this.clinicOnlyForm.openDays = this.selectedDaysRegister.join(',');
+  }
+
+  isDaySelectedRegister(day: string): boolean {
+    return this.selectedDaysRegister.includes(day);
+  }
+
+  toggleDayEdit(day: string): void {
+    const index = this.selectedDaysEdit.indexOf(day);
+    if (index > -1) {
+      this.selectedDaysEdit.splice(index, 1);
+    } else {
+      this.selectedDaysEdit.push(day);
+    }
+    this.clinicEditForm.openDays = this.selectedDaysEdit.join(',');
+  }
+
+  isDaySelectedEdit(day: string): boolean {
+    return this.selectedDaysEdit.includes(day);
+  }
+
+  // Clinic Admin Helpers
+  loadAdminClinic(): void {
+    this.adminService.getAdminClinic().subscribe({
+      next: (res) => {
+        this.adminClinic = res;
+      },
+      error: (err) => {
+        this.toastService.showError('Failed to load clinic details.');
+      }
+    });
+  }
+
+  openAdminEditClinicModal(): void {
+    if (!this.adminClinic) return;
+    this.selectedDaysAdmin = this.adminClinic.openDays ? this.adminClinic.openDays.split(',').map((d: string) => d.trim()) : [];
+    
+    const startTimeStr = this.adminClinic.startTime || '';
+    const endTimeStr = this.adminClinic.endTime || '';
+
+    if (startTimeStr.includes(',')) {
+      this.isSplitShiftAdmin = true;
+      this.startTime1Admin = startTimeStr.split(',')[0]?.trim() || '';
+      this.startTime2Admin = startTimeStr.split(',')[1]?.trim() || '';
+      this.endTime1Admin = endTimeStr.split(',')[0]?.trim() || '';
+      this.endTime2Admin = endTimeStr.split(',')[1]?.trim() || '';
+    } else {
+      this.isSplitShiftAdmin = false;
+      this.startTime1Admin = startTimeStr;
+      this.endTime1Admin = endTimeStr;
+      this.startTime2Admin = '';
+      this.endTime2Admin = '';
+    }
+
+    this.adminClinicForm = {
+      clinicName: this.adminClinic.clinicName,
+      clinicType: this.adminClinic.clinicType,
+      country: 'India',
+      state: this.adminClinic.state,
+      city: this.adminClinic.city,
+      area: this.adminClinic.area || '',
+      pincode: this.adminClinic.pincode || '',
+      addressline1: this.adminClinic.addressline1 || '',
+      addressline2: this.adminClinic.addressline2 || '',
+      openDays: this.adminClinic.openDays || '',
+      startTime: startTimeStr,
+      endTime: endTimeStr,
+      isAvailable: this.adminClinic.isAvailable !== false,
+      unavailabilityReason: this.adminClinic.unavailabilityReason || '',
+      isDoctorAvailable: this.adminClinic.isDoctorAvailable !== false,
+      doctorUnavailabilityReason: this.adminClinic.doctorUnavailabilityReason || '',
+      bookingWindowStartDate: this.adminClinic.bookingWindowStartDate ? this.adminClinic.bookingWindowStartDate.substring(0, 10) : '',
+      bookingWindowEndDate: this.adminClinic.bookingWindowEndDate ? this.adminClinic.bookingWindowEndDate.substring(0, 10) : '',
+      supportInPerson: !this.adminClinic.supportedModes || this.adminClinic.supportedModes.includes('InPerson'),
+      supportVideo: this.adminClinic.supportedModes ? this.adminClinic.supportedModes.includes('VideoConsultation') : false
+    };
+    this.showAdminEditModal = true;
+  }
+
+  closeAdminEditClinicModal(): void {
+    this.showAdminEditModal = false;
+    this.selectedDaysAdmin = [];
+    this.isSplitShiftAdmin = false;
+    this.startTime1Admin = '';
+    this.endTime1Admin = '';
+    this.startTime2Admin = '';
+    this.endTime2Admin = '';
+    this.timingsErrorMessageAdmin = '';
+    this.adminClinicForm.bookingWindowStartDate = '';
+    this.adminClinicForm.bookingWindowEndDate = '';
+  }
+
+  toggleDayAdmin(day: string): void {
+    const index = this.selectedDaysAdmin.indexOf(day);
+    if (index > -1) {
+      this.selectedDaysAdmin.splice(index, 1);
+    } else {
+      this.selectedDaysAdmin.push(day);
+    }
+    this.selectedDaysAdmin.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
+    this.adminClinicForm.openDays = this.selectedDaysAdmin.join(',');
+  }
+
+  isDaySelectedAdmin(day: string): boolean {
+    return this.selectedDaysAdmin.includes(day);
+  }
+
+  submitAdminClinicEdit(): void {
+    if (this.isSplitShiftAdmin) {
+      if (!this.startTime1Admin || !this.endTime1Admin || !this.startTime2Admin || !this.endTime2Admin) {
+        this.toastService.showError('Please configure both timing shifts completely.');
+        return;
+      }
+      if (this.startTime1Admin >= this.endTime1Admin) {
+        this.toastService.showError('Shift 1 opening time must be before closing time.');
+        return;
+      }
+      if (this.startTime2Admin >= this.endTime2Admin) {
+        this.toastService.showError('Shift 2 opening time must be before closing time.');
+        return;
+      }
+      if (this.endTime1Admin > this.startTime2Admin) {
+        this.toastService.showError('Shift 1 closing time cannot be after Shift 2 opening time.');
+        return;
+      }
+      this.adminClinicForm.startTime = `${this.startTime1Admin},${this.startTime2Admin}`;
+      this.adminClinicForm.endTime = `${this.endTime1Admin},${this.endTime2Admin}`;
+    } else {
+      if (!this.startTime1Admin || !this.endTime1Admin) {
+        this.toastService.showError('Please configure opening and closing hours.');
+        return;
+      }
+      if (this.startTime1Admin >= this.endTime1Admin) {
+        this.toastService.showError('Opening time must be before closing time.');
+        return;
+      }
+      this.adminClinicForm.startTime = this.startTime1Admin;
+      this.adminClinicForm.endTime = this.endTime1Admin;
+    }
+
+    if (this.adminClinicForm.isAvailable) {
+      if (!this.adminClinicForm.openDays || !this.adminClinicForm.startTime || !this.adminClinicForm.endTime) {
+        this.toastService.showError('Active/Open clinics must have a timing schedule (open days, start time, and end time) configured.');
+        return;
+      }
+    }
+
+    const modesList: string[] = [];
+    if (this.adminClinicForm.supportInPerson) modesList.push('InPerson');
+    if (this.adminClinicForm.supportVideo) modesList.push('VideoConsultation');
+    const supportedModesStr = modesList.join(',');
+
+    const payload = {
+      ...this.adminClinicForm,
+      bookingWindowStartDate: this.adminClinicForm.bookingWindowStartDate ? new Date(this.adminClinicForm.bookingWindowStartDate).toISOString() : null,
+      bookingWindowEndDate: this.adminClinicForm.bookingWindowEndDate ? new Date(this.adminClinicForm.bookingWindowEndDate).toISOString() : null,
+      supportedModes: supportedModesStr
+    };
+
+    this.adminService.updateClinicByAdmin(payload).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Clinic details updated successfully.');
+        this.closeAdminEditClinicModal();
+        this.loadAdminClinic();
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to update clinic details.');
+      }
+    });
+  }
+
+  validateTimingsChangeAdmin(): void {
+    this.timingsErrorMessageAdmin = '';
+
+    if (this.isSplitShiftAdmin) {
+      if (this.startTime1Admin && this.endTime1Admin && this.startTime1Admin >= this.endTime1Admin) {
+        this.timingsErrorMessageAdmin = 'Session 1 opening time must be before closing time.';
+        return;
+      }
+      if (this.startTime2Admin && this.endTime2Admin && this.startTime2Admin >= this.endTime2Admin) {
+        this.timingsErrorMessageAdmin = 'Session 2 opening time must be before closing time.';
+        return;
+      }
+      if (this.endTime1Admin && this.startTime2Admin && this.endTime1Admin > this.startTime2Admin) {
+        this.timingsErrorMessageAdmin = 'Session 1 closing time cannot be after Session 2 opening time.';
+        return;
+      }
+    } else {
+      if (this.startTime1Admin && this.endTime1Admin && this.startTime1Admin >= this.endTime1Admin) {
+        this.timingsErrorMessageAdmin = 'Opening time must be before closing time.';
+        return;
+      }
+    }
+  }
+
+  getSortedDays(openDaysStr: string): string[] {
+    if (!openDaysStr) return [];
+    const days = openDaysStr.split(',').map(d => d.trim());
+    return days.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
   }
 }

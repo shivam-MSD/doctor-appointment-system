@@ -1,0 +1,83 @@
+# JWT Bearer Authentication & Role-Based Access Control Plan
+
+This plan outlines how we will transition the application from a mock session header (`X-User-Id`) to a secure, real-world **JSON Web Token (JWT) Bearer Authentication** and **Role-Based Authorization** system, and implement Angular **AuthGuards** and **Auto-Logout** to prevent orphan session states.
+
+---
+
+## 1. Real-World Authentication & JWT Explanation
+
+### How JWT Authentication Works
+In modern stateless web applications, we use JSON Web Tokens (JWT) for secure authentication:
+1. **Login Request**: The client sends credentials (email & password) to `/api/auth/login`.
+2. **Token Generation**: The server verifies the credentials against the database. If correct, it generates a JWT containing:
+   - **Header**: Signature algorithm (e.g., HMAC SHA256).
+   - **Payload (Claims)**: Non-sensitive data about the user (User ID, Email, Name, and Roles like `Doctor`, `Patient`, `SuperAdmin`, `Admin`).
+   - **Signature**: Formed by combining the encoded header, encoded payload, and a secure **Secret Key** (kept private on the server).
+3. **Stateless Sessions**: The server returns this token to the client. The server does not store this token in a session store. It is stateless!
+4. **Passing the Token on Every Request**:
+   - **Do we need to pass the JWT token in each request?** **YES!** Because HTTP is stateless. The server has no memory of past requests. If the client doesn't send the token, the server cannot know who is making the request or if they are authorized.
+   - The token is passed in the request headers under `Authorization: Bearer <your-jwt-token>`.
+5. **Token Verification**: For every protected request, the server decodes the token and verifies the signature using its **Secret Key**. If the signature matches, the server trusts the claims (User ID, Roles) inside it without querying the database, making it extremely fast and scalable.
+
+---
+
+## 2. Proposed Changes
+
+### Backend (.NET Core)
+
+#### [MODIFY] [DoctorAppointmentSystem.csproj](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/DoctorAppointmentSystem.csproj)
+- Add package dependency for `Microsoft.AspNetCore.Authentication.JwtBearer`.
+
+#### [MODIFY] [appsettings.json](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/appsettings.json)
+- Add secure `Jwt` settings: Secret Key, Issuer, and Audience.
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+- Register Authentication services: `builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(...)`.
+- Update the HTTP pipeline to call `app.UseAuthentication()` before `app.UseAuthorization()`.
+
+#### [MODIFY] [AuthService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AuthService.cs)
+- Replace `GenerateMockJwtToken(...)` with cryptographic signing using `SymmetricSecurityKey` and `JwtSecurityTokenHandler`.
+- Include `ClaimTypes.NameIdentifier` (UserId) and `ClaimTypes.Role` (RoleName) in token claims.
+
+#### [MODIFY] Controllers
+We will secure the controllers by applying the `[Authorize]` attribute:
+- **[ClinicsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/ClinicsController.cs)**
+- **[AppointmentsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AppointmentsController.cs)**
+- **[PatientsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/PatientsController.cs)**
+- **[AdminController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AdminController.cs)**
+- **[FamilyController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/FamilyController.cs)**
+- **[NotificationsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/NotificationsController.cs)**
+
+We will extract the user identity directly from JWT claims rather than using `X-User-Id` headers:
+```csharp
+private Guid CurrentUserId => Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+```
+
+---
+
+### Frontend (Angular)
+
+#### [NEW] [auth.guard.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/guards/auth.guard.ts)
+- Create a route guard implementing `CanActivate`.
+- Check if the user is authenticated. If not, redirect to `/login` (or role-specific portal login).
+- Check if the user has the required role (if role-restricted).
+
+#### [MODIFY] [app-routing.module.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/app-routing.module.ts)
+- Secure the main routes layout and sub-routes by registering `canActivate: [AuthGuard]`.
+
+#### [MODIFY] [auth.interceptor.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/interceptors/auth.interceptor.ts)
+- Intercept outbound requests and append the JWT token in `Authorization: Bearer <token>` (already partially implemented).
+- Intercept inbound responses. If a `401 Unauthorized` response is returned, automatically invoke `authService.logout()`, clear the localStorage state, and navigate the user to the login screen. This prevents displaying welcome screens like "Welcome Back, Shivam!" when database is dropped!
+
+---
+
+## 3. Verification Plan
+
+### Automated Verification
+- Verify that both projects compile cleanly.
+
+### Manual Verification
+1. Open the application in the browser at `/patient/dashboard` when logged out. Verify it automatically redirects to `/patient/login`.
+2. Register and log in. Verify a secure JWT token is generated and stored.
+3. Access dashboard and check request headers in browser Network tab. Confirm `Authorization: Bearer <token>` is present.
+4. Manually clear the DB or token from local storage. Confirm that attempting to make any request triggers an immediate logout redirect back to `/login`.

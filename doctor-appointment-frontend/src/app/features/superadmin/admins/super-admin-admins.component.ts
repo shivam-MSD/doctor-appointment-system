@@ -63,4 +63,17 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  rejectAdmin(adminId: string): void {
+    this.adminService.rejectAdmin(adminId).subscribe({
+      next: (res) => {
+        this.successMessage = res.message || 'Clinic Admin rejected successfully.';
+        this.loadAdmins();
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (err) => {
+        this.errorMessage = err?.error?.detail || 'Failed to reject admin.';
+      }
+    });
+  }
 }

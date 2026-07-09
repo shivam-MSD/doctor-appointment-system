@@ -180,6 +180,12 @@ namespace DoctorAppointmentSystem.Migrations
                     b.Property<Guid>("AddressId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("BookingWindowEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("BookingWindowStartDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ClinicName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -196,9 +202,36 @@ namespace DoctorAppointmentSystem.Migrations
                     b.Property<Guid>("DoctorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("DoctorUnavailabilityReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EndTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDoctorAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OpenDays")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ParentClinicId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("RejectionReason")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("StartTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SupportedModes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UnavailabilityReason")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("VerificationStatus")
                         .IsRequired()
@@ -213,6 +246,47 @@ namespace DoctorAppointmentSystem.Migrations
                     b.HasIndex("DoctorId");
 
                     b.ToTable("Clinics", (string)null);
+                });
+
+            modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.ClinicAuditLog", b =>
+                {
+                    b.Property<Guid>("LogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClinicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NewDataJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("OldDataJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("LogId");
+
+                    b.ToTable("ClinicAuditLogs");
                 });
 
             modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.Doctor", b =>

@@ -76,13 +76,10 @@
               <span class="badge badge-pending" *ngIf="!admin.isVerified">Pending</span>
             </td>
             <td class="text-end">
-              <button
-                *ngIf="!admin.isVerified"
-                class="btn btn-confirm"
-                (click)="verifyAdmin(admin.adminId)"
-              >
-                Approve Admin
-              </button>
+              <div class="action-buttons" *ngIf="!admin.isVerified" style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn btn-confirm" (click)="verifyAdmin(admin.adminId)">Approve</button>
+                <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" (click)="rejectAdmin(admin.adminId)">Reject</button>
+              </div>
               <span class="text-muted small" *ngIf="admin.isVerified">Action Locked</span>
             </td>
           </tr>

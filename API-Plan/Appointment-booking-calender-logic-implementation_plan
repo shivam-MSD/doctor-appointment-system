@@ -1,0 +1,76 @@
+# Implementation Plan - Dynamic Appointment Slots & Booking Window Limits
+
+Implement a calendar booking window range (dates selection) configurable by the clinic admin/doctor, dynamic first-come-first-served time slot generation, and real-time double-booking slot exclusion.
+
+## User Review Required
+> [!IMPORTANT]
+> A new Entity Framework migration is required to add `BookingWindowEndDate` (DateTime?, nullable) to the `Clinics` table. 
+> Existing records will default to null (no limit on booking range, or up to 30 days max booking).
+
+## Open Questions
+- None.
+
+## Proposed Changes
+
+### Database & Entity Layer
+#### [MODIFY] [Clinic.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/Clinic.cs)
+- Add property `public DateTime? BookingWindowEndDate { get; set; }`
+
+### DTO Layer
+#### [MODIFY] [ClinicDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/ClinicDTOs.cs)
+- Add `BookingWindowEndDate` (DateTime?, nullable) to `ClinicDto` and `UpdateClinicDto`.
+- Add `BookedSlotDto` holding `string StartTime` and `string EndTime` to fetch already booked times on a specific day.
+
+### Application Services Layer
+#### [MODIFY] [ClinicService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/ClinicService.cs)
+- Map `BookingWindowEndDate` in `GetDoctorClinicsAsync`, `GetClinicsByDoctorIdAsync`, and `GetPendingClinicsAsync`.
+- Set `BookingWindowEndDate` in `UpdateClinicAsync`, `AdminUpdateClinicAsync`, and `VerifyClinicAsync` (merge clone).
+
+#### [MODIFY] [AppointmentService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AppointmentService.cs)
+- Enforce validation in `BookAppointmentAsync`:
+  - Verify appointment date is not in the past.
+  - Verify appointment date does not exceed `BookingWindowEndDate` if configured on the selected clinic.
+- Implement new service method `GetBookedSlotsAsync(Guid doctorId, Guid clinicId, DateTime date)` returning list of booked start/end times.
+
+### Controller Layer
+#### [MODIFY] [AppointmentsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AppointmentsController.cs)
+- Add endpoint `GET /api/appointments/booked-slots` to retrieve booked intervals for a specific doctor, clinic, and date.
+
+---
+
+### Frontend Components
+
+#### [MODIFY] [admin.service.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/services/admin.service.ts)
+- Add helper fields to `adminClinicForm` and `updateClinic` / `updateClinicByAdmin` calls.
+
+#### [MODIFY] [appointment.service.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/services/appointment.service.ts)
+- Add method `getBookedSlots(doctorId: string, clinicId: string, date: string): Observable<any[]>` calling `/api/appointments/booked-slots`.
+
+#### [MODIFY] [clinics.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/clinics/clinics.component.html) & [clinics.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/clinics/clinics.component.ts)
+- Add **Booking Window Expiry Date** calendar date selector (`type="date"`) to Doctor's timings modal.
+- Initialize, clear, and submit `bookingWindowEndDate` in timings payload.
+- Update table view to show if a branch booking range is open up to a specific date.
+
+#### [MODIFY] [dashboard.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.html) & [dashboard.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.ts)
+- Add **Booking Window Expiry Date** calendar date selector (`type="date"`) to Clinic Admin's edit timings form.
+
+#### [MODIFY] [book.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/appointments/book/book.component.html) & [book.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/appointments/book/book.component.ts)
+- Set date picker `min` attribute dynamically to today's date (`yyyy-MM-dd`).
+- Set date picker `max` attribute dynamically to the clinic's `bookingWindowEndDate` if configured.
+- When a date is selected:
+  - Verify that the clinic is open on that weekday.
+  - Dynamically generate 30-minute slots starting from the clinic's opening to closing timings (supporting split shifts!).
+  - Query the backend `/api/appointments/booked-slots` to fetch already booked times on that day.
+  - Exclude/disable slots that overlap with booked times.
+  - Let the patient click a free slot card to choose it. Eliminate typing raw times!
+
+## Verification Plan
+
+### Automated Tests
+- Build client and server to verify zero compilation errors.
+
+### Manual Verification
+- Test setting a "Booking Window Expiry Date" from Doctor/Admin modals.
+- Go to booking page as a patient, select the clinic, verify date picker restricts range strictly.
+- Choose a date, verify 30-minute interval slots render.
+- Book a slot (e.g. 10:00 - 10:30), select the same doctor/date again and verify `10:00 - 10:30` is now disabled/hidden as `[Booked]`.

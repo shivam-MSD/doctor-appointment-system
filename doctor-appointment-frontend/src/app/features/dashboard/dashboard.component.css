@@ -431,4 +431,24 @@
   box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
 }
 
+.weekday-selector span {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.weekday-selector span:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.weekday-selector span.selected {
+  background: rgba(6, 182, 212, 0.15) !important;
+  color: var(--accent-cyan) !important;
+  border-color: rgba(6, 182, 212, 0.4) !important;
+  font-weight: 600;
+}
+
 

@@ -87,21 +87,36 @@
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/superadmin/doctors" routerLinkActive="active">
-          <span class="icon">🩺</span>
-          <span class="label">Doctors</span>
+        <a class="nav-link" routerLink="/superadmin/doctors" routerLinkActive="active" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="icon">🩺</span>
+            <span class="label">Doctors</span>
+          </div>
+          <span *ngIf="pendingDoctorsCount > 0" style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: auto; line-height: 1;">
+            {{ pendingDoctorsCount }}
+          </span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/superadmin/clinics" routerLinkActive="active">
-          <span class="icon">🏢</span>
-          <span class="label">Clinics</span>
+        <a class="nav-link" routerLink="/superadmin/clinics" routerLinkActive="active" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="icon">🏢</span>
+            <span class="label">Clinics</span>
+          </div>
+          <span *ngIf="pendingClinicsCount > 0" style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: auto; line-height: 1;">
+            {{ pendingClinicsCount }}
+          </span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/superadmin/admins" routerLinkActive="active">
-          <span class="icon">🛡️</span>
-          <span class="label">Admins</span>
+        <a class="nav-link" routerLink="/superadmin/admins" routerLinkActive="active" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="icon">🛡️</span>
+            <span class="label">Admins</span>
+          </div>
+          <span *ngIf="pendingAdminsCount > 0" style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: auto; line-height: 1;">
+            {{ pendingAdminsCount }}
+          </span>
         </a>
       </li>
     </ng-container>

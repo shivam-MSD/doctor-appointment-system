@@ -15,5 +15,6 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<IEnumerable<Specialization>> GetSpecializationsAsync();
 		Task<IEnumerable<DoctorDto>> SearchDoctorsAsync(string? state, string? city, Guid? specializationId, string? nameSearch);
 		Task<IEnumerable<ClinicDto>> GetClinicsByDoctorIdAsync(Guid doctorId);
+		Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(Guid doctorId, Guid clinicId, DateTime date, Guid? patientId);
 	}
 }

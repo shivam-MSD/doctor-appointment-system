@@ -21,6 +21,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string VerificationStatus { get; set; }
 		public string AboutDoctor { get; set; }
 		public byte[] ProfileImage { get; set; }
+		public string State { get; set; } = string.Empty;
+		public string City { get; set; } = string.Empty;
 		public DateTime CreatedDate { get; set; }
 		public DateTime UpdatedDate { get; set; }
 	}

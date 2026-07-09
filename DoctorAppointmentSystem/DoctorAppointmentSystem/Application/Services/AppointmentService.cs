@@ -87,6 +87,16 @@ namespace DoctorAppointmentSystem.Application.Services
 				clinic = await _dbContext.Clinics.FindAsync(dto.ClinicId.Value);
 			}
 
+			if (dto.AppointmentDate.Date < DateTime.Today)
+			{
+				throw new BadRequestException("Appointment date cannot be in the past.");
+			}
+
+			if (clinic != null && clinic.BookingWindowEndDate.HasValue && dto.AppointmentDate.Date > clinic.BookingWindowEndDate.Value.Date)
+			{
+				throw new BadRequestException($"Appointments at this branch are only open until {clinic.BookingWindowEndDate.Value:yyyy-MM-dd}. Please choose an earlier date.");
+			}
+
 			// 8. Create the appointment
 			var appointment = new Appointment
 			{
@@ -268,7 +278,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (doctor != null)
 			{
 				var clinicIds = await _dbContext.Clinics
-					.Where(c => c.Doctor.DoctorId == doctor.DoctorId)
+					.Where(c => c.Doctor.DoctorId == doctor.DoctorId && c.ParentClinicId == null)
 					.Select(c => c.ClinicId)
 					.ToListAsync();
 
@@ -443,7 +453,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				.Include(d => d.Specialization)
 				.Include(d => d.User)
 				.Where(d => d.VerificationStatus == EVerificationStatus.Verified)
-				.Where(d => _dbContext.Clinics.Any(c => c.Doctor.DoctorId == d.DoctorId && c.VerificationStatus == EVerificationStatus.Verified));
+				.Where(d => _dbContext.Clinics.Any(c => c.Doctor.DoctorId == d.DoctorId && c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null));
 
 			// 2. Filter by location (State & City) if provided
 			if (!string.IsNullOrWhiteSpace(state) && !string.IsNullOrWhiteSpace(city))
@@ -451,7 +461,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				var doctorIdsAtLocation = await _dbContext.Clinics
 					.Include(c => c.Address)
 					.Include(c => c.Doctor)
-					.Where(c => c.VerificationStatus == EVerificationStatus.Verified && c.Address.State.ToLower() == state.ToLower() && c.Address.City.ToLower() == city.ToLower())
+					.Where(c => c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null && c.Address.State.ToLower() == state.ToLower() && c.Address.City.ToLower() == city.ToLower())
 					.Select(c => c.Doctor.DoctorId)
 					.Distinct()
 					.ToListAsync();
@@ -522,7 +532,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			return await _dbContext.Clinics
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
-				.Where(c => c.Doctor.DoctorId == doctorId && c.VerificationStatus == EVerificationStatus.Verified)
+				.Where(c => c.Doctor.DoctorId == doctorId && c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null)
 				.Select(c => new ClinicDto
 				{
 					ClinicId = c.ClinicId,
@@ -538,9 +548,64 @@ namespace DoctorAppointmentSystem.Application.Services
 					RejectionReason = c.RejectionReason,
 					Addressline1 = c.Address.Addressline1,
 					Addressline2 = c.Address.Addressline2,
-					Area = c.Address.Area
+					Area = c.Address.Area,
+					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == c.ClinicId),
+					AdminName = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault(),
+					AdminEmail = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.User.Email).FirstOrDefault(),
+					AdminMobileNo = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.MobileNo).FirstOrDefault(),
+					AdminIsVerified = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.IsVerified).FirstOrDefault(),
+					OpenDays = c.OpenDays,
+					StartTime = c.StartTime,
+					EndTime = c.EndTime,
+					IsAvailable = c.IsAvailable,
+					UnavailabilityReason = c.UnavailabilityReason,
+					IsDoctorAvailable = c.IsDoctorAvailable,
+					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
+					BookingWindowEndDate = c.BookingWindowEndDate,
+					BookingWindowStartDate = c.BookingWindowStartDate,
+					SupportedModes = c.SupportedModes
 				})
 				.ToListAsync();
+		}
+
+		public async Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(Guid doctorId, Guid clinicId, DateTime date, Guid? patientId)
+		{
+			var targetDate = date.Date;
+
+			var doctorSlotsQuery = _dbContext.Appointments
+				.Where(app => app.EAppointmentStatus != EAppointmentStatus.Cancelled)
+				.Where(app => EF.Property<Guid>(app, "DoctorId") == doctorId)
+				.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinicId)
+				.Where(app => app.AppointmentDate == targetDate);
+
+			var doctorSlots = await doctorSlotsQuery
+				.Select(app => new BookedSlotDto
+				{
+					StartTime = app.StartTime.ToString(@"hh\:mm"),
+					EndTime = app.EndTime.ToString(@"hh\:mm")
+				})
+				.ToListAsync();
+
+			if (patientId.HasValue && patientId.Value != Guid.Empty)
+			{
+				var patientSlots = await _dbContext.Appointments
+					.Where(app => app.EAppointmentStatus != EAppointmentStatus.Cancelled)
+					.Where(app => EF.Property<Guid>(app, "PatientId") == patientId.Value)
+					.Where(app => app.AppointmentDate == targetDate)
+					.Select(app => new BookedSlotDto
+					{
+						StartTime = app.StartTime.ToString(@"hh\:mm"),
+						EndTime = app.EndTime.ToString(@"hh\:mm")
+					})
+					.ToListAsync();
+
+				doctorSlots.AddRange(patientSlots);
+			}
+
+			return doctorSlots
+				.GroupBy(s => new { s.StartTime, s.EndTime })
+				.Select(g => g.First())
+				.ToList();
 		}
 	}
 }

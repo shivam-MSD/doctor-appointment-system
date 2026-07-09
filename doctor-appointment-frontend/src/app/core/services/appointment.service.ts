@@ -74,4 +74,15 @@ export class AppointmentService {
   getClinicsForDoctor(doctorId: string): Observable<any[]> {
     return this.http.get<any[]>(`/api/appointments/doctors/${doctorId}/clinics`);
   }
+
+  getBookedSlots(doctorId: string, clinicId: string, date: string, patientId?: string): Observable<any[]> {
+    let params = new HttpParams()
+      .set('doctorId', doctorId)
+      .set('clinicId', clinicId)
+      .set('date', date);
+    if (patientId) {
+      params = params.set('patientId', patientId);
+    }
+    return this.http.get<any[]>('/api/appointments/booked-slots', { params });
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -15,12 +15,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
   showNotificationsPanel = false;
   private signalrSub?: Subscription;
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const clickedInside = target.closest('.notification-container');
+    if (!clickedInside) {
+      this.showNotificationsPanel = false;
+    }
+  }
+
   constructor(
     public authService: AuthService,
     public themeService: ThemeService,
     private notificationService: NotificationService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const userId = this.authService.getUserId();

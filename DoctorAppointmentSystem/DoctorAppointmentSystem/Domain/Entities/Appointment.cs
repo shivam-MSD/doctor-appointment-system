@@ -42,7 +42,8 @@ namespace DoctorAppointmentSystem.Domain.Entities
 
 	public enum EConsultationType
 	{
-
+		InPerson,
+		VideoConsultation
 	}
 
 	public enum EAppointmentStatus

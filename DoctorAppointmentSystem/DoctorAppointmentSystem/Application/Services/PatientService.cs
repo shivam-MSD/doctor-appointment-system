@@ -148,7 +148,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				// Match clinic addresses
 				var matchedDoctorIds = await _dbContext.Clinics
-					.Where(c => c.VerificationStatus == EVerificationStatus.Verified)
+					.Where(c => c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null)
 					.Where(c => 
 						(string.IsNullOrEmpty(state) || c.Address.State.ToLower().Contains(state.ToLower())) &&
 						(string.IsNullOrEmpty(city) || c.Address.City.ToLower().Contains(city.ToLower()))
@@ -185,6 +185,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					VerificationStatus = d.VerificationStatus.ToString(),
 					AboutDoctor = d.AboutDoctor ?? string.Empty,
 					ProfileImage = d.ProfileImage ?? new byte[0],
+					State = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.State).FirstOrDefault() ?? string.Empty,
+					City = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.City).FirstOrDefault() ?? string.Empty,
 					CreatedDate = d.CreatedDate,
 					UpdatedDate = d.UpdatedDate
 				})

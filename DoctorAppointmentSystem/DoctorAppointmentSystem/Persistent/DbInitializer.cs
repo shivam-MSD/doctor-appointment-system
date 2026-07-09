@@ -118,6 +118,9 @@ namespace DoctorAppointmentSystem.Persistent
 				}
 			}
 			await db.SaveChangesAsync();
+
+			// Default legacy clinics to true availability
+			await db.Database.ExecuteSqlRawAsync("UPDATE Clinics SET IsAvailable = 1 WHERE IsAvailable = 0 AND UnavailabilityReason IS NULL");
 		}
 	}
 }

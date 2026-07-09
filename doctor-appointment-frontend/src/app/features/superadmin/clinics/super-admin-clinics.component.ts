@@ -24,6 +24,11 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
   selectedClinicIdForRejection = '';
   rejectionReason = '';
 
+  // History Tracking states
+  showHistoryModal = false;
+  selectedClinicHistory: any[] = [];
+  selectedClinicNameForHistory = '';
+
   constructor(
     private adminService: AdminService,
     private toastService: ToastService,
@@ -101,5 +106,81 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
         this.toastService.showError(err?.error?.detail || 'Failed to reject clinic.');
       }
     });
+  }
+
+  // History methods
+  viewHistory(clinicId: string, clinicName: string): void {
+    this.selectedClinicNameForHistory = clinicName;
+    this.adminService.getClinicHistory(clinicId).subscribe({
+      next: (res) => {
+        this.selectedClinicHistory = res;
+        this.showHistoryModal = true;
+      },
+      error: () => {
+        this.toastService.showError('Failed to load clinic audit history.');
+      }
+    });
+  }
+
+  closeHistoryModal(): void {
+    this.showHistoryModal = false;
+    this.selectedClinicHistory = [];
+    this.selectedClinicNameForHistory = '';
+  }
+
+  parseChanges(log: any): any[] {
+    try {
+      const oldObj = JSON.parse(log.oldDataJson || '{}');
+      const newObj = JSON.parse(log.newDataJson || '{}');
+      const changes: any[] = [];
+
+      const fieldLabels: { [key: string]: string } = {
+        ClinicName: 'Clinic Name',
+        ClinicType: 'Clinic Type',
+        OpenDays: 'Open Days',
+        StartTime: 'Opening Time',
+        EndTime: 'Closing Time',
+        IsAvailable: 'Branch Active/Open',
+        UnavailabilityReason: 'Branch Closed Reason',
+        IsDoctorAvailable: 'Doctor Available Personally',
+        DoctorUnavailabilityReason: 'Unavailability Reason',
+        BookingWindowEndDate: 'Booking End Date',
+        BookingWindowStartDate: 'Booking Start Date',
+        SupportedModes: 'Supported Modes',
+        State: 'State',
+        City: 'City',
+        Pincode: 'Pincode',
+        Area: 'Area',
+        Addressline1: 'Address Line 1',
+        Addressline2: 'Address Line 2'
+      };
+
+      const keys = Object.keys(fieldLabels);
+      for (const key of keys) {
+        let oldVal = oldObj[key];
+        let newVal = newObj[key];
+
+        if (key === 'BookingWindowEndDate' || key === 'BookingWindowStartDate') {
+          if (oldVal) oldVal = new Date(oldVal).toLocaleDateString();
+          if (newVal) newVal = new Date(newVal).toLocaleDateString();
+        }
+
+        if (typeof oldVal === 'boolean') oldVal = oldVal ? 'Yes' : 'No';
+        if (typeof newVal === 'boolean') newVal = newVal ? 'Yes' : 'No';
+
+        const normalize = (val: any) => (val === null || val === undefined) ? '' : String(val).trim();
+        if (normalize(oldVal) !== normalize(newVal)) {
+          changes.push({
+            label: fieldLabels[key],
+            oldVal: normalize(oldVal) || 'N/A',
+            newVal: normalize(newVal) || 'N/A'
+          });
+        }
+      }
+
+      return changes;
+    } catch (e) {
+      return [];
+    }
   }
 }

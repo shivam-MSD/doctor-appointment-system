@@ -87,8 +87,8 @@
             <td>{{ doctor.createdDate | date:'mediumDate' }}</td>
             <td class="text-end">
               <div class="action-buttons" *ngIf="doctor.verificationStatus === 'Pending'">
-                <button class="btn btn-confirm" (click)="approveDoctor(doctor.userId)">Approve</button>
-                <button class="btn btn-cancel" (click)="rejectDoctor(doctor.userId)">Reject</button>
+                <button class="btn btn-confirm" (click)="approveDoctor(doctor.doctorId)">Approve</button>
+                <button class="btn btn-cancel" (click)="rejectDoctor(doctor.doctorId)">Reject</button>
               </div>
               <span class="text-muted small" *ngIf="doctor.verificationStatus !== 'Pending'">Action Locked</span>
             </td>

@@ -44,7 +44,10 @@
             <td>{{ doctor.hospitalName }}</td>
             <td>{{ doctor.createdDate | date:'mediumDate' }}</td>
             <td class="text-end">
-              <button class="btn btn-confirm" (click)="approveDoctor(doctor.userId)">Approve Doctor</button>
+              <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn btn-confirm" (click)="approveDoctor(doctor.doctorId)">Approve</button>
+                <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" (click)="rejectDoctor(doctor.doctorId)">Reject</button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -141,7 +144,10 @@
             <td>{{ admin.email }}</td>
             <td>{{ admin.mobileNo }}</td>
             <td class="text-end">
-              <button class="btn btn-confirm" (click)="verifyAdmin(admin.adminId)">Approve Admin</button>
+              <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn btn-confirm" (click)="verifyAdmin(admin.adminId)">Approve</button>
+                <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" (click)="rejectAdmin(admin.adminId)">Reject</button>
+              </div>
             </td>
           </tr>
         </tbody>

@@ -1,0 +1,6 @@
+I can design and write the code for this history tracking system for you:
+
+Create the AuditLog domain entity and table (and run the EF migration).
+Log history entries automatically in ClinicService.cs during edits, approvals, and rejections.
+Expose an API & UI timeline for the Super Admin to click "View Change History" and see a history of all modifications and who approved/rejected them.
+Would you like to proceed with this enhancement?

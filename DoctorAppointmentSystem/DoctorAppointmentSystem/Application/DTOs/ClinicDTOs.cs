@@ -101,6 +101,12 @@ namespace DoctorAppointmentSystem.Application.DTOs
 
 		[MaxLength(250)]
 		public string? Addressline2 { get; set; }
+
+		public string? OpenDays { get; set; }
+		public string? StartTime { get; set; }
+		public string? EndTime { get; set; }
+		public bool IsAvailable { get; set; } = true;
+		public string? UnavailabilityReason { get; set; }
 	}
 
 	public class RegisterAdminForClinicDto
@@ -149,6 +155,21 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string VerificationStatus { get; set; } = "Pending";
 		public string? RejectionReason { get; set; }
 		public bool HasAdmin { get; set; }
+		public string? AdminName { get; set; }
+		public string? AdminEmail { get; set; }
+		public string? AdminMobileNo { get; set; }
+		public bool AdminIsVerified { get; set; }
+		public Guid? ParentClinicId { get; set; }
+		public string? OpenDays { get; set; }
+		public string? StartTime { get; set; }
+		public string? EndTime { get; set; }
+		public bool IsAvailable { get; set; } = true;
+		public string? UnavailabilityReason { get; set; }
+		public bool IsDoctorAvailable { get; set; } = true;
+		public string? DoctorUnavailabilityReason { get; set; }
+		public DateTime? BookingWindowEndDate { get; set; }
+		public DateTime? BookingWindowStartDate { get; set; }
+		public string? SupportedModes { get; set; }
 	}
 
 	public class UpdateClinicDto
@@ -183,6 +204,17 @@ namespace DoctorAppointmentSystem.Application.DTOs
 
 		[MaxLength(250)]
 		public string? Addressline2 { get; set; }
+
+		public string? OpenDays { get; set; }
+		public string? StartTime { get; set; }
+		public string? EndTime { get; set; }
+		public bool IsAvailable { get; set; } = true;
+		public string? UnavailabilityReason { get; set; }
+		public bool IsDoctorAvailable { get; set; } = true;
+		public string? DoctorUnavailabilityReason { get; set; }
+		public DateTime? BookingWindowEndDate { get; set; }
+		public DateTime? BookingWindowStartDate { get; set; }
+		public string? SupportedModes { get; set; }
 	}
 
 	public class RejectClinicDto
@@ -202,5 +234,11 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string LastName { get; set; }
 		public string MobileNo { get; set; }
 		public bool IsVerified { get; set; }
+	}
+
+	public class BookedSlotDto
+	{
+		public string StartTime { get; set; } = string.Empty;
+		public string EndTime { get; set; } = string.Empty;
 	}
 }

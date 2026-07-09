@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Application.Services;
 
@@ -6,6 +7,7 @@ namespace DoctorAppointmentSystem.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
+	[Authorize]
 	public class AppointmentsController : ControllerBase
 	{
 		private readonly IAppointmentService _appointmentService;
@@ -136,6 +138,17 @@ namespace DoctorAppointmentSystem.Controllers
 		public async Task<IActionResult> GetClinicsForDoctor(Guid doctorId)
 		{
 			var result = await _appointmentService.GetClinicsByDoctorIdAsync(doctorId);
+			return Ok(result);
+		}
+
+		[HttpGet("booked-slots")]
+		public async Task<IActionResult> GetBookedSlots(
+			[FromQuery] Guid doctorId,
+			[FromQuery] Guid clinicId,
+			[FromQuery] DateTime date,
+			[FromQuery] Guid? patientId)
+		{
+			var result = await _appointmentService.GetBookedSlotsAsync(doctorId, clinicId, date, patientId);
 			return Ok(result);
 		}
 	}

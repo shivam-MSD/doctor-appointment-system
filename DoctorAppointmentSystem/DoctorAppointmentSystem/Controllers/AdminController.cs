@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using DoctorAppointmentSystem.Application.Services;
 
 namespace DoctorAppointmentSystem.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
+	[Authorize(Roles = "SuperAdmin")]
 	public class AdminController : ControllerBase
 	{
 		private readonly IAdminService _adminService;

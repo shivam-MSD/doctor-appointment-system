@@ -9,9 +9,14 @@ export interface Appointment {
   endTime: string;
   status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
   reason: string;
-  consultationType: 'InPerson' | 'VideoConsultation';
+  consultationType: EConsultationType | string;
   clinicId?: string;
   clinicName?: string;
+}
+
+export enum EConsultationType {
+  InPerson = 'InPerson',
+  VideoConsultation = 'VideoConsultation'
 }
 
 export interface PagedResult<T> {

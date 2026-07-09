@@ -1,12 +1,14 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using DoctorAppointmentSystem.Application.Services;
 
 namespace DoctorAppointmentSystem.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
+	[Authorize]
 	public class NotificationsController : ControllerBase
 	{
 		private readonly INotificationService _notificationService;

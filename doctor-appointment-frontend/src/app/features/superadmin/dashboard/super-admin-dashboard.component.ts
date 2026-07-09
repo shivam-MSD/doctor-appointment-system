@@ -100,6 +100,30 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  rejectDoctor(doctorUserId: string): void {
+    this.adminService.rejectDoctor(doctorUserId).subscribe({
+      next: (res) => {
+        this.toastService.showSuccess(res.message || 'Doctor rejected successfully.');
+        this.loadPendingRequests();
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to reject doctor.');
+      }
+    });
+  }
+
+  rejectAdmin(adminId: string): void {
+    this.adminService.rejectAdmin(adminId).subscribe({
+      next: (res) => {
+        this.toastService.showSuccess(res.message || 'Clinic Admin rejected successfully.');
+        this.loadPendingRequests();
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to reject admin.');
+      }
+    });
+  }
+
   // Reject clinic methods
   openRejectClinicModal(clinicId: string): void {
     this.selectedClinicIdForRejection = clinicId;

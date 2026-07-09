@@ -69,6 +69,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					ConsultationFee = d.ConsultationFee,
 					AboutDoctor = d.AboutDoctor ?? string.Empty,
 					VerificationStatus = d.VerificationStatus.ToString(),
+					State = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.State).FirstOrDefault() ?? string.Empty,
+					City = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.City).FirstOrDefault() ?? string.Empty,
 					CreatedDate = d.CreatedDate,
 					UpdatedDate = d.UpdatedDate
 				})
@@ -133,6 +135,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					ConsultationFee = d.ConsultationFee,
 					AboutDoctor = d.AboutDoctor ?? string.Empty,
 					VerificationStatus = d.VerificationStatus.ToString(),
+					State = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.State).FirstOrDefault() ?? string.Empty,
+					City = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.City).FirstOrDefault() ?? string.Empty,
 					CreatedDate = d.CreatedDate,
 					UpdatedDate = d.UpdatedDate
 				})
@@ -144,6 +148,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			var query = _dbContext.Clinics
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
+				.Where(c => c.ParentClinicId == null || c.VerificationStatus == EVerificationStatus.UpdatedPending)
 				.AsQueryable();
 
 			if (!string.IsNullOrEmpty(search))
@@ -175,7 +180,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			return await query
-				.OrderByDescending(c => c.CreatedDate)
+				.OrderBy(c => c.VerificationStatus == EVerificationStatus.Verified ? 1 : 0)
+				.ThenByDescending(c => c.CreatedDate)
 				.Select(c => new ClinicDto
 				{
 					ClinicId = c.ClinicId,
@@ -189,7 +195,12 @@ namespace DoctorAppointmentSystem.Application.Services
 					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
 					VerificationStatus = c.VerificationStatus.ToString(),
 					RejectionReason = c.RejectionReason,
-					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == c.ClinicId)
+					ParentClinicId = c.ParentClinicId,
+					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)),
+					AdminName = _dbContext.Admins.Where(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault(),
+					AdminEmail = _dbContext.Admins.Where(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)).Select(a => a.User.Email).FirstOrDefault(),
+					AdminMobileNo = _dbContext.Admins.Where(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)).Select(a => a.MobileNo).FirstOrDefault(),
+					AdminIsVerified = _dbContext.Admins.Where(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)).Select(a => a.IsVerified).FirstOrDefault()
 				})
 				.ToListAsync();
 		}

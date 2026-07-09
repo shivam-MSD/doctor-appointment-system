@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Application.Services;
 
@@ -8,6 +9,7 @@ namespace DoctorAppointmentSystem.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
+	[Authorize]
 	public class ClinicsController : ControllerBase
 	{
 		private readonly IClinicService _clinicService;
@@ -69,6 +71,13 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		[HttpGet("doctor/{doctorId:guid}")]
+		public async Task<IActionResult> GetClinicsByDoctorId(Guid doctorId)
+		{
+			var result = await _clinicService.GetClinicsByDoctorIdAsync(doctorId);
+			return Ok(result);
+		}
+
 		[HttpGet("admins")]
 		public async Task<IActionResult> GetDoctorAdmins([FromHeader(Name = "X-User-Id")] Guid doctorUserId)
 		{
@@ -123,11 +132,49 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(new { Message = "Clinic details updated successfully. Pending Super Admin verification." });
 		}
 
+		[HttpPut("admin-update")]
+		public async Task<IActionResult> AdminUpdateClinic(
+			[FromHeader(Name = "X-User-Id")] Guid adminUserId,
+			[FromBody] UpdateClinicDto dto)
+		{
+			if (adminUserId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header representing the authenticated admin.");
+			}
+			await _clinicService.AdminUpdateClinicAsync(adminUserId, dto);
+			return Ok(new { Message = "Clinic details updated successfully." });
+		}
+
+		[HttpGet("my-clinic")]
+		public async Task<IActionResult> GetMyClinic([FromHeader(Name = "X-User-Id")] Guid adminUserId)
+		{
+			if (adminUserId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header representing the authenticated admin.");
+			}
+			var result = await _clinicService.GetAdminClinicAsync(adminUserId);
+			return Ok(result);
+		}
+
 		[HttpPost("verify-admin/{adminId}")]
 		public async Task<IActionResult> VerifyAdmin(Guid adminId)
 		{
 			await _clinicService.VerifyAdminAsync(adminId);
 			return Ok(new { Message = $"Clinic Admin '{adminId}' verified successfully." });
+		}
+
+		[HttpPost("reject-admin/{adminId}")]
+		public async Task<IActionResult> RejectAdmin(Guid adminId)
+		{
+			await _clinicService.RejectAdminAsync(adminId);
+			return Ok(new { Message = $"Clinic Admin '{adminId}' has been rejected." });
+		}
+
+		[HttpGet("{clinicId:guid}/history")]
+		public async Task<IActionResult> GetClinicHistory(Guid clinicId)
+		{
+			var result = await _clinicService.GetClinicHistoryAsync(clinicId);
+			return Ok(result);
 		}
 	}
 }

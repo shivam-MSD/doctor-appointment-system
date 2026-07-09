@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Application.Services;
 
@@ -6,6 +7,7 @@ namespace DoctorAppointmentSystem.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
+	[Authorize]
 	public class UsersController : ControllerBase
 	{
 		private readonly IUserService _userService;
