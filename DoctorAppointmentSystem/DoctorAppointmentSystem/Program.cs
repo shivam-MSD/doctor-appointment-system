@@ -57,7 +57,11 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IClinicS
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IEmailService, DoctorAppointmentSystem.Application.Services.EmailService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
 builder.Services.AddSignalR();
-builder.Services.AddDistributedMemoryCache();
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+	options.Configuration = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
+	options.InstanceName = "HealSync_";
+});
 
 var app = builder.Build();
 

@@ -21,45 +21,22 @@
     <form (submit)="loadClinics(); $event.preventDefault()" class="filter-form">
       <div class="filter-col flex-2">
         <label class="form-label">Search Clinic Name / Doctor</label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="Search clinics..."
-          [(ngModel)]="searchQuery"
-          name="searchQuery"
-          (ngModelChange)="loadClinics()"
-        >
+        <input type="text" class="form-control" placeholder="Search clinics..." [(ngModel)]="searchQuery"
+          name="searchQuery" (ngModelChange)="loadClinics()">
       </div>
       <div class="filter-col flex-1">
         <label class="form-label">State</label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="e.g. Maharashtra"
-          [(ngModel)]="stateFilter"
-          name="stateFilter"
-          (ngModelChange)="loadClinics()"
-        >
+        <input type="text" class="form-control" placeholder="e.g. Maharashtra" [(ngModel)]="stateFilter"
+          name="stateFilter" (ngModelChange)="loadClinics()">
       </div>
       <div class="filter-col flex-1">
         <label class="form-label">City</label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="e.g. Mumbai"
-          [(ngModel)]="cityFilter"
-          name="cityFilter"
-          (ngModelChange)="loadClinics()"
-        >
+        <input type="text" class="form-control" placeholder="e.g. Mumbai" [(ngModel)]="cityFilter" name="cityFilter"
+          (ngModelChange)="loadClinics()">
       </div>
       <div class="filter-col flex-1">
         <label class="form-label">Status</label>
-        <select
-          class="form-control"
-          [(ngModel)]="verifiedFilter"
-          name="verifiedFilter"
-          (change)="loadClinics()"
-        >
+        <select class="form-control" [(ngModel)]="verifiedFilter" name="verifiedFilter" (change)="loadClinics()">
           <option [value]="undefined">All Statuses</option>
           <option [value]="true">Verified</option>
           <option [value]="false">Pending Verification</option>
@@ -74,7 +51,7 @@
     <div class="table-header">
       <h3>Clinics Roster</h3>
     </div>
-    
+
     <div class="table-responsive" *ngIf="clinics.length > 0; else noClinics">
       <table class="dashboard-table">
         <thead>
@@ -94,24 +71,31 @@
               <span class="truncate-text" [title]="clinic.clinicName">{{ clinic.clinicName }}</span>
               <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
                 <!-- New Record Badge -->
-                <span class="badge" *ngIf="clinic.verificationStatus === 'Pending'" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                <span class="badge" *ngIf="clinic.verificationStatus === 'Pending'"
+                  style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
                   🆕 New Record
                 </span>
                 <!-- Edit Request Badge -->
-                <span class="badge" *ngIf="clinic.verificationStatus === 'UpdatedPending'" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                <span class="badge" *ngIf="clinic.verificationStatus === 'UpdatedPending'"
+                  style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
                   ✏️ Edit Request
                 </span>
                 <!-- Verified Badge -->
-                <span class="badge" *ngIf="clinic.verificationStatus === 'Verified'" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                <span class="badge" *ngIf="clinic.verificationStatus === 'Verified'"
+                  style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
                   ✓ Verified
                 </span>
                 <!-- Rejected Badge -->
-                <div *ngIf="clinic.verificationStatus === 'Rejected'" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                  <span class="badge" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                <div *ngIf="clinic.verificationStatus === 'Rejected'"
+                  style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                  <span class="badge"
+                    style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
                     ✕ Rejected
                   </span>
-                  <div *ngIf="clinic.rejectionReason" class="rejection-reason-container" style="font-size: 0.72rem; color: #ef4444; font-style: italic;">
-                    Reason: {{ clinic.rejectionReason | slice:0:30 }}{{ clinic.rejectionReason.length > 30 ? '...' : '' }}
+                  <div *ngIf="clinic.rejectionReason" class="rejection-reason-container"
+                    style="font-size: 0.72rem; color: #ef4444; font-style: italic;">
+                    Reason: {{ clinic.rejectionReason | slice:0:30 }}{{ clinic.rejectionReason.length > 30 ? '...' : ''
+                    }}
                     <span class="reason-tooltip" *ngIf="clinic.rejectionReason.length > 30">
                       {{ clinic.rejectionReason }}
                     </span>
@@ -131,19 +115,23 @@
             </td>
             <td class="text-end">
               <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
-                <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);" (click)="openDetailsModal(clinic)">
+                <button class="btn btn-secondary"
+                  style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);"
+                  (click)="openDetailsModal(clinic)">
                   👁️ View Details
                 </button>
-                <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color);" (click)="viewHistory(clinic.parentClinicId || clinic.clinicId, clinic.clinicName)">
+                <button class="btn btn-secondary"
+                  style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color);"
+                  (click)="viewHistory(clinic.parentClinicId || clinic.clinicId, clinic.clinicName)">
                   ⏳ History
                 </button>
                 <!-- Direct approval actions removed. Admin must open details view. -->
-                <span *ngIf="clinic.verificationStatus === 'Verified'" style="font-size: 0.85rem; color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px;">
+                <!-- <span *ngIf="clinic.verificationStatus === 'Verified'" style="font-size: 0.85rem; color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px;">
                   ✓ Approved
                 </span>
                 <span *ngIf="clinic.verificationStatus === 'Rejected'" style="font-size: 0.85rem; color: #ef4444; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px;">
                   ✕ Rejected
-                </span>
+                </span> -->
               </div>
             </td>
           </tr>
@@ -170,20 +158,16 @@
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label" for="rejectionReason">Reason for Rejection *</label>
-            <textarea 
-              id="rejectionReason"
-              name="rejectionReason"
-              class="form-control" 
-              rows="4" 
-              [(ngModel)]="rejectionReason" 
-              required
+            <textarea id="rejectionReason" name="rejectionReason" class="form-control" rows="4"
+              [(ngModel)]="rejectionReason" required
               placeholder="Provide specific feedback to the doctor so they can correct it (e.g. invalid license or incorrect address typo).">
             </textarea>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-cancel" (click)="closeRejectModal()">Cancel</button>
-          <button type="submit" class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white;">
+          <button type="submit" class="btn btn-cancel"
+            style="background: #ef4444; border-color: #ef4444; color: white;">
             Reject Clinic
           </button>
         </div>
@@ -194,61 +178,78 @@
   <!-- CLINIC CHANGE HISTORY TIMELINE MODAL -->
   <div class="modal-backdrop" *ngIf="showHistoryModal">
     <div class="glass-card modal-container" style="max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto;">
-      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
-        <h3 style="margin: 0; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+      <div class="modal-header"
+        style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+        <h3
+          style="margin: 0; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
           <span>⏳</span> {{ selectedClinicNameForHistory }} - Change History
         </h3>
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
       </div>
 
       <div class="modal-body" style="padding-top: 0;">
-        <div *ngIf="selectedClinicHistory.length === 0" style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+        <div *ngIf="selectedClinicHistory.length === 0"
+          style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
           <span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">📭</span>
           No audit history records found for this clinic.
         </div>
 
-        <div *ngIf="selectedClinicHistory.length > 0" class="history-timeline" style="position: relative; padding-left: 30px; margin-left: 10px; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 24px;">
-          
+        <div *ngIf="selectedClinicHistory.length > 0" class="history-timeline"
+          style="position: relative; padding-left: 30px; margin-left: 10px; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 24px;">
+
           <div *ngFor="let log of selectedClinicHistory" class="timeline-item" style="position: relative;">
-            
+
             <!-- Timeline indicator node -->
-            <div class="timeline-indicator" 
-                 style="position: absolute; left: -39px; top: 2px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #0f172a; display: flex; align-items: center; justify-content: center; font-size: 0.65rem;"
-                 [style.background]="log.action === 'Approved' ? '#10b981' : (log.action === 'Rejected' ? '#ef4444' : (log.action === 'Created' ? '#06b6d4' : '#8b5cf6'))">
+            <div class="timeline-indicator"
+              style="position: absolute; left: -39px; top: 2px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #0f172a; display: flex; align-items: center; justify-content: center; font-size: 0.65rem;"
+              [style.background]="log.action === 'Approved' ? '#10b981' : (log.action === 'Rejected' ? '#ef4444' : (log.action === 'Created' ? '#06b6d4' : '#8b5cf6'))">
             </div>
 
             <!-- Content Card -->
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <div
+              style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                <span class="badge" 
-                      style="font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;"
-                      [style.background]="log.action === 'Approved' ? 'rgba(16, 185, 129, 0.1)' : (log.action === 'Rejected' ? 'rgba(239, 68, 68, 0.1)' : (log.action === 'Created' ? 'rgba(6, 182, 212, 0.1)' : 'rgba(139, 92, 246, 0.1)'))"
-                      [style.color]="log.action === 'Approved' ? '#10b981' : (log.action === 'Rejected' ? '#ef4444' : (log.action === 'Created' ? 'var(--accent-cyan)' : '#a78bfa'))"
-                      [style.border]="log.action === 'Approved' ? '1px solid rgba(16, 185, 129, 0.2)' : (log.action === 'Rejected' ? '1px solid rgba(239, 68, 68, 0.2)' : (log.action === 'Created' ? '1px solid rgba(6, 182, 212, 0.2)' : '1px solid rgba(139, 92, 246, 0.2)'))">
-                  {{ log.action === 'EditSubmitted' ? 'Edit Request' : (log.action === 'TimingsUpdated' ? 'Timings Edit' : log.action) }}
+                <span class="badge"
+                  style="font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;"
+                  [style.background]="log.action === 'Approved' ? 'rgba(16, 185, 129, 0.1)' : (log.action === 'Rejected' ? 'rgba(239, 68, 68, 0.1)' : (log.action === 'Created' ? 'rgba(6, 182, 212, 0.1)' : 'rgba(139, 92, 246, 0.1)'))"
+                  [style.color]="log.action === 'Approved' ? '#10b981' : (log.action === 'Rejected' ? '#ef4444' : (log.action === 'Created' ? 'var(--accent-cyan)' : '#a78bfa'))"
+                  [style.border]="log.action === 'Approved' ? '1px solid rgba(16, 185, 129, 0.2)' : (log.action === 'Rejected' ? '1px solid rgba(239, 68, 68, 0.2)' : (log.action === 'Created' ? '1px solid rgba(6, 182, 212, 0.2)' : '1px solid rgba(139, 92, 246, 0.2)'))">
+                  {{ log.action === 'EditSubmitted' ? 'Edit Request' : (log.action === 'TimingsUpdated' ? 'Timings Edit'
+                  : log.action) }}
                 </span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ log.timestamp | date:'medium' }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ log.timestamp | date:'medium'
+                  }}</span>
               </div>
 
               <div style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px; font-weight: 500;">
-                <span style="color: var(--text-secondary);">By:</span> <strong>{{ log.actorName || 'System / Admin' }}</strong>
+                <span style="color: var(--text-secondary);">By:</span> <strong>{{ log.actorName || 'System / Admin'
+                  }}</strong>
               </div>
 
               <!-- Notes -->
-              <div *ngIf="log.notes" style="background: rgba(255,255,255,0.01); border-left: 3px solid var(--accent-cyan); padding: 6px 10px; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px; border-radius: 0 4px 4px 0; font-style: italic;">
+              <div *ngIf="log.notes"
+                style="background: rgba(255,255,255,0.01); border-left: 3px solid var(--accent-cyan); padding: 6px 10px; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px; border-radius: 0 4px 4px 0; font-style: italic;">
                 {{ log.notes }}
               </div>
 
               <!-- Change Diff details -->
-              <div *ngIf="parseChanges(log).length > 0" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
-                <h5 style="margin: 0 0 6px 0; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Changes Modified:</h5>
+              <div *ngIf="parseChanges(log).length > 0"
+                style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                <h5
+                  style="margin: 0 0 6px 0; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                  Changes Modified:</h5>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
-                  <div *ngFor="let chg of parseChanges(log)" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.03);">
+                  <div *ngFor="let chg of parseChanges(log)"
+                    style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.03);">
                     <span style="font-weight: 600; color: var(--text-primary);">{{ chg.label }}</span>
                     <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
-                      <span style="text-decoration: line-through; color: #ef4444; background: rgba(239, 68, 68, 0.05); padding: 1px 4px; border-radius: 3px;">{{ chg.oldVal }}</span>
+                      <span
+                        style="text-decoration: line-through; color: #ef4444; background: rgba(239, 68, 68, 0.05); padding: 1px 4px; border-radius: 3px;">{{
+                        chg.oldVal }}</span>
                       <span>&rarr;</span>
-                      <span style="color: #10b981; background: rgba(16, 185, 129, 0.05); padding: 1px 4px; border-radius: 3px; font-weight: 600;">{{ chg.newVal }}</span>
+                      <span
+                        style="color: #10b981; background: rgba(16, 185, 129, 0.05); padding: 1px 4px; border-radius: 3px; font-weight: 600;">{{
+                        chg.newVal }}</span>
                     </span>
                   </div>
                 </div>
@@ -267,101 +268,101 @@
 
   <!-- CLINIC REGISTRATION DETAILS MODAL -->
   <div class="modal-backdrop" *ngIf="showDetailsModal && selectedClinicForDetails">
-    <div class="glass-card modal-container" style="max-width: 650px; background: rgba(30, 41, 59, 0.98) !important; border: 1.5px solid rgba(255, 255, 255, 0.15); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; margin-bottom: 20px;">
-        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem; font-weight: 700; color: #38bdf8 !important;">👁️ Verify Clinic Location Details</h3>
-        <button class="close-modal" (click)="closeDetailsModal()" style="color: #94a3b8;">&times;</button>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>👁️ Verify Clinic Location Details</h3>
+        <button class="close-modal" (click)="closeDetailsModal()">&times;</button>
       </div>
 
-      <div class="modal-body scrollable-body" style="max-height: 440px; overflow-y: auto; padding-right: 8px;">
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #38bdf8 !important; border-bottom: 1.5px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 12px;">🏥 Clinic Information</h4>
-        <table class="details-table" style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; width: 35%; font-size: 0.88rem;">Clinic Name</td>
-            <td style="padding: 10px 0; font-weight: 700; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.clinicName }}</td>
+      <div class="modal-body scrollable-body">
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">🏥 Clinic Information</h4>
+        <table class="details-table">
+          <tr>
+            <td>Clinic Name</td>
+            <td>{{ selectedClinicForDetails.clinicName }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Clinic Type</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.clinicType }}</td>
+          <tr>
+            <td>Clinic Type</td>
+            <td>{{ selectedClinicForDetails.clinicType }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Registered By</td>
-            <td style="padding: 10px 0; color: #38bdf8 !important; font-weight: 600; font-size: 0.88rem;">{{ selectedClinicForDetails.doctorName }}</td>
+          <tr>
+            <td>Registered By</td>
+            <td style="color: var(--accent-cyan) !important;">{{ selectedClinicForDetails.doctorName }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Verification Status</td>
-            <td style="padding: 10px 0; font-size: 0.88rem;">
+          <tr>
+            <td>Verification Status</td>
+            <td>
               <span *ngIf="selectedClinicForDetails.verificationStatus === 'Verified'" class="badge badge-confirmed">Verified / Approved</span>
               <span *ngIf="selectedClinicForDetails.verificationStatus === 'Pending' || selectedClinicForDetails.verificationStatus === 'UpdatedPending'" class="badge badge-pending">Pending Verification</span>
               <span *ngIf="selectedClinicForDetails.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 2px 6px; border-radius: 6px;">Rejected</span>
             </td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);" *ngIf="selectedClinicForDetails.rejectionReason">
-            <td style="padding: 10px 0; font-weight: 600; color: #f87171 !important; font-size: 0.88rem;">Rejection Reason</td>
-            <td style="padding: 10px 0; color: #f87171 !important; font-style: italic; font-size: 0.88rem;">{{ selectedClinicForDetails.rejectionReason }}</td>
+          <tr *ngIf="selectedClinicForDetails.rejectionReason">
+            <td style="color: #f87171 !important;">Rejection Reason</td>
+            <td style="color: #f87171 !important; font-style: italic;">{{ selectedClinicForDetails.rejectionReason }}</td>
           </tr>
         </table>
 
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #38bdf8 !important; border-bottom: 1.5px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 12px;">📍 Full Address Details</h4>
-        <table class="details-table" style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; width: 35%; font-size: 0.88rem;">Address Line 1</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.addressline1 }}</td>
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">📍 Full Address Details</h4>
+        <table class="details-table">
+          <tr>
+            <td>Address Line 1</td>
+            <td>{{ selectedClinicForDetails.addressline1 }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Address Line 2</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.addressline2 || 'N/A' }}</td>
+          <tr>
+            <td>Address Line 2</td>
+            <td>{{ selectedClinicForDetails.addressline2 || 'N/A' }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Area / Locality</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.area || 'N/A' }}</td>
+          <tr>
+            <td>Area / Locality</td>
+            <td>{{ selectedClinicForDetails.area || 'N/A' }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">City</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.city }}</td>
+          <tr>
+            <td>City</td>
+            <td>{{ selectedClinicForDetails.city }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">State</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.state }}</td>
+          <tr>
+            <td>State</td>
+            <td>{{ selectedClinicForDetails.state }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Country</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedClinicForDetails.country || 'India' }}</td>
+          <tr>
+            <td>Country</td>
+            <td>{{ selectedClinicForDetails.country || 'India' }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Pincode</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-family: monospace; font-weight: 600; font-size: 0.88rem;">{{ selectedClinicForDetails.pincode }}</td>
+          <tr>
+            <td>Pincode</td>
+            <td>{{ selectedClinicForDetails.pincode }}</td>
           </tr>
         </table>
 
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #38bdf8 !important; border-bottom: 1.5px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 12px;">🕒 Working Schedule & Timings</h4>
-        <table class="details-table" style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; width: 35%; font-size: 0.88rem;">Days Open</td>
-            <td style="padding: 10px 0; font-size: 0.88rem;">
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">🕒 Working Schedule & Timings</h4>
+        <table class="details-table" style="margin-bottom: 12px;">
+          <tr>
+            <td>Days Open</td>
+            <td>
               <div style="display: flex; gap: 4px; flex-wrap: wrap;" *ngIf="selectedClinicForDetails.openDays; else noDays">
-                <span *ngFor="let day of selectedClinicForDetails.openDays.split(',')" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px;">
+                <span *ngFor="let day of selectedClinicForDetails.openDays.split(',')" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px;">
                   {{ day.trim() }}
                 </span>
               </div>
-              <ng-template #noDays><span style="color: #94a3b8; font-style: italic;">No timing schedule configured yet</span></ng-template>
+              <ng-template #noDays><span style="color: var(--text-muted); font-style: italic;">No timing schedule configured yet</span></ng-template>
             </td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);" *ngIf="selectedClinicForDetails.openDays">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Clinic Working Hours</td>
-            <td style="padding: 10px 0; color: #38bdf8 !important; font-weight: 600; font-size: 0.88rem;">{{ selectedClinicForDetails.startTime }} - {{ selectedClinicForDetails.endTime }}</td>
+          <tr *ngIf="selectedClinicForDetails.openDays">
+            <td>Clinic Working Hours</td>
+            <td style="color: var(--accent-cyan) !important;">{{ selectedClinicForDetails.startTime }} - {{ selectedClinicForDetails.endTime }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Supported Consultation Modes</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">
+          <tr>
+            <td>Supported Consultation Modes</td>
+            <td>
               <span *ngIf="selectedClinicForDetails.supportedModes?.includes('InPerson')" style="display: inline-block; margin-right: 12px;">✙ In-Person Visit</span>
               <span *ngIf="selectedClinicForDetails.supportedModes?.includes('VideoConsultation')">🎥 Video Consultation</span>
-              <span *ngIf="!selectedClinicForDetails.supportedModes" style="color: #94a3b8; font-style: italic;">In-Person Visit (Default)</span>
+              <span *ngIf="!selectedClinicForDetails.supportedModes" style="color: var(--text-muted); font-style: italic;">In-Person Visit (Default)</span>
             </td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);" *ngIf="selectedClinicForDetails.bookingWindowStartDate">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Booking Window Range</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.82rem;">
+          <tr *ngIf="selectedClinicForDetails.bookingWindowStartDate">
+            <td>Booking Window Range</td>
+            <td style="font-size: 0.82rem;">
               Available from <strong>{{ selectedClinicForDetails.bookingWindowStartDate | date:'mediumDate' }}</strong>
               <span *ngIf="selectedClinicForDetails.bookingWindowEndDate"> to <strong>{{ selectedClinicForDetails.bookingWindowEndDate | date:'mediumDate' }}</strong></span>
             </td>
@@ -370,18 +371,16 @@
       </div>
 
       <!-- Verification Checkbox -->
-      <div style="padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); margin-top: 15px;" *ngIf="selectedClinicForDetails.verificationStatus === 'Pending' || selectedClinicForDetails.verificationStatus === 'UpdatedPending'">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <input type="checkbox" id="clinicVerifyCheck" [(ngModel)]="isDetailsVerified" style="width: 20px; height: 20px; cursor: pointer;">
-          <label for="clinicVerifyCheck" style="color: #ffffff; font-weight: 600; font-size: 0.9rem; cursor: pointer; user-select: none;">
-            I have reviewed and verified all the registration details above.
-          </label>
-        </div>
+      <div class="verification-checkbox-bar" *ngIf="selectedClinicForDetails.verificationStatus === 'Pending' || selectedClinicForDetails.verificationStatus === 'UpdatedPending'">
+        <input type="checkbox" id="clinicVerifyCheck" [(ngModel)]="isDetailsVerified">
+        <label for="clinicVerifyCheck">
+          I have reviewed and verified all the registration details above.
+        </label>
       </div>
 
-      <div class="modal-footer" style="padding-top: 15px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+      <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()" style="font-size: 0.85rem; padding: 8px 16px;">Close</button>
-        
+
         <div style="display: flex; gap: 10px;" *ngIf="selectedClinicForDetails.verificationStatus === 'Pending' || selectedClinicForDetails.verificationStatus === 'UpdatedPending'">
           <button class="btn btn-confirm" style="background: #10b981; border-color: #10b981; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="verifyClinic(selectedClinicForDetails.clinicId); closeDetailsModal()" [disabled]="!isDetailsVerified">
             ✓ Approve Clinic
@@ -394,4 +393,3 @@
     </div>
   </div>
 </div>
-

@@ -421,6 +421,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync()
 		{
+			System.Diagnostics.Debugger.Launch();
 			const string cacheKey = "available_doctors_list";
 			var cachedData = await _distributedCache.GetStringAsync(cacheKey);
 
@@ -643,6 +644,101 @@ namespace DoctorAppointmentSystem.Application.Services
 				.GroupBy(s => new { s.StartTime, s.EndTime })
 				.Select(g => g.First())
 				.ToList();
+		}
+
+		public async Task<BookingDetailsDto> GetBookingDetailsAsync(Guid doctorId, Guid clinicId)
+		{
+			// 1. Fetch Doctor
+			var doctor = await _dbContext.Doctors
+				.Include(d => d.Specialization)
+				.Include(d => d.User)
+				.FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+
+			if (doctor == null)
+			{
+				throw new NotFoundException($"Doctor profile with ID '{doctorId}' was not found.");
+			}
+
+			if (doctor.VerificationStatus != EVerificationStatus.Verified)
+			{
+				throw new BadRequestException("The specified doctor profile is pending verification or has been rejected.");
+			}
+
+			// 2. Fetch Clinic
+			var clinic = await _dbContext.Clinics
+				.Include(c => c.Address)
+				.Include(c => c.Doctor)
+				.FirstOrDefaultAsync(c => c.ClinicId == clinicId);
+
+			if (clinic == null)
+			{
+				throw new NotFoundException($"Clinic with ID '{clinicId}' was not found.");
+			}
+
+			if (clinic.VerificationStatus != EVerificationStatus.Verified)
+			{
+				throw new BadRequestException("The specified clinic location is pending verification or has been rejected.");
+			}
+
+			// 3. CRITICAL SECURITY VALIDATION: Match clinic to doctor!
+			if (clinic.Doctor.DoctorId != doctorId)
+			{
+				throw new BadRequestException("Security Alert: The specified clinic does not belong to this doctor.");
+			}
+
+			// 4. Map to DTOs
+			var doctorDto = new DoctorDto
+			{
+				DoctorId = doctor.DoctorId,
+				UserId = doctor.User.UserId,
+				Email = doctor.User.Email,
+				SpecializationId = doctor.Specialization.SpecializationId,
+				SpecializationName = doctor.Specialization.SpecializationName,
+				FirstName = doctor.FirstName,
+				LastName = doctor.LastName,
+				MobileNo = doctor.MobileNo,
+				Qualification = doctor.Qualification,
+				LicenceNumber = doctor.LicenceNumber,
+				YearsOfExperience = doctor.YearsOfExperience,
+				ConsultationFee = doctor.ConsultationFee,
+				VerificationStatus = doctor.VerificationStatus.ToString(),
+				AboutDoctor = doctor.AboutDoctor ?? string.Empty
+			};
+
+			var clinicDto = new ClinicDto
+			{
+				ClinicId = clinic.ClinicId,
+				ClinicName = clinic.ClinicName,
+				ClinicType = clinic.ClinicType,
+				DoctorId = clinic.Doctor.DoctorId,
+				DoctorName = $"Dr. {clinic.Doctor.FirstName} {clinic.Doctor.LastName}",
+				State = clinic.Address.State,
+				City = clinic.Address.City,
+				Pincode = clinic.Address.Pincode,
+				Area = clinic.Address.Area,
+				Addressline1 = clinic.Address.Addressline1,
+				Addressline2 = clinic.Address.Addressline2,
+				IsVerified = clinic.VerificationStatus == EVerificationStatus.Verified,
+				VerificationStatus = clinic.VerificationStatus.ToString(),
+				RejectionReason = clinic.RejectionReason,
+				ParentClinicId = clinic.ParentClinicId,
+				OpenDays = clinic.OpenDays,
+				StartTime = clinic.StartTime,
+				EndTime = clinic.EndTime,
+				IsAvailable = clinic.IsAvailable,
+				UnavailabilityReason = clinic.UnavailabilityReason,
+				IsDoctorAvailable = clinic.IsDoctorAvailable,
+				DoctorUnavailabilityReason = clinic.DoctorUnavailabilityReason,
+				BookingWindowStartDate = clinic.BookingWindowStartDate,
+				BookingWindowEndDate = clinic.BookingWindowEndDate,
+				SupportedModes = clinic.SupportedModes
+			};
+
+			return new BookingDetailsDto
+			{
+				Doctor = doctorDto,
+				Clinic = clinicDto
+			};
 		}
 	}
 }

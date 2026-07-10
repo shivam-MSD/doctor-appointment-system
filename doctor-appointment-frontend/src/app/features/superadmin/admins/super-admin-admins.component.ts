@@ -1,30 +1,32 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-super-admin-admins',
-  templateUrl: './super-admin-admins.component.html',
-  styleUrls: ['./super-admin-admins.component.css']
+	selector: 'app-super-admin-admins',
+	templateUrl: './super-admin-admins.component.html',
+	styleUrls: ['./super-admin-admins.component.css']
 })
 export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
-  admins: any[] = [];
-  searchQuery = '';
-  verifiedFilter: boolean | undefined = undefined;
-  errorMessage = '';
-  successMessage = '';
-  private signalrSub?: Subscription;
+	admins: any[] = [];
+	searchQuery = '';
+	verifiedFilter: boolean | undefined = undefined;
+	errorMessage = '';
+	successMessage = '';
+	private signalrSub?: Subscription;
 
-  // View Details modal states
-  showDetailsModal = false;
-  selectedAdminForDetails: any = null;
-  isDetailsVerified = false;
+	// View Details modal states
+	showDetailsModal = false;
+	selectedAdminForDetails: any = null;
+	isDetailsVerified = false;
 
-  constructor(
-    private adminService: AdminService,
-    private notificationService: NotificationService
-  ) {}
+	constructor(
+		private adminService: AdminService,
+		private notificationService: NotificationService,
+		private toastService: ToastService
+	) {}
 
   ngOnInit(): void {
     this.loadAdmins();
@@ -71,12 +73,11 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
   verifyAdmin(adminId: string): void {
     this.adminService.verifyAdmin(adminId).subscribe({
       next: (res) => {
-        this.successMessage = res.message || 'Clinic Admin approved successfully!';
+        this.toastService.showSuccess(res.message || 'Clinic Admin approved successfully!');
         this.loadAdmins();
-        setTimeout(() => this.successMessage = '', 3000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Failed to approve admin.';
+        this.toastService.showError(err, 'Failed to approve admin.');
       }
     });
   }
@@ -84,12 +85,11 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
   rejectAdmin(adminId: string): void {
     this.adminService.rejectAdmin(adminId).subscribe({
       next: (res) => {
-        this.successMessage = res.message || 'Clinic Admin rejected successfully.';
+        this.toastService.showSuccess(res.message || 'Clinic Admin rejected successfully.');
         this.loadAdmins();
-        setTimeout(() => this.successMessage = '', 3000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Failed to reject admin.';
+        this.toastService.showError(err, 'Failed to reject admin.');
       }
     });
   }

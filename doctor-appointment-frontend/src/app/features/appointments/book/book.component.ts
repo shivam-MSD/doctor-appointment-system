@@ -91,7 +91,26 @@ export class BookComponent implements OnInit {
           const qClinicId = params['clinicId'];
           this.isClinicLocked = !!qClinicId;
 
-          if (qDoctorId) {
+          if (qDoctorId && qClinicId) {
+            this.appointmentService.getBookingDetails(qDoctorId, qClinicId).subscribe({
+              next: (details) => {
+                this.selectedDoctor = details.doctor;
+                this.doctors = [details.doctor];
+                this.doctorId = qDoctorId;
+
+                this.selectedClinic = details.clinic;
+                this.clinics = [details.clinic];
+                this.clinicId = qClinicId;
+
+                this.onClinicChange();
+                this.consultationType = 'InPerson';
+              },
+              error: (err) => {
+                this.toastService.showError(err, 'Failed to load booking details.');
+                this.router.navigate(['/patient/dashboard']);
+              }
+            });
+          } else if (qDoctorId) {
             this.appointmentService.getAvailableDoctors().subscribe({
               next: (allDoctors) => {
                 const foundDoctor = allDoctors.find(d => d.doctorId === qDoctorId);
@@ -103,17 +122,11 @@ export class BookComponent implements OnInit {
                   this.appointmentService.getClinicsForDoctor(qDoctorId).subscribe({
                     next: (clinicList) => {
                       this.clinics = clinicList;
-                      if (qClinicId && clinicList.some(c => c.clinicId === qClinicId)) {
-                        this.clinicId = qClinicId;
-                        this.selectedClinic = clinicList.find(c => c.clinicId === qClinicId);
-                        this.onClinicChange();
-                      } else if (clinicList.length > 0) {
+                      if (clinicList.length > 0) {
                         this.clinicId = clinicList[0].clinicId;
                         this.selectedClinic = clinicList[0];
                         this.onClinicChange();
                       }
-                      
-                      // Ensure default Mode is InPerson, and if the clinic doesn't support Video we reset it
                       this.consultationType = 'InPerson';
                     }
                   });

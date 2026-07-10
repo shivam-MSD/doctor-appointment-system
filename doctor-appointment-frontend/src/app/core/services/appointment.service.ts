@@ -49,6 +49,10 @@ export class AppointmentService {
     return this.http.get<any[]>('/api/appointments/available-doctors');
   }
 
+  getBookingDetails(doctorId: string, clinicId: string): Observable<any> {
+    return this.http.get<any>(`/api/appointments/booking-details?doctorId=${doctorId}&clinicId=${clinicId}`);
+  }
+
   getSpecializations(): Observable<any[]> {
     return this.http.get<any[]>('/api/appointments/specializations');
   }

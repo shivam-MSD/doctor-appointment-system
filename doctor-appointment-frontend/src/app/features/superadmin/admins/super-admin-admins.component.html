@@ -8,12 +8,7 @@
     <div class="role-badge">SuperAdmin Portal</div>
   </div>
 
-  <div *ngIf="successMessage" class="success-banner">
-    <span>✓</span> {{ successMessage }}
-  </div>
-  <div *ngIf="errorMessage" class="error-banner">
-    <span>⚠️</span> {{ errorMessage }}
-  </div>
+
 
   <!-- Filters Row -->
   <div class="glass-card">
@@ -95,34 +90,34 @@
 
   <!-- CLINIC STAFF ADMIN REGISTRATION DETAILS MODAL -->
   <div class="modal-backdrop" *ngIf="showDetailsModal && selectedAdminForDetails">
-    <div class="glass-card modal-container" style="max-width: 650px; background: rgba(30, 41, 59, 0.98) !important; border: 1.5px solid rgba(255, 255, 255, 0.15); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; margin-bottom: 20px;">
-        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.25rem; font-weight: 700; color: #38bdf8 !important;">👁️ Verify Clinic Staff Admin Credentials</h3>
-        <button class="close-modal" (click)="closeDetailsModal()" style="color: #94a3b8;">&times;</button>
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>👁️ Verify Clinic Staff Admin Credentials</h3>
+        <button class="close-modal" (click)="closeDetailsModal()">&times;</button>
       </div>
 
-      <div class="modal-body scrollable-body" style="max-height: 440px; overflow-y: auto; padding-right: 8px;">
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #38bdf8 !important; border-bottom: 1.5px solid rgba(255,255,255,0.1); padding-bottom: 6px; margin-bottom: 12px;">🛡️ Administrator Information</h4>
-        <table class="details-table" style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; width: 35%; font-size: 0.88rem;">Admin Name</td>
-            <td style="padding: 10px 0; font-weight: 700; color: #ffffff !important; font-size: 0.88rem;">{{ selectedAdminForDetails.firstName }} {{ selectedAdminForDetails.lastName }}</td>
+      <div class="modal-body scrollable-body">
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">🛡️ Administrator Information</h4>
+        <table class="details-table">
+          <tr>
+            <td>Admin Name</td>
+            <td>{{ selectedAdminForDetails.firstName }} {{ selectedAdminForDetails.lastName }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Email Address (Login ID)</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedAdminForDetails.email }}</td>
+          <tr>
+            <td>Email Address (Login ID)</td>
+            <td>{{ selectedAdminForDetails.email }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Mobile Number</td>
-            <td style="padding: 10px 0; color: #ffffff !important; font-size: 0.88rem;">{{ selectedAdminForDetails.mobileNo || 'N/A' }}</td>
+          <tr>
+            <td>Mobile Number</td>
+            <td>{{ selectedAdminForDetails.mobileNo || 'N/A' }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Assigned Clinic Name</td>
-            <td style="padding: 10px 0; color: #38bdf8 !important; font-weight: 600; font-size: 0.88rem;">{{ selectedAdminForDetails.clinicName }}</td>
+          <tr>
+            <td>Assigned Clinic Name</td>
+            <td style="color: var(--accent-cyan) !important;">{{ selectedAdminForDetails.clinicName }}</td>
           </tr>
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px 0; font-weight: 600; color: #94a3b8 !important; font-size: 0.88rem;">Verification Status</td>
-            <td style="padding: 10px 0; font-size: 0.88rem;">
+          <tr>
+            <td>Verification Status</td>
+            <td>
               <span *ngIf="selectedAdminForDetails.isVerified" class="badge badge-confirmed">Active / Approved</span>
               <span *ngIf="!selectedAdminForDetails.isVerified" class="badge badge-pending">Pending Verification</span>
             </td>
@@ -131,16 +126,14 @@
       </div>
 
       <!-- Verification Checkbox -->
-      <div style="padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); margin-top: 15px;" *ngIf="!selectedAdminForDetails.isVerified">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <input type="checkbox" id="adminVerifyCheck" [(ngModel)]="isDetailsVerified" style="width: 20px; height: 20px; cursor: pointer;">
-          <label for="adminVerifyCheck" style="color: #ffffff; font-weight: 600; font-size: 0.9rem; cursor: pointer; user-select: none;">
-            I have reviewed and verified all the registration details above.
-          </label>
-        </div>
+      <div class="verification-checkbox-bar" *ngIf="!selectedAdminForDetails.isVerified">
+        <input type="checkbox" id="adminVerifyCheck" [(ngModel)]="isDetailsVerified">
+        <label for="adminVerifyCheck">
+          I have reviewed and verified all the registration details above.
+        </label>
       </div>
 
-      <div class="modal-footer" style="padding-top: 15px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+      <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()" style="font-size: 0.85rem; padding: 8px 16px;">Close</button>
         
         <div style="display: flex; gap: 10px;" *ngIf="!selectedAdminForDetails.isVerified">

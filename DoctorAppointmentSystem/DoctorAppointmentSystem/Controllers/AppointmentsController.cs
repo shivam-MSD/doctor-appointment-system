@@ -111,6 +111,13 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		[HttpGet("booking-details")]
+		public async Task<IActionResult> GetBookingDetails([FromQuery] Guid doctorId, [FromQuery] Guid clinicId)
+		{
+			var result = await _appointmentService.GetBookingDetailsAsync(doctorId, clinicId);
+			return Ok(result);
+		}
+
 		[HttpGet("specializations")]
 		[AllowAnonymous]
 		public async Task<IActionResult> GetSpecializations()

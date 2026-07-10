@@ -1,30 +1,32 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-super-admin-doctors',
-  templateUrl: './super-admin-doctors.component.html',
-  styleUrls: ['./super-admin-doctors.component.css']
+	selector: 'app-super-admin-doctors',
+	templateUrl: './super-admin-doctors.component.html',
+	styleUrls: ['./super-admin-doctors.component.css']
 })
 export class SuperAdminDoctorsComponent implements OnInit, OnDestroy {
-  doctors: any[] = [];
-  searchQuery = '';
-  statusFilter = ''; // Empty for all, Verified, Pending
-  errorMessage = '';
-  successMessage = '';
-  private signalrSub?: Subscription;
+	doctors: any[] = [];
+	searchQuery = '';
+	statusFilter = ''; // Empty for all, Verified, Pending
+	errorMessage = '';
+	successMessage = '';
+	private signalrSub?: Subscription;
 
-  // View Details modal states
-  showDetailsModal = false;
-  selectedDoctorForDetails: any = null;
-  isDetailsVerified = false;
+	// View Details modal states
+	showDetailsModal = false;
+	selectedDoctorForDetails: any = null;
+	isDetailsVerified = false;
 
-  constructor(
-    private adminService: AdminService,
-    private notificationService: NotificationService
-  ) {}
+	constructor(
+		private adminService: AdminService,
+		private notificationService: NotificationService,
+		private toastService: ToastService
+	) {}
 
   ngOnInit(): void {
     this.loadDoctors();
@@ -71,12 +73,11 @@ export class SuperAdminDoctorsComponent implements OnInit, OnDestroy {
   approveDoctor(doctorUserId: string): void {
     this.adminService.approveDoctor(doctorUserId).subscribe({
       next: (res) => {
-        this.successMessage = res.message || 'Doctor approved successfully!';
+        this.toastService.showSuccess(res.message || 'Doctor approved successfully!');
         this.loadDoctors();
-        setTimeout(() => this.successMessage = '', 3000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Failed to approve doctor.';
+        this.toastService.showError(err, 'Failed to approve doctor.');
       }
     });
   }
@@ -84,12 +85,11 @@ export class SuperAdminDoctorsComponent implements OnInit, OnDestroy {
   rejectDoctor(doctorUserId: string): void {
     this.adminService.verifyDoctor(doctorUserId, 'Rejected').subscribe({
       next: (res) => {
-        this.successMessage = res.message || 'Doctor application rejected.';
+        this.toastService.showSuccess(res.message || 'Doctor application rejected.');
         this.loadDoctors();
-        setTimeout(() => this.successMessage = '', 3000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Failed to reject doctor.';
+        this.toastService.showError(err, 'Failed to reject doctor.');
       }
     });
   }
