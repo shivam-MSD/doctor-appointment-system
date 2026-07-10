@@ -112,6 +112,7 @@ namespace DoctorAppointmentSystem.Controllers
 		}
 
 		[HttpGet("specializations")]
+		[AllowAnonymous]
 		public async Task<IActionResult> GetSpecializations()
 		{
 			var result = await _appointmentService.GetSpecializationsAsync();

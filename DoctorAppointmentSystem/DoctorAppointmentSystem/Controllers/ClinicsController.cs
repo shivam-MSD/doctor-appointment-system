@@ -107,15 +107,15 @@ namespace DoctorAppointmentSystem.Controllers
 		[HttpPost("verify-clinic/{clinicId}")]
 		public async Task<IActionResult> VerifyClinic(Guid clinicId)
 		{
-			await _clinicService.VerifyClinicAsync(clinicId);
-			return Ok(new { Message = $"Clinic '{clinicId}' verified successfully." });
+			var name = await _clinicService.VerifyClinicAsync(clinicId);
+			return Ok(new { Message = $"Clinic '{name}' verified successfully." });
 		}
 
 		[HttpPost("verify-clinic/{clinicId}/reject")]
 		public async Task<IActionResult> RejectClinic(Guid clinicId, [FromBody] RejectClinicDto dto)
 		{
-			await _clinicService.RejectClinicAsync(clinicId, dto.RejectionReason);
-			return Ok(new { Message = $"Clinic '{clinicId}' has been rejected." });
+			var name = await _clinicService.RejectClinicAsync(clinicId, dto.RejectionReason);
+			return Ok(new { Message = $"Clinic '{name}' has been rejected successfully." });
 		}
 
 		[HttpPut("{clinicId}")]
@@ -159,15 +159,15 @@ namespace DoctorAppointmentSystem.Controllers
 		[HttpPost("verify-admin/{adminId}")]
 		public async Task<IActionResult> VerifyAdmin(Guid adminId)
 		{
-			await _clinicService.VerifyAdminAsync(adminId);
-			return Ok(new { Message = $"Clinic Admin '{adminId}' verified successfully." });
+			var name = await _clinicService.VerifyAdminAsync(adminId);
+			return Ok(new { Message = $"Clinic Admin '{name}' verified successfully." });
 		}
 
 		[HttpPost("reject-admin/{adminId}")]
 		public async Task<IActionResult> RejectAdmin(Guid adminId)
 		{
-			await _clinicService.RejectAdminAsync(adminId);
-			return Ok(new { Message = $"Clinic Admin '{adminId}' has been rejected." });
+			var name = await _clinicService.RejectAdminAsync(adminId);
+			return Ok(new { Message = $"Clinic Admin '{name}' has been rejected successfully." });
 		}
 
 		[HttpGet("{clinicId:guid}/history")]

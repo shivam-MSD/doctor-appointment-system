@@ -49,10 +49,6 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public double ConsultationFee { get; set; }
 
 		[Required]
-		[MaxLength(150)]
-		public string HospitalName { get; set; }
-
-		[Required]
 		public EVerificationStatus VerificationStatus { get; set; }
 
 		public byte[]? ProfileImage { get; set; }

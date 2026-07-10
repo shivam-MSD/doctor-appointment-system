@@ -109,7 +109,6 @@ namespace DoctorAppointmentSystem.Persistent.Context
 				entity.Property(d => d.Gender).HasConversion<string>().IsRequired();
 				entity.Property(d => d.Qualification).IsRequired().HasMaxLength(150);
 				entity.Property(d => d.LicenceNumber).IsRequired().HasMaxLength(50);
-				entity.Property(d => d.HospitalName).IsRequired().HasMaxLength(150);
 				entity.Property(d => d.VerificationStatus).HasConversion<string>().HasDefaultValue(EVerificationStatus.Pending);
 
 				// User to Doctor (1 to 1)

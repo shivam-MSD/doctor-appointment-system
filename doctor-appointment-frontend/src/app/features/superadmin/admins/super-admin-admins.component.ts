@@ -16,6 +16,11 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
   successMessage = '';
   private signalrSub?: Subscription;
 
+  // View Details modal states
+  showDetailsModal = false;
+  selectedAdminForDetails: any = null;
+  isDetailsVerified = false;
+
   constructor(
     private adminService: AdminService,
     private notificationService: NotificationService
@@ -49,6 +54,18 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
         this.errorMessage = 'Failed to load clinic administrators list.';
       }
     });
+  }
+
+  openDetailsModal(admin: any): void {
+    this.selectedAdminForDetails = admin;
+    this.isDetailsVerified = false;
+    this.showDetailsModal = true;
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.selectedAdminForDetails = null;
+    this.isDetailsVerified = false;
   }
 
   verifyAdmin(adminId: string): void {

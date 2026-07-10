@@ -19,7 +19,6 @@ export class DoctorRegisterComponent implements OnInit {
   dob = '';
   qualification = '';
   licenceNumber = '';
-  hospitalName = '';
   yearsOfExperience = 1;
   consultationFee = 500.0; // Seed with default INR fee
   specializations: any[] = [];
@@ -36,6 +35,20 @@ export class DoctorRegisterComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      const role = this.authService.getRole();
+      if (role === 'Patient') {
+        this.router.navigate(['/patient/dashboard']);
+      } else if (role === 'Doctor') {
+        this.router.navigate(['/doctor/dashboard']);
+      } else if (role === 'Admin') {
+        this.router.navigate(['/admin/dashboard']);
+      } else if (role === 'SuperAdmin') {
+        this.router.navigate(['/superadmin/dashboard']);
+      }
+      return;
+    }
+
     this.appointmentService.getSpecializations().subscribe({
       next: (data) => {
         this.specializations = data;
@@ -66,7 +79,6 @@ export class DoctorRegisterComponent implements OnInit {
       dob: this.dob,
       qualification: this.qualification,
       licenceNumber: this.licenceNumber,
-      hospitalName: this.hospitalName,
       yearsOfExperience: this.yearsOfExperience,
       consultationFee: this.consultationFee,
       specializationId: this.specializationId

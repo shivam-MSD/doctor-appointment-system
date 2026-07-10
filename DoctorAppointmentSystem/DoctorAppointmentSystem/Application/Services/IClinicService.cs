@@ -14,10 +14,10 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<IEnumerable<ClinicAdminDto>> GetDoctorAdminsAsync(Guid doctorUserId);
 		Task<IEnumerable<ClinicDto>> GetPendingClinicsAsync();
 		Task<IEnumerable<ClinicAdminDto>> GetPendingAdminsAsync();
-		Task VerifyClinicAsync(Guid clinicId);
-		Task VerifyAdminAsync(Guid adminId);
-		Task RejectAdminAsync(Guid adminId);
-		Task RejectClinicAsync(Guid clinicId, string rejectionReason);
+		Task<string> VerifyClinicAsync(Guid clinicId);
+		Task<string> VerifyAdminAsync(Guid adminId);
+		Task<string> RejectAdminAsync(Guid adminId);
+		Task<string> RejectClinicAsync(Guid clinicId, string rejectionReason);
 		Task UpdateClinicAsync(Guid clinicId, Guid doctorUserId, UpdateClinicDto dto);
 		Task<IEnumerable<ClinicDto>> GetClinicsByDoctorIdAsync(Guid doctorId);
 		Task AdminUpdateClinicAsync(Guid adminUserId, UpdateClinicDto dto);

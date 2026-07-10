@@ -7,6 +7,7 @@ using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Domain.Entities;
 using DoctorAppointmentSystem.Domain.Exceptions;
 using DoctorAppointmentSystem.Persistent.Context;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace DoctorAppointmentSystem.Application.Services
 {
@@ -14,14 +15,19 @@ namespace DoctorAppointmentSystem.Application.Services
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly INotificationService _notificationService;
+		private readonly IDistributedCache _distributedCache;
 
-		public AdminService(ApplicationDbContext dbContext, INotificationService notificationService)
+		public AdminService(
+			ApplicationDbContext dbContext,
+			INotificationService notificationService,
+			IDistributedCache distributedCache)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
+			_distributedCache = distributedCache;
 		}
 
-		public async Task VerifyDoctorAsync(Guid doctorId, string status)
+		public async Task<string> VerifyDoctorAsync(Guid doctorId, string status)
 		{
 			var doctor = await _dbContext.Doctors
 				.Include(d => d.User)
@@ -42,8 +48,13 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			await _dbContext.SaveChangesAsync();
 
+			// Evict the available doctors cache since status has changed
+			await _distributedCache.RemoveAsync("available_doctors_list");
+
 			await _notificationService.CreateNotificationAsync(doctor.User.UserId, $"Your doctor profile verification status has been updated to: {status}.");
 			await _notificationService.SendRefreshSignalAsync("Doctors");
+
+			return $"Dr. {doctor.FirstName} {doctor.LastName}";
 		}
 
 		public async Task<IEnumerable<DoctorDto>> GetPendingDoctorsAsync()
@@ -64,7 +75,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					MobileNo = d.MobileNo,
 					Qualification = d.Qualification,
 					LicenceNumber = d.LicenceNumber,
-					HospitalName = d.HospitalName,
 					YearsOfExperience = d.YearsOfExperience,
 					ConsultationFee = d.ConsultationFee,
 					AboutDoctor = d.AboutDoctor ?? string.Empty,
@@ -90,7 +100,6 @@ namespace DoctorAppointmentSystem.Application.Services
 				query = query.Where(d => 
 					d.FirstName.ToLower().Contains(searchLower) ||
 					d.LastName.ToLower().Contains(searchLower) ||
-					d.HospitalName.ToLower().Contains(searchLower) ||
 					d.LicenceNumber.ToLower().Contains(searchLower) ||
 					d.MobileNo.Contains(searchLower)
 				);
@@ -130,7 +139,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					MobileNo = d.MobileNo,
 					Qualification = d.Qualification,
 					LicenceNumber = d.LicenceNumber,
-					HospitalName = d.HospitalName,
 					YearsOfExperience = d.YearsOfExperience,
 					ConsultationFee = d.ConsultationFee,
 					AboutDoctor = d.AboutDoctor ?? string.Empty,
@@ -192,10 +200,23 @@ namespace DoctorAppointmentSystem.Application.Services
 					State = c.Address.State,
 					City = c.Address.City,
 					Pincode = c.Address.Pincode,
+					Area = c.Address.Area,
+					Addressline1 = c.Address.Addressline1,
+					Addressline2 = c.Address.Addressline2,
 					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
 					VerificationStatus = c.VerificationStatus.ToString(),
 					RejectionReason = c.RejectionReason,
 					ParentClinicId = c.ParentClinicId,
+					OpenDays = c.OpenDays,
+					StartTime = c.StartTime,
+					EndTime = c.EndTime,
+					IsAvailable = c.IsAvailable,
+					UnavailabilityReason = c.UnavailabilityReason,
+					IsDoctorAvailable = c.IsDoctorAvailable,
+					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
+					BookingWindowStartDate = c.BookingWindowStartDate,
+					BookingWindowEndDate = c.BookingWindowEndDate,
+					SupportedModes = c.SupportedModes,
 					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)),
 					AdminName = _dbContext.Admins.Where(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault(),
 					AdminEmail = _dbContext.Admins.Where(a => a.Clinic.ClinicId == (c.ParentClinicId ?? c.ClinicId)).Select(a => a.User.Email).FirstOrDefault(),

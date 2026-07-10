@@ -35,7 +35,6 @@ export class ProfileComponent implements OnInit {
   // Doctor Fields
   qualification = '';
   licenceNumber = '';
-  hospitalName = '';
   yearsOfExperience = 0;
   consultationFee = 0;
   about = '';
@@ -122,7 +121,6 @@ export class ProfileComponent implements OnInit {
           this.mobileNo = data.mobileNo;
           this.qualification = data.qualification || '';
           this.licenceNumber = data.licenceNumber || '';
-          this.hospitalName = data.hospitalName || '';
           this.yearsOfExperience = data.yearsOfExperience || 0;
           this.consultationFee = data.consultationFee || 0;
           this.about = data.aboutDoctor || data.about || '';
@@ -213,7 +211,6 @@ export class ProfileComponent implements OnInit {
         mobileNo: this.mobileNo,
         qualification: this.qualification,
         licenceNumber: this.licenceNumber,
-        hospitalName: this.hospitalName,
         yearsOfExperience: this.yearsOfExperience,
         consultationFee: this.consultationFee,
         aboutDoctor: this.about,

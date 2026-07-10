@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -7,7 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   email = '';
   password = '';
   firstName = '';
@@ -21,6 +21,21 @@ export class RegisterComponent {
     private authService: AuthService,
     private router: Router
   ) {}
+
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      const role = this.authService.getRole();
+      if (role === 'Patient') {
+        this.router.navigate(['/patient/dashboard']);
+      } else if (role === 'Doctor') {
+        this.router.navigate(['/doctor/dashboard']);
+      } else if (role === 'Admin') {
+        this.router.navigate(['/admin/dashboard']);
+      } else if (role === 'SuperAdmin') {
+        this.router.navigate(['/superadmin/dashboard']);
+      }
+    }
+  }
 
   onSubmit(form: any): void {
     if (form.invalid) {

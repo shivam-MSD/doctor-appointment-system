@@ -134,7 +134,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					d.FirstName.ToLower().Contains(cleanSearch) || 
 					d.LastName.ToLower().Contains(cleanSearch) || 
 					d.Qualification.ToLower().Contains(cleanSearch) ||
-					d.HospitalName.ToLower().Contains(cleanSearch) ||
 					d.Specialization.SpecializationName.ToLower().Contains(cleanSearch)
 				);
 			}
@@ -179,7 +178,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					MobileNo = d.MobileNo,
 					Qualification = d.Qualification,
 					LicenceNumber = d.LicenceNumber,
-					HospitalName = d.HospitalName,
 					YearsOfExperience = d.YearsOfExperience,
 					ConsultationFee = d.ConsultationFee,
 					VerificationStatus = d.VerificationStatus.ToString(),

@@ -17,7 +17,6 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public int YearsOfExperience { get; set; }
 		public string LicenceNumber { get; set; }
 		public double ConsultationFee { get; set; }
-		public string HospitalName { get; set; }
 		public string VerificationStatus { get; set; }
 		public string AboutDoctor { get; set; }
 		public byte[] ProfileImage { get; set; }
@@ -49,9 +48,6 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[Range(0, 100000, ErrorMessage = "Consultation fee must be non-negative.")]
 		public double ConsultationFee { get; set; }
 
-		[Required]
-		public string HospitalName { get; set; }
-
 		public string AboutDoctor { get; set; }
 	}
 
@@ -73,9 +69,6 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[Required]
 		[Range(0, 100000, ErrorMessage = "Consultation fee must be non-negative.")]
 		public double ConsultationFee { get; set; }
-
-		[Required]
-		public string HospitalName { get; set; }
 
 		public string AboutDoctor { get; set; }
 

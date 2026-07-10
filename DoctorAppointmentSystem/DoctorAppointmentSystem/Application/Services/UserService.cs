@@ -73,7 +73,6 @@ namespace DoctorAppointmentSystem.Application.Services
 				MobileNo = doctor.MobileNo,
 				Qualification = doctor.Qualification,
 				LicenceNumber = doctor.LicenceNumber,
-				HospitalName = doctor.HospitalName,
 				YearsOfExperience = doctor.YearsOfExperience,
 				ConsultationFee = doctor.ConsultationFee,
 				AboutDoctor = doctor.AboutDoctor ?? string.Empty,
@@ -113,7 +112,6 @@ namespace DoctorAppointmentSystem.Application.Services
 			doctor.MobileNo = dto.MobileNo;
 			doctor.Qualification = dto.Qualification;
 			doctor.LicenceNumber = dto.LicenceNumber;
-			doctor.HospitalName = dto.HospitalName;
 			doctor.YearsOfExperience = dto.YearsOfExperience;
 			doctor.ConsultationFee = dto.ConsultationFee;
 			doctor.AboutDoctor = dto.AboutDoctor;

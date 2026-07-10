@@ -24,6 +24,11 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
   selectedClinicIdForRejection = '';
   rejectionReason = '';
 
+  // View Details modal states
+  showDetailsModal = false;
+  selectedClinicForDetails: any = null;
+  isDetailsVerified = false;
+
   // History Tracking states
   showHistoryModal = false;
   selectedClinicHistory: any[] = [];
@@ -106,6 +111,19 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
         this.toastService.showError(err?.error?.detail || 'Failed to reject clinic.');
       }
     });
+  }
+
+  // View Details methods
+  openDetailsModal(clinic: any): void {
+    this.selectedClinicForDetails = clinic;
+    this.isDetailsVerified = false;
+    this.showDetailsModal = true;
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.selectedClinicForDetails = null;
+    this.isDetailsVerified = false;
   }
 
   // History methods

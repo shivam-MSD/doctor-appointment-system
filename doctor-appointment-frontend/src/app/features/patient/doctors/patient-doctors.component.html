@@ -87,10 +87,6 @@
         <p class="doctor-qualification">{{ doctor.qualification }} &bull; {{ doctor.yearsOfExperience }} Years Experience</p>
         
         <div class="doctor-meta">
-          <div class="meta-item">
-            <span class="meta-icon">🏢</span>
-            <span><strong>Primary Hospital:</strong> {{ doctor.hospitalName }}</span>
-          </div>
           <div class="meta-item" *ngIf="doctor.city || doctor.state">
             <span class="meta-icon">📍</span>
             <span><strong>Location:</strong> {{ doctor.city }}{{ doctor.city && doctor.state ? ', ' : '' }}{{ doctor.state }}</span>
@@ -188,10 +184,6 @@
           <div class="info-item">
             <span class="info-label" style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Consultation Fee</span>
             <span class="info-value" style="font-size: 0.92rem; font-weight: 600; color: #10b981;">Rs. {{ selectedDoctorForModal.consultationFee }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label" style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Primary Hospital</span>
-            <span class="info-value" style="font-size: 0.92rem; font-weight: 600; color: var(--text-primary);">{{ selectedDoctorForModal.hospitalName }}</span>
           </div>
           <div class="info-item" *ngIf="selectedDoctorForModal.city || selectedDoctorForModal.state">
             <span class="info-label" style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Location</span>

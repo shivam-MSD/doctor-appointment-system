@@ -16,6 +16,11 @@ export class SuperAdminDoctorsComponent implements OnInit, OnDestroy {
   successMessage = '';
   private signalrSub?: Subscription;
 
+  // View Details modal states
+  showDetailsModal = false;
+  selectedDoctorForDetails: any = null;
+  isDetailsVerified = false;
+
   constructor(
     private adminService: AdminService,
     private notificationService: NotificationService
@@ -49,6 +54,18 @@ export class SuperAdminDoctorsComponent implements OnInit, OnDestroy {
         this.errorMessage = 'Failed to load doctors list.';
       }
     });
+  }
+
+  openDetailsModal(doctor: any): void {
+    this.selectedDoctorForDetails = doctor;
+    this.isDetailsVerified = false;
+    this.showDetailsModal = true;
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.selectedDoctorForDetails = null;
+    this.isDetailsVerified = false;
   }
 
   approveDoctor(doctorUserId: string): void {

@@ -71,9 +71,6 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string LicenceNumber { get; set; }
 
 		[Required]
-		public string HospitalName { get; set; }
-
-		[Required]
 		public int YearsOfExperience { get; set; }
 
 		[Required]

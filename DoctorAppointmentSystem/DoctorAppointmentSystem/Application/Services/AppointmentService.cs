@@ -3,6 +3,8 @@ using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Domain.Entities;
 using DoctorAppointmentSystem.Domain.Exceptions;
 using DoctorAppointmentSystem.Persistent.Context;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace DoctorAppointmentSystem.Application.Services
 {
@@ -10,11 +12,16 @@ namespace DoctorAppointmentSystem.Application.Services
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly INotificationService _notificationService;
+		private readonly IDistributedCache _distributedCache;
 
-		public AppointmentService(ApplicationDbContext dbContext, INotificationService notificationService)
+		public AppointmentService(
+			ApplicationDbContext dbContext,
+			INotificationService notificationService,
+			IDistributedCache distributedCache)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
+			_distributedCache = distributedCache;
 		}
 
 		public async Task<AppointmentDto> BookAppointmentAsync(Guid userId, CreateAppointmentDto dto)
@@ -414,6 +421,14 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync()
 		{
+			const string cacheKey = "available_doctors_list";
+			var cachedData = await _distributedCache.GetStringAsync(cacheKey);
+
+			if (!string.IsNullOrEmpty(cachedData))
+			{
+				return JsonSerializer.Deserialize<IEnumerable<DoctorDto>>(cachedData) ?? new List<DoctorDto>();
+			}
+
 			var doctors = await _dbContext.Doctors
 				.Include(d => d.Specialization)
 				.Include(d => d.User)
@@ -430,7 +445,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					MobileNo = d.MobileNo,
 					Qualification = d.Qualification,
 					LicenceNumber = d.LicenceNumber,
-					HospitalName = d.HospitalName,
 					YearsOfExperience = d.YearsOfExperience,
 					ConsultationFee = d.ConsultationFee,
 					VerificationStatus = d.VerificationStatus.ToString(),
@@ -438,12 +452,36 @@ namespace DoctorAppointmentSystem.Application.Services
 				})
 				.ToListAsync();
 
+			var cacheOptions = new DistributedCacheEntryOptions
+			{
+				AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) // Cache for 24 hours since we use eviction
+			};
+
+			await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(doctors), cacheOptions);
+
 			return doctors;
 		}
 
 		public async Task<IEnumerable<Specialization>> GetSpecializationsAsync()
 		{
-			return await _dbContext.Specializations.OrderBy(s => s.SpecializationName).ToListAsync();
+			const string cacheKey = "specializations_list";
+			var cachedData = await _distributedCache.GetStringAsync(cacheKey);
+
+			if (!string.IsNullOrEmpty(cachedData))
+			{
+				return JsonSerializer.Deserialize<IEnumerable<Specialization>>(cachedData) ?? new List<Specialization>();
+			}
+
+			var specializations = await _dbContext.Specializations.OrderBy(s => s.SpecializationName).ToListAsync();
+
+			var cacheOptions = new DistributedCacheEntryOptions
+			{
+				AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) // Cache for 24 hours
+			};
+
+			await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(specializations), cacheOptions);
+
+			return specializations;
 		}
 
 		public async Task<IEnumerable<DoctorDto>> SearchDoctorsAsync(string? state, string? city, Guid? specializationId, string? nameSearch)
@@ -495,7 +533,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					MobileNo = d.MobileNo,
 					Qualification = d.Qualification,
 					LicenceNumber = d.LicenceNumber,
-					HospitalName = d.HospitalName,
 					YearsOfExperience = d.YearsOfExperience,
 					ConsultationFee = d.ConsultationFee,
 					VerificationStatus = d.VerificationStatus.ToString(),

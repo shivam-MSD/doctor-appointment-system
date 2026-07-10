@@ -21,11 +21,19 @@ namespace DoctorAppointmentSystem.Controllers
 		{
 			if (string.IsNullOrEmpty(status))
 			{
-				return BadRequest("Missing status query parameter. Values: Verified, Pending.");
+				return BadRequest("Missing status query parameter. Values: Verified, Pending, Rejected.");
 			}
 
-			await _adminService.VerifyDoctorAsync(doctorId, status);
-			return Ok(new { Message = $"Doctor verification status updated to '{status}' successfully." });
+			var name = await _adminService.VerifyDoctorAsync(doctorId, status);
+			if (status.Equals("Verified", StringComparison.OrdinalIgnoreCase))
+			{
+				return Ok(new { Message = $"Doctor '{name}' approved successfully." });
+			}
+			else if (status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+			{
+				return Ok(new { Message = $"Doctor '{name}' rejected successfully." });
+			}
+			return Ok(new { Message = $"Doctor '{name}' verification status updated to '{status}' successfully." });
 		}
 
 		[HttpGet("pending-doctors")]

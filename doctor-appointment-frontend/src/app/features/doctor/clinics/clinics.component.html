@@ -8,19 +8,16 @@
     <button class="btn btn-primary" (click)="openClinicModal()">+ Register Clinic Branch</button>
   </div>
 
-  <div *ngIf="successMessage" class="success-banner">
+  <!-- <div *ngIf="successMessage" class="success-banner">
     <span>✓</span> {{ successMessage }}
-  </div>
-  <div *ngIf="errorMessage" class="error-banner">
-    <span>⚠️</span> {{ errorMessage }}
-  </div>
+  </div> -->
 
   <!-- Clinics Directory Table Card -->
   <div class="glass-card table-card">
     <div class="table-header">
       <h3>Clinical Locations Registry</h3>
     </div>
-    
+
     <div class="table-responsive" *ngIf="doctorClinics.length > 0; else noClinics">
       <table class="dashboard-table">
         <thead>
@@ -34,100 +31,120 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let clinic of doctorClinics" [style.border-left]="clinic.isAvailable ? '4px solid #10b981' : '4px solid #f59e0b'" [style.opacity]="clinic.isAvailable ? '1' : '0.85'">
+          <tr *ngFor="let clinic of doctorClinics"
+            [style.border-left]="clinic.isAvailable ? '4px solid #10b981' : '4px solid #f59e0b'"
+            [style.opacity]="clinic.isAvailable ? '1' : '0.85'">
             <td class="bold" style="padding-top: 12px; padding-bottom: 12px; max-width: 240px;">
               <!-- Clinic Name & Availability indicator dot & Verification Badge -->
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span [style.background]="clinic.isAvailable ? '#10b981' : '#f59e0b'" 
-                      style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;"
-                      [title]="clinic.isAvailable ? 'Open & Available' : 'Temporarily Closed'"></span>
-                <span class="truncate-text" style="max-width: 160px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.92rem;" [title]="clinic.clinicName">
+                <span [style.background]="clinic.isAvailable ? '#10b981' : '#f59e0b'"
+                  style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;"
+                  [title]="clinic.isAvailable ? 'Open & Available' : 'Temporarily Closed'"></span>
+                <span class="truncate-text"
+                  style="max-width: 160px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.92rem;"
+                  [title]="clinic.clinicName">
                   {{ clinic.clinicName }}
                 </span>
 
                 <!-- Verification Tag right next to Clinic Name -->
-                <span *ngIf="clinic.verificationStatus === 'Verified'" class="badge badge-confirmed" style="font-size: 0.65rem; padding: 2px 6px; display: inline-flex; align-items: center; gap: 2px; line-height: 1; vertical-align: middle;">
+                <span *ngIf="clinic.verificationStatus === 'Verified'" class="badge badge-confirmed"
+                  style="font-size: 0.65rem; padding: 2px 6px; display: inline-flex; align-items: center; gap: 2px; line-height: 1; vertical-align: middle;">
                   ✔ Verified
                 </span>
-                <span *ngIf="clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'UpdatedPending'" class="badge badge-pending" style="font-size: 0.65rem; padding: 2px 6px; display: inline-flex; align-items: center; gap: 2px; line-height: 1; vertical-align: middle;">
+                <span *ngIf="clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'UpdatedPending'"
+                  class="badge badge-pending"
+                  style="font-size: 0.65rem; padding: 2px 6px; display: inline-flex; align-items: center; gap: 2px; line-height: 1; vertical-align: middle;">
                   ⌛ Pending
                 </span>
-                <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 2px; line-height: 1; vertical-align: middle;">
+                <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled"
+                  style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 2px; line-height: 1; vertical-align: middle;">
                   ❌ Rejected
                 </span>
               </div>
 
               <!-- Badges for Type & Availability Status below Name -->
               <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
-                <span class="type-indicator text-uppercase" style="font-size: 0.65rem; padding: 2px 6px;">{{ clinic.clinicType }}</span>
+                <span class="type-indicator text-uppercase" style="font-size: 0.65rem; padding: 2px 6px;">{{
+                  clinic.clinicType }}</span>
 
                 <!-- Availability Badge -->
-                <span class="badge" [style.background]="clinic.isAvailable ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'" 
-                             [style.border]="clinic.isAvailable ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)'"
-                             [style.color]="clinic.isAvailable ? '#10b981' : '#f59e0b'"
-                             style="font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 2px;">
+                <span class="badge"
+                  [style.background]="clinic.isAvailable ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'"
+                  [style.border]="clinic.isAvailable ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)'"
+                  [style.color]="clinic.isAvailable ? '#10b981' : '#f59e0b'"
+                  style="font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 2px;">
                   {{ clinic.isAvailable ? '🟢 Open' : '🔴 Closed' }}
                 </span>
               </div>
 
               <!-- Rejection Notice & Unavailability Reason -->
-              <div *ngIf="clinic.verificationStatus === 'Rejected' && clinic.rejectionReason" style="font-size: 0.72rem; color: #ef4444; margin-top: 4px; font-weight: 400; font-style: italic;">
+              <div *ngIf="clinic.verificationStatus === 'Rejected' && clinic.rejectionReason"
+                style="font-size: 0.72rem; color: #ef4444; margin-top: 4px; font-weight: 400; font-style: italic;">
                 Rejection Reason: {{ clinic.rejectionReason }}
               </div>
-              <div *ngIf="!clinic.isAvailable && clinic.unavailabilityReason" style="font-size: 0.72rem; color: #f59e0b; margin-top: 4px; font-weight: 400; font-style: italic;">
+              <div *ngIf="!clinic.isAvailable && clinic.unavailabilityReason"
+                style="font-size: 0.72rem; color: #f59e0b; margin-top: 4px; font-weight: 400; font-style: italic;">
                 Closed Notice: {{ clinic.unavailabilityReason }}
               </div>
-              <div *ngIf="clinic.isAvailable && clinic.isDoctorAvailable === false" style="font-size: 0.72rem; color: var(--accent-cyan); margin-top: 4px; font-weight: 400; font-style: italic;">
-                Doctor Notice: Personally unavailable ({{ clinic.doctorUnavailabilityReason || 'Staff attending patients' }})
+              <div *ngIf="clinic.isAvailable && clinic.isDoctorAvailable === false"
+                style="font-size: 0.72rem; color: var(--accent-cyan); margin-top: 4px; font-weight: 400; font-style: italic;">
+                Doctor Notice: Personally unavailable ({{ clinic.doctorUnavailabilityReason || 'Staff attending
+                patients' }})
               </div>
             </td>
             <td>{{ clinic.city }}, {{ clinic.state }}</td>
             <td>
               <div *ngIf="clinic.openDays; else noTimings">
-                <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-cyan);">🕒 {{ formatClinicTimings(clinic.startTime, clinic.endTime) }}</span>
+                <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-cyan);">🕒 {{
+                  formatClinicTimings(clinic.startTime, clinic.endTime) }}</span>
                 <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                  <span *ngFor="let day of getSortedDays(clinic.openDays)" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px;">
+                  <span *ngFor="let day of getSortedDays(clinic.openDays)"
+                    style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px;">
                     {{ day }}
                   </span>
                 </div>
               </div>
               <ng-template #noTimings>
-                <span style="font-size: 0.75rem; color: var(--text-secondary); font-style: italic;">Not scheduled yet</span>
+                <span style="font-size: 0.75rem; color: var(--text-secondary); font-style: italic;">Not scheduled
+                  yet</span>
               </ng-template>
             </td>
             <td>
               <!-- If Verified/UpdatedPending and Has No Admin: Show Add Admin action button -->
-              <button 
+              <button
                 *ngIf="(clinic.verificationStatus === 'Verified' || clinic.verificationStatus === 'UpdatedPending') && !clinic.hasAdmin"
                 class="btn btn-confirm"
                 style="font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; white-space: nowrap;"
-                (click)="openAdminModal(clinic.clinicId, clinic.clinicName)"
-              >
+                (click)="openAdminModal(clinic.clinicId, clinic.clinicName)">
                 + Add Admin
               </button>
 
               <!-- If Pending/Rejected and Has No Admin: Show No Admin Assigned badge -->
-              <span *ngIf="(clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'Rejected') && !clinic.hasAdmin" class="badge" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
+              <span
+                *ngIf="(clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'Rejected') && !clinic.hasAdmin"
+                class="badge"
+                style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;">
                 👤 No Admin Assigned
               </span>
 
               <!-- If Has Admin: Show Admin Detail button -->
-              <button 
-                *ngIf="clinic.hasAdmin"
-                class="btn btn-confirm"
+              <button *ngIf="clinic.hasAdmin" class="btn btn-confirm"
                 style="background: rgba(6, 182, 212, 0.15); border-color: rgba(6, 182, 212, 0.3); color: var(--accent-cyan); font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"
-                (click)="openAdminDetailModal(clinic)"
-              >
+                (click)="openAdminDetailModal(clinic)">
                 👤 Show Admin Detail
               </button>
             </td>
             <td>
-              <button class="btn btn-confirm" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #10b981; font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;" (click)="openTimingsModal(clinic)">
+              <button class="btn btn-confirm"
+                style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #10b981; font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"
+                (click)="openTimingsModal(clinic)">
                 📅 Edit Timing
               </button>
             </td>
             <td class="text-end">
-              <button class="btn btn-confirm" style="background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); white-space: nowrap;" (click)="openEditClinicModal(clinic)">
+              <button class="btn btn-confirm"
+                style="background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); white-space: nowrap;"
+                (click)="openEditClinicModal(clinic)">
                 ✏️ Edit
               </button>
             </td>
@@ -157,7 +174,8 @@
       <div class="scrollable-body">
         <div class="form-group">
           <label class="form-label">Clinic / Hospital Name *</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.clinicName" name="clinicName" required placeholder="e.g. City Dental Care">
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.clinicName" name="clinicName" required
+            placeholder="e.g. City Dental Care">
         </div>
 
         <div class="form-row">
@@ -178,37 +196,42 @@
         <div class="form-row">
           <div class="form-group col-4">
             <label class="form-label">State *</label>
-            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.state" name="state" required placeholder="e.g. Maharashtra">
+            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.state" name="state" required
+              placeholder="e.g. Maharashtra">
           </div>
           <div class="form-group col-4">
             <label class="form-label">City *</label>
-            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.city" name="city" required placeholder="e.g. Mumbai">
+            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.city" name="city" required
+              placeholder="e.g. Mumbai">
           </div>
           <div class="form-group col-4">
             <label class="form-label">Pincode *</label>
-            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.pincode" name="pincode" required placeholder="e.g. 400050">
+            <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.pincode" name="pincode" required
+              placeholder="e.g. 400050">
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Area *</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.area" name="area" required placeholder="e.g. Bandra West">
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.area" name="area" required
+            placeholder="e.g. Bandra West">
         </div>
 
         <div class="form-group">
           <label class="form-label">Address Line 1 *</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.addressline1" name="addressline1" required placeholder="e.g. Shop 4, Hill Road">
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.addressline1" name="addressline1" required
+            placeholder="e.g. Shop 4, Hill Road">
         </div>
 
         <div class="form-group">
           <label class="form-label">Address Line 2 (Optional)</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.addressline2" name="addressline2" placeholder="e.g. Opposite National Bank">
+          <input type="text" class="form-control" [(ngModel)]="clinicOnlyForm.addressline2" name="addressline2"
+            placeholder="e.g. Opposite National Bank">
         </div>
 
 
 
-        <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
-        <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
+        <!-- <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div> -->
       </div>
 
       <div class="modal-footer">
@@ -231,33 +254,39 @@
       <div class="scrollable-body">
         <div class="form-group">
           <label class="form-label">Selected Clinic Location</label>
-          <input type="text" class="form-control text-muted bg-light" [value]="selectedClinicNameForAdmin" disabled style="opacity: 0.7;">
+          <input type="text" class="form-control text-muted bg-light" [value]="selectedClinicNameForAdmin" disabled
+            style="opacity: 0.7;">
         </div>
 
         <div class="form-row">
           <div class="form-group col-6">
             <label class="form-label">Admin First Name *</label>
-            <input type="text" class="form-control" [(ngModel)]="adminForm.adminFirstName" name="adminFirstName" required placeholder="e.g. John">
+            <input type="text" class="form-control" [(ngModel)]="adminForm.adminFirstName" name="adminFirstName"
+              required placeholder="e.g. John">
           </div>
           <div class="form-group col-6">
             <label class="form-label">Admin Last Name *</label>
-            <input type="text" class="form-control" [(ngModel)]="adminForm.adminLastName" name="adminLastName" required placeholder="e.g. Doe">
+            <input type="text" class="form-control" [(ngModel)]="adminForm.adminLastName" name="adminLastName" required
+              placeholder="e.g. Doe">
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Admin Contact Mobile *</label>
-          <input type="tel" class="form-control" [(ngModel)]="adminForm.adminMobileNo" name="adminMobileNo" required placeholder="e.g. 9876543210">
+          <input type="tel" class="form-control" [(ngModel)]="adminForm.adminMobileNo" name="adminMobileNo" required
+            placeholder="e.g. 9876543210">
         </div>
 
         <div class="form-group">
           <label class="form-label">Admin Email (Username for Login) *</label>
-          <input type="email" class="form-control" [(ngModel)]="adminForm.adminEmail" name="adminEmail" required placeholder="e.g. admin@clinic.com">
+          <input type="email" class="form-control" [(ngModel)]="adminForm.adminEmail" name="adminEmail" required
+            placeholder="e.g. admin@clinic.com">
         </div>
 
         <div class="form-group">
           <label class="form-label">Admin Password *</label>
-          <input type="password" class="form-control" [(ngModel)]="adminForm.adminPassword" name="adminPassword" required placeholder="Min 6 characters">
+          <input type="password" class="form-control" [(ngModel)]="adminForm.adminPassword" name="adminPassword"
+            required placeholder="Min 6 characters">
         </div>
 
         <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
@@ -284,7 +313,8 @@
       <div class="scrollable-body">
         <div class="form-group">
           <label class="form-label">Clinic / Hospital Name *</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.clinicName" name="clinicName" required placeholder="e.g. City Dental Care">
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.clinicName" name="clinicName" required
+            placeholder="e.g. City Dental Care">
         </div>
 
         <div class="form-row">
@@ -305,31 +335,37 @@
         <div class="form-row">
           <div class="form-group col-4">
             <label class="form-label">State *</label>
-            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.state" name="state" required placeholder="e.g. Maharashtra">
+            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.state" name="state" required
+              placeholder="e.g. Maharashtra">
           </div>
           <div class="form-group col-4">
             <label class="form-label">City *</label>
-            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.city" name="city" required placeholder="e.g. Mumbai">
+            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.city" name="city" required
+              placeholder="e.g. Mumbai">
           </div>
           <div class="form-group col-4">
             <label class="form-label">Pincode *</label>
-            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.pincode" name="pincode" required placeholder="e.g. 400050">
+            <input type="text" class="form-control" [(ngModel)]="clinicEditForm.pincode" name="pincode" required
+              placeholder="e.g. 400050">
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Area *</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.area" name="area" required placeholder="e.g. Bandra West">
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.area" name="area" required
+            placeholder="e.g. Bandra West">
         </div>
 
         <div class="form-group">
           <label class="form-label">Address Line 1 *</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.addressline1" name="addressline1" required placeholder="e.g. Shop 4, Hill Road">
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.addressline1" name="addressline1" required
+            placeholder="e.g. Shop 4, Hill Road">
         </div>
 
         <div class="form-group">
           <label class="form-label">Address Line 2 (Optional)</label>
-          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.addressline2" name="addressline2" placeholder="e.g. Opposite National Bank">
+          <input type="text" class="form-control" [(ngModel)]="clinicEditForm.addressline2" name="addressline2"
+            placeholder="e.g. Opposite National Bank">
         </div>
 
 
@@ -355,17 +391,17 @@
       <div class="modal-body scrollable-body">
         <h4 class="section-title">🏥 Timings Configuration</h4>
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
-          Set the working hours, operating weekdays, and booking availability status for <strong>{{ selectedClinicNameForTimings }}</strong>.
+          Set the working hours, operating weekdays, and booking availability status for <strong>{{
+            selectedClinicNameForTimings }}</strong>.
         </p>
 
         <!-- Timings & Schedule -->
         <div class="form-group">
           <label class="form-label">Days Open * (Select multiple)</label>
           <div class="weekday-selector" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px;">
-            <span *ngFor="let day of weekDays" 
-                  [class.selected]="isDaySelectedTimings(day)" 
-                  (click)="toggleDayTimings(day)"
-                  style="padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; border: 1px solid var(--border-color); user-select: none; transition: all 0.2s;">
+            <span *ngFor="let day of weekDays" [class.selected]="isDaySelectedTimings(day)"
+              (click)="toggleDayTimings(day)"
+              style="padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; border: 1px solid var(--border-color); user-select: none; transition: all 0.2s;">
               {{ day }}
             </span>
           </div>
@@ -374,8 +410,10 @@
 
         <!-- Split Shift Selector Switch -->
         <div class="form-group" style="margin-top: 15px;">
-          <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-            <input type="checkbox" [(ngModel)]="isSplitShift" (ngModelChange)="validateTimingsChange()" name="isSplitShift" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
+          <label class="form-label"
+            style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input type="checkbox" [(ngModel)]="isSplitShift" (ngModelChange)="validateTimingsChange()"
+              name="isSplitShift" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
             <span>Support Split Shift Timings (Morning & Evening sessions)</span>
           </label>
         </div>
@@ -384,70 +422,92 @@
         <div class="form-row" style="margin-top: 15px;" *ngIf="!isSplitShift">
           <div class="form-group col-6">
             <label class="form-label">Opening Time *</label>
-            <input type="time" class="form-control" [(ngModel)]="startTime1" (ngModelChange)="validateTimingsChange()" name="startTime1">
+            <input type="time" class="form-control" [(ngModel)]="startTime1" (ngModelChange)="validateTimingsChange()"
+              name="startTime1">
           </div>
           <div class="form-group col-6">
             <label class="form-label">Closing Time *</label>
-            <input type="time" class="form-control" [(ngModel)]="endTime1" (ngModelChange)="validateTimingsChange()" name="endTime1">
+            <input type="time" class="form-control" [(ngModel)]="endTime1" (ngModelChange)="validateTimingsChange()"
+              name="endTime1">
           </div>
         </div>
 
         <!-- Split Timing Inputs -->
-        <div style="margin-top: 15px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px;" *ngIf="isSplitShift">
-          <h5 style="margin: 0 0 10px 0; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase;">Session 1 (e.g. Morning Shift)</h5>
+        <div
+          style="margin-top: 15px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px;"
+          *ngIf="isSplitShift">
+          <h5 style="margin: 0 0 10px 0; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase;">
+            Session 1 (e.g. Morning Shift)</h5>
           <div class="form-row">
             <div class="form-group col-6">
               <label class="form-label">Opening Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="startTime1" (ngModelChange)="validateTimingsChange()" name="startTime1">
+              <input type="time" class="form-control" [(ngModel)]="startTime1" (ngModelChange)="validateTimingsChange()"
+                name="startTime1">
             </div>
             <div class="form-group col-6">
               <label class="form-label">Closing Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="endTime1" (ngModelChange)="validateTimingsChange()" name="endTime1">
+              <input type="time" class="form-control" [(ngModel)]="endTime1" (ngModelChange)="validateTimingsChange()"
+                name="endTime1">
             </div>
           </div>
 
-          <h5 style="margin: 15px 0 10px 0; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase; border-top: 1px solid var(--border-color); padding-top: 15px;">Session 2 (e.g. Evening Shift)</h5>
+          <h5
+            style="margin: 15px 0 10px 0; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase; border-top: 1px solid var(--border-color); padding-top: 15px;">
+            Session 2 (e.g. Evening Shift)</h5>
           <div class="form-row">
             <div class="form-group col-6">
               <label class="form-label">Opening Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="startTime2" (ngModelChange)="validateTimingsChange()" name="startTime2">
+              <input type="time" class="form-control" [(ngModel)]="startTime2" (ngModelChange)="validateTimingsChange()"
+                name="startTime2">
             </div>
             <div class="form-group col-6">
               <label class="form-label">Closing Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="endTime2" (ngModelChange)="validateTimingsChange()" name="endTime2">
+              <input type="time" class="form-control" [(ngModel)]="endTime2" (ngModelChange)="validateTimingsChange()"
+                name="endTime2">
             </div>
           </div>
         </div>
 
         <!-- Immediate UI error feedbacks -->
-        <div *ngIf="timingsErrorMessage" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 12px; border-radius: 6px; font-size: 0.8rem; color: #f87171; display: flex; gap: 8px; align-items: center; margin-top: 12px; font-weight: 500;">
+        <div *ngIf="timingsErrorMessage"
+          style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 12px; border-radius: 6px; font-size: 0.8rem; color: #f87171; display: flex; gap: 8px; align-items: center; margin-top: 12px; font-weight: 500;">
           <span>⚠️ {{ timingsErrorMessage }}</span>
         </div>
 
         <!-- Availability Toggle -->
         <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-          <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isAvailable" name="isAvailable" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
+          <label class="form-label"
+            style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isAvailable" name="isAvailable"
+              style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
             <span>Branch is Open & Available for Bookings</span>
           </label>
         </div>
 
         <div class="form-group" style="margin-top: 10px;" *ngIf="!clinicTimingsForm.isAvailable">
           <label class="form-label">Reason for Temporary Closure / Unavailability</label>
-          <textarea class="form-control" [(ngModel)]="clinicTimingsForm.unavailabilityReason" name="unavailabilityReason" rows="2" placeholder="e.g. Closed today due to heavy rain. Please book for tomorrow."></textarea>
+          <textarea class="form-control" [(ngModel)]="clinicTimingsForm.unavailabilityReason"
+            name="unavailabilityReason" rows="2"
+            placeholder="e.g. Closed today due to heavy rain. Please book for tomorrow."></textarea>
         </div>
 
         <!-- Doctor Availability Toggle (Clinic is open, but doctor themselves is unavailable) -->
-        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;" *ngIf="clinicTimingsForm.isAvailable">
-          <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isDoctorAvailable" name="isDoctorAvailable" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
+        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;"
+          *ngIf="clinicTimingsForm.isAvailable">
+          <label class="form-label"
+            style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isDoctorAvailable" name="isDoctorAvailable"
+              style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
             <span>Doctor is Personally Available at this Branch</span>
           </label>
         </div>
 
-        <div class="form-group" style="margin-top: 10px;" *ngIf="clinicTimingsForm.isAvailable && !clinicTimingsForm.isDoctorAvailable">
+        <div class="form-group" style="margin-top: 10px;"
+          *ngIf="clinicTimingsForm.isAvailable && !clinicTimingsForm.isDoctorAvailable">
           <label class="form-label">Reason for Doctor's Unavailability</label>
-          <textarea class="form-control" [(ngModel)]="clinicTimingsForm.doctorUnavailabilityReason" name="doctorUnavailabilityReason" rows="2" placeholder="e.g. Doctor is attending conference. Assistant staff will be attending patients."></textarea>
+          <textarea class="form-control" [(ngModel)]="clinicTimingsForm.doctorUnavailabilityReason"
+            name="doctorUnavailabilityReason" rows="2"
+            placeholder="e.g. Doctor is attending conference. Assistant staff will be attending patients."></textarea>
         </div>
 
         <!-- Booking range start and end dates limit -->
@@ -455,27 +515,37 @@
           <label class="form-label" style="font-weight: 700;">Open Booking Window (Available Dates)</label>
           <div style="display: flex; gap: 15px; margin-top: 8px;">
             <div style="flex: 1;">
-              <label class="form-label" for="bookingWindowStartDate" style="font-size: 0.8rem; color: var(--text-secondary);">Available From</label>
-              <input type="date" class="form-control" id="bookingWindowStartDate" [(ngModel)]="clinicTimingsForm.bookingWindowStartDate" name="bookingWindowStartDate">
+              <label class="form-label" for="bookingWindowStartDate"
+                style="font-size: 0.8rem; color: var(--text-secondary);">Available From</label>
+              <input type="date" class="form-control" id="bookingWindowStartDate"
+                [(ngModel)]="clinicTimingsForm.bookingWindowStartDate" name="bookingWindowStartDate">
             </div>
             <div style="flex: 1;">
-              <label class="form-label" for="bookingWindowEndDate" style="font-size: 0.8rem; color: var(--text-secondary);">Available To (Optional)</label>
-              <input type="date" class="form-control" id="bookingWindowEndDate" [(ngModel)]="clinicTimingsForm.bookingWindowEndDate" name="bookingWindowEndDate">
+              <label class="form-label" for="bookingWindowEndDate"
+                style="font-size: 0.8rem; color: var(--text-secondary);">Available To (Optional)</label>
+              <input type="date" class="form-control" id="bookingWindowEndDate"
+                [(ngModel)]="clinicTimingsForm.bookingWindowEndDate" name="bookingWindowEndDate">
             </div>
           </div>
-          <small class="form-text text-muted" style="margin-top: 6px; display: block; color: var(--text-secondary);">Configure the date range in which patients can schedule appointments. Leave dates blank for immediate/indefinite bookings.</small>
+          <small class="form-text text-muted"
+            style="margin-top: 6px; display: block; color: var(--text-secondary);">Configure the date range in which
+            patients can schedule appointments. Leave dates blank for immediate/indefinite bookings.</small>
         </div>
 
         <!-- Consultation Modes Configuration -->
         <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
           <label class="form-label" style="font-weight: 700;">Supported Consultation Modes</label>
           <div style="display: flex; gap: 20px; margin-top: 8px;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.9rem;">
-              <input type="checkbox" [(ngModel)]="clinicTimingsForm.supportInPerson" name="supportInPerson" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
+            <label
+              style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.9rem;">
+              <input type="checkbox" [(ngModel)]="clinicTimingsForm.supportInPerson" name="supportInPerson"
+                style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
               <span>✙ In-Person Visit</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.9rem;">
-              <input type="checkbox" [(ngModel)]="clinicTimingsForm.supportVideo" name="supportVideo" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
+            <label
+              style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.9rem;">
+              <input type="checkbox" [(ngModel)]="clinicTimingsForm.supportVideo" name="supportVideo"
+                style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
               <span>🎥 Video Consultation</span>
             </label>
           </div>
@@ -503,14 +573,17 @@
 
     <div class="modal-body" style="padding: 24px;">
       <div style="text-align: center; margin-bottom: 20px;">
-        <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; border: 1.5px solid rgba(6, 182, 212, 0.3);">
+        <div
+          style="width: 60px; height: 60px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; border: 1.5px solid rgba(6, 182, 212, 0.3);">
           <span style="font-size: 1.8rem; color: var(--accent-cyan);">👤</span>
         </div>
-        <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">{{ selectedAdminName }}</h4>
-        <span class="badge" [style.background]="selectedAdminIsVerified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'"
-                     [style.color]="selectedAdminIsVerified ? '#10b981' : '#f59e0b'"
-                     [style.border]="selectedAdminIsVerified ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)'"
-                     style="padding: 2px 8px; border-radius: 20px; font-size: 0.68rem; font-weight: 600; margin-top: 5px; display: inline-block;">
+        <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">{{ selectedAdminName }}
+        </h4>
+        <span class="badge"
+          [style.background]="selectedAdminIsVerified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'"
+          [style.color]="selectedAdminIsVerified ? '#10b981' : '#f59e0b'"
+          [style.border]="selectedAdminIsVerified ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)'"
+          style="padding: 2px 8px; border-radius: 20px; font-size: 0.68rem; font-weight: 600; margin-top: 5px; display: inline-block;">
           {{ selectedAdminIsVerified ? '✔ Verified Admin' : '⏳ Pending Verification' }}
         </span>
       </div>
@@ -534,7 +607,8 @@
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" style="width: 100%;" (click)="closeAdminDetailModal()">Close Details</button>
+      <button type="button" class="btn btn-secondary" style="width: 100%;" (click)="closeAdminDetailModal()">Close
+        Details</button>
     </div>
   </div>
 </div>

@@ -14,7 +14,6 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string MobileNo { get; set; }
 		public string Qualification { get; set; }
 		public string LicenceNumber { get; set; }
-		public string HospitalName { get; set; }
 		public int YearsOfExperience { get; set; }
 		public double ConsultationFee { get; set; }
 		public string AboutDoctor { get; set; }

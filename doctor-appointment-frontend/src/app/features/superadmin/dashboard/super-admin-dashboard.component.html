@@ -28,7 +28,6 @@
             <th>Doctor Name</th>
             <th>Specialization</th>
             <th>Licence Number</th>
-            <th>Hospital Name</th>
             <th>Reg. Date</th>
             <th class="text-end">Actions</th>
           </tr>
@@ -41,7 +40,6 @@
             </td>
             <td>{{ doctor.specializationName }}</td>
             <td><code>{{ doctor.licenceNumber }}</code></td>
-            <td>{{ doctor.hospitalName }}</td>
             <td>{{ doctor.createdDate | date:'mediumDate' }}</td>
             <td class="text-end">
               <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">

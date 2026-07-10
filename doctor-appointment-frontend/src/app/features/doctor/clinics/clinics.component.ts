@@ -236,7 +236,23 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     };
   }
 
+  validateClinicForm(form: any): boolean {
+    const requiredFields = ['clinicName', 'clinicType', 'country', 'state', 'city', 'area', 'pincode', 'addressline1'];
+    for (const field of requiredFields) {
+      const val = form[field];
+      if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '')) {
+        const fieldNameFormatted = field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        this.toastService.showError(`${fieldNameFormatted} is required and cannot be empty or blank.`);
+        return false;
+      }
+    }
+    return true;
+  }
+
   submitClinicOnly(): void {
+    if (!this.validateClinicForm(this.clinicOnlyForm)) {
+      return;
+    }
     this.adminService.registerClinicOnly(this.clinicOnlyForm).subscribe({
       next: (res) => {
         this.successMessage = res.message || 'Clinic registered successfully! Pending Super Admin verification.';
@@ -245,8 +261,8 @@ export class ClinicsComponent implements OnInit, OnDestroy {
         setTimeout(() => this.closeClinicModal(), 2000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Failed to register clinic.';
-        this.toastService.showError(this.errorMessage);
+        const errorDetail = err?.error?.detail || 'Failed to register clinic.';
+        this.toastService.showError(errorDetail);
       }
     });
   }
@@ -298,6 +314,10 @@ export class ClinicsComponent implements OnInit, OnDestroy {
 
   submitClinicEdit(): void {
     if (!this.selectedClinicIdForEdit) return;
+
+    if (!this.validateClinicForm(this.clinicEditForm)) {
+      return;
+    }
 
     this.adminService.updateClinic(this.selectedClinicIdForEdit, this.clinicEditForm).subscribe({
       next: () => {

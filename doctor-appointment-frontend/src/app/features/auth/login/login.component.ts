@@ -30,6 +30,20 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      const role = this.authService.getRole();
+      if (role === 'Patient') {
+        this.router.navigate(['/patient/dashboard']);
+      } else if (role === 'Doctor') {
+        this.router.navigate(['/doctor/dashboard']);
+      } else if (role === 'Admin') {
+        this.router.navigate(['/admin/dashboard']);
+      } else if (role === 'SuperAdmin') {
+        this.router.navigate(['/superadmin/dashboard']);
+      }
+      return;
+    }
+
     // Read fixed role from route data if accessed via dedicated URL
     this.route.data.subscribe(data => {
       if (data && data['role']) {

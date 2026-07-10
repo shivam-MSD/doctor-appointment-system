@@ -393,10 +393,6 @@
 
       <form (submit)="submitClinicRegistration(); $event.preventDefault()">
         <div class="modal-body scrollable-body">
-          <div class="error-banner" *ngIf="errorMessage">
-            <span>⚠️</span> {{ errorMessage }}
-          </div>
-
           <h4 class="section-title">🏢 Center / Clinic Details</h4>
           <div class="form-row">
             <div class="form-group col-6">

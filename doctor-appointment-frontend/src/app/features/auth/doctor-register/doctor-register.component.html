@@ -22,27 +22,32 @@
       <div class="form-row">
         <div class="form-group flex-1">
           <label class="form-label" for="firstName">First Name *</label>
-          <input class="form-control" type="text" id="firstName" name="firstName" [(ngModel)]="firstName" placeholder="Dr. John" required>
+          <input class="form-control" type="text" id="firstName" name="firstName" [(ngModel)]="firstName"
+            placeholder="Dr. John" required>
         </div>
         <div class="form-group flex-1">
           <label class="form-label" for="lastName">Last Name *</label>
-          <input class="form-control" type="text" id="lastName" name="lastName" [(ngModel)]="lastName" placeholder="Doe" required>
+          <input class="form-control" type="text" id="lastName" name="lastName" [(ngModel)]="lastName" placeholder="Doe"
+            required>
         </div>
       </div>
 
       <div class="form-group">
         <label class="form-label" for="email">Email Address *</label>
-        <input class="form-control" type="email" id="email" name="email" [(ngModel)]="email" placeholder="doctor@hospital.com" required>
+        <input class="form-control" type="email" id="email" name="email" [(ngModel)]="email"
+          placeholder="doctor@hospital.com" required>
       </div>
 
       <div class="form-row">
         <div class="form-group flex-1">
           <label class="form-label" for="password">Password *</label>
-          <input class="form-control" type="password" id="password" name="password" [(ngModel)]="password" placeholder="••••••••" required>
+          <input class="form-control" type="password" id="password" name="password" [(ngModel)]="password"
+            placeholder="••••••••" required>
         </div>
         <div class="form-group flex-1">
           <label class="form-label" for="mobileNo">Mobile Number *</label>
-          <input class="form-control" type="tel" id="mobileNo" name="mobileNo" [(ngModel)]="mobileNo" placeholder="+1 555-0188" required>
+          <input class="form-control" type="tel" id="mobileNo" name="mobileNo" [(ngModel)]="mobileNo"
+            placeholder="+1 555-0188" required>
         </div>
       </div>
 
@@ -86,31 +91,32 @@
         </div>
         <div class="form-group flex-1">
           <label class="form-label" for="specialization">Specialization *</label>
-          <select class="form-control" id="specialization" name="specializationId" [(ngModel)]="specializationId" required>
+          <select class="form-control" id="specialization" name="specializationId" [(ngModel)]="specializationId"
+            required>
             <option value="" disabled selected>-- Select Specialization --</option>
-            <option *ngFor="let spec of specializations" [value]="spec.specializationId">{{ spec.specializationName }}</option>
+            <option *ngFor="let spec of specializations" [value]="spec.specializationId">{{ spec.specializationName }}
+            </option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
         <label class="form-label" for="licenceNumber">Medical License Number *</label>
-        <input class="form-control" type="text" id="licenceNumber" name="licenceNumber" [(ngModel)]="licenceNumber" placeholder="LIC-9831-29" required>
+        <input class="form-control" type="text" id="licenceNumber" name="licenceNumber" [(ngModel)]="licenceNumber"
+          placeholder="LIC-9831-29" required>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="hospitalName">Clinic / Hospital Name *</label>
-        <input class="form-control" type="text" id="hospitalName" name="hospitalName" [(ngModel)]="hospitalName" placeholder="City General Hospital" required>
-      </div>
 
       <div class="form-row">
         <div class="form-group flex-1">
           <label class="form-label" for="yearsOfExperience">Years of Experience *</label>
-          <input class="form-control" type="number" id="yearsOfExperience" name="yearsOfExperience" [(ngModel)]="yearsOfExperience" min="1" required>
+          <input class="form-control" type="number" id="yearsOfExperience" name="yearsOfExperience"
+            [(ngModel)]="yearsOfExperience" min="1" required>
         </div>
         <div class="form-group flex-1">
           <label class="form-label" for="consultationFee">Consultation Fee (INR) *</label>
-          <input class="form-control" type="number" id="consultationFee" name="consultationFee" [(ngModel)]="consultationFee" min="0" required>
+          <input class="form-control" type="number" id="consultationFee" name="consultationFee"
+            [(ngModel)]="consultationFee" min="0" required>
         </div>
       </div>
 

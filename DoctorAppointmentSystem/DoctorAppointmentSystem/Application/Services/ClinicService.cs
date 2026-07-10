@@ -495,7 +495,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				.ToListAsync();
 		}
 
-		public async Task VerifyClinicAsync(Guid clinicId)
+		public async Task<string> VerifyClinicAsync(Guid clinicId)
 		{
 			var clinic = await _dbContext.Clinics
 				.Include(c => c.Doctor)
@@ -588,9 +588,10 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Clinics");
+			return clinic.ClinicName;
 		}
 
-		public async Task VerifyAdminAsync(Guid adminId)
+		public async Task<string> VerifyAdminAsync(Guid adminId)
 		{
 			var admin = await _dbContext.Admins
 				.Include(a => a.User)
@@ -611,9 +612,10 @@ namespace DoctorAppointmentSystem.Application.Services
 			// Notify Doctor user that their admin has been approved
 			await _notificationService.CreateNotificationAsync(admin.Clinic.Doctor.User.UserId, $"The Clinic Admin {admin.FirstName} {admin.LastName} assigned to '{admin.Clinic.ClinicName}' has been approved.");
 			await _notificationService.SendRefreshSignalAsync("Admins");
+			return $"{admin.FirstName} {admin.LastName}";
 		}
 
-		public async Task RejectAdminAsync(Guid adminId)
+		public async Task<string> RejectAdminAsync(Guid adminId)
 		{
 			var admin = await _dbContext.Admins
 				.Include(a => a.User)
@@ -642,9 +644,10 @@ namespace DoctorAppointmentSystem.Application.Services
 			// Notify the doctor
 			await _notificationService.CreateNotificationAsync(doctorUserId, $"The Clinic Admin {adminName} assigned to '{clinicName}' has been rejected by the Super Admin.");
 			await _notificationService.SendRefreshSignalAsync("Admins");
+			return adminName;
 		}
 
-		public async Task RejectClinicAsync(Guid clinicId, string rejectionReason)
+		public async Task<string> RejectClinicAsync(Guid clinicId, string rejectionReason)
 		{
 			var clinic = await _dbContext.Clinics
 				.Include(c => c.Doctor)
@@ -707,6 +710,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Clinics");
+			return clinic.ClinicName;
 		}
 
 		public async Task UpdateClinicAsync(Guid clinicId, Guid doctorUserId, UpdateClinicDto dto)
@@ -727,7 +731,16 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new ForbiddenException("You do not have permission to modify this clinic.");
 			}
 
-			if (dto.IsAvailable && (string.IsNullOrWhiteSpace(dto.OpenDays) || string.IsNullOrWhiteSpace(dto.StartTime) || string.IsNullOrWhiteSpace(dto.EndTime)))
+			bool isDtoTimingEmpty = string.IsNullOrWhiteSpace(dto.OpenDays) && 
+			                        string.IsNullOrWhiteSpace(dto.StartTime) && 
+			                        string.IsNullOrWhiteSpace(dto.EndTime);
+
+			bool isDbTimingEmpty = string.IsNullOrWhiteSpace(clinic.OpenDays) && 
+			                       string.IsNullOrWhiteSpace(clinic.StartTime) && 
+			                       string.IsNullOrWhiteSpace(clinic.EndTime);
+
+			if (dto.IsAvailable && !isDtoTimingEmpty && 
+			    (string.IsNullOrWhiteSpace(dto.OpenDays) || string.IsNullOrWhiteSpace(dto.StartTime) || string.IsNullOrWhiteSpace(dto.EndTime)))
 			{
 				throw new BadRequestException("Active/Open clinics must have a timing schedule (open days, start time, and end time) configured.");
 			}
@@ -775,9 +788,9 @@ namespace DoctorAppointmentSystem.Application.Services
 						Address = proposedAddress,
 						VerificationStatus = EVerificationStatus.UpdatedPending,
 						ParentClinicId = clinicId,
-						OpenDays = dto.OpenDays,
-						StartTime = dto.StartTime,
-						EndTime = dto.EndTime,
+						OpenDays = string.IsNullOrWhiteSpace(dto.OpenDays) ? clinic.OpenDays : dto.OpenDays,
+						StartTime = string.IsNullOrWhiteSpace(dto.StartTime) ? clinic.StartTime : dto.StartTime,
+						EndTime = string.IsNullOrWhiteSpace(dto.EndTime) ? clinic.EndTime : dto.EndTime,
 						IsAvailable = dto.IsAvailable,
 						UnavailabilityReason = dto.UnavailabilityReason,
 						IsDoctorAvailable = dto.IsDoctorAvailable,
@@ -793,9 +806,9 @@ namespace DoctorAppointmentSystem.Application.Services
 					// Update existing edit request clone record
 					clone.ClinicName = dto.ClinicName;
 					clone.ClinicType = dto.ClinicType;
-					clone.OpenDays = dto.OpenDays;
-					clone.StartTime = dto.StartTime;
-					clone.EndTime = dto.EndTime;
+					clone.OpenDays = string.IsNullOrWhiteSpace(dto.OpenDays) ? clinic.OpenDays : dto.OpenDays;
+					clone.StartTime = string.IsNullOrWhiteSpace(dto.StartTime) ? clinic.StartTime : dto.StartTime;
+					clone.EndTime = string.IsNullOrWhiteSpace(dto.EndTime) ? clinic.EndTime : dto.EndTime;
 					clone.IsAvailable = dto.IsAvailable;
 					clone.UnavailabilityReason = dto.UnavailabilityReason;
 					clone.IsDoctorAvailable = dto.IsDoctorAvailable;
@@ -893,7 +906,16 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			var clinic = admin.Clinic;
 
-			if (dto.IsAvailable && (string.IsNullOrWhiteSpace(dto.OpenDays) || string.IsNullOrWhiteSpace(dto.StartTime) || string.IsNullOrWhiteSpace(dto.EndTime)))
+			bool isDtoTimingEmpty = string.IsNullOrWhiteSpace(dto.OpenDays) && 
+			                        string.IsNullOrWhiteSpace(dto.StartTime) && 
+			                        string.IsNullOrWhiteSpace(dto.EndTime);
+
+			bool isDbTimingEmpty = string.IsNullOrWhiteSpace(clinic.OpenDays) && 
+			                       string.IsNullOrWhiteSpace(clinic.StartTime) && 
+			                       string.IsNullOrWhiteSpace(clinic.EndTime);
+
+			if (dto.IsAvailable && !isDtoTimingEmpty && 
+			    (string.IsNullOrWhiteSpace(dto.OpenDays) || string.IsNullOrWhiteSpace(dto.StartTime) || string.IsNullOrWhiteSpace(dto.EndTime)))
 			{
 				throw new BadRequestException("Active/Open clinics must have a timing schedule (open days, start time, and end time) configured.");
 			}
@@ -917,9 +939,9 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			clinic.ClinicName = dto.ClinicName;
 			clinic.ClinicType = dto.ClinicType;
-			clinic.OpenDays = dto.OpenDays;
-			clinic.StartTime = dto.StartTime;
-			clinic.EndTime = dto.EndTime;
+			clinic.OpenDays = string.IsNullOrWhiteSpace(dto.OpenDays) ? clinic.OpenDays : dto.OpenDays;
+			clinic.StartTime = string.IsNullOrWhiteSpace(dto.StartTime) ? clinic.StartTime : dto.StartTime;
+			clinic.EndTime = string.IsNullOrWhiteSpace(dto.EndTime) ? clinic.EndTime : dto.EndTime;
 			clinic.IsAvailable = dto.IsAvailable;
 			clinic.UnavailabilityReason = dto.UnavailabilityReason;
 			clinic.IsDoctorAvailable = dto.IsDoctorAvailable;
