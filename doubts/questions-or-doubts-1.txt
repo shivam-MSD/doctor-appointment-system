@@ -1,0 +1,5 @@
+there are some problems :-
+
+1. if patient books appointment for date 12-07-2026 and doctor or admin has not yet confirm the appoitmnet and if that date is gone means - it is like appointment is expires then, what can be do?? Because that appointment is still showing in the doctors dashboard, eg, if todays date is 13-07-2026 then it should not show the appointment request for all the date before the current date. It should be expired.
+And what if this happens??? 
+So, patient is waiting for the appointment confitmation and but the date expires then what can patient do? he has to book nw appointment??

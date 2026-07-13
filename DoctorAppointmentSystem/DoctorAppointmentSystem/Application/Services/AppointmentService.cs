@@ -205,13 +205,18 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 		}
 
-		public async Task<PagedResult<AppointmentDto>> GetAdminDoctorDashboardAppointmentsAsync(Guid userId, string? status, DateTime? startDate, DateTime? endDate, string? search, int page, int size)
+		public async Task<PagedResult<AppointmentDto>> GetAdminDoctorDashboardAppointmentsAsync(Guid userId, string? status, DateTime? startDate, DateTime? endDate, string? search, Guid? patientId, int page, int size)
 		{
 			var query = _dbContext.Appointments
 				.Include(app => app.Patient)
 				.Include(app => app.Doctor)
 				.Include(app => app.Clinic)
 				.AsQueryable();
+
+			if (patientId.HasValue)
+			{
+				query = query.Where(app => EF.Property<Guid>(app, "PatientId") == patientId.Value);
+			}
 
 			// Resolve User Role dashboard scope
 			var isDoctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
@@ -253,12 +258,14 @@ namespace DoctorAppointmentSystem.Application.Services
 			// Filter by search (names)
 			if (!string.IsNullOrEmpty(search))
 			{
-				var searchLower = search.ToLower();
+				var searchLower = search.Trim().ToLower();
 				query = query.Where(app =>
 					app.Patient.FirstName.ToLower().Contains(searchLower) ||
 					app.Patient.LastName.ToLower().Contains(searchLower) ||
+					(app.Patient.FirstName + " " + app.Patient.LastName).ToLower().Contains(searchLower) ||
 					app.Doctor.FirstName.ToLower().Contains(searchLower) ||
-					app.Doctor.LastName.ToLower().Contains(searchLower)
+					app.Doctor.LastName.ToLower().Contains(searchLower) ||
+					(app.Doctor.FirstName + " " + app.Doctor.LastName).ToLower().Contains(searchLower)
 				);
 			}
 
@@ -329,20 +336,42 @@ namespace DoctorAppointmentSystem.Application.Services
 				.Take(size)
 				.ToListAsync();
 
-			var dtos = items.Select(p => new PatientDto
-			{
-				PatientId = p.PatientId,
-				UserId = Guid.Empty, // Return pure demographics DTO
-				Email = string.Empty,
-				FirstName = p.FirstName,
-				LastName = p.LastName,
-				MobileNo = p.MobileNo,
-				Gender = p.Gender.ToString(),
-				DOB = p.DOB,
-				BloodGroup = p.BloodGroup.ToString(),
-				EmergencyContactName = p.EmergencyConactName,
-				EmergencyContactNumber = p.EmergencyConactNumber
-			});
+			var patientIdsList = items.Select(p => p.PatientId).ToList();
+			var userPatients = await _dbContext.UserPatients
+				.Where(up => patientIdsList.Contains(up.PatientId))
+				.ToListAsync();
+
+			var userIds = userPatients.Select(up => up.UserId).ToList();
+			var addresses = await _dbContext.Addresses
+				.Where(a => a.User != null && userIds.Contains(a.User.UserId))
+				.Include(a => a.User)
+				.ToListAsync();
+
+			var dtos = items.Select(p => {
+				var up = userPatients.FirstOrDefault(u => u.PatientId == p.PatientId);
+				var address = up != null ? addresses.FirstOrDefault(a => a.User.UserId == up.UserId) : null;
+				return new PatientDto
+				{
+					PatientId = p.PatientId,
+					UserId = up?.UserId ?? Guid.Empty,
+					Email = string.Empty,
+					FirstName = p.FirstName,
+					LastName = p.LastName,
+					MobileNo = p.MobileNo,
+					Gender = p.Gender.ToString(),
+					DOB = p.DOB,
+					BloodGroup = p.BloodGroup.ToString(),
+					EmergencyContactName = p.EmergencyConactName,
+					EmergencyContactNumber = p.EmergencyConactNumber,
+					Country = address?.Country ?? "India",
+					State = address?.State ?? string.Empty,
+					City = address?.City ?? string.Empty,
+					Area = address?.Area ?? string.Empty,
+					Pincode = address?.Pincode ?? string.Empty,
+					Addressline1 = address?.Addressline1 ?? string.Empty,
+					Addressline2 = address?.Addressline2
+				};
+			}).ToList();
 
 			return new PagedResult<PatientDto>(dtos, totalCount, page, size);
 		}
@@ -561,7 +590,10 @@ namespace DoctorAppointmentSystem.Application.Services
 				Status = app.EAppointmentStatus.ToString(),
 				Reason = app.Reason,
 				ConsultationType = app.EConsultationType.ToString(),
-				CreatedDate = app.CreatedDate
+				CreatedDate = app.CreatedDate,
+				Comment = app.Comment,
+				Report = app.Report,
+				RejectionReason = app.RejectionReason
 			};
 		}
 
@@ -738,6 +770,181 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				Doctor = doctorDto,
 				Clinic = clinicDto
+			};
+		}
+
+		public async Task ApproveAppointmentAsync(Guid appointmentId, string? comment)
+		{
+			var appointment = await _dbContext.Appointments
+				.Include(a => a.Patient)
+				.Include(a => a.Doctor)
+				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+
+			if (appointment == null)
+			{
+				throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
+			}
+
+			appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
+			if (!string.IsNullOrWhiteSpace(comment))
+			{
+				appointment.Comment = comment.Trim();
+			}
+
+			await _dbContext.SaveChangesAsync();
+
+			// Refresh SignalR hubs
+			var userPatient = await _dbContext.UserPatients
+				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+			if (userPatient != null)
+			{
+				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been approved.");
+			}
+			await _notificationService.SendRefreshSignalAsync("Appointments");
+		}
+
+		public async Task RejectAppointmentAsync(Guid appointmentId, string reason)
+		{
+			if (string.IsNullOrWhiteSpace(reason))
+			{
+				throw new BadRequestException("A rejection reason must be provided.");
+			}
+
+			var appointment = await _dbContext.Appointments
+				.Include(a => a.Patient)
+				.Include(a => a.Doctor)
+				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+
+			if (appointment == null)
+			{
+				throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
+			}
+
+			appointment.EAppointmentStatus = EAppointmentStatus.Rejected;
+			appointment.RejectionReason = reason.Trim();
+
+			await _dbContext.SaveChangesAsync();
+
+			// Refresh SignalR hubs
+			var userPatient = await _dbContext.UserPatients
+				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+			if (userPatient != null)
+			{
+				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} was rejected. Reason: {reason}");
+			}
+			await _notificationService.SendRefreshSignalAsync("Appointments");
+		}
+
+		public async Task CompleteAppointmentAsync(Guid appointmentId, string? comment, string? report)
+		{
+			var appointment = await _dbContext.Appointments
+				.Include(a => a.Patient)
+				.Include(a => a.Doctor)
+				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+
+			if (appointment == null)
+			{
+				throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
+			}
+
+			appointment.EAppointmentStatus = EAppointmentStatus.Completed;
+			if (!string.IsNullOrWhiteSpace(comment))
+			{
+				appointment.Comment = comment.Trim();
+			}
+			if (!string.IsNullOrWhiteSpace(report))
+			{
+				appointment.Report = report.Trim();
+			}
+
+			await _dbContext.SaveChangesAsync();
+
+			// Refresh SignalR hubs
+			var userPatient = await _dbContext.UserPatients
+				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+			if (userPatient != null)
+			{
+				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Completed.");
+			}
+			await _notificationService.SendRefreshSignalAsync("Appointments");
+		}
+
+		public async Task MovePendingAppointmentAsync(Guid appointmentId, string? comment)
+		{
+			var appointment = await _dbContext.Appointments
+				.Include(a => a.Patient)
+				.Include(a => a.Doctor)
+				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+
+			if (appointment == null)
+			{
+				throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
+			}
+
+			appointment.EAppointmentStatus = EAppointmentStatus.Pending;
+			if (!string.IsNullOrWhiteSpace(comment))
+			{
+				appointment.Comment = comment.Trim();
+			}
+
+			await _dbContext.SaveChangesAsync();
+
+			// Refresh SignalR hubs
+			var userPatient = await _dbContext.UserPatients
+				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+			if (userPatient != null)
+			{
+				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Pending.");
+			}
+			await _notificationService.SendRefreshSignalAsync("Appointments");
+		}
+
+		public async Task<PatientDto> GetPatientDetailsAsync(Guid userId, Guid patientId)
+		{
+			// Check if Doctor
+			var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
+			// Check if Clinic Admin
+			var adminObj = await _dbContext.Admins.FirstOrDefaultAsync(a => a.User.UserId == userId);
+
+			if (doctor == null && adminObj == null)
+			{
+				throw new ForbiddenException("Only clinical staff and doctors can access patient details.");
+			}
+
+			// Fetch patient
+			var p = await _dbContext.Patients.FindAsync(patientId);
+			if (p == null)
+			{
+				throw new NotFoundException($"Patient with ID '{patientId}' was not found.");
+			}
+
+			var userPatient = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.PatientId == patientId);
+			Address? address = null;
+			if (userPatient != null)
+			{
+				address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.User.UserId == userPatient.UserId);
+			}
+
+			return new PatientDto
+			{
+				PatientId = p.PatientId,
+				UserId = userPatient?.UserId ?? Guid.Empty,
+				Email = string.Empty,
+				FirstName = p.FirstName,
+				LastName = p.LastName,
+				MobileNo = p.MobileNo,
+				Gender = p.Gender.ToString(),
+				DOB = p.DOB,
+				BloodGroup = p.BloodGroup.ToString(),
+				EmergencyContactName = p.EmergencyConactName,
+				EmergencyContactNumber = p.EmergencyConactNumber,
+				Country = address?.Country ?? "India",
+				State = address?.State ?? string.Empty,
+				City = address?.City ?? string.Empty,
+				Area = address?.Area ?? string.Empty,
+				Pincode = address?.Pincode ?? string.Empty,
+				Addressline1 = address?.Addressline1 ?? string.Empty,
+				Addressline2 = address?.Addressline2
 			};
 		}
 	}

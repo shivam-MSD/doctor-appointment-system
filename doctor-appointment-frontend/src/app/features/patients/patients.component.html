@@ -3,7 +3,7 @@
   <div class="glass-card welcome-card">
     <div class="welcome-text">
       <h2>Patients Directory</h2>
-      <p>Search, filter, and view demographic details of registered patients.</p>
+      <p>Search, filter, and view demographic profiles & medical history of registered patients.</p>
     </div>
     <div class="role-badge">Directory</div>
   </div>
@@ -40,8 +40,8 @@
           <option value="">All Blood Groups</option>
           <option value="APositive">A+</option>
           <option value="ANegative">A-</option>
-          <option value="BPos">B+</option>
-          <option value="BPos">B-</option>
+          <option value="BPositive">B+</option>
+          <option value="BNegative">B-</option>
           <option value="ABPositive">AB+</option>
           <option value="ABNegative">AB-</option>
           <option value="OPositive">O+</option>
@@ -84,17 +84,16 @@
         <thead>
           <tr>
             <th>Patient Name</th>
-            <th>Age</th>
             <th>Gender</th>
             <th>Blood Group</th>
             <th>Phone</th>
-            <th>Emergency Contact</th>
+            <th style="text-align: center;">Profile Details</th>
+            <th style="text-align: center;">Visit History</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let patient of getFilteredPatients()">
             <td class="bold">{{ patient.firstName }} {{ patient.lastName }}</td>
-            <td>{{ getAge(patient.dob) }} years</td>
             <td>
               <span class="badge badge-gender">{{ patient.gender }}</span>
             </td>
@@ -102,12 +101,15 @@
               <span class="badge badge-blood">{{ patient.bloodGroup }}</span>
             </td>
             <td>{{ patient.mobileNo }}</td>
-            <td>
-              <div class="emergency-info" *ngIf="patient.emergencyContactName; else none">
-                <span class="name">{{ patient.emergencyContactName }}</span>
-                <span class="phone">📞 {{ patient.emergencyContactNumber }}</span>
-              </div>
-              <ng-template #none><span class="text-muted">None</span></ng-template>
+            <td style="text-align: center;">
+              <button class="btn btn-sm-outline" (click)="openDetailsModal(patient)">
+                👁️ Profile Info
+              </button>
+            </td>
+            <td style="text-align: center;">
+              <button class="btn btn-sm-outline" (click)="openHistoryModal(patient)" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                📜 Visit History
+              </button>
             </td>
           </tr>
         </tbody>
@@ -121,5 +123,145 @@
         <p>No records match your selected keyword search or filter criteria.</p>
       </div>
     </ng-template>
+  </div>
+
+  <!-- VIEW PATIENT DETAILS MODAL -->
+  <div class="modal-backdrop" *ngIf="showDetailsModal && selectedPatientDetails">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>📋 Patient Demographic Profile</h3>
+        <button class="close-modal" (click)="closeDetailsModal()">&times;</button>
+      </div>
+      <div class="modal-body scrollable-body">
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">📋 Personal Demographics</h4>
+        <table class="details-table">
+          <tr>
+            <td>Full Name</td>
+            <td>{{ selectedPatientDetails.firstName }} {{ selectedPatientDetails.lastName }}</td>
+          </tr>
+          <tr>
+            <td>Date of Birth</td>
+            <td>{{ selectedPatientDetails.dob | date:'mediumDate' }} ({{ getAge(selectedPatientDetails.dob) }} years)</td>
+          </tr>
+          <tr>
+            <td>Gender</td>
+            <td>{{ selectedPatientDetails.gender }}</td>
+          </tr>
+          <tr>
+            <td>Blood Group</td>
+            <td>{{ selectedPatientDetails.bloodGroup }}</td>
+          </tr>
+          <tr>
+            <td>Contact Number</td>
+            <td>{{ selectedPatientDetails.mobileNo }}</td>
+          </tr>
+        </table>
+
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 20px;">🚨 Emergency Contact Registry</h4>
+        <table class="details-table" *ngIf="selectedPatientDetails.emergencyContactName; else noEmergency">
+          <tr>
+            <td>Contact Name</td>
+            <td>{{ selectedPatientDetails.emergencyContactName }}</td>
+          </tr>
+          <tr>
+            <td>Relation</td>
+            <td>Family / Relative</td>
+          </tr>
+          <tr>
+            <td>Emergency Phone</td>
+            <td style="color: #ef4444; font-weight: 600;">📞 {{ selectedPatientDetails.emergencyContactNumber }}</td>
+          </tr>
+        </table>
+        <ng-template #noEmergency>
+          <div style="font-size: 0.88rem; color: var(--text-secondary); font-style: italic; padding: 5px 0;">
+            No emergency contact details uploaded for this patient.
+          </div>
+        </ng-template>
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 20px;">📍 Residence Address</h4>
+        <table class="details-table">
+          <tr>
+            <td style="width: 35%;">Address Line 1</td>
+            <td>{{ selectedPatientDetails.addressline1 || 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td>Address Line 2</td>
+            <td>{{ selectedPatientDetails.addressline2 || 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td>Area / Pincode</td>
+            <td>{{ selectedPatientDetails.area || 'N/A' }} - {{ selectedPatientDetails.pincode || 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td>City / State</td>
+            <td>{{ selectedPatientDetails.city || 'N/A' }}, {{ selectedPatientDetails.state || 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td>Country</td>
+            <td>{{ selectedPatientDetails.country || 'N/A' }}</td>
+          </tr>
+        </table>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" (click)="closeDetailsModal()">Close Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW PATIENT APPOINTMENT HISTORY MODAL -->
+  <div class="modal-backdrop" *ngIf="showHistoryModal">
+    <div class="modal-container" style="max-width: 750px;">
+      <div class="modal-header">
+        <h3>📜 Medical History: {{ selectedPatientName }}</h3>
+        <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
+      </div>
+      <div class="modal-body scrollable-body" style="max-height: 480px; overflow-y: auto;">
+        <div class="loading-state" *ngIf="isHistoryLoading" style="padding: 20px 0;">
+          <div class="spinner"></div>
+          <p>Retrieving historical bookings...</p>
+        </div>
+
+        <div *ngIf="!isHistoryLoading">
+          <div class="table-responsive" *ngIf="patientHistory.length > 0; else noHistory">
+            <table class="dashboard-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Clinic</th>
+                  <th>Date</th>
+                  <th>Time Slot</th>
+                  <th>Status</th>
+                  <th>Reason & Clinical Records</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let h of patientHistory">
+                  <td style="font-weight: 600;">{{ h.clinicName || 'Direct' }}</td>
+                  <td>{{ h.appointmentDate | date:'mediumDate' }}</td>
+                  <td style="font-family: monospace; font-size: 0.8rem;">{{ h.startTime | date:'shortTime' }}</td>
+                  <td>
+                    <span [class]="getStatusClass(h.status)">{{ h.status }}</span>
+                  </td>
+                  <td>
+                    <div style="font-size: 0.8rem;">
+                      <span *ngIf="h.reason" style="display: block; color: var(--text-secondary); margin-bottom: 2px;">💬 Visit: {{ h.reason }}</span>
+                      <span *ngIf="h.comment" style="display: block; color: var(--text-secondary); margin-bottom: 2px;">💬 Note: {{ h.comment }}</span>
+                      <span *ngIf="h.report" style="display: block; color: var(--accent-cyan);">📋 Report: {{ h.report }}</span>
+                      <span *ngIf="(h.status === 'Cancelled' || h.status === 'Rejected') && h.rejectionReason" style="display: block; color: #ef4444;">⚠️ Rejection: {{ h.rejectionReason }}</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ng-template #noHistory>
+            <div style="text-align: center; padding: 30px; color: var(--text-secondary);">
+              <span>📭</span> No previous history recorded for this patient.
+            </div>
+          </ng-template>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" (click)="closeHistoryModal()">Close</button>
+      </div>
+    </div>
   </div>
 </div>

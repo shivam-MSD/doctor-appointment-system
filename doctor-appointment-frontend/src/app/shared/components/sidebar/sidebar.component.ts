@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { PatientService } from '../../../core/services/patient.service';
 import { AdminService } from '../../../core/services/admin.service';
+import { AppointmentService } from '../../../core/services/appointment.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Subscription } from 'rxjs';
 
@@ -15,19 +16,33 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private profileCompletionValue = 100;
   private signalrSub?: Subscription;
 
+  isCollapsed = false;
+
   // SuperAdmin pending counters
   pendingDoctorsCount = 0;
   pendingClinicsCount = 0;
   pendingAdminsCount = 0;
 
+  // Doctor pending counters
+  pendingRequestsCount = 0;
+
   constructor(
     public authService: AuthService,
     private patientService: PatientService,
     private adminService: AdminService,
+    private appointmentService: AppointmentService,
     private notificationService: NotificationService
   ) {}
 
+  toggleSidebar(): void {
+    this.isCollapsed = !this.isCollapsed;
+    localStorage.setItem('sidebar_collapsed', this.isCollapsed.toString());
+  }
+
   ngOnInit(): void {
+    const savedState = localStorage.getItem('sidebar_collapsed');
+    this.isCollapsed = savedState === 'true';
+
     const role = this.authService.getRole();
     if (role === 'Patient') {
       this.loadPatientCompletion();
@@ -38,6 +53,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.signalrSub = this.notificationService.refreshData$.subscribe({
         next: () => {
           this.loadSuperAdminCounts();
+        }
+      });
+    } else if (role === 'Doctor') {
+      this.loadDoctorCounts();
+      
+      this.signalrSub = this.notificationService.refreshData$.subscribe({
+        next: () => {
+          this.loadDoctorCounts();
         }
       });
     }
@@ -52,6 +75,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
     this.adminService.getPendingAdmins().subscribe({
       next: (res) => this.pendingAdminsCount = res.length
+    });
+  }
+
+  private loadDoctorCounts(): void {
+    this.appointmentService.getAdminDoctorDashboard({ status: 'Pending' }, 1, 1).subscribe({
+      next: (res) => this.pendingRequestsCount = res.totalCount
     });
   }
 

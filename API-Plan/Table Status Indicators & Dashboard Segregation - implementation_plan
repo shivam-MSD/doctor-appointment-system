@@ -1,0 +1,96 @@
+# Implementation Plan - Table Status Indicators & Dashboard Segregation
+
+This plan implements a unified status indication across all appointments tables in the project, introduces an appointment history view for patients, and separates the doctor's appointment requests from confirmed lists.
+
+## Proposed Changes
+
+### 1. Unified Status Indicators in "Type" Columns
+
+We will display a color-coded status indicator dot inside the **Type** column in every table displaying appointments.
+- **Color Coding**:
+  - `Pending` (Approval Pending): Yellow/Orange (`#f59e0b`)
+  - `Confirmed` (Approved/Upcoming): Green (`#10b981`)
+  - `Completed`: Purple/Indigo (`#8b5cf6` or `#06b6d4`)
+  - `Cancelled` (Rejected): Red (`#ef4444`)
+- **Impacted Tables**:
+  - Patient Dashboard Upcoming Appointments list
+  - Doctor Dashboard Daily Schedule queue list
+  - Doctor appointments list (`DoctorAppointmentsComponent`)
+  - Doctor appointment requests list (`DoctorRequestsComponent`)
+
+---
+
+### 2. Patient Dashboard Segmentation (Active vs. Historical)
+
+We will introduce a new sidebar route for patients: **Appointment History** (`/patient/history`).
+- **Sidebar Entry**:
+  - Add **Appointment History** sidebar link in [sidebar.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/sidebar/sidebar.component.html).
+- **Routing**:
+  - Add `/patient/history` child route in [app-routing.module.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/app-routing.module.ts) mapping to `DashboardComponent` with data `{ historyOnly: true }`.
+- **Component Filtering**:
+  - Read active route data in [dashboard.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.ts) to toggle `historyMode`.
+  - Filter `getFilteredAppointments()`:
+    - **Dashboard**: Only show `Confirmed` & `Pending` appointments where the date has not passed yet.
+    - **History**: Show all `Completed`, `Cancelled`, or past-date appointments.
+
+---
+
+### 3. Doctor Portal: Requests vs. Appointments Separation
+
+- **Exclude Pending from Appointments**:
+  - Update `getFilteredAppointments()` in [doctor-appointments.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.ts) to filter out `Pending` appointments when no status filter is selected.
+  - Remove `Pending` option from the status filters dropdown in [doctor-appointments.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.html).
+
+---
+
+## Proposed Edits
+
+### Shared/Components
+
+#### [MODIFY] [sidebar.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/sidebar/sidebar.component.html)
+- Add "Appointment History" link for Patients.
+
+### Core Routing
+
+#### [MODIFY] [app-routing.module.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/app-routing.module.ts)
+- Add child route `/patient/history`.
+
+### Dashboard Feature
+
+#### [MODIFY] [dashboard.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.ts)
+- Add helper methods `getStatusColor(status)` and `getStatusTitle(status)`.
+- Inject `ActivatedRoute` and listen to route parameters to set `historyMode`.
+- Filter patient appointments in `getFilteredAppointments()`.
+
+#### [MODIFY] [dashboard.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.html)
+- Remove `Status` column from the Patient appointments list.
+- Merge status indicators inside the `Type` column.
+- Display clinic indicators/badges prominently.
+
+### Doctor Features
+
+#### [MODIFY] [doctor-appointments.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.ts)
+- Add status color helper methods.
+- Exclude pending status appointments by default from listings.
+
+#### [MODIFY] [doctor-appointments.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.html)
+- Remove `Pending` filter option.
+- Remove `Status` column from appointments table.
+- Place status indicator dot under the `Type` column.
+
+#### [MODIFY] [doctor-requests.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/requests/doctor-requests.component.html)
+- Add the `Pending` status indicator dot in the `Consultation Type` column.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Validate compilation using `npx ng build`.
+- Check backend runtime logs.
+
+### Manual Verification
+- Log in as a patient, browse Dashboard, confirm only upcoming/pending bookings are listed.
+- Navigate to sidebar "Appointment History", verify all cancelled, completed, and past bookings are shown.
+- Log in as a doctor, verify "Appointments" list has no unapproved requests (which remain in "Requests" sidebar).
+- Inspect status indicator dots next to consultation type values.

@@ -27,19 +27,20 @@
             <th>Schedule & Hours</th>
             <th>Admin Assignment</th>
             <th>Edit Timing</th>
+            <th>Full Details</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let clinic of doctorClinics"
-            [style.border-left]="clinic.isAvailable ? '4px solid #10b981' : '4px solid #f59e0b'"
-            [style.opacity]="clinic.isAvailable ? '1' : '0.85'">
+            [style.border-left]="isClinicCurrentlyOpen(clinic) ? '4px solid #10b981' : '4px solid #f59e0b'"
+            [style.opacity]="isClinicCurrentlyOpen(clinic) ? '1' : '0.85'">
             <td class="bold" style="padding-top: 12px; padding-bottom: 12px; max-width: 240px;">
               <!-- Clinic Name & Availability indicator dot & Verification Badge -->
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span [style.background]="clinic.isAvailable ? '#10b981' : '#f59e0b'"
+                <span [style.background]="isClinicCurrentlyOpen(clinic) ? '#10b981' : '#f59e0b'"
                   style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;"
-                  [title]="clinic.isAvailable ? 'Open & Available' : 'Temporarily Closed'"></span>
+                  [title]="isClinicCurrentlyOpen(clinic) ? 'Open & Available' : 'Closed'"></span>
                 <span class="truncate-text"
                   style="max-width: 160px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.92rem;"
                   [title]="clinic.clinicName">
@@ -69,11 +70,13 @@
 
                 <!-- Availability Badge -->
                 <span class="badge"
-                  [style.background]="clinic.isAvailable ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'"
-                  [style.border]="clinic.isAvailable ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)'"
-                  [style.color]="clinic.isAvailable ? '#10b981' : '#f59e0b'"
+                  [style.background]="isClinicCurrentlyOpen(clinic) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'"
+                  [style.border]="isClinicCurrentlyOpen(clinic) ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)'"
+                  [style.color]="isClinicCurrentlyOpen(clinic) ? '#10b981' : '#f59e0b'"
                   style="font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 2px;">
-                  {{ clinic.isAvailable ? '🟢 Open' : '🔴 Closed' }}
+                  <span *ngIf="isClinicCurrentlyOpen(clinic)">🟢 Open</span>
+                  <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed (Temporarily Closed)</span>
+                  <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside Working Hours)</span>
                 </span>
               </div>
 
@@ -139,6 +142,13 @@
                 style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #10b981; font-size: 0.78rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"
                 (click)="openTimingsModal(clinic)">
                 📅 Edit Timing
+              </button>
+            </td>
+            <td>
+              <button class="btn btn-confirm"
+                style="background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.15); color: var(--text-primary); font-size: 0.75rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"
+                (click)="openClinicDetailsModal(clinic)">
+                👁️ View Details
               </button>
             </td>
             <td class="text-end">
@@ -609,6 +619,130 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" style="width: 100%;" (click)="closeAdminDetailModal()">Close
         Details</button>
+    </div>
+  </div>
+
+  <!-- CLINIC DETAILS POPUP MODAL (WITH ADMIN IF ASSIGNED) -->
+  <div class="modal-backdrop" *ngIf="showClinicDetailsModal">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>🏢 Clinic Branch Details</h3>
+        <button class="close-modal" (click)="closeClinicDetailsModal()">&times;</button>
+      </div>
+      <div class="modal-body scrollable-body" *ngIf="selectedClinicDetails">
+        <!-- Clinic Status Summary Header Card -->
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-size: 1.15rem; font-weight: 700; color: var(--accent-cyan);">{{ selectedClinicDetails.clinicName }}</h4>
+            <span class="type-indicator text-uppercase" style="font-size: 0.65rem; padding: 2px 6px;">{{ selectedClinicDetails.clinicType }}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+            <span class="badge" [style.background]="selectedClinicDetails.verificationStatus === 'Verified' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)'"
+                                [style.color]="selectedClinicDetails.verificationStatus === 'Verified' ? '#10b981' : '#f59e0b'"
+                                style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; border: 1px solid;">
+              {{ selectedClinicDetails.verificationStatus }}
+            </span>
+             <span class="badge" [style.background]="isClinicCurrentlyOpen(selectedClinicDetails) ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)'"
+                                 [style.color]="isClinicCurrentlyOpen(selectedClinicDetails) ? '#10b981' : '#ef4444'"
+                                 style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; border: 1px solid;">
+               <span *ngIf="isClinicCurrentlyOpen(selectedClinicDetails)">🟢 Open & Available</span>
+               <span *ngIf="!isClinicCurrentlyOpen(selectedClinicDetails) && selectedClinicDetails.isAvailable === false">🔴 Closed (Temporarily Closed)</span>
+               <span *ngIf="!isClinicCurrentlyOpen(selectedClinicDetails) && selectedClinicDetails.isAvailable !== false">🔴 Closed (Outside Working Hours)</span>
+             </span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+          <!-- Location and Address Details -->
+          <div>
+            <h5 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">📍 Location & Address Details</h5>
+            <table class="details-table" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="font-weight: 700; width: 35%; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Street Address 1</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.addressline1 || 'N/A' }}</td>
+              </tr>
+              <tr *ngIf="selectedClinicDetails.addressline2">
+                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Street Address 2</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.addressline2 }}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Area / Pincode</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.area || 'N/A' }} - {{ selectedClinicDetails.pincode || 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">City / State</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.city }}, {{ selectedClinicDetails.state }}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Country</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.country || 'India' }}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Schedule & Hours -->
+          <div>
+            <h5 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">📅 Timing Schedule</h5>
+            <table class="details-table" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="font-weight: 700; width: 35%; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Operational Hours</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; font-weight: 600; color: var(--accent-cyan);">
+                  {{ selectedClinicDetails.startTime ? formatClinicTimings(selectedClinicDetails.startTime, selectedClinicDetails.endTime) : 'Not Scheduled' }}
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Weekly Open Days</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">
+                  {{ selectedClinicDetails.openDays || 'None configured' }}
+                </td>
+              </tr>
+              <tr *ngIf="!selectedClinicDetails.isAvailable && selectedClinicDetails.unavailabilityReason">
+                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: #f59e0b;">Closure Reason</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: #f59e0b; font-style: italic;">{{ selectedClinicDetails.unavailabilityReason }}</td>
+              </tr>
+              <tr *ngIf="selectedClinicDetails.isDoctorAvailable === false && selectedClinicDetails.doctorUnavailabilityReason">
+                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--accent-cyan);">Doctor Absence Reason</td>
+                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--accent-cyan); font-style: italic;">{{ selectedClinicDetails.doctorUnavailabilityReason }}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Associated Clinic Admin Details -->
+          <div>
+            <h5 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">👤 Associated Clinic Admin</h5>
+            <div *ngIf="selectedClinicDetails.hasAdmin; else noAdminAssigned" style="background: rgba(6, 182, 212, 0.05); border: 1px dashed rgba(6, 182, 212, 0.2); border-radius: 8px; padding: 12px 16px;">
+              <table class="details-table" style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="font-weight: 700; width: 35%; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Admin Username / Email</td>
+                  <td style="padding: 6px 0; font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">{{ selectedClinicDetails.adminEmail || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Full Name</td>
+                  <td style="padding: 6px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.adminName || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Phone / Mobile No</td>
+                  <td style="padding: 6px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.adminMobileNo || 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Status</td>
+                  <td style="padding: 6px 0; font-size: 0.85rem;">
+                    <span class="badge badge-confirmed" style="font-size: 0.65rem; padding: 2px 6px;">✓ Active Admin</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <ng-template #noAdminAssigned>
+              <div style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 15px; text-align: center; color: #ef4444; font-size: 0.85rem; font-weight: 500;">
+                ⚠️ No Admin Assigned to this clinic location branch.
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" (click)="closeClinicDetailsModal()">Close</button>
+      </div>
     </div>
   </div>
 </div>

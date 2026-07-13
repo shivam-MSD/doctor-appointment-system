@@ -30,6 +30,7 @@ export class AppointmentService {
     if (filters.startDate) params = params.set('startDate', filters.startDate);
     if (filters.endDate) params = params.set('endDate', filters.endDate);
     if (filters.search) params = params.set('search', filters.search);
+    if (filters.patientId) params = params.set('patientId', filters.patientId);
     return this.http.get<PagedResult<Appointment>>('/api/appointments/admin-doctor-dashboard', { params });
   }
 
@@ -88,5 +89,25 @@ export class AppointmentService {
       params = params.set('patientId', patientId);
     }
     return this.http.get<any[]>('/api/appointments/booked-slots', { params });
+  }
+
+  approveAppointment(id: string, comment?: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/approve/${id}`, { comment });
+  }
+
+  rejectAppointment(id: string, reason: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/reject/${id}`, { reason });
+  }
+
+  completeAppointment(id: string, comment?: string, report?: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/complete/${id}`, { comment, report });
+  }
+
+  movePendingAppointment(id: string, comment?: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/move-pending/${id}`, { comment });
+  }
+
+  getPatientDetails(patientId: string): Observable<any> {
+    return this.http.get<any>(`/api/appointments/patients/${patientId}`);
   }
 }

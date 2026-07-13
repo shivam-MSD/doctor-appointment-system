@@ -1,0 +1,245 @@
+<div class="appointments-wrapper">
+  <!-- Portal Title -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>Appointments Directory</h2>
+      <p>Filter, search, and view all scheduled, past, and upcoming appointments across clinics.</p>
+    </div>
+    <div class="role-badge">Appointments</div>
+  </div>
+
+  <!-- Filters Dashboard Panel -->
+  <div class="glass-card filter-card">
+    <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3>🔍 Filter Appointments</h3>
+      <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
+    </div>
+    
+    <div class="filters-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 15px;">
+      <!-- Status filter -->
+      <div class="form-group">
+        <label class="form-label">Appointment Status</label>
+        <select class="form-control" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option value="Confirmed">Confirmed (Active)</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled / Rejected</option>
+        </select>
+      </div>
+
+      <!-- Keyword search -->
+      <div class="form-group">
+        <label class="form-label">Patient Name</label>
+        <input class="form-control" type="text" [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()" placeholder="Search patient name...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Split Layout Container -->
+  <div style="display: flex; gap: 24px; align-items: flex-start; margin-top: 20px; width: 100%;" class="appointments-split-layout">
+    <!-- Left Sidebar (Clinic Locations) -->
+    <div class="glass-card clinic-sidebar" style="width: 280px; flex-shrink: 0; padding: 20px;">
+      <h4 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+        <span>🏢</span> Clinic Locations
+      </h4>
+      
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button 
+          type="button" 
+          (click)="selectClinic('')" 
+          class="clinic-item-btn" 
+          [style.background]="selectedClinicId === '' ? 'rgba(6, 182, 212, 0.12)' : 'rgba(255,255,255,0.02)'"
+          [style.border-color]="selectedClinicId === '' ? 'var(--accent-cyan)' : 'var(--border-color)'"
+          style="text-align: left; padding: 12px 16px; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 600; cursor: pointer; color: var(--text-primary); transition: all 0.2s; width: 100%;">
+          🌐 All Clinics / Locations
+        </button>
+        
+        <button 
+          *ngFor="let clinic of doctorClinics" 
+          type="button" 
+          (click)="selectClinic(clinic.clinicId)" 
+          class="clinic-item-btn" 
+          [style.background]="selectedClinicId === clinic.clinicId ? 'rgba(6, 182, 212, 0.12)' : 'rgba(255,255,255,0.02)'"
+          [style.border-color]="selectedClinicId === clinic.clinicId ? 'var(--accent-cyan)' : 'var(--border-color)'"
+          style="text-align: left; padding: 12px 16px; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 600; cursor: pointer; color: var(--text-primary); transition: all 0.2s; display: flex; flex-direction: column; gap: 4px; width: 100%;">
+          <span style="font-size: 0.9rem;">🏢 {{ clinic.clinicName }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 500;">📍 {{ clinic.area }}, {{ clinic.city }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Panel (Main Content Table) -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoading" style="margin: 0; padding: 40px 0;">
+        <div class="spinner"></div>
+        <p>Loading appointments registry...</p>
+      </div>
+
+      <!-- Appointments List Table -->
+      <div class="glass-card table-card" *ngIf="!isLoading" style="margin: 0;">
+        <div class="table-header">
+          <h3>Patient Appointments ({{ getFilteredAppointments().length }})</h3>
+        </div>
+
+        <!-- Status Color Legend Key -->
+        <div class="status-legend" style="display: flex; gap: 15px; align-items: center; font-size: 0.8rem; font-weight: 600; padding: 10px 20px 10px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.01);">
+          <span style="color: var(--text-secondary);">Status Color Key:</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span> Confirmed</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span> Pending (Confirmation Pending)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span> Cancelled</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #dc2626;"></span> Rejected</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></span> Completed</span>
+        </div>
+
+    <div class="table-responsive" *ngIf="getFilteredAppointments().length > 0; else emptyState">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Patient Name</th>
+            <th>Clinic / Location</th>
+            <th>Date</th>
+            <th>Time Slot</th>
+            <th>Consultation Type</th>
+            <th>Reason / Reason for Visit</th>
+            <th>Clinical Note / Report</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let app of getFilteredAppointments()" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
+            <td class="bold">
+              <a href="javascript:void(0)" (click)="openPatientDetailsModal(app.patientId)" style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;" title="Click to view patient profile">
+                {{ app.patientName }} ℹ️
+              </a>
+            </td>
+            <td style="color: var(--accent-cyan); font-weight: 600;">{{ app.clinicName || 'Direct' }}</td>
+            <td>{{ app.appointmentDate | date:'mediumDate' }}</td>
+            <td style="font-family: monospace;">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }}</td>
+            <td>
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <span [style.background]="getStatusColor(app.status)"
+                  style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;"
+                  [title]="getStatusTitle(app.status)"></span>
+                <span class="type-indicator" [title]="app.consultationType === 'InPerson' ? 'In-Person clinic visit' : 'Video call session'">
+                  {{ getConsultationTypeLabel(app.consultationType) }}
+                </span>
+              </span>
+            </td>
+            <td>
+              <span class="truncate-text" [title]="app.reason">{{ app.reason }}</span>
+            </td>
+            <td>
+              <div *ngIf="app.comment || app.report; else emptyNotes">
+                <div *ngIf="app.comment" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 2px;">
+                  💬 <strong>Comment:</strong> {{ app.comment }}
+                </div>
+                <div *ngIf="app.report" style="font-size: 0.8rem; color: var(--accent-cyan);">
+                  📋 <strong>Report:</strong> {{ app.report }}
+                </div>
+              </div>
+              <div *ngIf="(app.status === 'Cancelled' || app.status === 'Rejected') && app.rejectionReason" style="font-size: 0.8rem; color: #ef4444;">
+                ⚠️ <strong>Rejected:</strong> {{ app.rejectionReason }}
+              </div>
+              <ng-template #emptyNotes><span class="text-muted">-</span></ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination controls -->
+      <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+        <span class="pagination-info" style="font-size: 0.85rem; color: var(--text-secondary);">
+          Showing Page {{ page }} of {{ totalPages() }} (Total {{ totalCount }} records)
+        </span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" (click)="prevPage()" [disabled]="page === 1">Previous</button>
+          <button class="btn btn-secondary" (click)="nextPage()" [disabled]="page * size >= totalCount">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="empty-icon">📅</span>
+        <h4>No Appointments Found</h4>
+        <p>No appointments match the selected filters or search queries.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
+</div>
+
+  <!-- VIEW PATIENT DETAILS MODAL (WITHOUT ADDRESS) -->
+  <div class="modal-backdrop" *ngIf="showPatientDetailsModal">
+    <div class="modal-container" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3>📋 Patient Profile Details</h3>
+        <button class="close-modal" (click)="closePatientDetailsModal()">&times;</button>
+      </div>
+      <div class="modal-body scrollable-body">
+        <div class="loading-state" *ngIf="isDetailsLoading" style="padding: 20px 0;">
+          <div class="spinner"></div>
+          <p>Loading patient details...</p>
+        </div>
+
+        <div *ngIf="!isDetailsLoading && selectedPatientDetails">
+          <table class="details-table" style="width: 100%;">
+            <tr>
+              <td style="font-weight: 700; width: 40%; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Full Name</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.firstName }} {{ selectedPatientDetails.lastName }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Age</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ getAge(selectedPatientDetails.dob) }} years</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Date of Birth</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.dob | date:'mediumDate' }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Gender</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.gender }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Blood Group</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.bloodGroup }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Contact Phone</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.mobileNo }}</td>
+            </tr>
+            <tr *ngIf="selectedPatientDetails.emergencyContactName">
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color); color: #ef4444;">Emergency Contact</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color); font-weight: 600; color: #ef4444;">
+                {{ selectedPatientDetails.emergencyContactName }} ({{ selectedPatientDetails.emergencyContactNumber }})
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Address Line 1</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.addressline1 || 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Address Line 2</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.addressline2 || 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Area / Pincode</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.area || 'N/A' }} - {{ selectedPatientDetails.pincode || 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">City / State</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.city || 'N/A' }}, {{ selectedPatientDetails.state || 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Country</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.country || 'N/A' }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" (click)="closePatientDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

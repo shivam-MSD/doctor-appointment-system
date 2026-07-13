@@ -48,6 +48,7 @@ namespace DoctorAppointmentSystem.Controllers
 			[FromQuery] DateTime? startDate,
 			[FromQuery] DateTime? endDate,
 			[FromQuery] string? search,
+			[FromQuery] Guid? patientId,
 			[FromQuery] int page = 1,
 			[FromQuery] int size = 10)
 		{
@@ -56,7 +57,7 @@ namespace DoctorAppointmentSystem.Controllers
 				return BadRequest("Missing required X-User-Id header representing the authenticated user.");
 			}
 
-			var result = await _appointmentService.GetAdminDoctorDashboardAppointmentsAsync(userId, status, startDate, endDate, search, page, size);
+			var result = await _appointmentService.GetAdminDoctorDashboardAppointmentsAsync(userId, status, startDate, endDate, search, patientId, page, size);
 			return Ok(result);
 		}
 
@@ -157,6 +158,46 @@ namespace DoctorAppointmentSystem.Controllers
 			[FromQuery] Guid? patientId)
 		{
 			var result = await _appointmentService.GetBookedSlotsAsync(doctorId, clinicId, date, patientId);
+			return Ok(result);
+		}
+
+		[HttpPost("approve/{id:guid}")]
+		public async Task<IActionResult> ApproveAppointment(Guid id, [FromBody] ApproveAppointmentDto dto)
+		{
+			await _appointmentService.ApproveAppointmentAsync(id, dto.Comment);
+			return Ok(new { Message = "Appointment approved successfully." });
+		}
+
+		[HttpPost("reject/{id:guid}")]
+		public async Task<IActionResult> RejectAppointment(Guid id, [FromBody] RejectAppointmentDto dto)
+		{
+			await _appointmentService.RejectAppointmentAsync(id, dto.Reason);
+			return Ok(new { Message = "Appointment rejected successfully." });
+		}
+
+		[HttpPost("complete/{id:guid}")]
+		public async Task<IActionResult> CompleteAppointment(Guid id, [FromBody] CompleteAppointmentDto dto)
+		{
+			await _appointmentService.CompleteAppointmentAsync(id, dto.Comment, dto.Report);
+			return Ok(new { Message = "Appointment marked as completed successfully." });
+		}
+
+		[HttpPost("move-pending/{id:guid}")]
+		public async Task<IActionResult> MovePendingAppointment(Guid id, [FromBody] MovePendingAppointmentDto dto)
+		{
+			await _appointmentService.MovePendingAppointmentAsync(id, dto.Comment);
+			return Ok(new { Message = "Appointment status updated to pending." });
+		}
+
+		[HttpGet("patients/{patientId:guid}")]
+		public async Task<IActionResult> GetPatientDetails([FromHeader(Name = "X-User-Id")] Guid userId, Guid patientId)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			var result = await _appointmentService.GetPatientDetailsAsync(userId, patientId);
 			return Ok(result);
 		}
 	}

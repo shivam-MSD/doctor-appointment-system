@@ -1,0 +1,95 @@
+# Implementation Plan - Redesign Doctor Portal UI & Appointment Workflow
+
+This plan outlines the restructuring of the Doctor Portal sidebar navigation, dashboard queue, patient directory history views, and the appointment requests verification workflow.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Proposed Clinic Details Location**:
+> We suggest **NOT** showing the large full clinics table directly on the daily patient appointments queue dashboard to keep the dashboard focused. Instead:
+> 1. We will place a high-level, compact **Practice Locations Card** at the top or bottom of the dashboard summarizing active clinics and their active status.
+> 2. The full management table (adding clinics, editing details, assigning admins) remains in the dedicated **My Clinics** sidebar section, which is cleaner and less distracting.
+
+---
+
+## Proposed Changes
+
+### 1. Database & Backend API Extensions
+
+We already added the `Comment`, `Report`, and `RejectionReason` columns to the database `Appointments` table and exposed the endpoints. 
+We will confirm we have these endpoints working:
+- `POST /api/appointments/approve/{id}`: Approves a request (status `Confirmed`), updates optional comment.
+- `POST /api/appointments/reject/{id}`: Rejects a request (status `Cancelled`), updates mandatory rejection reason.
+- `POST /api/appointments/complete/{id}`: Marks appointment as `Completed`, saves comment and clinical report.
+- `POST /api/appointments/move-pending/{id}`: Marks appointment as `Pending` (no-show), saves comment/reason.
+
+---
+
+### 2. Frontend Services & Navigation Routing
+
+#### [MODIFY] [appointment.service.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/services/appointment.service.ts)
+- Add endpoints:
+  - `approveAppointment(id: string, comment?: string)`
+  - `rejectAppointment(id: string, reason: string)`
+  - `completeAppointment(id: string, comment?: string, report?: string)`
+  - `movePendingAppointment(id: string, comment?: string)`
+
+#### [MODIFY] [app-routing.module.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/app-routing.module.ts)
+- Add route for `/doctor/requests` mapping to a new component.
+  `{ path: 'doctor/requests', component: DoctorRequestsComponent }`
+
+#### [MODIFY] [app.module.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/app.module.ts)
+- Register `DoctorRequestsComponent` (to be created).
+
+#### [MODIFY] [sidebar.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/sidebar/sidebar.component.ts) & [sidebar.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/sidebar/sidebar.component.html)
+- Add a new sidebar link for **Appointment Requests** under Doctor role.
+- Retrieve the count of pending appointments via `AppointmentService` to display as a red notification badge next to the link.
+
+---
+
+### 3. Feature Page Implementations
+
+#### [MODIFY] [dashboard.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.ts) & [dashboard.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.html)
+- Display a dedicated **Patient Appointments** queue for the Doctor.
+- **Filter**: Only show today's scheduled/completed/no-show appointments.
+- **Sorting Logic**:
+  - Unprocessed active bookings (status `Confirmed`) appear at the top, sorted by `StartTime` ASC.
+  - Processed bookings (status `Completed` or `Pending`) appear at the bottom.
+- **Checked Row Actions**:
+  - Add text fields directly in the row to input **Comments** and **Clinical Reports**.
+  - Provide a **✓ Complete** button (shows warning popup before finishing).
+  - Provide a **⚠️ No-Show (Pending)** button (shows warning popup before moving to no-show list).
+- Add a compact clinics/centers overview card below the queue.
+
+#### [MODIFY] [patients.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patients/patients.component.ts) & [patients.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patients/patients.component.html)
+- Sort the patient directory list alphabetically by name.
+- Provide two modern popups:
+  - **View Details Popup**: Displays complete profile/emergency info.
+  - **View Appointment History Popup**: Lists all previous, current, and upcoming appointments of that patient, displaying dates, clinic names, consultation types, status, and comments/reports.
+
+#### [NEW] [doctor-requests.component.ts] & [doctor-requests.component.html]
+- Create under `features/doctor/requests/`.
+- Fetches all pending appointments requests (`status === 'Pending'`).
+- Display request details (Patient name, reason, type, clinic, slot).
+- Provide action buttons:
+  - **Approve Request**: Opens modal to enter optional appointment comment.
+  - **Reject Request**: Opens modal to enter **mandatory** rejection reason.
+  - **View Patient History**: View previous appointments of the patient right from the request panel to verify booking history.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run `npx ng build` to verify frontend compiling.
+- Run `dotnet build` to verify backend compiling.
+
+### Manual Verification
+1. Log in as a Doctor. Verify the sidebar contains "Appointment Requests" with a pending badge count.
+2. Go to the dashboard. Verify that only today's appointments are listed in the queue, sorted with active scheduled slots at the top.
+3. Click "Complete" or "No-Show" on an active row, fill comments, and verify:
+   - Warning popups show up.
+   - On confirmation, the status updates on the server.
+   - The row immediately shifts to the end of the daily queue.
+4. Go to **My Patients**. Verify patient records are sorted alphabetically. Click "View Details" and "View Appointment History" and check if comments and reports are rendered correctly in the popups.
+5. Go to **Appointment Requests**. Test approving and rejecting requests, inserting reasons, and verifying they reflect immediately.

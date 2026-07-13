@@ -1,27 +1,46 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+  <!-- Sidebar Toggle Button -->
+  <div class="sidebar-toggle-container">
+    <button class="sidebar-toggle-btn" (click)="toggleSidebar()"
+      [title]="isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
+      <span class="toggle-icon">{{ isCollapsed ? '>' : '<' }}</span>
+    </button>
+  </div>
+
   <ul class="nav-list">
     <!-- Patient-Specific Links -->
     <ng-container *ngIf="authService.getRole() === 'Patient'">
       <li>
-        <a class="nav-link" routerLink="/patient/dashboard" routerLinkActive="active">
+        <a class="nav-link" routerLink="/patient/dashboard" routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: true}" data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/patient/book-appointment" routerLinkActive="active">
+        <a class="nav-link" routerLink="/patient/history" routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: true}" data-tooltip="Appointment History">
+          <span class="icon">📜</span>
+          <span class="label">Appointment History</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/patient/book-appointment" routerLinkActive="active"
+          data-tooltip="Book Appointment">
           <span class="icon">📅</span>
           <span class="label">Book Appointment</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/patient/profile" routerLinkActive="active">
+        <a class="nav-link" routerLink="/patient/profile" routerLinkActive="active"
+          data-tooltip="My Profile">
           <span class="icon">👤</span>
           <span class="label">My Profile</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/patient/doctors" routerLinkActive="active">
+        <a class="nav-link" routerLink="/patient/doctors" routerLinkActive="active"
+          data-tooltip="Search Doctors">
           <span class="icon">🩺</span>
           <span class="label">Search Doctors</span>
         </a>
@@ -31,31 +50,51 @@
     <!-- Doctor-Specific Links -->
     <ng-container *ngIf="authService.getRole() === 'Doctor'">
       <li>
-        <a class="nav-link" routerLink="/doctor/dashboard" routerLinkActive="active">
+        <a class="nav-link" routerLink="/doctor/dashboard" routerLinkActive="active"
+          data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/patients" routerLinkActive="active">
-          <span class="icon">👤</span>
+        <a class="nav-link" routerLink="/doctor/appointments" routerLinkActive="active"
+          data-tooltip="Appointments">
+          <span class="icon">📅</span>
+          <span class="label">Appointments</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/doctor/requests" routerLinkActive="active" data-tooltip="Appointment Requests">
+          <span class="icon">📨</span>
+          <span class="label">Appointment Requests</span>
+          <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingRequestsCount > 0">
+            {{ pendingRequestsCount }}
+          </span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/doctor/patients" routerLinkActive="active" data-tooltip="My Patients">
+          <span class="icon">📋</span>
           <span class="label">My Patients</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/clinics" routerLinkActive="active">
+        <a class="nav-link" routerLink="/doctor/clinics" routerLinkActive="active"
+          data-tooltip="My Clinics">
           <span class="icon">🏢</span>
           <span class="label">My Clinics</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/admins" routerLinkActive="active">
+        <a class="nav-link" routerLink="/doctor/admins" routerLinkActive="active"
+          data-tooltip="Clinic Admins">
           <span class="icon">👥</span>
           <span class="label">Clinic Admins</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/profile" routerLinkActive="active">
+        <a class="nav-link" routerLink="/doctor/profile" routerLinkActive="active"
+          data-tooltip="My Profile">
           <span class="icon">👤</span>
           <span class="label">My Profile</span>
         </a>
@@ -65,13 +104,15 @@
     <!-- Clinic Admin Links -->
     <ng-container *ngIf="authService.getRole() === 'Admin'">
       <li>
-        <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active">
+        <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active"
+          data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/admin/profile" routerLinkActive="active">
+        <a class="nav-link" routerLink="/admin/profile" routerLinkActive="active"
+          data-tooltip="My Profile">
           <span class="icon">👤</span>
           <span class="label">My Profile</span>
         </a>
@@ -81,40 +122,35 @@
     <!-- Super Admin Links -->
     <ng-container *ngIf="authService.getRole() === 'SuperAdmin'">
       <li>
-        <a class="nav-link" routerLink="/superadmin/dashboard" routerLinkActive="active">
+        <a class="nav-link" routerLink="/superadmin/dashboard" routerLinkActive="active"
+          data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/superadmin/doctors" routerLinkActive="active" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="icon">🩺</span>
-            <span class="label">Doctors</span>
-          </div>
-          <span *ngIf="pendingDoctorsCount > 0" style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: auto; line-height: 1;">
+        <a class="nav-link" routerLink="/superadmin/doctors" routerLinkActive="active" data-tooltip="Doctors">
+          <span class="icon">🩺</span>
+          <span class="label">Doctors</span>
+          <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingDoctorsCount > 0">
             {{ pendingDoctorsCount }}
           </span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/superadmin/clinics" routerLinkActive="active" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="icon">🏢</span>
-            <span class="label">Clinics</span>
-          </div>
-          <span *ngIf="pendingClinicsCount > 0" style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: auto; line-height: 1;">
+        <a class="nav-link" routerLink="/superadmin/clinics" routerLinkActive="active" data-tooltip="Clinics">
+          <span class="icon">🏢</span>
+          <span class="label">Clinics</span>
+          <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingClinicsCount > 0">
             {{ pendingClinicsCount }}
           </span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/superadmin/admins" routerLinkActive="active" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="icon">🛡️</span>
-            <span class="label">Admins</span>
-          </div>
-          <span *ngIf="pendingAdminsCount > 0" style="background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: auto; line-height: 1;">
+        <a class="nav-link" routerLink="/superadmin/admins" routerLinkActive="active" data-tooltip="Admins">
+          <span class="icon">🛡️</span>
+          <span class="label">Admins</span>
+          <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingAdminsCount > 0">
             {{ pendingAdminsCount }}
           </span>
         </a>
@@ -123,20 +159,16 @@
   </ul>
 
   <!-- Sidebar Profile Completion Card -->
-  <div class="sidebar-completion-card" *ngIf="isProfileIncomplete()">
+  <div class="sidebar-completion-card" *ngIf="isProfileIncomplete()"
+    [attr.data-tooltip]="'Profile Setup: ' + getCompletionPercentage() + '% Complete'">
     <div class="sidebar-circle-wrapper">
       <svg viewBox="0 0 36 36" class="sidebar-circular-chart">
-        <path class="circle-bg"
-          d="M18 2.0845
+        <path class="circle-bg" d="M18 2.0845
             a 15.9155 15.9155 0 0 1 0 31.831
-            a 15.9155 15.9155 0 0 1 0 -31.831"
-        />
-        <path class="circle"
-          [attr.stroke-dasharray]="getCompletionPercentage() + ', 100'"
-          d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 -31.831" />
+        <path class="circle" [attr.stroke-dasharray]="getCompletionPercentage() + ', 100'" d="M18 2.0845
             a 15.9155 15.9155 0 0 1 0 31.831
-            a 15.9155 15.9155 0 0 1 0 -31.831"
-        />
+            a 15.9155 15.9155 0 0 1 0 -31.831" />
       </svg>
       <span class="sidebar-circle-pct">{{ getCompletionPercentage() }}%</span>
     </div>

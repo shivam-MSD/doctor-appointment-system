@@ -12,6 +12,8 @@ import { PatientsComponent } from './features/patients/patients.component';
 // Doctor feature pages
 import { ClinicsComponent } from './features/doctor/clinics/clinics.component';
 import { ClinicAdminsComponent } from './features/doctor/clinic-admins/clinic-admins.component';
+import { DoctorAppointmentsComponent } from './features/doctor/appointments/doctor-appointments.component';
+import { DoctorRequestsComponent } from './features/doctor/requests/doctor-requests.component';
 
 // Super Admin feature pages
 import { SuperAdminDashboardComponent } from './features/superadmin/dashboard/super-admin-dashboard.component';
@@ -44,12 +46,15 @@ const routes: Routes = [
 
       // Patient Routes
       { path: 'patient/dashboard', component: DashboardComponent },
+      { path: 'patient/history', component: DashboardComponent, data: { historyOnly: true } },
       { path: 'patient/book-appointment', component: BookComponent },
       { path: 'patient/profile', component: ProfileComponent },
       { path: 'patient/doctors', component: PatientDoctorsComponent },
 
       // Doctor Routes
       { path: 'doctor/dashboard', component: DashboardComponent },
+      { path: 'doctor/appointments', component: DoctorAppointmentsComponent },
+      { path: 'doctor/requests', component: DoctorRequestsComponent },
       { path: 'doctor/patients', component: PatientsComponent },
       { path: 'doctor/clinics', component: ClinicsComponent },
       { path: 'doctor/admins', component: ClinicAdminsComponent },

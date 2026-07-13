@@ -746,7 +746,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			// Validate timing clashes (exclude this clinic itself from clash check)
-			await ValidateNoClinicClashAsync(clinic.Doctor.DoctorId, clinicId, dto.OpenDays, dto.StartTime, dto.EndTime);
+			await ValidateNoClinicClashAsync(clinic.Doctor.DoctorId, clinicId, dto.OpenDays, dto.StartTime, dto.EndTime, dto.IsAvailable, dto.IsDoctorAvailable);
 
 			bool detailsChanged = clinic.ClinicName != dto.ClinicName ||
 			                      clinic.ClinicType != dto.ClinicType ||
@@ -920,7 +920,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new BadRequestException("Active/Open clinics must have a timing schedule (open days, start time, and end time) configured.");
 			}
 
-			await ValidateNoClinicClashAsync(clinic.Doctor.DoctorId, clinic.ClinicId, dto.OpenDays, dto.StartTime, dto.EndTime);
+			await ValidateNoClinicClashAsync(clinic.Doctor.DoctorId, clinic.ClinicId, dto.OpenDays, dto.StartTime, dto.EndTime, dto.IsAvailable, dto.IsDoctorAvailable);
 
 			// Log audit log for direct admin edit
 			var auditLog = new ClinicAuditLog
@@ -1043,8 +1043,13 @@ namespace DoctorAppointmentSystem.Application.Services
 			return intervals;
 		}
 
-		private async Task ValidateNoClinicClashAsync(Guid doctorId, Guid? excludingClinicId, string? openDays, string? startTimeStr, string? endTimeStr)
+		private async Task ValidateNoClinicClashAsync(Guid doctorId, Guid? excludingClinicId, string? openDays, string? startTimeStr, string? endTimeStr, bool isAvailable = true, bool isDoctorAvailable = true)
 		{
+			if (!isAvailable || !isDoctorAvailable)
+			{
+				return; // Skip scheduling clash validation entirely if this clinic is closed or the doctor is unavailable
+			}
+
 			if (string.IsNullOrEmpty(openDays) || string.IsNullOrEmpty(startTimeStr) || string.IsNullOrEmpty(endTimeStr))
 			{
 				return; // No schedule set yet, so no clash validation needed
@@ -1062,10 +1067,13 @@ namespace DoctorAppointmentSystem.Application.Services
 				.Select(d => d.ToLower())
 				.ToList();
 
-			// Fetch all clinics of this doctor
+			// Fetch all clinics of this doctor that are active and available (ignore closed or doctor unavailable branches)
 			var query = _dbContext.Clinics
 				.Include(c => c.Doctor)
-				.Where(c => c.Doctor.DoctorId == doctorId && c.VerificationStatus != EVerificationStatus.Rejected);
+				.Where(c => c.Doctor.DoctorId == doctorId 
+				         && c.VerificationStatus != EVerificationStatus.Rejected
+				         && c.IsAvailable == true
+				         && c.IsDoctorAvailable == true);
 
 			if (excludingClinicId.HasValue)
 			{

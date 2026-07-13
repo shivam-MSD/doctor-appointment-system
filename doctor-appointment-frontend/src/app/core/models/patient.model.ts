@@ -8,6 +8,13 @@ export interface Patient {
   bloodGroup?: string;
   emergencyContactName: string;
   emergencyContactNumber: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  area?: string;
+  pincode?: string;
+  addressline1?: string;
+  addressline2?: string;
 }
 
 export interface FamilyVerification {

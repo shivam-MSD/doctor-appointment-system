@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Appointment } from '../../core/models/appointment.model';
 import { Subscription } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,10 +21,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
   statusFilter = '';
   firstName = '';
   errorMessage = '';
+  historyMode = false;
   private signalrSub?: Subscription;
 
   // Doctor completeness state
   isDoctorAddressIncomplete = false;
+
+  // Doctor Daily Queue States
+  doctorPage = 1;
+  doctorSize = 10;
+  commentInputs: { [key: string]: string } = {};
+  reportInputs: { [key: string]: string } = {};
+
+  // Warning Confirmation Modals
+  showCompleteConfirm = false;
+  selectedAppIdForComplete = '';
+  showNoShowConfirm = false;
+  selectedAppIdForNoShow = '';
+  showCancelAppointmentConfirm = false;
+  selectedAppIdForCancel = '';
+
+  // Patient Details Modal States
+  showPatientDetailsModal = false;
+  selectedPatientDetails: any = null;
+  isDetailsLoading = false;
+
+  // Clinic Details Modal States
+  showClinicDetailsModal = false;
+  selectedClinicDetails: any = null;
+
+  // Doctor Dashboard Patient History modal states
+  showHistoryModal = false;
+  selectedPatientName = '';
+  patientHistory: Appointment[] = [];
+  isHistoryLoading = false;
+
+  // Patient Dashboard own appointment notes modal states
+  showPatientHistoryModal = false;
+  selectedAppForHistory: Appointment | null = null;
 
   // SuperAdmin lists
   pendingDoctors: any[] = [];
@@ -135,12 +170,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private adminService: AdminService,
     private patientService: PatientService,
     private toastService: ToastService,
-    private notificationService: NotificationService
-  ) {}
+    private notificationService: NotificationService,
+    private route: ActivatedRoute
+  ) { }
 
   ngOnInit(): void {
     this.role = this.authService.getRole() || 'Patient';
     this.firstName = sessionStorage.getItem('firstName') || 'User';
+    this.historyMode = !!this.route.snapshot.data['historyOnly'];
+    if (this.role === 'Doctor') {
+      this.loadDoctorClinics();
+    }
     this.loadDashboardData();
 
     // Listen for silent refresh signals to update the dashboard automatically in real-time
@@ -176,10 +216,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.loadSuperAdminData();
     } else {
       // Doctor or Clinic Admin
-      this.appointmentService.getAdminDoctorDashboard({ status: this.statusFilter }, 1, 10).subscribe({
+      const filters: any = {};
+      if (this.role === 'Doctor') {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        filters.startDate = todayStart.toISOString();
+        filters.endDate = todayEnd.toISOString();
+      } else {
+        if (this.statusFilter) filters.status = this.statusFilter;
+      }
+
+      const page = this.role === 'Doctor' ? this.doctorPage : 1;
+      const size = this.role === 'Doctor' ? this.doctorSize : 10;
+
+      this.appointmentService.getAdminDoctorDashboard(filters, page, size).subscribe({
         next: (res) => {
-          this.appointments = res.items;
-          this.totalCount = res.totalCount;
+          if (this.role === 'Doctor') {
+            // Sort: Confirmed (Active) first, sorted by StartTime.
+            // Completed / Pending (No-show) at the end, sorted by StartTime.
+            this.appointments = res.items.sort((a, b) => {
+              const statusA = a.status === 'Confirmed' ? 0 : 1;
+              const statusB = b.status === 'Confirmed' ? 0 : 1;
+              if (statusA !== statusB) {
+                return statusA - statusB;
+              }
+              return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+            });
+            this.totalCount = res.totalCount;
+
+            // Pre-populate input fields
+            res.items.forEach(app => {
+              this.commentInputs[app.appointmentId] = app.comment || '';
+              this.reportInputs[app.appointmentId] = app.report || '';
+            });
+          } else {
+            this.appointments = res.items;
+            this.totalCount = res.totalCount;
+          }
         },
         error: () => {
           this.errorMessage = 'Failed to load dashboard appointments.';
@@ -227,7 +302,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadDoctorClinics(): void {
     this.adminService.getDoctorClinics().subscribe({
       next: (res) => this.doctorClinics = res,
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -366,18 +441,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadDashboardData();
   }
 
-  cancelAppointment(id: string): void {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
-      this.appointmentService.cancelAppointment(id).subscribe({
-        next: () => {
-          this.toastService.showSuccess('Appointment cancelled successfully.');
-          this.loadDashboardData();
-        },
-        error: (err) => {
-          this.toastService.showError(err?.error?.detail || 'Failed to cancel appointment.');
-        }
-      });
-    }
+  openCancelAppointmentConfirm(id: string): void {
+    this.selectedAppIdForCancel = id;
+    this.showCancelAppointmentConfirm = true;
+  }
+
+  closeCancelAppointmentConfirm(): void {
+    this.selectedAppIdForCancel = '';
+    this.showCancelAppointmentConfirm = false;
+  }
+
+  confirmCancelAppointment(): void {
+    if (!this.selectedAppIdForCancel) return;
+    this.appointmentService.cancelAppointment(this.selectedAppIdForCancel).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Appointment has been cancelled successfully.');
+        this.closeCancelAppointmentConfirm();
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to cancel appointment.');
+      }
+    });
   }
 
   getStatusClass(status: string): string {
@@ -385,6 +470,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case 'Pending': return 'badge badge-pending';
       case 'Confirmed': return 'badge badge-confirmed';
       case 'Cancelled': return 'badge badge-cancelled';
+      case 'Rejected': return 'badge badge-cancelled';
       case 'Completed': return 'badge badge-completed';
       default: return 'badge';
     }
@@ -401,6 +487,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   getFilteredAppointments(): Appointment[] {
     if (!this.appointments) return [];
+    if (this.role === 'Patient') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return this.appointments.filter(app => {
+        const appDate = new Date(app.appointmentDate);
+        appDate.setHours(0, 0, 0, 0);
+
+        const isPastDate = appDate < today;
+        const isCompletedOrCancelledOrRejected = app.status === 'Completed' || app.status === 'Cancelled' || app.status === 'Rejected';
+
+        if (this.historyMode) {
+          return isCompletedOrCancelledOrRejected || isPastDate;
+        } else {
+          return !isCompletedOrCancelledOrRejected && !isPastDate;
+        }
+      });
+    }
     if (this.role !== 'Doctor' || this.selectedClinicIds.length === 0) {
       return this.appointments;
     }
@@ -529,7 +633,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   openAdminEditClinicModal(): void {
     if (!this.adminClinic) return;
     this.selectedDaysAdmin = this.adminClinic.openDays ? this.adminClinic.openDays.split(',').map((d: string) => d.trim()) : [];
-    
+
     const startTimeStr = this.adminClinic.startTime || '';
     const endTimeStr = this.adminClinic.endTime || '';
 
@@ -696,5 +800,253 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!openDaysStr) return [];
     const days = openDaysStr.split(',').map(d => d.trim());
     return days.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
+  }
+
+  openCompleteConfirm(appId: string): void {
+    this.selectedAppIdForComplete = appId;
+    this.showCompleteConfirm = true;
+  }
+
+  closeCompleteConfirm(): void {
+    this.selectedAppIdForComplete = '';
+    this.showCompleteConfirm = false;
+  }
+
+  confirmComplete(): void {
+    if (!this.selectedAppIdForComplete) return;
+    const comment = this.commentInputs[this.selectedAppIdForComplete] || '';
+    const report = this.reportInputs[this.selectedAppIdForComplete] || '';
+
+    this.appointmentService.completeAppointment(this.selectedAppIdForComplete, comment, report).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Appointment has been marked as completed.');
+        this.closeCompleteConfirm();
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to complete appointment.');
+      }
+    });
+  }
+
+  openNoShowConfirm(appId: string): void {
+    this.selectedAppIdForNoShow = appId;
+    this.showNoShowConfirm = true;
+  }
+
+  closeNoShowConfirm(): void {
+    this.selectedAppIdForNoShow = '';
+    this.showNoShowConfirm = false;
+  }
+
+  confirmNoShow(): void {
+    if (!this.selectedAppIdForNoShow) return;
+    const comment = this.commentInputs[this.selectedAppIdForNoShow] || '';
+
+    this.appointmentService.movePendingAppointment(this.selectedAppIdForNoShow, comment).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Appointment has been set to Pending (No-Show).');
+        this.closeNoShowConfirm();
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to mark appointment as pending.');
+      }
+    });
+  }
+
+  doctorPrevPage(): void {
+    if (this.doctorPage > 1) {
+      this.doctorPage--;
+      this.loadDashboardData();
+    }
+  }
+
+  doctorNextPage(): void {
+    if (this.doctorPage * this.doctorSize < this.totalCount) {
+      this.doctorPage++;
+      this.loadDashboardData();
+    }
+  }
+
+  doctorTotalPages(): number {
+    return Math.ceil(this.totalCount / this.doctorSize) || 1;
+  }
+
+  openPatientDetailsModal(patientId: string): void {
+    this.selectedPatientDetails = null;
+    this.showPatientDetailsModal = true;
+    this.isDetailsLoading = true;
+
+    this.appointmentService.getPatientDetails(patientId).subscribe({
+      next: (res) => {
+        this.selectedPatientDetails = res;
+        this.isDetailsLoading = false;
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to fetch patient details.');
+        this.isDetailsLoading = false;
+        this.closePatientDetailsModal();
+      }
+    });
+  }
+
+  closePatientDetailsModal(): void {
+    this.showPatientDetailsModal = false;
+    this.selectedPatientDetails = null;
+  }
+
+  getAge(dob: string | Date | undefined): number {
+    if (!dob) return 0;
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
+
+  openHistoryModal(patientId: string, patientName: string): void {
+    this.selectedPatientName = patientName;
+    this.patientHistory = [];
+    this.showHistoryModal = true;
+    this.isHistoryLoading = true;
+
+    this.appointmentService.getAdminDoctorDashboard({ patientId: patientId }, 1, 100).subscribe({
+      next: (res) => {
+        this.patientHistory = res.items.sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+        this.isHistoryLoading = false;
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to retrieve patient medical history.');
+        this.isHistoryLoading = false;
+        this.closeHistoryModal();
+      }
+    });
+  }
+
+  closeHistoryModal(): void {
+    this.showHistoryModal = false;
+    this.selectedPatientName = '';
+    this.patientHistory = [];
+  }
+
+  openPatientHistoryModal(app: Appointment): void {
+    this.selectedAppForHistory = app;
+    this.showPatientHistoryModal = true;
+  }
+
+  closePatientHistoryModal(): void {
+    this.showPatientHistoryModal = false;
+    this.selectedAppForHistory = null;
+  }
+
+  openClinicDetailsModal(clinic: any): void {
+    this.selectedClinicDetails = clinic;
+    this.showClinicDetailsModal = true;
+  }
+
+  closeClinicDetailsModal(): void {
+    this.showClinicDetailsModal = false;
+    this.selectedClinicDetails = null;
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'Confirmed': return '#10b981';
+      case 'Pending': return '#f59e0b';
+      case 'Cancelled': return '#ef4444';
+      case 'Rejected': return '#dc2626';
+      case 'Completed': return '#8b5cf6';
+      default: return '#6b7280';
+    }
+  }
+
+  getStatusTitle(status: string): string {
+    switch (status) {
+      case 'Confirmed': return 'Confirmed';
+      case 'Pending': return 'Confirmation Pending';
+      case 'Cancelled': return 'Cancelled';
+      case 'Rejected': return 'Rejected';
+      case 'Completed': return 'Completed';
+      default: return status;
+    }
+  }
+
+  formatClinicTimings(startTime: string, endTime: string): string {
+    if (!startTime || !endTime) return '';
+    const starts = startTime.split(',').map(t => t.trim());
+    const ends = endTime.split(',').map(t => t.trim());
+    const shifts: string[] = [];
+    for (let i = 0; i < starts.length; i++) {
+      if (starts[i] && ends[i]) {
+        shifts.push(`${starts[i]} - ${ends[i]}`);
+      }
+    }
+    return shifts.join(' & ');
+  }
+
+  getConsultationTypeLabel(type: string): string {
+    return type === 'InPerson' ? '🏠 In-Person Visit' : '🎥 Video Consultation';
+  }
+
+  isClinicCurrentlyOpen(clinic: any): boolean {
+    if (!clinic || clinic.isAvailable === false) {
+      return false;
+    }
+
+    if (!clinic.openDays) return false;
+    const days = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
+    const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    if (!days.includes(todayName)) {
+      return false;
+    }
+
+    if (!clinic.startTime || !clinic.endTime) return false;
+    const starts = clinic.startTime.split(',').map((t: string) => t.trim());
+    const ends = clinic.endTime.split(',').map((t: string) => t.trim());
+
+    const parseTimeToMinutes = (timeStr: string): number => {
+      if (!timeStr) return 0;
+      const ampmMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (ampmMatch) {
+        let hours = parseInt(ampmMatch[1], 10);
+        const minutes = parseInt(ampmMatch[2], 10);
+        const ampm = ampmMatch[3].toUpperCase();
+        if (ampm === 'PM' && hours < 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+      }
+      const parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        return hours * 60 + minutes;
+      }
+      return 0;
+    };
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    for (let i = 0; i < starts.length; i++) {
+      if (!starts[i] || !ends[i]) continue;
+      const startMin = parseTimeToMinutes(starts[i]);
+      const endMin = parseTimeToMinutes(ends[i]);
+      
+      if (startMin <= endMin) {
+        if (currentMinutes >= startMin && currentMinutes <= endMin) {
+          return true;
+        }
+      } else {
+        if (currentMinutes >= startMin || currentMinutes <= endMin) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

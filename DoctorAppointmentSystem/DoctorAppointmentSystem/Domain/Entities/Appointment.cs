@@ -29,15 +29,23 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		[Required]
 		public EAppointmentStatus EAppointmentStatus { get; set; }
 
-		[Required]
-		[MaxLength(500)]
-		public string Reason { get; set; }
+		[MaxLength(4000)]
+		public string? Reason { get; set; }
 
 		[Required]
 		public DateTime CreatedDate { get; set; }
 
 		[Required]
 		public EConsultationType EConsultationType { get; set; }
+
+		[MaxLength(1000)]
+		public string? Comment { get; set; }
+
+		[MaxLength(2000)]
+		public string? Report { get; set; }
+
+		[MaxLength(500)]
+		public string? RejectionReason { get; set; }
 	}
 
 	public enum EConsultationType
@@ -51,6 +59,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		Pending,
 		Confirmed,
 		Cancelled,
-		Completed
+		Completed,
+		Rejected
 	}
 }

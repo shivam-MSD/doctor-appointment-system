@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AppointmentService } from '../../core/services/appointment.service';
 import { Patient } from '../../core/models/patient.model';
+import { Appointment } from '../../core/models/appointment.model';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-patients',
@@ -17,7 +19,20 @@ export class PatientsComponent implements OnInit {
   errorMessage = '';
   isLoading = false;
 
-  constructor(private appointmentService: AppointmentService) {}
+  // View Details Modal
+  showDetailsModal = false;
+  selectedPatientDetails: Patient | null = null;
+
+  // View Appointment History Modal
+  showHistoryModal = false;
+  selectedPatientName = '';
+  patientHistory: Appointment[] = [];
+  isHistoryLoading = false;
+
+  constructor(
+    private appointmentService: AppointmentService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.loadPatients();
@@ -29,7 +44,12 @@ export class PatientsComponent implements OnInit {
     // Load list with high limit to allow local demographic filtering and layout search
     this.appointmentService.getPatientsList(undefined, 1, 100).subscribe({
       next: (res) => {
-        this.patients = res.items;
+        // Sort patients by first and last name alphabetically
+        this.patients = res.items.sort((a, b) => {
+          const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+          const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
         this.isLoading = false;
       },
       error: () => {
@@ -91,5 +111,53 @@ export class PatientsComponent implements OnInit {
     this.genderFilter = '';
     this.bloodGroupFilter = '';
     this.ageGroupFilter = '';
+  }
+
+  // Modal Actions
+  openDetailsModal(patient: Patient): void {
+    this.selectedPatientDetails = patient;
+    this.showDetailsModal = true;
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.selectedPatientDetails = null;
+  }
+
+  openHistoryModal(patient: Patient): void {
+    const fullName = `${patient.firstName} ${patient.lastName}`;
+    this.selectedPatientName = fullName;
+    this.patientHistory = [];
+    this.showHistoryModal = true;
+    this.isHistoryLoading = true;
+
+    this.appointmentService.getAdminDoctorDashboard({ patientId: patient.patientId }, 1, 100).subscribe({
+      next: (res) => {
+        // Sort history by date descending
+        this.patientHistory = res.items.sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+        this.isHistoryLoading = false;
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to retrieve patient medical history.');
+        this.isHistoryLoading = false;
+      }
+    });
+  }
+
+  closeHistoryModal(): void {
+    this.showHistoryModal = false;
+    this.selectedPatientName = '';
+    this.patientHistory = [];
+  }
+
+  getStatusClass(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'confirmed': return 'badge badge-confirmed';
+      case 'pending': return 'badge badge-pending';
+      case 'completed': return 'badge badge-confirmed';
+      case 'cancelled': return 'badge badge-cancelled';
+      case 'rejected': return 'badge badge-cancelled';
+      default: return 'badge';
+    }
   }
 }

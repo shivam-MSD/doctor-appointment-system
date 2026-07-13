@@ -29,6 +29,8 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   showEditClinicModal = false;
   showTimingsModal = false;
   showAdminDetailsModal = false;
+  showClinicDetailsModal = false;
+  selectedClinicDetails: any = null;
 
   // Selected Admin Details
   selectedAdminName = '';
@@ -141,6 +143,64 @@ export class ClinicsComponent implements OnInit, OnDestroy {
       }
     }
     return shifts.join(' & ');
+  }
+
+  isClinicCurrentlyOpen(clinic: any): boolean {
+    if (!clinic || clinic.isAvailable === false) {
+      return false;
+    }
+
+    if (!clinic.openDays) return false;
+    const days = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
+    const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    if (!days.includes(todayName)) {
+      return false;
+    }
+
+    if (!clinic.startTime || !clinic.endTime) return false;
+    const starts = clinic.startTime.split(',').map((t: string) => t.trim());
+    const ends = clinic.endTime.split(',').map((t: string) => t.trim());
+
+    const parseTimeToMinutes = (timeStr: string): number => {
+      if (!timeStr) return 0;
+      const ampmMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (ampmMatch) {
+        let hours = parseInt(ampmMatch[1], 10);
+        const minutes = parseInt(ampmMatch[2], 10);
+        const ampm = ampmMatch[3].toUpperCase();
+        if (ampm === 'PM' && hours < 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+      }
+      const parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        return hours * 60 + minutes;
+      }
+      return 0;
+    };
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    for (let i = 0; i < starts.length; i++) {
+      if (!starts[i] || !ends[i]) continue;
+      const startMin = parseTimeToMinutes(starts[i]);
+      const endMin = parseTimeToMinutes(ends[i]);
+      
+      if (startMin <= endMin) {
+        if (currentMinutes >= startMin && currentMinutes <= endMin) {
+          return true;
+        }
+      } else {
+        if (currentMinutes >= startMin || currentMinutes <= endMin) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   ngOnDestroy(): void {
@@ -528,5 +588,15 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     this.selectedAdminMobileNo = '';
     this.selectedAdminClinicName = '';
     this.selectedAdminIsVerified = false;
+  }
+
+  openClinicDetailsModal(clinic: any): void {
+    this.selectedClinicDetails = clinic;
+    this.showClinicDetailsModal = true;
+  }
+
+  closeClinicDetailsModal(): void {
+    this.showClinicDetailsModal = false;
+    this.selectedClinicDetails = null;
   }
 }

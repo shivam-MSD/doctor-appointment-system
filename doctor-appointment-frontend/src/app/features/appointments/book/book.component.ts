@@ -419,7 +419,7 @@ export class BookComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.patientId || !this.doctorId || !this.appointmentDate || !this.startTime || !this.endTime || !this.reason) {
+    if (!this.patientId || !this.doctorId || !this.appointmentDate || !this.startTime || !this.endTime) {
       this.errorMessage = 'Please complete all required fields (make sure to select a Doctor).';
       this.toastService.showError(this.errorMessage);
       return;

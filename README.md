@@ -102,3 +102,28 @@ npm install
 npm run start
 ```
 Open your browser and navigate to `http://localhost:4200` to start using HealSync!
+
+
+Doctor Appointment System
+this is decoupled healthcare management application built to streamline doctor registrations, clinic scheduling, administrative delegation, and patient appointment bookings across multiple centers.
+
+here, patient and doctor needs to register.
+super admin verify and approve or reject the doctor.
+Once doctor is approve, he can able ot login and add more than one clinic and the one admin per clinic/hospital and can update it  later.
+These all the clinc and admin adding request goes to super admin - he can approve or reject the clinc/hospital or admin request.
+
+Doctor or admin can set the appointment dates avalability, so that patient can book the appointment.
+
+Doctor can :-
+add/update/delete clinic
+add/update/delete clinic admin
+View patient appointment and patient details
+approve/reject patient appointment
+set clinic/hostpital
+
+Patient can :-
+view all doctors details along with all the clinic/hospital
+book appointment
+
+
+

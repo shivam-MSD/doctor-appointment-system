@@ -24,6 +24,8 @@ import { PatientsComponent } from './features/patients/patients.component';
 // Doctor Feature Sub-components
 import { ClinicsComponent } from './features/doctor/clinics/clinics.component';
 import { ClinicAdminsComponent } from './features/doctor/clinic-admins/clinic-admins.component';
+import { DoctorAppointmentsComponent } from './features/doctor/appointments/doctor-appointments.component';
+import { DoctorRequestsComponent } from './features/doctor/requests/doctor-requests.component';
 
 // Super Admin Feature Sub-components
 import { SuperAdminDashboardComponent } from './features/superadmin/dashboard/super-admin-dashboard.component';
@@ -47,6 +49,8 @@ import { PatientDoctorsComponent } from './features/patient/doctors/patient-doct
     PatientsComponent,
     ClinicsComponent,
     ClinicAdminsComponent,
+    DoctorAppointmentsComponent,
+    DoctorRequestsComponent,
     SuperAdminDashboardComponent,
     SuperAdminDoctorsComponent,
     SuperAdminClinicsComponent,
