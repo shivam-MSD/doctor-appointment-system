@@ -60,6 +60,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		Confirmed,
 		Cancelled,
 		Completed,
-		Rejected
+		Rejected,
+		Expired
 	}
 }

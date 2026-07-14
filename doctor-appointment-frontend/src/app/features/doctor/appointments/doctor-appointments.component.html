@@ -98,8 +98,7 @@
           <tr>
             <th>Patient Name</th>
             <th>Clinic / Location</th>
-            <th>Date</th>
-            <th>Time Slot</th>
+            <th>Date & Time</th>
             <th>Consultation Type</th>
             <th>Reason / Reason for Visit</th>
             <th>Clinical Note / Report</th>
@@ -113,8 +112,12 @@
               </a>
             </td>
             <td style="color: var(--accent-cyan); font-weight: 600;">{{ app.clinicName || 'Direct' }}</td>
-            <td>{{ app.appointmentDate | date:'mediumDate' }}</td>
-            <td style="font-family: monospace;">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }}</td>
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM d, y' }}</span>
+                <span style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }}</span>
+              </div>
+            </td>
             <td>
               <span style="display: flex; align-items: center; gap: 8px;">
                 <span [style.background]="getStatusColor(app.status)"

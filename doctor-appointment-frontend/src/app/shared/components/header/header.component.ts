@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { NotificationService, NotificationDto } from '../../../core/services/notification.service';
-import { Subscription, interval } from 'rxjs';
+import { Subscription, interval, timer } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -13,7 +13,9 @@ import { Subscription, interval } from 'rxjs';
 export class HeaderComponent implements OnInit, OnDestroy {
   notifications: NotificationDto[] = [];
   showNotificationsPanel = false;
+  currentDateTime: Date = new Date();
   private signalrSub?: Subscription;
+  private clockSub?: Subscription;
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -28,10 +30,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     public themeService: ThemeService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
+    // Live clock - update every second
+    this.clockSub = interval(1000).subscribe(() => {
+      this.currentDateTime = new Date();
+    });
+
     const userId = this.authService.getUserId();
     if (userId) {
       // 1. Initial load
@@ -52,6 +60,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.signalrSub) {
       this.signalrSub.unsubscribe();
+    }
+    if (this.clockSub) {
+      this.clockSub.unsubscribe();
     }
     this.notificationService.stopConnection();
   }

@@ -72,8 +72,7 @@
               <tr>
             <th>Patient Name</th>
             <th>Clinic Location</th>
-            <th>Proposed Date</th>
-            <th>Proposed Time Slot</th>
+            <th>Proposed Date & Time</th>
             <th>Consultation Type</th>
             <th>Reason for Visit</th>
             <th style="width: 280px; text-align: center;">Actions</th>
@@ -87,8 +86,12 @@
               </a>
             </td>
             <td style="color: var(--accent-cyan); font-weight: 600;">{{ request.clinicName || 'Direct' }}</td>
-            <td>{{ request.appointmentDate | date:'mediumDate' }}</td>
-            <td style="font-family: monospace;">{{ request.startTime | date:'shortTime' }} - {{ request.endTime | date:'shortTime' }}</td>
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ request.appointmentDate | date:'EEE, MMM d, y' }}</span>
+                <span style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ request.startTime | date:'shortTime' }} - {{ request.endTime | date:'shortTime' }}</span>
+              </div>
+            </td>
             <td>
               <span style="display: flex; align-items: center; gap: 8px;">
                 <span [style.background]="getStatusColor(request.status)"
@@ -199,8 +202,7 @@
               <thead>
                 <tr>
                   <th>Clinic</th>
-                  <th>Date</th>
-                  <th>Time Slot</th>
+                  <th>Date & Time</th>
                   <th>Status</th>
                   <th>Rejection/Clinical Notes</th>
                 </tr>
@@ -208,8 +210,12 @@
               <tbody>
                 <tr *ngFor="let h of patientHistory">
                   <td style="font-weight: 600;">{{ h.clinicName || 'Direct' }}</td>
-                  <td>{{ h.appointmentDate | date:'mediumDate' }}</td>
-                  <td style="font-family: monospace; font-size: 0.8rem;">{{ h.startTime | date:'shortTime' }}</td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                      <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ h.appointmentDate | date:'EEE, MMM d, y' }}</span>
+                      <span style="font-family: monospace; font-weight: 700; color: var(--accent-cyan); font-size: 0.8rem;">{{ h.startTime | date:'shortTime' }}</span>
+                    </div>
+                  </td>
                   <td>
                     <span [class]="getStatusClass(h.status)">{{ h.status }}</span>
                   </td>

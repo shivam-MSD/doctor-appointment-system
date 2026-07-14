@@ -1,0 +1,101 @@
+# Implementation Plan: Smart Booking Window Calendar in Edit Timing Popup
+
+## Goal
+Replace the plain `<input type="date">` fields in the **Doctor Edit Clinic** and **Admin Edit Clinic** modals with a **calendar-style UI** where:
+- Only the days matching the selected open days are **enabled** (clickable)
+- All other days are **greyed out / disabled**
+- Doctor/admin clicks **Start Date** → all valid dates up to that point are highlighted
+- Doctor/admin then clicks **End Date** → range is confirmed, booking window is auto-set
+- The "last available date" is always the **last open-day date** within the selected range
+
+---
+
+## All Edge Cases to Handle
+
+| # | Case | Behavior |
+|---|---|---|
+| 1 | No open days selected yet | Calendar is fully disabled, show warning: "Select open days first" |
+| 2 | Only start date clicked, no end date | Start highlighted, waiting for end click |
+| 3 | End date clicked before start date | Swap them automatically (or show error) |
+| 4 | Range selected but contains zero open days | Impossible (non-open days are disabled, can't be clicked) |
+| 5 | Doctor clears open days after setting range | Calendar re-renders, invalid dates become disabled, range is cleared |
+| 6 | Open-ended booking window (no end date) | Allow clearing end date — keeps start date only |
+| 7 | Clinic 2 (expired window + no remaining open days) | "Book at this Branch" disabled — already fixed ✅ |
+| 8 | No booking window set at all (Immediate/Open-ended) | Show "No date restriction" state with a toggle to set one |
+
+---
+
+## Proposed Changes
+
+### TS — `dashboard.component.ts`
+#### [MODIFY] dashboard.component.ts
+
+Add **shared calendar state** (reusable for both doctor and admin modals):
+```typescript
+// Booking window calendar
+bookingCalendarMonth = new Date();       // which month is displayed
+bookingCalendarDays: any[] = [];         // generated days array
+bookingWindowPickStart = '';             // selected start date string (YYYY-MM-DD)
+bookingWindowPickEnd = '';               // selected end date string
+bookingWindowActiveForm: 'edit' | 'admin' | null = null;  // which modal is active
+```
+
+Add functions:
+- `generateBookingCalendar()` — generates the month grid, marks open days as enabled
+- `onBookingCalendarDayClick(day)` — first click = start, second click = end (or swap if before start)  
+- `getActiveDaysForCalendar(): string[]` — returns `selectedDaysEdit` or `selectedDaysAdmin` based on active form
+- `bookingCalendarPrevMonth()` / `bookingCalendarNextMonth()`
+- `clearBookingWindow()` — resets both dates
+
+---
+
+### HTML — `dashboard.component.html`
+#### [MODIFY] dashboard.component.html
+
+**In the Doctor Edit Clinic modal** (around line 975–998):
+- Replace the two `<input type="date">` fields (for start/end) with the shared calendar component HTML
+- Add label: "📅 Booking Window (click start → end date)"
+- Show selected range summary below calendar: `From: 10/07/2026  To: 25/07/2026`
+- Add "Clear dates" button
+
+**In the Admin Edit Clinic modal** (around line 1168–1181):
+- Same calendar replacement
+
+**Calendar UI Structure** (shared snippet):
+```html
+<!-- Month nav + grid -->
+<div class="booking-calendar">
+  <!-- Header: < July 2026 > -->
+  <!-- Day headers: Su Mo Tu We Th Fr Sa -->
+  <!-- Days grid: open days = clickable + highlighted, closed days = greyed -->
+  <!-- Range start = green circle, range end = green circle, in-between = light fill -->
+</div>
+<!-- Summary below -->
+<div *ngIf="bookingWindowPickStart">
+  📅 From: {{ bookingWindowPickStart | date:'dd MMM yyyy' }}
+  <span *ngIf="bookingWindowPickEnd"> → To: {{ bookingWindowPickEnd | date:'dd MMM yyyy' }}</span>
+</div>
+```
+
+---
+
+## Verification Plan
+
+### Manual Testing
+1. Open Doctor dashboard → Edit clinic → Select Mon/Wed/Fri → Calendar shows only M/W/F clickable
+2. Click a Monday → highlighted as start
+3. Click a Friday 3 weeks later → range selected, Wed dates in between also part of range
+4. Save → booking window stored correctly
+5. Patient views clinic → "Book at this Branch" now shows correct availability
+6. Clear open days → calendar becomes fully disabled
+7. Clear dates → both start/end reset to empty (open-ended)
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **Doctor Edit Clinic form** currently does not have `bookingWindowStartDate`/`bookingWindowEndDate` fields at all (they exist only in `adminClinicForm`). Should I also add these fields to the **doctor's** `clinicEditForm` and the backend call?
+
+> [!NOTE]
+> The calendar will be built inline (no new Angular component file needed) to keep changes minimal. It reuses the same pattern as the existing appointment booking calendar.

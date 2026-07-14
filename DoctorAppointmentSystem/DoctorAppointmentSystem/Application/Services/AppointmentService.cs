@@ -204,7 +204,77 @@ namespace DoctorAppointmentSystem.Application.Services
 				}
 			}
 		}
+    // Auto-expire any pending appointments whose date has passed
+    public async Task AutoExpirePastPendingAppointmentsAsync()
+    {
+        var today = DateTime.Today;
+        var staleAppointments = await _dbContext.Appointments
+            .Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending && app.AppointmentDate < today)
+            .ToListAsync();
+        if (staleAppointments.Any())
+        {
+            foreach (var app in staleAppointments)
+            {
+                app.EAppointmentStatus = EAppointmentStatus.Expired;
+                // Notify patient about expiration
+                var patient = await _dbContext.Patients
+                    .FirstOrDefaultAsync(p => p.PatientId == EF.Property<Guid>(app, "PatientId"));
+                if (patient != null)
+                {
+                    var msg = $"Your appointment on {app.AppointmentDate:yyyy-MM-dd} has expired because it was not confirmed in time. Please book a new appointment.";
+                    var patientUser = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.PatientId == patient.PatientId);
+                if (patientUser != null)
+                {
+                    await _notificationService.CreateNotificationAsync(patientUser.UserId, msg);
+                }
+                }
+            }
+            await _dbContext.SaveChangesAsync();
+            await _notificationService.SendRefreshSignalAsync("Appointments");
+        }
+    }
 
+    // Doctor or clinic admin cancels a confirmed appointment with a reason
+    public async Task DoctorCancelAppointmentAsync(Guid userId, Guid appointmentId, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new BadRequestException("A cancellation reason must be provided.");
+        }
+        var appointment = await _dbContext.Appointments
+            .Include(a => a.Doctor)
+            .Include(a => a.Patient)
+            .Include(a => a.Clinic)
+            .FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+        if (appointment == null)
+        {
+            throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
+        }
+        // Verify the user is the doctor for this appointment or an admin of the clinic
+        var isDoctor = await _dbContext.Doctors.AnyAsync(d => d.DoctorId == appointment.Doctor.DoctorId && d.User.UserId == userId);
+        var isAdmin = false;
+        if (appointment.Clinic != null)
+        {
+            isAdmin = await _dbContext.Admins.AnyAsync(a => a.Clinic.ClinicId == appointment.Clinic.ClinicId && a.User.UserId == userId);
+        }
+        if (!isDoctor && !isAdmin)
+        {
+            throw new ForbiddenException("You do not have permission to cancel this appointment.");
+        }
+        appointment.EAppointmentStatus = EAppointmentStatus.Cancelled;
+        // Optionally store cancellation reason if a property exists
+        // appointment.CancellationReason = reason;
+        await _dbContext.SaveChangesAsync();
+        var msg = $"Your appointment on {appointment.AppointmentDate:yyyy-MM-dd} with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been cancelled. Reason: {reason}";
+        var patientUser = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+                if (patientUser != null)
+                {
+                    await _notificationService.CreateNotificationAsync(patientUser.UserId, msg);
+                }
+        await _notificationService.SendRefreshSignalAsync("Appointments");
+    }
+
+    
 		public async Task<PagedResult<AppointmentDto>> GetAdminDoctorDashboardAppointmentsAsync(Guid userId, string? status, DateTime? startDate, DateTime? endDate, string? search, Guid? patientId, int page, int size)
 		{
 			var query = _dbContext.Appointments

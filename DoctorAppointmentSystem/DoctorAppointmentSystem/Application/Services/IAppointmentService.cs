@@ -7,6 +7,8 @@ namespace DoctorAppointmentSystem.Application.Services
 	{
 		Task<AppointmentDto> BookAppointmentAsync(Guid userId, CreateAppointmentDto dto);
 		Task CancelAppointmentAsync(Guid userId, Guid appointmentId);
+Task AutoExpirePastPendingAppointmentsAsync();
+Task DoctorCancelAppointmentAsync(Guid userId, Guid appointmentId, string reason);
 		Task<PagedResult<AppointmentDto>> GetAdminDoctorDashboardAppointmentsAsync(Guid userId, string? status, DateTime? startDate, DateTime? endDate, string? search, Guid? patientId, int page, int size);
 		Task<PagedResult<PatientDto>> GetDashboardPatientsAsync(Guid userId, string? search, int page, int size);
 		Task<PagedResult<AppointmentDto>> GetPatientDashboardAppointmentsAsync(Guid userId, string? status, int page, int size);

@@ -423,6 +423,76 @@ export class PatientDoctorsComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  /**
+   * Returns true if the clinic has at least one bookable date remaining:
+   * - Not manually closed (isAvailable !== false)
+   * - Has openDays configured
+   * - Booking window end date (if set) has not passed
+   * - At least one day within the effective booking window falls on an open day
+   */
+  isClinicBookable(clinic: any): boolean {
+    if (!clinic || clinic.isAvailable === false) return false;
+    if (!clinic.openDays || clinic.openDays.trim() === '') return false;
+
+    const openDayNames = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
+    const weekDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Effective range start = max(today, bookingWindowStart)
+    let rangeStart = new Date(today);
+    if (clinic.bookingWindowStartDate) {
+      const winStart = new Date(clinic.bookingWindowStartDate);
+      winStart.setHours(0, 0, 0, 0);
+      if (winStart > rangeStart) rangeStart = winStart;
+    }
+
+    // Effective range end = bookingWindowEnd (if set), else open-ended (search 180 days)
+    let rangeEnd: Date | null = null;
+    if (clinic.bookingWindowEndDate) {
+      rangeEnd = new Date(clinic.bookingWindowEndDate);
+      rangeEnd.setHours(23, 59, 59, 999);
+      // Booking window already expired
+      if (rangeEnd < today) return false;
+    }
+
+    // If rangeStart > rangeEnd → impossible window
+    if (rangeEnd && rangeStart > rangeEnd) return false;
+
+    // Scan up to 7 days from rangeStart (a full week covers all day-of-week possibilities)
+    const scanLimit = rangeEnd
+      ? Math.min(7, Math.ceil((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1)
+      : 7;
+
+    for (let i = 0; i < scanLimit; i++) {
+      const d = new Date(rangeStart);
+      d.setDate(d.getDate() + i);
+      if (rangeEnd && d > rangeEnd) break;
+      if (openDayNames.includes(weekDays[d.getDay()])) return true;
+    }
+
+    return false;
+  }
+
+  /** Human-readable reason why a clinic is not bookable */
+  getClinicNotBookableReason(clinic: any): string {
+    if (!clinic) return 'Clinic unavailable.';
+    if (clinic.isAvailable === false) return clinic.unavailabilityReason || 'This branch is temporarily closed.';
+    if (!clinic.openDays || clinic.openDays.trim() === '') return 'No schedule has been configured for this branch yet.';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (clinic.bookingWindowEndDate) {
+      const rangeEnd = new Date(clinic.bookingWindowEndDate);
+      rangeEnd.setHours(23, 59, 59, 999);
+      if (rangeEnd < today) return `Booking window closed on ${new Date(clinic.bookingWindowEndDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.`;
+    }
+
+    return 'No remaining bookable dates within the current booking window.';
+  }
+
   toggleAboutExpand(): void {
     this.aboutExpanded = !this.aboutExpanded;
   }

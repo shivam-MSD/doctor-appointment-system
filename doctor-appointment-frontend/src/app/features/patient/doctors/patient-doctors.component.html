@@ -100,7 +100,7 @@
               <circle cx="12" cy="12" r="3" />
             </svg>
           </button>
-          <button type="button" (click)="onBookAppointmentClick(doctor)" class="btn btn-primary book-btn"
+          <button type="button" (click)="openDoctorModal(doctor)" class="btn btn-primary book-btn"
             style="flex: 1; text-align: center;">
             Book Appointment
           </button>
@@ -327,7 +327,17 @@
                   </div>
                 </div>
 
-                <a [routerLink]="['/patient/book-appointment']"
+                <!-- Not bookable: show disabled button with specific reason -->
+                <button *ngIf="!isClinicBookable(clinic)"
+                  class="btn btn-primary" disabled
+                  [title]="getClinicNotBookableReason(clinic)"
+                  style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; height: auto; margin-top: 4px; opacity: 0.45; cursor: not-allowed;">
+                  🔴 Not Available
+                </button>
+
+                <!-- Bookable: normal navigation link -->
+                <a *ngIf="isClinicBookable(clinic)"
+                  [routerLink]="['/patient/book-appointment']"
                   [queryParams]="{ doctorId: selectedDoctorForModal.doctorId, clinicId: clinic.clinicId }"
                   class="btn btn-primary" (click)="closeDoctorModal()"
                   style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; height: auto; margin-top: 4px;">

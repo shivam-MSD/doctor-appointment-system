@@ -38,7 +38,7 @@ export class BookComponent implements OnInit {
   state = '';
   city = '';
   specializationId = '';
-  
+
   // Custom Filter Field
   nameSearch = '';
 
@@ -58,7 +58,7 @@ export class BookComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private toastService: ToastService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const today = new Date();
@@ -153,9 +153,9 @@ export class BookComponent implements OnInit {
     }
 
     this.appointmentService.searchDoctors(
-      this.state || undefined, 
-      this.city || undefined, 
-      this.specializationId || undefined, 
+      this.state || undefined,
+      this.city || undefined,
+      this.specializationId || undefined,
       this.nameSearch || undefined
     ).subscribe({
       next: (data) => {
@@ -250,8 +250,8 @@ export class BookComponent implements OnInit {
       maxLimitDate.setHours(23, 59, 59, 999);
     }
 
-    const openDaysArray = this.selectedClinic?.openDays 
-      ? this.selectedClinic.openDays.split(',').map((d: string) => d.trim()) 
+    const openDaysArray = this.selectedClinic?.openDays
+      ? this.selectedClinic.openDays.split(',').map((d: string) => d.trim())
       : [];
 
     for (let day = 1; day <= totalDays; day++) {
@@ -270,7 +270,10 @@ export class BookComponent implements OnInit {
       const exceedsMax = maxLimitDate ? dateObj > maxLimitDate : false;
       const isClosedDay = !openDaysArray.includes(dayName);
 
-      const isAvailable = !isPast && !exceedsMin && !exceedsMax && !isClosedDay;
+      // If clinic is manually closed, all days are unavailable
+      const isClinicManuallyOpen = this.selectedClinic?.isAvailable !== false;
+
+      const isAvailable = isClinicManuallyOpen && !isPast && !exceedsMin && !exceedsMax && !isClosedDay;
       const isToday = dateObj.getTime() === today.getTime();
 
       days.push({
@@ -324,14 +327,20 @@ export class BookComponent implements OnInit {
     const selectedClinic = this.getSelectedClinic();
     if (!selectedClinic) return;
 
+    // 0. Block if clinic is manually closed
+    if (selectedClinic.isAvailable === false) {
+      this.dateValidationError = 'This clinic branch is temporarily closed and is not accepting appointments. Please try again later or choose a different branch.';
+      return;
+    }
+
     // 1. Determine day of the week (adjusting for timezone if needed, simple local parse is fine)
     const dateObj = new Date(this.appointmentDate);
     const dayName = this.weekDaysList[dateObj.getDay()];
 
     // 2. Validate clinic is open on this day of week
-    const openDaysArray = selectedClinic.openDays ? selectedClinic.openDays.split(',').map((d: string) => d.trim()) : [];
+    const openDaysArray = selectedClinic?.openDays ? selectedClinic.openDays.split(',').map((d: string) => d.trim()) : [];
     if (!openDaysArray.includes(dayName)) {
-      this.dateValidationError = `This clinic branch is closed on ${dayName}. Open days: ${selectedClinic.openDays}.`;
+      this.dateValidationError = `This clinic branch is closed on ${dayName}. Open days: ${selectedClinic?.openDays}.`;
       return;
     }
 
@@ -432,6 +441,13 @@ export class BookComponent implements OnInit {
     }
 
     const selectedClinic = this.getSelectedClinic();
+
+    // Guard: clinic manually closed
+    if (selectedClinic && selectedClinic.isAvailable === false) {
+      this.errorMessage = 'This clinic branch is temporarily closed and cannot accept appointments.';
+      this.toastService.showError(this.errorMessage);
+      return;
+    }
 
     // Combine date and time strings into complete Date objects
     const startDateTime = new Date(`${this.appointmentDate}T${this.startTime}`);

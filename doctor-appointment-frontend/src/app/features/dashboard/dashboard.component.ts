@@ -31,7 +31,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   doctorPage = 1;
   doctorSize = 10;
   commentInputs: { [key: string]: string } = {};
+  noteInputs: { [key: string]: string } = {};
   reportInputs: { [key: string]: string } = {};
+  expandedNoteRows: { [key: string]: boolean } = {};
 
   // Warning Confirmation Modals
   showCompleteConfirm = false;
@@ -92,6 +94,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   endTime2Admin = '';
   timingsErrorMessageAdmin = '';
 
+  // Booking Window Calendar state (shared for admin and doctor edit modals)
+  adminBookingCalMonth = new Date();
+  adminBookingCalDays: any[] = [];
+  adminBookingPickStart = '';
+  adminBookingPickEnd = '';
+
+  editBookingCalMonth = new Date();
+  editBookingCalDays: any[] = [];
+  editBookingPickStart = '';
+  editBookingPickEnd = '';
+
   // Edit clinic states
   showEditClinicModal = false;
   selectedClinicIdForEdit = '';
@@ -109,7 +122,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     startTime: '',
     endTime: '',
     isAvailable: true,
-    unavailabilityReason: ''
+    unavailabilityReason: '',
+    bookingWindowStartDate: '',
+    bookingWindowEndDate: ''
   };
 
   clinicOnlyForm = {
@@ -549,7 +564,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.clinicEditForm = {
       clinicName: clinic.clinicName,
       clinicType: clinic.clinicType,
-      country: 'India', // Default to India
+      country: 'India',
       state: clinic.state,
       city: clinic.city,
       area: clinic.area || '',
@@ -560,8 +575,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       startTime: clinic.startTime || '',
       endTime: clinic.endTime || '',
       isAvailable: clinic.isAvailable !== false,
-      unavailabilityReason: clinic.unavailabilityReason || ''
+      unavailabilityReason: clinic.unavailabilityReason || '',
+      bookingWindowStartDate: clinic.bookingWindowStartDate ? clinic.bookingWindowStartDate.substring(0, 10) : '',
+      bookingWindowEndDate: clinic.bookingWindowEndDate ? clinic.bookingWindowEndDate.substring(0, 10) : ''
     };
+    this.editBookingPickStart = this.clinicEditForm.bookingWindowStartDate;
+    this.editBookingPickEnd = this.clinicEditForm.bookingWindowEndDate;
+    this.editBookingCalMonth = this.editBookingPickStart ? new Date(this.editBookingPickStart) : new Date();
+    this.generateEditBookingCalendar();
     this.showEditClinicModal = true;
   }
 
@@ -612,6 +633,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.selectedDaysEdit.push(day);
     }
     this.clinicEditForm.openDays = this.selectedDaysEdit.join(',');
+    // Regenerate booking calendar to reflect updated open days
+    this.editBookingPickStart = '';
+    this.editBookingPickEnd = '';
+    this.clinicEditForm.bookingWindowStartDate = '';
+    this.clinicEditForm.bookingWindowEndDate = '';
+    this.generateEditBookingCalendar();
   }
 
   isDaySelectedEdit(day: string): boolean {
@@ -673,6 +700,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       supportInPerson: !this.adminClinic.supportedModes || this.adminClinic.supportedModes.includes('InPerson'),
       supportVideo: this.adminClinic.supportedModes ? this.adminClinic.supportedModes.includes('VideoConsultation') : false
     };
+    this.adminBookingPickStart = this.adminClinicForm.bookingWindowStartDate;
+    this.adminBookingPickEnd = this.adminClinicForm.bookingWindowEndDate;
+    this.adminBookingCalMonth = this.adminBookingPickStart ? new Date(this.adminBookingPickStart) : new Date();
+    this.generateAdminBookingCalendar();
     this.showAdminEditModal = true;
   }
 
@@ -698,10 +729,168 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     this.selectedDaysAdmin.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
     this.adminClinicForm.openDays = this.selectedDaysAdmin.join(',');
+    // Regenerate booking calendar and clear range when days change
+    this.adminBookingPickStart = '';
+    this.adminBookingPickEnd = '';
+    this.adminClinicForm.bookingWindowStartDate = '';
+    this.adminClinicForm.bookingWindowEndDate = '';
+    this.generateAdminBookingCalendar();
   }
 
   isDaySelectedAdmin(day: string): boolean {
     return this.selectedDaysAdmin.includes(day);
+  }
+
+  // ─── Booking Window Calendar: Admin ───────────────────────────────────────
+
+  generateAdminBookingCalendar(): void {
+    this.adminBookingCalDays = this.generateBookingCalendarDays(
+      this.adminBookingCalMonth,
+      this.selectedDaysAdmin,
+      this.adminBookingPickStart,
+      this.adminBookingPickEnd
+    );
+  }
+
+  adminBookingCalPrev(): void {
+    const m = this.adminBookingCalMonth.getMonth();
+    this.adminBookingCalMonth = new Date(this.adminBookingCalMonth.getFullYear(), m - 1, 1);
+    this.generateAdminBookingCalendar();
+  }
+
+  adminBookingCalNext(): void {
+    const m = this.adminBookingCalMonth.getMonth();
+    this.adminBookingCalMonth = new Date(this.adminBookingCalMonth.getFullYear(), m + 1, 1);
+    this.generateAdminBookingCalendar();
+  }
+
+  onAdminBookingDayClick(day: any): void {
+    if (!day.isOpenDay || day.dayNumber === null) return;
+    const clicked = day.dateString as string;
+    if (!this.adminBookingPickStart || (this.adminBookingPickStart && this.adminBookingPickEnd)) {
+      // Reset: start a new selection
+      this.adminBookingPickStart = clicked;
+      this.adminBookingPickEnd = '';
+    } else {
+      // Second click: set end (swap if before start)
+      if (clicked < this.adminBookingPickStart) {
+        this.adminBookingPickEnd = this.adminBookingPickStart;
+        this.adminBookingPickStart = clicked;
+      } else {
+        this.adminBookingPickEnd = clicked;
+      }
+    }
+    this.adminClinicForm.bookingWindowStartDate = this.adminBookingPickStart;
+    this.adminClinicForm.bookingWindowEndDate = this.adminBookingPickEnd;
+    this.generateAdminBookingCalendar();
+  }
+
+  clearAdminBookingWindow(): void {
+    this.adminBookingPickStart = '';
+    this.adminBookingPickEnd = '';
+    this.adminClinicForm.bookingWindowStartDate = '';
+    this.adminClinicForm.bookingWindowEndDate = '';
+    this.generateAdminBookingCalendar();
+  }
+
+  getAdminBookingCalMonthName(): string {
+    return this.adminBookingCalMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  // ─── Booking Window Calendar: Doctor Edit ─────────────────────────────────
+
+  generateEditBookingCalendar(): void {
+    this.editBookingCalDays = this.generateBookingCalendarDays(
+      this.editBookingCalMonth,
+      this.selectedDaysEdit,
+      this.editBookingPickStart,
+      this.editBookingPickEnd
+    );
+  }
+
+  editBookingCalPrev(): void {
+    const m = this.editBookingCalMonth.getMonth();
+    this.editBookingCalMonth = new Date(this.editBookingCalMonth.getFullYear(), m - 1, 1);
+    this.generateEditBookingCalendar();
+  }
+
+  editBookingCalNext(): void {
+    const m = this.editBookingCalMonth.getMonth();
+    this.editBookingCalMonth = new Date(this.editBookingCalMonth.getFullYear(), m + 1, 1);
+    this.generateEditBookingCalendar();
+  }
+
+  onEditBookingDayClick(day: any): void {
+    if (!day.isOpenDay || day.dayNumber === null) return;
+    const clicked = day.dateString as string;
+    if (!this.editBookingPickStart || (this.editBookingPickStart && this.editBookingPickEnd)) {
+      this.editBookingPickStart = clicked;
+      this.editBookingPickEnd = '';
+    } else {
+      if (clicked < this.editBookingPickStart) {
+        this.editBookingPickEnd = this.editBookingPickStart;
+        this.editBookingPickStart = clicked;
+      } else {
+        this.editBookingPickEnd = clicked;
+      }
+    }
+    this.clinicEditForm.bookingWindowStartDate = this.editBookingPickStart;
+    this.clinicEditForm.bookingWindowEndDate = this.editBookingPickEnd;
+    this.generateEditBookingCalendar();
+  }
+
+  clearEditBookingWindow(): void {
+    this.editBookingPickStart = '';
+    this.editBookingPickEnd = '';
+    this.clinicEditForm.bookingWindowStartDate = '';
+    this.clinicEditForm.bookingWindowEndDate = '';
+    this.generateEditBookingCalendar();
+  }
+
+  getEditBookingCalMonthName(): string {
+    return this.editBookingCalMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  // ─── Shared calendar day-grid generator ───────────────────────────────────
+
+  generateBookingCalendarDays(
+    currentMonth: Date,
+    openDayNames: string[],
+    pickStart: string,
+    pickEnd: string
+  ): any[] {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const startDow = firstDay.getDay(); // 0=Sun
+    const openNorm = openDayNames.map(d => d.toLowerCase());
+    const fullWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const days: any[] = [];
+    // Padding
+    for (let i = 0; i < startDow; i++) {
+      days.push({ dayNumber: null, dateString: '', isOpenDay: false, inRange: false, isStart: false, isEnd: false });
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dateObj = new Date(year, month, d);
+      dateObj.setHours(0, 0, 0, 0);
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const dateString = `${yyyy}-${mm}-${dd}`;
+      const dayName = fullWeek[dateObj.getDay()];
+      const isOpenDay = openNorm.includes(dayName) && dateObj >= today;
+      const isStart = dateString === pickStart;
+      const isEnd = dateString === pickEnd;
+      const inRange = pickStart && pickEnd ? dateString > pickStart && dateString < pickEnd : false;
+      days.push({ dayNumber: d, dateString, isOpenDay, inRange, isStart, isEnd, isToday: dateObj.getTime() === today.getTime() });
+    }
+    return days;
   }
 
   submitAdminClinicEdit(): void {
@@ -800,6 +989,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!openDaysStr) return [];
     const days = openDaysStr.split(',').map(d => d.trim());
     return days.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
+  }
+
+  toggleNotesRow(appId: string): void {
+    this.expandedNoteRows[appId] = !this.expandedNoteRows[appId];
   }
 
   openCompleteConfirm(appId: string): void {

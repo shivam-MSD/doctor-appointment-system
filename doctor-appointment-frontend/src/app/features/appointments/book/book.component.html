@@ -212,7 +212,7 @@
 
       <!-- Submit & Navigation buttons -->
       <div class="actions">
-        <button class="btn btn-primary w-100" type="submit">Confirm Reservation</button>
+        <button class="btn btn-primary w-100" type="submit" [disabled]="selectedClinic && selectedClinic.isAvailable === false" [title]="(selectedClinic && selectedClinic.isAvailable === false) ? 'This clinic branch is temporarily closed' : ''">Confirm Reservation</button>
         <a routerLink="/patient/doctors" class="btn btn-secondary w-100 cancel-link">Cancel</a>
       </div>
     </form>
