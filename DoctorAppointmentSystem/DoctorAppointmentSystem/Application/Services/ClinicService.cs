@@ -41,6 +41,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				clinic.BookingWindowEndDate,
 				clinic.BookingWindowStartDate,
 				clinic.SupportedModes,
+				clinic.MaxAppointmentsPerDay,
 				State = clinic.Address?.State ?? string.Empty,
 				City = clinic.Address?.City ?? string.Empty,
 				Pincode = clinic.Address?.Pincode ?? string.Empty,
@@ -68,6 +69,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				dto.BookingWindowEndDate,
 				dto.BookingWindowStartDate,
 				dto.SupportedModes,
+				dto.MaxAppointmentsPerDay,
 				State = dto.State,
 				City = dto.City,
 				Pincode = dto.Pincode,
@@ -370,7 +372,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
 					BookingWindowEndDate = c.BookingWindowEndDate,
 					BookingWindowStartDate = c.BookingWindowStartDate,
-					SupportedModes = c.SupportedModes
+					SupportedModes = c.SupportedModes,
+					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay
 				})
 				.ToListAsync();
 		}
@@ -411,7 +414,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
 					BookingWindowEndDate = c.BookingWindowEndDate,
 					BookingWindowStartDate = c.BookingWindowStartDate,
-					SupportedModes = c.SupportedModes
+					SupportedModes = c.SupportedModes,
+					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay
 				})
 				.ToListAsync();
 		}
@@ -470,7 +474,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
 					BookingWindowEndDate = c.BookingWindowEndDate,
 					BookingWindowStartDate = c.BookingWindowStartDate,
-					SupportedModes = c.SupportedModes
+					SupportedModes = c.SupportedModes,
+					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay
 				})
 				.ToListAsync();
 		}
@@ -551,6 +556,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					parent.BookingWindowEndDate = clinic.BookingWindowEndDate;
 					parent.BookingWindowStartDate = clinic.BookingWindowStartDate;
 					parent.SupportedModes = clinic.SupportedModes;
+					parent.MaxAppointmentsPerDay = clinic.MaxAppointmentsPerDay;
 					parent.VerificationStatus = EVerificationStatus.Verified;
 					parent.RejectionReason = null;
 
@@ -867,6 +873,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				clinic.BookingWindowEndDate = dto.BookingWindowEndDate;
 				clinic.BookingWindowStartDate = dto.BookingWindowStartDate;
 				clinic.SupportedModes = dto.SupportedModes;
+				clinic.MaxAppointmentsPerDay = dto.MaxAppointmentsPerDay;
 
 				if (clinic.VerificationStatus == EVerificationStatus.Verified || clinic.VerificationStatus == EVerificationStatus.UpdatedPending)
 				{
@@ -949,6 +956,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			clinic.BookingWindowEndDate = dto.BookingWindowEndDate;
 			clinic.BookingWindowStartDate = dto.BookingWindowStartDate;
 			clinic.SupportedModes = dto.SupportedModes;
+		clinic.MaxAppointmentsPerDay = dto.MaxAppointmentsPerDay;
 
 			// Don't drop verification status of a clinic for trusted admin edits
 			clinic.VerificationStatus = EVerificationStatus.Verified;

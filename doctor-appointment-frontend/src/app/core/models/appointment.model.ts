@@ -7,7 +7,7 @@ export interface Appointment {
   appointmentDate: string;
   startTime: string;
   endTime: string;
-  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed' | 'Rejected';
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed' | 'Rejected' | 'RescheduleProposed';
   reason: string;
   consultationType: EConsultationType | string;
   clinicId?: string;
@@ -15,6 +15,8 @@ export interface Appointment {
   comment?: string;
   report?: string;
   rejectionReason?: string;
+  queueNumber?: number;
+  doctorAssignedTime?: string;
 }
 
 export enum EConsultationType {

@@ -12,8 +12,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public Guid? ClinicId { get; set; }
 		public string? ClinicName { get; set; }
 		public DateTime AppointmentDate { get; set; }
-		public DateTime StartTime { get; set; }
-		public DateTime EndTime { get; set; }
+		public DateTime? StartTime { get; set; }
+		public DateTime? EndTime { get; set; }
 		public string Status { get; set; }
 		public string Reason { get; set; }
 		public string ConsultationType { get; set; }
@@ -21,6 +21,10 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string? Comment { get; set; }
 		public string? Report { get; set; }
 		public string? RejectionReason { get; set; }
+		/// <summary>Queue position for this clinic on the appointment date.</summary>
+		public int QueueNumber { get; set; }
+		/// <summary>Approximate time assigned by the doctor/admin after booking.</summary>
+		public DateTime? DoctorAssignedTime { get; set; }
 	}
 
 	public class CreateAppointmentDto
@@ -35,12 +39,6 @@ namespace DoctorAppointmentSystem.Application.DTOs
 
 		[Required]
 		public DateTime AppointmentDate { get; set; }
-
-		[Required]
-		public DateTime StartTime { get; set; }
-
-		[Required]
-		public DateTime EndTime { get; set; }
 
 		[MaxLength(4000, ErrorMessage = "Reason cannot exceed 4000 characters.")]
 		public string? Reason { get; set; } = string.Empty;
@@ -66,6 +64,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 	public class ApproveAppointmentDto
 	{
 		public string? Comment { get; set; }
+		public DateTime? DoctorAssignedTime { get; set; }
 	}
 
 	public class RejectAppointmentDto
@@ -83,5 +82,43 @@ namespace DoctorAppointmentSystem.Application.DTOs
 	public class MovePendingAppointmentDto
 	{
 		public string? Comment { get; set; }
+	}
+
+	/// <summary>Returned by GET /appointments/day-availability to show booking capacity for a date.</summary>
+	public class DayAvailabilityDto
+	{
+		public DateTime Date { get; set; }
+		public Guid ClinicId { get; set; }
+		public int BookedCount { get; set; }
+		public int? MaxCapacity { get; set; } // null = unlimited
+		public int? RemainingSlots { get; set; } // null = unlimited
+		public bool IsFull { get; set; }
+	}
+
+	/// <summary>Posted by doctor/admin to assign a time slot to an existing appointment.</summary>
+	public class AssignAppointmentTimeDto
+	{
+		[Required]
+		public DateTime DoctorAssignedTime { get; set; }
+		public string? Comment { get; set; }
+	}
+
+	public class ProposeRescheduleDto
+	{
+		[Required]
+		public Guid AppointmentId { get; set; }
+		[Required]
+		public DateTime ProposedDate { get; set; }
+		public DateTime? ProposedTime { get; set; }
+		[Required]
+		public string Reason { get; set; }
+	}
+
+	public class RespondRescheduleDto
+	{
+		[Required]
+		public Guid AppointmentId { get; set; }
+		[Required]
+		public bool Accept { get; set; }
 	}
 }

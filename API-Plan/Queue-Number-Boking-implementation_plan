@@ -1,0 +1,162 @@
+# Implementation Plan: Date-Only + Daily Limit + Queue Number Booking System
+
+## Summary of Change
+Replace the current 30-minute time-slot booking system with a simpler, more realistic OPD-style system:
+- **Patient** selects only the date → gets a queue number automatically
+- **Doctor/Admin** sets max patients per day per clinic
+- **Calendar** shows "X slots remaining" on each date — full dates are greyed out
+- **Doctor** assigns an approximate time to the patient after booking
+- **Patient dashboard** shows queue number + doctor-assigned time + any comments
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> `StartTime` and `EndTime` are currently `[Required]` in both the `Appointment` entity and `CreateAppointmentDto`. These will become **optional/nullable** — existing appointment records in the DB will have NULL for these fields after migration. The migration is **non-destructive** (no data is deleted), but existing records will show no time info.
+
+> [!WARNING]
+> This is a **database schema migration** — `EF Core Add-Migration` must be run after backend changes. A migration script will be generated automatically.
+
+---
+
+## Proposed Changes
+
+### Component 1 — Backend: Domain / Entities
+
+#### [MODIFY] Appointment.cs
+- Make `StartTime` and `EndTime` **nullable** (`DateTime?`)
+- Add `QueueNumber` (int) — sequential per clinic per day
+- Add `DoctorAssignedTime` (DateTime?) — doctor sets this after booking
+
+#### [MODIFY] Clinic.cs
+- Add `MaxAppointmentsPerDay` (int?) — null = unlimited
+
+---
+
+### Component 2 — Backend: DTOs
+
+#### [MODIFY] AppointmentDTOs.cs
+- `AppointmentDto`: Add `QueueNumber`, `DoctorAssignedTime`; make `StartTime`/`EndTime` nullable
+- `CreateAppointmentDto`: Remove `StartTime`, `EndTime` (no longer needed from patient)
+- **[NEW]** `DayAvailabilityDto`: `{ Date, BookedCount, MaxCapacity, RemainingSlots, IsFull }`
+- **[NEW]** `AssignAppointmentTimeDto`: `{ DoctorAssignedTime, Comment }`
+
+---
+
+### Component 3 — Backend: Service Interface
+
+#### [MODIFY] IAppointmentService.cs
+- Add: `Task<DayAvailabilityDto> GetDayAvailabilityAsync(Guid clinicId, DateTime date)`
+- Add: `Task AssignAppointmentTimeAsync(Guid userId, Guid appointmentId, AssignAppointmentTimeDto dto)`
+- Remove: `Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(...)` (no longer needed)
+
+---
+
+### Component 4 — Backend: AppointmentService.cs
+
+#### [MODIFY] BookAppointmentAsync
+- Remove: `StartTime`/`EndTime` validation and overlap checks
+- Remove: `StartTime`/`EndTime` from appointment creation
+- Add: **Daily limit check** — count active (non-Cancelled/Rejected/Expired) appointments for that date+clinic, compare against `MaxAppointmentsPerDay`
+- Add: **Queue number** — assign `MAX(QueueNumber) + 1` for that date+clinic
+- Update notification message: `"New appointment #3 booked by Patient X for Monday Jul 21"`
+
+#### [NEW] GetDayAvailabilityAsync
+- Returns `{ BookedCount, MaxCapacity, RemainingSlots, IsFull }` for a given clinic+date
+
+#### [NEW] AssignAppointmentTimeAsync
+- Doctor/admin sets `DoctorAssignedTime` and optional `Comment` on the appointment
+- Sends notification to patient: `"Your appointment #3 on Mon Jul 21 has been assigned at 11:30 AM"`
+
+---
+
+### Component 5 — Backend: AppointmentsController.cs
+
+#### [MODIFY]
+- Remove endpoint: `GET /booked-slots` (replaced by day-availability)
+- **[NEW]** `GET /day-availability?clinicId=&date=` → `GetDayAvailabilityAsync`
+- **[NEW]** `POST /assign-time/{id}` → `AssignAppointmentTimeAsync`
+
+---
+
+### Component 6 — Backend: EF Migration
+
+Run after all entity changes:
+```
+dotnet ef migrations add AddQueueNumberAndDailyLimit
+dotnet ef database update
+```
+
+---
+
+### Component 7 — Frontend: Book Component
+
+#### [MODIFY] book.component.ts
+- Remove: `generatedSlots`, `selectedSlot`, `startTime`, `endTime`, all slot-generation logic
+- Remove: call to `getBookedSlots()`
+- Add: call to `getDayAvailability(clinicId, date)` after date selected
+- Show: `remainingSlots` count on each calendar date cell
+- Block: date selection if `isFull === true`
+- Submit: send only `patientId, doctorId, clinicId, appointmentDate, consultationType, reason`
+
+#### [MODIFY] book.component.html
+- Remove: "Available Time Slots" grid section entirely
+- Add: slot count badge on calendar dates (e.g., "3 left", "Full")
+- Simplify submit button
+
+---
+
+### Component 8 — Frontend: Appointment Service (Angular)
+
+#### [MODIFY] appointment.service.ts
+- Remove: `getBookedSlots()`
+- Add: `getDayAvailability(clinicId, date)` → calls `GET /appointments/day-availability`
+- Add: `assignAppointmentTime(appointmentId, dto)` → calls `POST /appointments/assign-time/{id}`
+
+---
+
+### Component 9 — Frontend: Dashboard (Doctor/Admin)
+
+#### [MODIFY] dashboard.component.html + dashboard.component.ts
+- Add: "Assign Time" button per appointment row
+- Add: modal with time picker + optional comment
+- Show: queue number (e.g., "Queue #3") badge in appointment table
+- Show: doctor-assigned time in appointment row
+
+#### [MODIFY] Admin/Doctor Edit Clinic modal
+- Add: "Max Appointments Per Day" number input (0 = unlimited)
+
+---
+
+### Component 10 — Frontend: Patient Dashboard
+
+#### [MODIFY] dashboard.component.html (patient section)
+- Add: Queue number badge on each appointment card
+- Add: Doctor-assigned time display (if set)
+- Show: "Awaiting time assignment" if not yet assigned
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Build: `dotnet build` — no compilation errors
+- Frontend: `ng build` — no TS errors
+
+### Manual Verification
+1. Doctor sets `MaxAppointmentsPerDay = 3` for clinic
+2. Patient books 3 appointments for same date → all succeed
+3. 4th booking for same date → blocked: "This date is fully booked"
+4. Patient cancels one → slot count drops to 2 → 4th booking now succeeds
+5. Doctor assigns time via "Assign Time" button → patient sees it on dashboard
+6. Doctor sets no limit (null) → unlimited bookings work as before
+7. Calendar correctly shows "2 left", "1 left", "Full" on dates
+8. Full dates are greyed out and non-clickable in booking calendar
+
+---
+
+## Open Questions
+
+> [!NOTE]
+> Should "Confirmed" appointments also count toward the daily limit? Or only "Pending"? Currently proposing: **Pending + Confirmed** count against the limit. Cancelled, Rejected, Expired do NOT.

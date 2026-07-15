@@ -15,17 +15,13 @@ export class BookComponent implements OnInit {
   doctorId = '';
   clinicId = '';
   appointmentDate = '';
-  startTime = '';
-  endTime = '';
   consultationType = 'InPerson';
   reason = '';
 
-  // Timing Slot Definitions
+  // Calendar state
   todayDate = '';
   minBookingDate = '';
   maxBookingDate = '';
-  generatedSlots: any[] = [];
-  selectedSlot: any = null;
   weekDaysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   dateValidationError = '';
   isClinicLocked = false;
@@ -33,6 +29,10 @@ export class BookComponent implements OnInit {
   selectedClinic: any = null;
   currentMonth = new Date();
   calendarDays: any[] = [];
+
+  // Day availability info (for selected date)
+  dayAvailability: any = null;
+  isLoadingAvailability = false;
 
   // Mandatory Filter Fields
   state = '';
@@ -194,10 +194,7 @@ export class BookComponent implements OnInit {
 
   onClinicChange(): void {
     this.appointmentDate = '';
-    this.generatedSlots = [];
-    this.selectedSlot = null;
-    this.startTime = '';
-    this.endTime = '';
+    this.dayAvailability = null;
     this.dateValidationError = '';
 
     const selectedClinic = this.getSelectedClinic();
@@ -314,122 +311,50 @@ export class BookComponent implements OnInit {
   }
 
   onDateChange(): void {
-    this.generatedSlots = [];
-    this.selectedSlot = null;
-    this.startTime = '';
-    this.endTime = '';
+    this.dayAvailability = null;
     this.dateValidationError = '';
 
-    if (!this.appointmentDate || !this.clinicId || !this.doctorId) {
+    if (!this.appointmentDate || !this.clinicId) {
       return;
     }
 
     const selectedClinic = this.getSelectedClinic();
     if (!selectedClinic) return;
 
-    // 0. Block if clinic is manually closed
+    // Block if clinic is manually closed
     if (selectedClinic.isAvailable === false) {
-      this.dateValidationError = 'This clinic branch is temporarily closed and is not accepting appointments. Please try again later or choose a different branch.';
+      this.dateValidationError = 'This clinic branch is temporarily closed and is not accepting appointments.';
       return;
     }
 
-    // 1. Determine day of the week (adjusting for timezone if needed, simple local parse is fine)
-    const dateObj = new Date(this.appointmentDate);
+    // Validate clinic is open on this day of week
+    const dateObj = new Date(this.appointmentDate + 'T00:00:00');
     const dayName = this.weekDaysList[dateObj.getDay()];
-
-    // 2. Validate clinic is open on this day of week
     const openDaysArray = selectedClinic?.openDays ? selectedClinic.openDays.split(',').map((d: string) => d.trim()) : [];
-    if (!openDaysArray.includes(dayName)) {
-      this.dateValidationError = `This clinic branch is closed on ${dayName}. Open days: ${selectedClinic?.openDays}.`;
+    if (openDaysArray.length > 0 && !openDaysArray.includes(dayName)) {
+      this.dateValidationError = `This clinic is closed on ${dayName}. Open days: ${selectedClinic?.openDays}.`;
       return;
     }
 
-    // 3. Generate candidate slots
-    const startStr = selectedClinic.startTime || '';
-    const endStr = selectedClinic.endTime || '';
-
-    let starts = startStr.includes(',') ? startStr.split(',') : [startStr];
-    let ends = endStr.includes(',') ? endStr.split(',') : [endStr];
-
-    const slots: any[] = [];
-    const count = Math.min(starts.length, ends.length);
-
-    for (let i = 0; i < count; i++) {
-      const s = starts[i]?.trim();
-      const e = ends[i]?.trim();
-      if (!s || !e) continue;
-
-      let currentMin = this.timeToMinutes(s);
-      const endMin = this.timeToMinutes(e);
-
-      // Generate 30 minutes slots
-      while (currentMin + 30 <= endMin) {
-        const nextMin = currentMin + 30;
-        const slotStart = this.minutesToTime(currentMin);
-        const slotEnd = this.minutesToTime(nextMin);
-        slots.push({
-          startTime: slotStart,
-          endTime: slotEnd,
-          isBooked: false,
-          label: `${this.formatTime12(slotStart)} - ${this.formatTime12(slotEnd)}`
-        });
-        currentMin = nextMin;
-      }
-    }
-
-    this.generatedSlots = slots;
-
-    // 4. Query booked slots from backend
-    this.appointmentService.getBookedSlots(this.doctorId, this.clinicId, this.appointmentDate, this.patientId).subscribe({
-      next: (bookedList: any[]) => {
-        for (const slot of this.generatedSlots) {
-          const isOverlapping = bookedList.some(booked => {
-            return slot.startTime < booked.endTime && slot.endTime > booked.startTime;
-          });
-          if (isOverlapping) {
-            slot.isBooked = true;
-          }
+    // Fetch day availability from backend
+    this.isLoadingAvailability = true;
+    this.appointmentService.getDayAvailability(this.clinicId, this.appointmentDate).subscribe({
+      next: (avail) => {
+        this.dayAvailability = avail;
+        this.isLoadingAvailability = false;
+        if (avail.isFull) {
+          this.dateValidationError = `This date is fully booked (${avail.bookedCount}/${avail.maxCapacity} appointments). Please choose another date.`;
         }
       },
       error: () => {
-        this.toastService.showError('Failed to fetch already booked slots.');
+        this.isLoadingAvailability = false;
       }
     });
   }
 
-  selectSlot(slot: any): void {
-    if (slot.isBooked) return;
-    this.selectedSlot = slot;
-    this.startTime = slot.startTime;
-    this.endTime = slot.endTime;
-  }
-
-  private timeToMinutes(timeStr: string): number {
-    const parts = timeStr.split(':');
-    const hrs = parseInt(parts[0] || '0', 10);
-    const mins = parseInt(parts[1] || '0', 10);
-    return hrs * 60 + mins;
-  }
-
-  private minutesToTime(totalMins: number): string {
-    const hrs = Math.floor(totalMins / 60);
-    const mins = totalMins % 60;
-    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-  }
-
-  private formatTime12(timeStr: string): string {
-    const parts = timeStr.split(':');
-    let hrs = parseInt(parts[0] || '0', 10);
-    const mins = parts[1] || '00';
-    const ampm = hrs >= 12 ? 'PM' : 'AM';
-    hrs = hrs % 12;
-    if (hrs === 0) hrs = 12;
-    return `${hrs}:${mins} ${ampm}`;
-  }
-
   onSubmit(): void {
-    if (!this.patientId || !this.doctorId || !this.appointmentDate || !this.startTime || !this.endTime) {
-      this.errorMessage = 'Please complete all required fields (make sure to select a Doctor).';
+    if (!this.patientId || !this.doctorId || !this.appointmentDate) {
+      this.errorMessage = 'Please complete all required fields and select an appointment date.';
       this.toastService.showError(this.errorMessage);
       return;
     }
@@ -449,12 +374,9 @@ export class BookComponent implements OnInit {
       return;
     }
 
-    // Combine date and time strings into complete Date objects
-    const startDateTime = new Date(`${this.appointmentDate}T${this.startTime}`);
-    const endDateTime = new Date(`${this.appointmentDate}T${this.endTime}`);
-
-    if (startDateTime >= endDateTime) {
-      this.errorMessage = 'Start time must be strictly before end time.';
+    // Guard: day is fully booked
+    if (this.dayAvailability?.isFull) {
+      this.errorMessage = 'This date is fully booked. Please choose another date.';
       this.toastService.showError(this.errorMessage);
       return;
     }
@@ -464,23 +386,22 @@ export class BookComponent implements OnInit {
       doctorId: this.doctorId,
       clinicId: this.clinicId ? this.clinicId : null,
       appointmentDate: this.appointmentDate,
-      startTime: startDateTime.toISOString(),
-      endTime: endDateTime.toISOString(),
       consultationType: this.consultationType,
       reason: this.reason
     };
 
     this.appointmentService.bookAppointment(payload).subscribe({
-      next: () => {
+      next: (result) => {
         this.errorMessage = '';
-        this.successMessage = 'Appointment booked successfully! Redirecting to dashboard...';
+        const queueNum = result?.queueNumber ? ` You are #${result.queueNumber} in queue.` : '';
+        this.successMessage = `Appointment booked successfully!${queueNum} Redirecting to dashboard...`;
         this.toastService.showSuccess(this.successMessage);
         setTimeout(() => {
           this.router.navigate(['/patient/dashboard']);
         }, 2000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'An overlap conflict occurred. Please select another slot.';
+        this.errorMessage = err?.error?.detail || 'Failed to book appointment. The date may be fully booked.';
         this.toastService.showError(this.errorMessage);
       }
     });

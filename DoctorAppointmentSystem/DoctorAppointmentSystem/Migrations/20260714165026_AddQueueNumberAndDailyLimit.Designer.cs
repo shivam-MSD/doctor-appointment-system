@@ -4,6 +4,7 @@ using DoctorAppointmentSystem.Persistent.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DoctorAppointmentSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714165026_AddQueueNumberAndDailyLimit")]
+    partial class AddQueueNumberAndDailyLimit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -174,16 +177,6 @@ namespace DoctorAppointmentSystem.Migrations
                     b.Property<string>("Report")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime?>("RescheduleProposedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("RescheduleProposedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RescheduleReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime?>("StartTime")
                         .HasColumnType("datetime2");

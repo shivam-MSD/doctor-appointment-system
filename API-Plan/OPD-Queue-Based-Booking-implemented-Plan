@@ -1,0 +1,31 @@
+# OPD Queue-Based Booking Implementation Complete
+
+The doctor appointment system has been successfully transformed from a strict time-slot-based booking model to a flexible **OPD Queue-Based** model.
+
+## What has changed?
+
+### 1. Daily Capacity & Date-Only Booking (Backend)
+- Modified `Clinic` to include an optional `MaxAppointmentsPerDay` capacity limit.
+- Removed time-slot constraints and overlap calculations for booking.
+- Modified `Appointment` to generate sequential `QueueNumber` records for the specific date.
+- Endpoints were updated to only check if a day is fully booked using a new `/day-availability` API instead of listing 30-minute intervals.
+
+### 2. Frontend Booking UI Redesign
+- The `book.component` has been rewritten. Instead of picking 30-minute intervals, patients now select an available date using a custom calendar.
+- The UI checks the day's total availability against the clinic's maximum daily limit (e.g., *12/20 Booked*, *8 slots remaining*).
+- If a clinic is configured for unlimited appointments, the UI reflects "Unlimited appointments allowed".
+- Upon booking, the patient receives a Queue Number (e.g., *You are #3 in queue*).
+
+### 3. Doctor/Admin Queue Management
+- Replaced the generic "Approve" button with a specific **"Assign Time"** button for doctors/admins.
+- When an appointment is "Pending" (Waitlist), doctors can assign an explicit start time.
+- The Patient Dashboard and Doctor Dashboard both reflect the assigned time and queue numbers prominently.
+- Statuses easily convey the state of the appointment: `Pending` (Waitlist), `Confirmed` (Time Assigned), `Completed`, or `Cancelled`.
+
+### 4. Database Schema Update
+- The necessary changes have been successfully committed to the database schema via EF Core migrations (`AddQueueNumberAndDailyLimit`).
+
+## Next Steps
+You can now test the new workflow!
+1. Log in as a patient, select a clinic, and pick a date. You will not be asked for a time slot.
+2. Log in as the doctor, open your dashboard, find the new "Pending Assignment" appointment, and click **Assign Time** to finalize the patient's visit.

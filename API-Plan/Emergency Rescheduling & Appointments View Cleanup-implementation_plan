@@ -1,0 +1,70 @@
+# Emergency Rescheduling & Appointments View Cleanup
+
+This plan outlines the steps to implement **Option A (Propose New Time)** for doctors and to clean up the Doctor Appointments view using status tabs.
+
+## Open Questions
+1. **Patient Dashboard:** Do we already have a Patient Dashboard built where patients can see their appointments and accept/decline the reschedule? If not, we will need to build a small view for them to respond to this proposal.
+2. **Push Notifications/Email:** Do you want to send actual emails or SMS for this reschedule request, or is a SignalR/in-app notification sufficient for now?
+
+## Proposed Changes
+
+### Backend Changes
+
+#### 1. Domain Entities & Enums
+- Modify `Appointment.cs` to add:
+  - `public DateTime? RescheduleProposedDate { get; set; }`
+  - `public DateTime? RescheduleProposedTime { get; set; }` (optional if time is assigned later by queue, but good for specific slots).
+  - `public string? RescheduleReason { get; set; }`
+- Modify `EAppointmentStatus` to add new states:
+  - `RescheduleProposed`
+- Create a new EF Core Migration and update the database.
+
+#### 2. DTOs
+- Create `ProposeRescheduleDto`:
+  - `AppointmentId`
+  - `ProposedDate`
+  - `ProposedTime` (optional)
+  - `Reason`
+- Create `RespondRescheduleDto`:
+  - `AppointmentId`
+  - `Accept` (boolean)
+
+#### 3. Services & Controllers
+- Update `IAppointmentService` and `AppointmentService` with two new methods:
+  - `ProposeRescheduleAsync(ProposeRescheduleDto dto)`
+  - `RespondToRescheduleAsync(RespondRescheduleDto dto)`
+- Expose these via `AppointmentsController`.
+- Ensure SignalR notifications are fired when a reschedule is proposed (notifying patient) and when responded to (notifying doctor).
+
+---
+
+### Frontend Changes (Doctor Side)
+
+#### 1. Appointment Tabs (UI Cleanup)
+- **File:** `doctor-appointments.component.html` and `.ts`
+- Introduce a Tab UI at the top of the list:
+  - **Upcoming:** Shows `Pending`, `Confirmed`, and `RescheduleProposed` for dates >= Today.
+  - **Past & Completed:** Shows `Completed` and any past appointments.
+  - **Cancelled / Rejected:** Shows `Cancelled`, `Rejected`.
+  - **All:** Shows everything.
+- Update `getFilteredAppointments()` logic to apply these tab filters.
+
+#### 2. Reschedule Action & Modal
+- **File:** `doctor-appointments.component.html`
+- Add a **"Reschedule"** button next to the Cancel button for Upcoming appointments.
+- Add a new Modal: **"Propose Reschedule"**
+  - Inputs: New Date, New Time (optional), Reason text area.
+- Call the new backend `ProposeReschedule` endpoint on submit.
+- Show a status badge for `Reschedule Proposed` (e.g., Orange/Yellow) on the table.
+
+## Verification Plan
+
+### Automated Tests
+- Run backend build `dotnet build` to ensure no syntax issues after modifying enums and entities.
+- Run `dotnet ef migrations add AddRescheduleFields` and `dotnet ef database update`.
+
+### Manual Verification
+1. **Tabs:** Verify the doctor's appointment list cleanly separates Upcoming, Past, and Cancelled appointments.
+2. **Propose Reschedule:** Log in as a doctor, select an appointment, click Reschedule, enter a date/reason, and submit.
+3. **Database Check:** Verify the appointment status changes to `RescheduleProposed` and the fields are populated correctly in the database.
+4. **Patient Flow:** Log in as the patient, view the appointment, and accept the reschedule. Verify the date changes and status returns to `Confirmed`.

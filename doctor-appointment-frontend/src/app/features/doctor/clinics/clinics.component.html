@@ -520,26 +520,79 @@
             placeholder="e.g. Doctor is attending conference. Assistant staff will be attending patients."></textarea>
         </div>
 
-        <!-- Booking range start and end dates limit -->
+        <!-- Booking Window — Smart Calendar Picker -->
         <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-          <label class="form-label" style="font-weight: 700;">Open Booking Window (Available Dates)</label>
-          <div style="display: flex; gap: 15px; margin-top: 8px;">
-            <div style="flex: 1;">
-              <label class="form-label" for="bookingWindowStartDate"
-                style="font-size: 0.8rem; color: var(--text-secondary);">Available From</label>
-              <input type="date" class="form-control" id="bookingWindowStartDate"
-                [(ngModel)]="clinicTimingsForm.bookingWindowStartDate" name="bookingWindowStartDate">
+          <label class="form-label" style="font-weight: 700;">📅 Open Booking Window (Available Dates)</label>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.4;">
+            Click a <strong>start date</strong>, then click an <strong>end date</strong>. Only your selected open days are clickable.
+          </p>
+
+          <div *ngIf="selectedDaysTimings.length === 0" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #f59e0b; margin-bottom: 10px;">
+            ⚠️ Select open days above first to enable date picking.
+          </div>
+
+          <div *ngIf="selectedDaysTimings.length > 0" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.02); padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <button type="button" class="btn btn-secondary" (click)="bookingCalPrev()" style="padding: 4px 10px; font-size: 0.8rem;">← Prev</button>
+              <strong style="font-size: 0.95rem; color: var(--text-primary);">{{ getBookingCalMonthName() }}</strong>
+              <button type="button" class="btn btn-secondary" (click)="bookingCalNext()" style="padding: 4px 10px; font-size: 0.8rem;">Next →</button>
             </div>
-            <div style="flex: 1;">
-              <label class="form-label" for="bookingWindowEndDate"
-                style="font-size: 0.8rem; color: var(--text-secondary);">Available To (Optional)</label>
-              <input type="date" class="form-control" id="bookingWindowEndDate"
-                [(ngModel)]="clinicTimingsForm.bookingWindowEndDate" name="bookingWindowEndDate">
+
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
+              <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">
+              <ng-container *ngFor="let day of bookingCalDays">
+                <div *ngIf="day.dayNumber === null" style="height: 34px;"></div>
+                <button *ngIf="day.dayNumber !== null" type="button"
+                  (click)="onBookingDayClick(day)"
+                  [disabled]="!day.isOpenDay"
+                  style="height: 34px; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; transition: all 0.15s; display: flex; align-items: center; justify-content: center;"
+                  [style.background]="day.isStart || day.isEnd ? '#10b981' : (day.inRange ? 'rgba(16,185,129,0.18)' : (day.isOpenDay ? 'rgba(6,182,212,0.08)' : 'transparent'))"
+                  [style.color]="day.isStart || day.isEnd ? '#fff' : (day.inRange ? '#10b981' : (day.isOpenDay ? 'var(--accent-cyan)' : '#ccc'))"
+                  [style.cursor]="day.isOpenDay ? 'pointer' : 'not-allowed'"
+                  [style.border]="day.isToday && !day.isStart && !day.isEnd ? '1px solid var(--accent-cyan)' : '1px solid transparent'"
+                  [title]="day.isStart ? 'Start: ' + day.dateString : (day.isEnd ? 'End: ' + day.dateString : (day.isOpenDay ? 'Click to select' : 'Clinic closed'))">
+                  {{ day.dayNumber }}
+                </button>
+              </ng-container>
             </div>
           </div>
-          <small class="form-text text-muted"
-            style="margin-top: 6px; display: block; color: var(--text-secondary);">Configure the date range in which
-            patients can schedule appointments. Leave dates blank for immediate/indefinite bookings.</small>
+
+          <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span *ngIf="bookingPickStart" style="color: #10b981; font-weight: 600;">
+              📅 From: {{ bookingPickStart | date:'dd MMM yyyy' }}
+              <span *ngIf="bookingPickEnd"> → To: {{ bookingPickEnd | date:'dd MMM yyyy' }}</span>
+              <span *ngIf="!bookingPickEnd" style="color: var(--text-secondary); font-weight: 400;"> → (click end date)</span>
+            </span>
+            <span *ngIf="!bookingPickStart" style="font-style: italic;">No date restriction set (open-ended)</span>
+            <button *ngIf="bookingPickStart" type="button" (click)="clearBookingWindow()"
+              style="font-size: 0.75rem; color: #ef4444; background: none; border: 1px solid rgba(239,68,68,0.3); border-radius: 4px; padding: 2px 8px; cursor: pointer;">
+              ✕ Clear dates
+            </button>
+          </div>
+        </div>
+
+        <!-- Max Appointments Per Day -->
+        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+          <label class="form-label" style="font-weight: 700;">👥 Max Patients Per Day</label>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="clinicTimingsForm.maxAppointmentsPerDay"
+              name="maxAppointmentsPerDay"
+              min="1"
+              max="500"
+              placeholder="e.g. 20"
+              style="max-width: 180px;"
+            >
+            <span style="font-size: 0.82rem; color: var(--text-secondary); font-style: italic;">Leave blank for unlimited</span>
+          </div>
+          <small class="form-text text-muted" style="margin-top: 4px; display: block; color: var(--text-secondary);">
+            Patients cannot book on a day that has already reached this limit. Leave blank for no cap.
+          </small>
         </div>
 
         <!-- Consultation Modes Configuration -->

@@ -47,6 +47,12 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   endTime2 = '';
   timingsErrorMessage = '';
 
+  // Booking Window Calendar state
+  bookingCalMonth = new Date();
+  bookingCalDays: any[] = [];
+  bookingPickStart = '';
+  bookingPickEnd = '';
+
   selectedClinicIdForTimings = '';
   selectedClinicNameForTimings = '';
   clinicTimingsForm = {
@@ -60,7 +66,8 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     bookingWindowStartDate: '',
     bookingWindowEndDate: '',
     supportInPerson: true,
-    supportVideo: false
+    supportVideo: false,
+    maxAppointmentsPerDay: null as number | null
   };
 
   selectedClinicIdForEdit = '';
@@ -426,8 +433,15 @@ export class ClinicsComponent implements OnInit, OnDestroy {
       bookingWindowStartDate: clinic.bookingWindowStartDate ? clinic.bookingWindowStartDate.substring(0, 10) : '',
       bookingWindowEndDate: clinic.bookingWindowEndDate ? clinic.bookingWindowEndDate.substring(0, 10) : '',
       supportInPerson: !modes || modes.includes('InPerson'),
-      supportVideo: modes.includes('VideoConsultation')
+      supportVideo: modes.includes('VideoConsultation'),
+      maxAppointmentsPerDay: clinic.maxAppointmentsPerDay ?? null
     };
+    
+    this.bookingPickStart = this.clinicTimingsForm.bookingWindowStartDate;
+    this.bookingPickEnd = this.clinicTimingsForm.bookingWindowEndDate;
+    this.bookingCalMonth = this.bookingPickStart ? new Date(this.bookingPickStart) : new Date();
+    this.generateBookingCalendar();
+
     this.showTimingsModal = true;
   }
 
@@ -442,6 +456,8 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     this.startTime2 = '';
     this.endTime2 = '';
     this.timingsErrorMessage = '';
+    this.bookingPickStart = '';
+    this.bookingPickEnd = '';
     this.clinicTimingsForm.bookingWindowStartDate = '';
     this.clinicTimingsForm.bookingWindowEndDate = '';
   }
@@ -456,6 +472,11 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     // Sort array elements by standard weekday index sequence
     this.selectedDaysTimings.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
     this.clinicTimingsForm.openDays = this.selectedDaysTimings.join(',');
+    this.bookingPickStart = '';
+    this.bookingPickEnd = '';
+    this.clinicTimingsForm.bookingWindowStartDate = '';
+    this.clinicTimingsForm.bookingWindowEndDate = '';
+    this.generateBookingCalendar();
   }
 
   isDaySelectedTimings(day: string): boolean {
@@ -532,7 +553,8 @@ export class ClinicsComponent implements OnInit, OnDestroy {
       doctorUnavailabilityReason: this.clinicTimingsForm.doctorUnavailabilityReason,
       bookingWindowStartDate: this.clinicTimingsForm.bookingWindowStartDate ? new Date(this.clinicTimingsForm.bookingWindowStartDate).toISOString() : null,
       bookingWindowEndDate: this.clinicTimingsForm.bookingWindowEndDate ? new Date(this.clinicTimingsForm.bookingWindowEndDate).toISOString() : null,
-      supportedModes: supportedModesStr
+      supportedModes: supportedModesStr,
+      maxAppointmentsPerDay: this.clinicTimingsForm.maxAppointmentsPerDay || null
     };
 
     this.adminService.updateClinic(this.selectedClinicIdForTimings, payload).subscribe({
@@ -598,5 +620,108 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   closeClinicDetailsModal(): void {
     this.showClinicDetailsModal = false;
     this.selectedClinicDetails = null;
+  }
+
+  // Booking Window Calendar Actions
+  generateBookingCalendar(): void {
+    this.bookingCalDays = this.generateBookingCalendarDays(
+      this.bookingCalMonth,
+      this.selectedDaysTimings,
+      this.bookingPickStart,
+      this.bookingPickEnd
+    );
+  }
+
+  bookingCalPrev(): void {
+    const m = this.bookingCalMonth.getMonth();
+    this.bookingCalMonth = new Date(this.bookingCalMonth.getFullYear(), m - 1, 1);
+    this.generateBookingCalendar();
+  }
+
+  bookingCalNext(): void {
+    const m = this.bookingCalMonth.getMonth();
+    this.bookingCalMonth = new Date(this.bookingCalMonth.getFullYear(), m + 1, 1);
+    this.generateBookingCalendar();
+  }
+
+  onBookingDayClick(day: any): void {
+    if (!day.isOpenDay) return;
+    const clicked = day.dateString;
+
+    if (!this.bookingPickStart || (this.bookingPickStart && this.bookingPickEnd)) {
+      this.bookingPickStart = clicked;
+      this.bookingPickEnd = '';
+    } else {
+      if (clicked < this.bookingPickStart) {
+        this.bookingPickEnd = this.bookingPickStart;
+        this.bookingPickStart = clicked;
+      } else {
+        this.bookingPickEnd = clicked;
+      }
+    }
+    this.clinicTimingsForm.bookingWindowStartDate = this.bookingPickStart;
+    this.clinicTimingsForm.bookingWindowEndDate = this.bookingPickEnd;
+    this.generateBookingCalendar();
+  }
+
+  clearBookingWindow(): void {
+    this.bookingPickStart = '';
+    this.bookingPickEnd = '';
+    this.clinicTimingsForm.bookingWindowStartDate = '';
+    this.clinicTimingsForm.bookingWindowEndDate = '';
+    this.generateBookingCalendar();
+  }
+
+  getBookingCalMonthName(): string {
+    return this.bookingCalMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  // Generate calendar days for a given month and selected range
+  generateBookingCalendarDays(
+    monthDate: Date,
+    selectedDays: string[],
+    pickStart: string,
+    pickEnd: string
+  ): any[] {
+    const year = monthDate.getFullYear();
+    const month = monthDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const startingDayOfWeek = firstDay.getDay(); // 0 = Sunday
+    const daysInMonth = lastDay.getDate();
+
+    const days: any[] = [];
+    const todayStr = new Date().toISOString().substring(0, 10);
+
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push({ dayNumber: null });
+    }
+
+    const dayNameMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(year, month, i);
+      const dateString = d.toISOString().substring(0, 10);
+      const dayName = dayNameMap[d.getDay()];
+
+      const isOpenDay = selectedDays.includes(dayName) && dateString >= todayStr;
+      const isStart = dateString === pickStart;
+      const isEnd = dateString === pickEnd;
+      const inRange = pickStart && pickEnd ? dateString > pickStart && dateString < pickEnd : false;
+      const isToday = dateString === todayStr;
+
+      days.push({
+        dayNumber: i,
+        dateString: dateString,
+        isOpenDay: isOpenDay,
+        isStart: isStart,
+        isEnd: isEnd,
+        inRange: inRange,
+        isToday: isToday
+      });
+    }
+
+    return days;
   }
 }

@@ -170,6 +170,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public DateTime? BookingWindowEndDate { get; set; }
 		public DateTime? BookingWindowStartDate { get; set; }
 		public string? SupportedModes { get; set; }
+		public int? MaxAppointmentsPerDay { get; set; }
 	}
 
 	public class UpdateClinicDto
@@ -215,6 +216,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public DateTime? BookingWindowEndDate { get; set; }
 		public DateTime? BookingWindowStartDate { get; set; }
 		public string? SupportedModes { get; set; }
+		public int? MaxAppointmentsPerDay { get; set; }
 	}
 
 	public class RejectClinicDto

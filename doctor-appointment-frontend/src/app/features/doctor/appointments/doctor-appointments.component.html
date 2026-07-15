@@ -14,8 +14,9 @@
       <h3>🔍 Filter Appointments</h3>
       <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
     </div>
-    
-    <div class="filters-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 15px;">
+
+    <div class="filters-grid"
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 15px;">
       <!-- Status filter -->
       <div class="form-group">
         <label class="form-label">Appointment Status</label>
@@ -27,43 +28,57 @@
         </select>
       </div>
 
+      <!-- Consultation filter -->
+      <div class="form-group" style="display: flex; flex-direction: column;">
+        <label class="form-label" style="margin-bottom: 8px;">Consultation Type</label>
+        <div class="tabs-container" style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px; height: 100%;">
+          <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = ''; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">All</button>
+          <button class="btn" [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'InPerson'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">In-Person</button>
+          <button class="btn" [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'VideoCall'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">Video</button>
+        </div>
+      </div>
+
+      <!-- Date filter -->
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-control" type="date" [(ngModel)]="dateFilter" (change)="onFilterChange()">
+      </div>
+
       <!-- Keyword search -->
       <div class="form-group">
         <label class="form-label">Patient Name</label>
-        <input class="form-control" type="text" [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()" placeholder="Search patient name...">
+        <input class="form-control" type="text" [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()"
+          placeholder="Search patient name...">
       </div>
     </div>
   </div>
 
   <!-- Split Layout Container -->
-  <div style="display: flex; gap: 24px; align-items: flex-start; margin-top: 20px; width: 100%;" class="appointments-split-layout">
+  <div style="display: flex; gap: 24px; align-items: flex-start; margin-top: 20px; width: 100%;"
+    class="appointments-split-layout">
     <!-- Left Sidebar (Clinic Locations) -->
     <div class="glass-card clinic-sidebar" style="width: 280px; flex-shrink: 0; padding: 20px;">
-      <h4 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+      <h4
+        style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
         <span>🏢</span> Clinic Locations
       </h4>
-      
+
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button 
-          type="button" 
-          (click)="selectClinic('')" 
-          class="clinic-item-btn" 
+        <button type="button" (click)="selectClinic('')" class="clinic-item-btn"
           [style.background]="selectedClinicId === '' ? 'rgba(6, 182, 212, 0.12)' : 'rgba(255,255,255,0.02)'"
           [style.border-color]="selectedClinicId === '' ? 'var(--accent-cyan)' : 'var(--border-color)'"
           style="text-align: left; padding: 12px 16px; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 600; cursor: pointer; color: var(--text-primary); transition: all 0.2s; width: 100%;">
           🌐 All Clinics / Locations
         </button>
-        
-        <button 
-          *ngFor="let clinic of doctorClinics" 
-          type="button" 
-          (click)="selectClinic(clinic.clinicId)" 
-          class="clinic-item-btn" 
+
+        <button *ngFor="let clinic of doctorClinics" type="button" (click)="selectClinic(clinic.clinicId)"
+          class="clinic-item-btn"
           [style.background]="selectedClinicId === clinic.clinicId ? 'rgba(6, 182, 212, 0.12)' : 'rgba(255,255,255,0.02)'"
           [style.border-color]="selectedClinicId === clinic.clinicId ? 'var(--accent-cyan)' : 'var(--border-color)'"
           style="text-align: left; padding: 12px 16px; border: 1.5px solid var(--border-color); border-radius: 8px; font-weight: 600; cursor: pointer; color: var(--text-primary); transition: all 0.2s; display: flex; flex-direction: column; gap: 4px; width: 100%;">
           <span style="font-size: 0.9rem;">🏢 {{ clinic.clinicName }}</span>
-          <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 500;">📍 {{ clinic.area }}, {{ clinic.city }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 500;">📍 {{ clinic.area }}, {{
+            clinic.city }}</span>
         </button>
       </div>
     </div>
@@ -78,99 +93,151 @@
 
       <!-- Appointments List Table -->
       <div class="glass-card table-card" *ngIf="!isLoading" style="margin: 0;">
-        <div class="table-header">
-          <h3>Patient Appointments ({{ getFilteredAppointments().length }})</h3>
+        <div class="table-header" style="flex-direction: column; align-items: flex-start; gap: 20px;">
+          <h3 style="margin-bottom: 0;">Patient Appointments ({{ getFilteredAppointments().length }})</h3>
+
+          <!-- Appointment UI Tabs -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
+            <button class="btn" [ngClass]="activeTab === 'upcoming' ? 'btn-primary' : 'btn-secondary'"
+              (click)="setTab('upcoming')" style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">Upcoming
+              & New</button>
+            <button class="btn" [ngClass]="activeTab === 'past' ? 'btn-primary' : 'btn-secondary'"
+              (click)="setTab('past')" style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">Past &
+              Completed</button>
+            <button class="btn" [ngClass]="activeTab === 'cancelled' ? 'btn-primary' : 'btn-secondary'"
+              (click)="setTab('cancelled')"
+              style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">Cancelled / Rejected</button>
+            <button class="btn" [ngClass]="activeTab === 'all' ? 'btn-primary' : 'btn-secondary'"
+              (click)="setTab('all')" style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">All
+              Records</button>
+          </div>
         </div>
 
         <!-- Status Color Legend Key -->
-        <div class="status-legend" style="display: flex; gap: 15px; align-items: center; font-size: 0.8rem; font-weight: 600; padding: 10px 20px 10px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.01);">
+        <div class="status-legend"
+          style="display: flex; gap: 15px; align-items: center; font-size: 0.8rem; font-weight: 600; padding: 10px 20px 10px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.01);">
           <span style="color: var(--text-secondary);">Status Color Key:</span>
-          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span> Confirmed</span>
-          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span> Pending (Confirmation Pending)</span>
-          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span> Cancelled</span>
-          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #dc2626;"></span> Rejected</span>
-          <span style="display: flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></span> Completed</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span
+              style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+            Confirmed</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span
+              style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span>
+            Pending (Confirmation Pending)</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span
+              style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
+            Cancelled</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span
+              style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #dc2626;"></span>
+            Rejected</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span
+              style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></span>
+            Completed</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span
+              style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ec4899;"></span>
+            Reschedule Proposed</span>
         </div>
 
-    <div class="table-responsive" *ngIf="getFilteredAppointments().length > 0; else emptyState">
-      <table class="dashboard-table">
-        <thead>
-          <tr>
-            <th>Patient Name</th>
-            <th>Clinic / Location</th>
-            <th>Date & Time</th>
-            <th>Consultation Type</th>
-            <th>Reason / Reason for Visit</th>
-            <th>Clinical Note / Report</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let app of getFilteredAppointments()" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
-            <td class="bold">
-              <a href="javascript:void(0)" (click)="openPatientDetailsModal(app.patientId)" style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;" title="Click to view patient profile">
-                {{ app.patientName }} ℹ️
-              </a>
-            </td>
-            <td style="color: var(--accent-cyan); font-weight: 600;">{{ app.clinicName || 'Direct' }}</td>
-            <td>
-              <div style="display: flex; flex-direction: column; gap: 2px;">
-                <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM d, y' }}</span>
-                <span style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }}</span>
-              </div>
-            </td>
-            <td>
-              <span style="display: flex; align-items: center; gap: 8px;">
-                <span [style.background]="getStatusColor(app.status)"
-                  style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;"
-                  [title]="getStatusTitle(app.status)"></span>
-                <span class="type-indicator" [title]="app.consultationType === 'InPerson' ? 'In-Person clinic visit' : 'Video call session'">
-                  {{ getConsultationTypeLabel(app.consultationType) }}
-                </span>
-              </span>
-            </td>
-            <td>
-              <span class="truncate-text" [title]="app.reason">{{ app.reason }}</span>
-            </td>
-            <td>
-              <div *ngIf="app.comment || app.report; else emptyNotes">
-                <div *ngIf="app.comment" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 2px;">
-                  💬 <strong>Comment:</strong> {{ app.comment }}
-                </div>
-                <div *ngIf="app.report" style="font-size: 0.8rem; color: var(--accent-cyan);">
-                  📋 <strong>Report:</strong> {{ app.report }}
-                </div>
-              </div>
-              <div *ngIf="(app.status === 'Cancelled' || app.status === 'Rejected') && app.rejectionReason" style="font-size: 0.8rem; color: #ef4444;">
-                ⚠️ <strong>Rejected:</strong> {{ app.rejectionReason }}
-              </div>
-              <ng-template #emptyNotes><span class="text-muted">-</span></ng-template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <div class="table-responsive" *ngIf="getFilteredAppointments().length > 0; else emptyState">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Patient Name</th>
+                <th>Clinic / Location</th>
+                <th>Date & Time</th>
+                <th>Reason / Reason for Visit</th>
+                <th>Clinical Note / Report</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let app of getFilteredAppointments()">
+                <td [style.border-left]="'4px solid ' + getStatusColor(app.status)" style="padding-left: 12px;">
+                  <a href="javascript:void(0)" (click)="openPatientDetailsModal(app.patientId)"
+                    style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;"
+                    title="Click to view patient profile">
+                    {{ app.patientName }} ℹ️
+                  </a>
+                </td>
+                <td style="color: var(--accent-cyan); font-weight: 600;">{{ app.clinicName || 'Direct' }}</td>
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM d, y' }}</span>
+                    <span *ngIf="app.startTime && app.endTime" style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }} (Clinic Window)</span>
+                    <span *ngIf="app.doctorAssignedTime" style="font-family: monospace; font-weight: 700; color: #10b981; margin-top: 4px;">{{ app.doctorAssignedTime | date:'shortTime' }}</span>
+                    <span *ngIf="!app.doctorAssignedTime && (app.status === 'Pending' || app.status === 'Confirmed')" style="font-family: monospace; font-weight: 600; color: #f59e0b; margin-top: 4px;">⏳ Time not assigned</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="truncate-text" [title]="app.reason">{{ app.reason }}</span>
+                </td>
+                <td>
+                  <div *ngIf="app.comment || app.report; else emptyNotes">
+                    <div *ngIf="app.comment"
+                      style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 2px;">
+                      💬 <strong>Comment:</strong> {{ app.comment }}
+                    </div>
+                    <div *ngIf="app.report" style="font-size: 0.8rem; color: var(--accent-cyan);">
+                      📋 <strong>Report:</strong> {{ app.report }}
+                    </div>
+                  </div>
+                  <div *ngIf="(app.status === 'Cancelled' || app.status === 'Rejected') && app.rejectionReason"
+                    style="font-size: 0.8rem; color: #ef4444;">
+                    ⚠️ <strong>Rejected:</strong> {{ app.rejectionReason }}
+                  </div>
+                  <ng-template #emptyNotes><span class="text-muted">-</span></ng-template>
+                </td>
+                <td style="display: flex; gap: 8px;">
+                  <!-- Cancel button available for Pending/Confirmed/RescheduleProposed -->
+                  <button
+                    *ngIf="app.status === 'Pending' || app.status === 'Confirmed' || app.status === 'RescheduleProposed'"
+                    class="btn btn-outline"
+                    style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); font-size: 0.75rem; padding: 4px 10px;"
+                    (click)="cancelAppointment(app.appointmentId)">
+                    Cancel
+                  </button>
 
-      <!-- Pagination controls -->
-      <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border-color);">
-        <span class="pagination-info" style="font-size: 0.85rem; color: var(--text-secondary);">
-          Showing Page {{ page }} of {{ totalPages() }} (Total {{ totalCount }} records)
-        </span>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary" (click)="prevPage()" [disabled]="page === 1">Previous</button>
-          <button class="btn btn-secondary" (click)="nextPage()" [disabled]="page * size >= totalCount">Next</button>
+                  <!-- Propose Reschedule button for Pending/Confirmed -->
+                  <button *ngIf="app.status === 'Pending' || app.status === 'Confirmed'" class="btn btn-outline"
+                    style="color: #ec4899; border-color: rgba(236, 72, 153, 0.3); font-size: 0.75rem; padding: 4px 10px;"
+                    (click)="openRescheduleModal(app.appointmentId)">
+                    Reschedule
+                  </button>
+
+                  <!-- Assign Time / Edit Time button for Pending/Confirmed -->
+                  <button *ngIf="(app.status === 'Pending' || app.status === 'Confirmed')" class="btn btn-outline"
+                    style="color: #10b981; border-color: rgba(16, 185, 129, 0.3); font-size: 0.75rem; padding: 4px 10px;"
+                    (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)">
+                    {{ app.doctorAssignedTime ? 'Edit Time' : 'Assign Time' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination controls -->
+          <div class="pagination-container"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border-color);">
+            <span class="pagination-info" style="font-size: 0.85rem; color: var(--text-secondary);">
+              Showing Page {{ page }} of {{ totalPages() }} (Total {{ totalCount }} records)
+            </span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" (click)="prevPage()" [disabled]="page === 1">Previous</button>
+              <button class="btn btn-secondary" (click)="nextPage()"
+                [disabled]="page * size >= totalCount">Next</button>
+            </div>
+          </div>
         </div>
+
+        <ng-template #emptyState>
+          <div class="empty-state">
+            <span class="empty-icon">📅</span>
+            <h4>No Appointments Found</h4>
+            <p>No appointments match the selected filters or search queries.</p>
+          </div>
+        </ng-template>
       </div>
     </div>
-
-    <ng-template #emptyState>
-      <div class="empty-state">
-        <span class="empty-icon">📅</span>
-        <h4>No Appointments Found</h4>
-        <p>No appointments match the selected filters or search queries.</p>
-      </div>
-    </ng-template>
   </div>
-</div>
-</div>
 
   <!-- VIEW PATIENT DETAILS MODAL (WITHOUT ADDRESS) -->
   <div class="modal-backdrop" *ngIf="showPatientDetailsModal">
@@ -188,54 +255,76 @@
         <div *ngIf="!isDetailsLoading && selectedPatientDetails">
           <table class="details-table" style="width: 100%;">
             <tr>
-              <td style="font-weight: 700; width: 40%; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Full Name</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.firstName }} {{ selectedPatientDetails.lastName }}</td>
+              <td style="font-weight: 700; width: 40%; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                Full Name</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                selectedPatientDetails.firstName }} {{ selectedPatientDetails.lastName }}</td>
             </tr>
             <tr>
               <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Age</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ getAge(selectedPatientDetails.dob) }} years</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                getAge(selectedPatientDetails.dob) }} years</td>
             </tr>
             <tr>
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Date of Birth</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.dob | date:'mediumDate' }}</td>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Date of Birth
+              </td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.dob |
+                date:'mediumDate' }}</td>
             </tr>
             <tr>
               <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Gender</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.gender }}</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                selectedPatientDetails.gender }}</td>
             </tr>
             <tr>
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Blood Group</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.bloodGroup }}</td>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Blood Group
+              </td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                selectedPatientDetails.bloodGroup }}</td>
             </tr>
             <tr>
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Contact Phone</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.mobileNo }}</td>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Contact Phone
+              </td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                selectedPatientDetails.mobileNo }}</td>
             </tr>
             <tr *ngIf="selectedPatientDetails.emergencyContactName">
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color); color: #ef4444;">Emergency Contact</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color); font-weight: 600; color: #ef4444;">
+              <td
+                style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color); color: #ef4444;">
+                Emergency Contact</td>
+              <td
+                style="padding: 10px 0; border-bottom: 1px solid var(--border-color); font-weight: 600; color: #ef4444;">
                 {{ selectedPatientDetails.emergencyContactName }} ({{ selectedPatientDetails.emergencyContactNumber }})
               </td>
             </tr>
             <tr>
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Address Line 1</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.addressline1 || 'N/A' }}</td>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Address Line
+                1</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                selectedPatientDetails.addressline1 || 'N/A' }}</td>
             </tr>
             <tr>
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Address Line 2</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.addressline2 || 'N/A' }}</td>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Address Line
+                2</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                selectedPatientDetails.addressline2 || 'N/A' }}</td>
             </tr>
             <tr>
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Area / Pincode</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.area || 'N/A' }} - {{ selectedPatientDetails.pincode || 'N/A' }}</td>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Area /
+                Pincode</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.area
+                || 'N/A' }} - {{ selectedPatientDetails.pincode || 'N/A' }}</td>
             </tr>
             <tr>
-              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">City / State</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.city || 'N/A' }}, {{ selectedPatientDetails.state || 'N/A' }}</td>
+              <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">City / State
+              </td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.city
+                || 'N/A' }}, {{ selectedPatientDetails.state || 'N/A' }}</td>
             </tr>
             <tr>
               <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Country</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedPatientDetails.country || 'N/A' }}</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
+                selectedPatientDetails.country || 'N/A' }}</td>
             </tr>
           </table>
         </div>
@@ -245,4 +334,76 @@
       </div>
     </div>
   </div>
+  <!-- Reschedule Modal -->
+  <div class="modal-backdrop" *ngIf="showRescheduleModal">
+    <div class="modal-content glass-card" style="max-width: 500px; padding: 0;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h4 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+          <span>📅</span> Propose New Date/Time
+        </h4>
+        <button class="btn-close" (click)="closeRescheduleModal()" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
+          Select a new date and time for this appointment. The patient will be notified and asked to accept or decline the proposed reschedule.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label class="form-label">Proposed Date <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" [(ngModel)]="rescheduleDate">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label class="form-label">Proposed Time (Optional)</label>
+          <input type="time" class="form-control" [(ngModel)]="rescheduleTime">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label class="form-label">Reason for Reschedule <span class="text-danger">*</span></label>
+          <textarea class="form-control" [(ngModel)]="rescheduleReason" rows="3"
+            placeholder="e.g., Medical emergency, Doctor unavailable today"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary" (click)="closeRescheduleModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitReschedulePropose()"
+          [disabled]="!rescheduleDate || !rescheduleReason" style="background: #ec4899; border-color: #ec4899;">Propose
+          Reschedule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSIGN TIME MODAL -->
+  <div class="modal-backdrop" *ngIf="showAssignTimeModal">
+    <div class="modal-content glass-card" style="max-width: 450px; padding: 0;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h4 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+          <span>⏰</span> Assign Appointment Time
+        </h4>
+        <button class="btn-close" (click)="closeAssignTimeModal()" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
+          Assign a specific time for this appointment. The patient will be notified.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label class="form-label">Assigned Time <span class="text-danger">*</span></label>
+          <input type="time" class="form-control" [(ngModel)]="assignTimeInput">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label class="form-label">Comment (Optional)</label>
+          <textarea class="form-control" [(ngModel)]="assignTimeComment" rows="2"
+            placeholder="e.g., Please arrive 10 mins early"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary" (click)="closeAssignTimeModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitAssignTime()"
+          [disabled]="!assignTimeInput" style="background: #10b981; border-color: #10b981;">Assign Time</button>
+      </div>
+    </div>
+  </div>
+
 </div>

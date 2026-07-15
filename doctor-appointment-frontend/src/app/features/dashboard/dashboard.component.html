@@ -128,6 +128,13 @@
             <option value="Rejected">Rejected</option>
           </ng-container>
         </select>
+        <div class="tabs-container" style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px;">
+          <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = ''; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">All</button>
+          <button class="btn" [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'InPerson'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">In-Person</button>
+          <button class="btn" [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'VideoCall'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">Video</button>
+        </div>
+        
+        <input type="date" class="form-control filter-select" [(ngModel)]="dateFilter" (ngModelChange)="onFilterChange()">
       </div>
     </div>
 
@@ -147,34 +154,38 @@
     </div>
 
     <!-- Appointments Table -->
-    <div class="table-responsive" *ngIf="getFilteredAppointments().length > 0; else emptyState">
+    <div class="table-responsive" *ngIf="filteredAppointments.length > 0; else emptyState">
       <table class="dashboard-table">
         <thead>
           <tr>
             <th>Doctor</th>
             <th>Patient</th>
+            <th>Queue No</th>
             <th>Date & Time</th>
-            <th>Consultation Type</th>
             <th>Status</th>
             <th>History / Records</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let app of getFilteredAppointments()" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
+          <tr *ngFor="let app of filteredAppointments" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
             <td class="bold">{{ app.doctorName }}</td>
             <td>{{ app.patientName }}</td>
             <td>
-              <div style="display: flex; flex-direction: column; gap: 2px;">
-                <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM d, y' }}</span>
-                <span style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }}</span>
-              </div>
+              <span *ngIf="app.queueNumber" style="display: inline-block; width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); font-weight: 700; font-size: 1rem; border: 1px solid var(--accent-cyan);">
+                {{ app.queueNumber }}
+              </span>
+              <span *ngIf="!app.queueNumber" class="text-muted">-</span>
             </td>
             <td>
-              <span class="type-indicator" [title]="app.consultationType === 'InPerson' ? 'In-Person clinic visit' : 'Video call session'">
-                {{ getConsultationTypeLabel(app.consultationType) }}
-              </span>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM d, y' }}</span>
+                <span *ngIf="app.doctorAssignedTime" style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.doctorAssignedTime | date:'shortTime' }}</span>
+                <span *ngIf="!app.doctorAssignedTime && app.status !== 'Pending'" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Time not assigned</span>
+                <span *ngIf="app.status === 'Pending'" style="font-size: 0.75rem; color: #f59e0b; font-weight: 600;">Pending Assignment</span>
+              </div>
             </td>
+
             <td>
               <span class="badge" [style.background]="getStatusColor(app.status)" [style.color]="'#fff'" style="padding: 4px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 600; text-transform: uppercase;">
                 {{ getStatusTitle(app.status) }}
@@ -218,10 +229,19 @@
   <!-- DOCTOR ONLY: Patient Appointments Today Daily Queue -->
   <div class="glass-card table-card" *ngIf="role === 'Doctor'">
     <div class="table-header">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div>
           <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">📅 Patient Appointments Today</h3>
           <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">Your daily scheduled check-up queue sorted chronologically.</p>
+        </div>
+        
+        <div class="filters-row" style="display: flex; gap: 10px;">
+          <div class="tabs-container" style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px;">
+            <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = ''; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">All</button>
+            <button class="btn" [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'InPerson'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">In-Person</button>
+            <button class="btn" [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'VideoCall'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">Video</button>
+          </div>
+          <input type="date" class="form-control filter-select" [(ngModel)]="dateFilter" (ngModelChange)="onFilterChange()">
         </div>
       </div>
     </div>
@@ -241,7 +261,7 @@
           <tr>
             <th>Date & Time</th>
             <th>Patient Name</th>
-            <th>Consultation Type</th>
+            <th>Queue No</th>
             <th>Clinic Location</th>
             <th>Reason for Visit</th>
             <th>Patient History</th>
@@ -249,13 +269,15 @@
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let app of appointments">
+          <ng-container *ngFor="let app of filteredAppointments">
             <!-- Main appointment row -->
             <tr [style.opacity]="(app.status === 'Completed' || app.status === 'Cancelled' || app.status === 'Rejected') ? '0.55' : '1'" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
               <td>
                 <div style="display: flex; flex-direction: column; gap: 2px;">
                   <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM d' }}</span>
-                  <span style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }}</span>
+                  <span *ngIf="app.doctorAssignedTime" style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.doctorAssignedTime | date:'shortTime' }}</span>
+                  <span *ngIf="!app.doctorAssignedTime && app.status !== 'Pending'" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Time not assigned</span>
+                  <span *ngIf="app.status === 'Pending'" style="font-size: 0.75rem; color: #f59e0b; font-weight: 600;">Pending Assignment</span>
                 </div>
               </td>
               <td class="bold">
@@ -265,18 +287,14 @@
                   </a>
                 </div>
                 <span *ngIf="app.status !== 'Confirmed'" class="badge" [class.badge-confirmed]="app.status === 'Completed'" [class.badge-pending]="app.status === 'Pending'" style="font-size: 0.68rem; padding: 2px 6px; margin-top: 4px; display: inline-block;">
-                  {{ app.status === 'Completed' ? '✓ Checked' : '⚠️ No-Show' }}
+                  {{ app.status === 'Completed' ? '✓ Checked' : (app.status === 'Pending' ? 'Waitlist' : '⏳ Skip / Late') }}
                 </span>
               </td>
-              <td>
-                <span style="display: flex; align-items: center; gap: 8px;">
-                  <span [style.background]="getStatusColor(app.status)"
-                    style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;"
-                    [title]="getStatusTitle(app.status)"></span>
-                  <span class="type-indicator" [title]="app.consultationType === 'InPerson' ? 'In-Person clinic visit' : 'Video call session'">
-                    {{ getConsultationTypeLabel(app.consultationType) }}
-                  </span>
+              <td style="text-align: center;">
+                <span *ngIf="app.queueNumber" style="display: inline-block; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); font-weight: 700; font-size: 1rem; border: 1px solid var(--accent-cyan);">
+                  {{ app.queueNumber }}
                 </span>
+                <span *ngIf="!app.queueNumber" class="text-muted">-</span>
               </td>
               <td>{{ app.clinicName || 'Direct' }}</td>
               <td>
@@ -288,12 +306,15 @@
                 </button>
               </td>
               <td>
-                <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;" *ngIf="app.status === 'Confirmed'; else processedText">
-                  <button class="btn btn-confirm" (click)="openCompleteConfirm(app.appointmentId)" style="background: #10b981; border-color: #10b981; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
+                <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;" *ngIf="app.status === 'Pending' || app.status === 'Confirmed'; else processedText">
+                  <button class="btn btn-sm-outline" (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)" style="background: #0284c7; color: white; border: none;">
+                    {{ app.doctorAssignedTime ? 'Edit Time' : 'Assign Time' }}
+                  </button>
+                  <button *ngIf="app.status === 'Confirmed'" class="btn btn-confirm" (click)="openCompleteConfirm(app.appointmentId)" style="background: #10b981; border-color: #10b981; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
                     ✓ Complete
                   </button>
-                  <button class="btn btn-cancel" (click)="openNoShowConfirm(app.appointmentId)" style="background: #ef4444; border-color: #ef4444; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
-                    ⚠️ No-Show
+                  <button *ngIf="app.status === 'Confirmed'" class="btn btn-cancel" (click)="openNoShowConfirm(app.appointmentId)" style="background: #ef4444; border-color: #ef4444; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
+                    ⏳ Skip / Late
                   </button>
                 </div>
                 <ng-template #processedText>
@@ -387,30 +408,30 @@
       </div>
       <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn btn-secondary" (click)="closeCompleteConfirm()">Cancel</button>
-        <button class="btn btn-confirm" style="background: #10b981; border-color: #10b981; color: white; font-weight: 600;" (click)="confirmComplete()" [disabled]="!commentInputs[selectedAppIdForComplete]?.trim() || !reportInputs[selectedAppIdForComplete]?.trim()">
+        <button class="btn btn-confirm" style="background: #10b981; border-color: #10b981; color: white; font-weight: 600;" (click)="confirmComplete()" [disabled]="!commentInputs[selectedAppIdForComplete] || !commentInputs[selectedAppIdForComplete].trim() || !reportInputs[selectedAppIdForComplete] || !reportInputs[selectedAppIdForComplete].trim()">
           Confirm Completion
         </button>
       </div>
     </div>
   </div>
 
-  <!-- NO-SHOW WARNING MODAL -->
+  <!-- PATIENT LATE/ABSENT WARNING MODAL -->
   <div class="modal-backdrop" *ngIf="showNoShowConfirm">
     <div class="modal-container" style="max-width: 480px;">
       <div class="modal-header">
-        <h3 style="color: #ef4444 !important;">⚠️ Mark Patient as No-Show</h3>
+        <h3 style="color: #f59e0b !important;">⏳ Mark as Skipped / Late</h3>
         <button class="close-modal" (click)="closeNoShowConfirm()">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">
-          Are you sure you want to mark this patient as No-Show? 
-          This will move the appointment status to Pending (No-Show), send a notification alert to the patient, and position the slot at the end of today's check-up list.
+        <p style="margin-bottom: 20px; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">
+          Are you sure you want to skip this patient's turn? 
+          This will move the appointment status to Pending (Waitlist). They will be notified and their turn will be moved to the end of the queue for when they arrive.
         </p>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
-        <button class="btn btn-secondary" (click)="closeNoShowConfirm()">Cancel</button>
-        <button class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white; font-weight: 600;" (click)="confirmNoShow()">
-          Confirm No-Show
+        <button class="btn btn-outline" (click)="closeNoShowConfirm()">Cancel</button>
+        <button class="btn btn-cancel" style="background: #f59e0b; border-color: #f59e0b; color: white; font-weight: 600;" (click)="confirmNoShow()">
+          Confirm Skip
         </button>
       </div>
     </div>
@@ -904,174 +925,6 @@
     </div>
   </div>
 
-  <!-- CLINIC EDIT MODAL -->
-  <div class="modal-backdrop" *ngIf="showEditClinicModal">
-    <div class="glass-card modal-container">
-      <div class="modal-header">
-        <h3>Edit Clinic Location Details</h3>
-        <button class="close-modal" (click)="closeEditClinicModal()">&times;</button>
-      </div>
-
-      <form (submit)="submitClinicEdit(); $event.preventDefault()">
-        <div class="modal-body scrollable-body">
-          <h4 class="section-title">🏢 Center / Clinic Details</h4>
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">Name</label>
-              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.clinicName" name="clinicName" required
-                placeholder="e.g. City Care Physiotherapy">
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label">Type</label>
-              <select class="form-control" [(ngModel)]="clinicEditForm.clinicType" name="clinicType" required>
-                <option value="Clinic">Clinic</option>
-                <option value="PhysiotherapyCenter">Physiotherapy Center</option>
-                <option value="Hospital">Hospital</option>
-                <option value="WellnessCenter">Wellness Center</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Address -->
-          <div class="form-row">
-            <div class="form-group col-4">
-              <label class="form-label">Country</label>
-              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.country" name="country" required>
-            </div>
-            <div class="form-group col-4">
-              <label class="form-label">State</label>
-              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.state" name="state" required
-                placeholder="e.g. Maharashtra">
-            </div>
-            <div class="form-group col-4">
-              <label class="form-label">City</label>
-              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.city" name="city" required
-                placeholder="e.g. Mumbai">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">Area</label>
-              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.area" name="area" required
-                placeholder="e.g. Bandra West">
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label">Pincode *</label>
-              <input class="form-control" type="text" [(ngModel)]="clinicEditForm.pincode" name="pincode" required
-                placeholder="e.g. 400050">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Address Line 1</label>
-            <input class="form-control" type="text" [(ngModel)]="clinicEditForm.addressline1" name="addressline1"
-              required placeholder="e.g. 102 Park Avenue">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Address Line 2 (Optional)</label>
-            <input class="form-control" type="text" [(ngModel)]="clinicEditForm.addressline2" name="addressline2"
-              placeholder="e.g. Near Metro Station">
-          </div>
-
-          <!-- Clinic Timings & Schedule -->
-          <div class="form-group" style="margin-top: 15px;">
-            <label class="form-label">Days Open * (Select multiple)</label>
-            <div class="weekday-selector" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px;">
-              <span *ngFor="let day of weekDays" 
-                    [class.selected]="isDaySelectedEdit(day)" 
-                    (click)="toggleDayEdit(day)"
-                    style="padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; border: 1px solid var(--border-color); user-select: none; transition: all 0.2s;">
-                {{ day }}
-              </span>
-            </div>
-            <input type="hidden" [(ngModel)]="clinicEditForm.openDays" name="openDays" required>
-          </div>
-
-          <div class="form-row" style="margin-top: 15px;">
-            <div class="form-group col-6">
-              <label class="form-label">Opening Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="clinicEditForm.startTime" name="startTime" required>
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label">Closing Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="clinicEditForm.endTime" name="endTime" required>
-            </div>
-          </div>
-
-          <!-- Booking Window — Smart Calendar Picker (Doctor Edit) -->
-          <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-            <label class="form-label" style="font-weight: 700;">📅 Booking Window (Available Dates)</label>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.4;">
-              Click a <strong>start date</strong>, then click an <strong>end date</strong>. Only your selected open days are clickable.
-            </p>
-
-            <div *ngIf="selectedDaysEdit.length === 0" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #f59e0b; margin-bottom: 10px;">
-              ⚠️ Select open days above first to enable date picking.
-            </div>
-
-            <div *ngIf="selectedDaysEdit.length > 0" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.02); padding: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <button type="button" class="btn btn-secondary" (click)="editBookingCalPrev()" style="padding: 4px 10px; font-size: 0.8rem;">← Prev</button>
-                <strong style="font-size: 0.95rem; color: var(--text-primary);">{{ getEditBookingCalMonthName() }}</strong>
-                <button type="button" class="btn btn-secondary" (click)="editBookingCalNext()" style="padding: 4px 10px; font-size: 0.8rem;">Next →</button>
-              </div>
-
-              <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
-                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-              </div>
-
-              <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">
-                <ng-container *ngFor="let day of editBookingCalDays">
-                  <div *ngIf="day.dayNumber === null" style="height: 34px;"></div>
-                  <button *ngIf="day.dayNumber !== null" type="button"
-                    (click)="onEditBookingDayClick(day)"
-                    [disabled]="!day.isOpenDay"
-                    style="height: 34px; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; transition: all 0.15s; display: flex; align-items: center; justify-content: center;"
-                    [style.background]="day.isStart || day.isEnd ? '#10b981' : (day.inRange ? 'rgba(16,185,129,0.18)' : (day.isOpenDay ? 'rgba(6,182,212,0.08)' : 'transparent'))"
-                    [style.color]="day.isStart || day.isEnd ? '#fff' : (day.inRange ? '#10b981' : (day.isOpenDay ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.15)'))"
-                    [style.cursor]="day.isOpenDay ? 'pointer' : 'not-allowed'"
-                    [style.border]="day.isToday && !day.isStart && !day.isEnd ? '1px solid var(--accent-cyan)' : '1px solid transparent'"
-                    [title]="day.isStart ? 'Start: ' + day.dateString : (day.isEnd ? 'End: ' + day.dateString : (day.isOpenDay ? 'Click to select' : 'Clinic closed'))">
-                    {{ day.dayNumber }}
-                  </button>
-                </ng-container>
-              </div>
-            </div>
-
-            <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <span *ngIf="editBookingPickStart" style="color: #10b981; font-weight: 600;">
-                📅 From: {{ editBookingPickStart | date:'dd MMM yyyy' }}
-                <span *ngIf="editBookingPickEnd"> → To: {{ editBookingPickEnd | date:'dd MMM yyyy' }}</span>
-                <span *ngIf="!editBookingPickEnd" style="color: var(--text-secondary); font-weight: 400;"> → (click end date)</span>
-              </span>
-              <span *ngIf="!editBookingPickStart" style="font-style: italic;">No date restriction set (open-ended)</span>
-              <button *ngIf="editBookingPickStart" type="button" (click)="clearEditBookingWindow()"
-                style="font-size: 0.75rem; color: #ef4444; background: none; border: 1px solid rgba(239,68,68,0.3); border-radius: 4px; padding: 2px 8px; cursor: pointer;">
-                ✕ Clear dates
-              </button>
-            </div>
-          </div>
-
-          <!-- Availability Toggle -->
-          <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-            <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-              <input type="checkbox" [(ngModel)]="clinicEditForm.isAvailable" name="isAvailable" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
-              <span>Branch is Open &amp; Available for Bookings</span>
-            </label>
-          </div>
-
-          <div class="form-group" style="margin-top: 10px;" *ngIf="!clinicEditForm.isAvailable">
-            <label class="form-label">Reason for Temporary Closure / Unavailability</label>
-            <textarea class="form-control" [(ngModel)]="clinicEditForm.unavailabilityReason" name="unavailabilityReason" rows="2" placeholder="e.g. Closed today due to heavy rain. Please book for tomorrow."></textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-cancel" (click)="closeEditClinicModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- CLINIC ADMIN EDIT MODAL -->
   <div class="modal-backdrop" *ngIf="showAdminEditModal">
@@ -1253,7 +1106,7 @@
                     [disabled]="!day.isOpenDay"
                     style="height: 34px; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; transition: all 0.15s; display: flex; align-items: center; justify-content: center;"
                     [style.background]="day.isStart || day.isEnd ? '#10b981' : (day.inRange ? 'rgba(16,185,129,0.18)' : (day.isOpenDay ? 'rgba(6,182,212,0.08)' : 'transparent'))"
-                    [style.color]="day.isStart || day.isEnd ? '#fff' : (day.inRange ? '#10b981' : (day.isOpenDay ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.15)'))"
+                    [style.color]="day.isStart || day.isEnd ? '#fff' : (day.inRange ? '#10b981' : (day.isOpenDay ? 'var(--accent-cyan)' : '#ccc'))"
                     [style.cursor]="day.isOpenDay ? 'pointer' : 'not-allowed'"
                     [style.border]="day.isToday && !day.isStart && !day.isEnd ? '1px solid var(--accent-cyan)' : '1px solid transparent'"
                     [title]="day.isStart ? 'Start: ' + day.dateString : (day.isEnd ? 'End: ' + day.dateString : (day.isOpenDay ? 'Click to select' : 'Clinic closed'))">
@@ -1276,6 +1129,27 @@
                 ✕ Clear dates
               </button>
             </div>
+          </div>
+
+          <!-- Max Appointments Per Day -->
+          <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+            <label class="form-label" style="font-weight: 700;">👥 Max Patients Per Day</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input
+                type="number"
+                class="form-control"
+                [(ngModel)]="adminClinicForm.maxAppointmentsPerDay"
+                name="maxAppointmentsPerDay"
+                min="1"
+                max="500"
+                placeholder="e.g. 20"
+                style="max-width: 180px;"
+              >
+              <span style="font-size: 0.82rem; color: var(--text-secondary); font-style: italic;">Leave blank for unlimited</span>
+            </div>
+            <small class="form-text text-muted" style="margin-top: 4px; display: block;">
+              Patients cannot book on a day that has already reached this limit. Leave blank for no cap.
+            </small>
           </div>
 
           <!-- Consultation Modes Configuration -->
@@ -1451,4 +1325,32 @@
       </div>
     </div>
   </div>
+
+  <!-- ASSIGN APPOINTMENT TIME MODAL -->
+  <div class="modal-backdrop" *ngIf="showAssignTimeModal">
+    <div class="modal-container" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3>⏰ Assign Consultation Time</h3>
+        <button class="close-modal" (click)="closeAssignTimeModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label">Assign Start Time *</label>
+          <input type="time" class="form-control" [(ngModel)]="assignedTimeInput" name="assignedTimeInput" required>
+          <small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 6px;">
+            The patient will be notified of this assigned time.
+          </small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Add Note/Comment (Optional)</label>
+          <textarea class="form-control" [(ngModel)]="commentInputs[selectedAppIdForAssignTime]" rows="2" placeholder="e.g. Please arrive 15 minutes early..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 15px;">
+        <button class="btn btn-secondary" (click)="closeAssignTimeModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitAssignTime()" [disabled]="!assignedTimeInput">Confirm Time</button>
+      </div>
+    </div>
+  </div>
+
 </div>

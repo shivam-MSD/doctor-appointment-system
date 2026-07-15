@@ -41,6 +41,18 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(new { Message = "Appointment cancelled successfully." });
 		}
 
+		[HttpPost("doctor-cancel/{id:guid}")]
+		public async Task<IActionResult> DoctorCancelAppointment([FromHeader(Name = "X-User-Id")] Guid userId, Guid id, [FromBody] RejectAppointmentDto dto)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header representing the authenticated user.");
+			}
+
+			await _appointmentService.DoctorCancelAppointmentAsync(userId, id, dto.Reason);
+			return Ok(new { Message = "Appointment cancelled successfully." });
+		}
+
 		[HttpGet("admin-doctor-dashboard")]
 		public async Task<IActionResult> GetAdminDoctorDashboard(
 			[FromHeader(Name = "X-User-Id")] Guid userId,
@@ -65,6 +77,7 @@ namespace DoctorAppointmentSystem.Controllers
 		public async Task<IActionResult> GetPatientDashboard(
 			[FromHeader(Name = "X-User-Id")] Guid userId,
 			[FromQuery] string? status,
+			[FromQuery] bool isHistory = false,
 			[FromQuery] int page = 1,
 			[FromQuery] int size = 10)
 		{
@@ -73,7 +86,7 @@ namespace DoctorAppointmentSystem.Controllers
 				return BadRequest("Missing required X-User-Id header representing the authenticated user.");
 			}
 
-			var result = await _appointmentService.GetPatientDashboardAppointmentsAsync(userId, status, page, size);
+			var result = await _appointmentService.GetPatientDashboardAppointmentsAsync(userId, status, isHistory, page, size);
 			return Ok(result);
 		}
 
@@ -150,21 +163,19 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
-		[HttpGet("booked-slots")]
-		public async Task<IActionResult> GetBookedSlots(
-			[FromQuery] Guid doctorId,
+		[HttpGet("day-availability")]
+		public async Task<IActionResult> GetDayAvailability(
 			[FromQuery] Guid clinicId,
-			[FromQuery] DateTime date,
-			[FromQuery] Guid? patientId)
+			[FromQuery] DateTime date)
 		{
-			var result = await _appointmentService.GetBookedSlotsAsync(doctorId, clinicId, date, patientId);
+			var result = await _appointmentService.GetDayAvailabilityAsync(clinicId, date);
 			return Ok(result);
 		}
 
 		[HttpPost("approve/{id:guid}")]
 		public async Task<IActionResult> ApproveAppointment(Guid id, [FromBody] ApproveAppointmentDto dto)
 		{
-			await _appointmentService.ApproveAppointmentAsync(id, dto.Comment);
+			await _appointmentService.ApproveAppointmentAsync(id, dto.Comment, dto.DoctorAssignedTime);
 			return Ok(new { Message = "Appointment approved successfully." });
 		}
 
@@ -189,6 +200,21 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(new { Message = "Appointment status updated to pending." });
 		}
 
+		[HttpPost("assign-time/{id:guid}")]
+		public async Task<IActionResult> AssignAppointmentTime(
+			[FromHeader(Name = "X-User-Id")] Guid userId,
+			Guid id,
+			[FromBody] AssignAppointmentTimeDto dto)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			await _appointmentService.AssignAppointmentTimeAsync(userId, id, dto);
+			return Ok(new { Message = "Appointment time assigned successfully." });
+		}
+
 		[HttpGet("patients/{patientId:guid}")]
 		public async Task<IActionResult> GetPatientDetails([FromHeader(Name = "X-User-Id")] Guid userId, Guid patientId)
 		{
@@ -199,6 +225,30 @@ namespace DoctorAppointmentSystem.Controllers
 
 			var result = await _appointmentService.GetPatientDetailsAsync(userId, patientId);
 			return Ok(result);
+		}
+
+		[HttpPost("propose-reschedule")]
+		public async Task<IActionResult> ProposeReschedule([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] ProposeRescheduleDto dto)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			await _appointmentService.ProposeRescheduleAsync(userId, dto);
+			return Ok(new { Message = "Reschedule proposed successfully." });
+		}
+
+		[HttpPost("respond-reschedule")]
+		public async Task<IActionResult> RespondToReschedule([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] RespondRescheduleDto dto)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			await _appointmentService.RespondToRescheduleAsync(userId, dto);
+			return Ok(new { Message = "Reschedule response processed successfully." });
 		}
 	}
 }

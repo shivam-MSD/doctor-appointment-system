@@ -12,6 +12,8 @@ import { NotificationService } from '../../../core/services/notification.service
 })
 export class DoctorRequestsComponent implements OnInit, OnDestroy {
   pendingRequests: Appointment[] = [];
+  dateFilter = '';
+  consultationFilter = '';
   isLoading = false;
   errorMessage = '';
   selectedClinicId = '';
@@ -21,7 +23,9 @@ export class DoctorRequestsComponent implements OnInit, OnDestroy {
   // Approve Modal States
   showApproveModal = false;
   selectedApproveId = '';
+  selectedApproveAppDate = '';
   approveComment = '';
+  approveTimeInput = '';
 
   // Reject Modal States
   showRejectModal = false;
@@ -76,22 +80,31 @@ export class DoctorRequestsComponent implements OnInit, OnDestroy {
   }
 
   // Approve Logic
-  openApproveModal(id: string): void {
+  openApproveModal(id: string, date: string): void {
     this.selectedApproveId = id;
+    this.selectedApproveAppDate = new Date(date).toISOString().split('T')[0];
     this.approveComment = '';
+    this.approveTimeInput = '';
     this.showApproveModal = true;
   }
 
   closeApproveModal(): void {
     this.showApproveModal = false;
     this.selectedApproveId = '';
+    this.selectedApproveAppDate = '';
     this.approveComment = '';
+    this.approveTimeInput = '';
   }
 
   confirmApprove(): void {
     if (!this.selectedApproveId) return;
 
-    this.appointmentService.approveAppointment(this.selectedApproveId, this.approveComment).subscribe({
+    let assignedTime: string | undefined = undefined;
+    if (this.approveTimeInput) {
+      assignedTime = `${this.selectedApproveAppDate}T${this.approveTimeInput}:00`;
+    }
+
+    this.appointmentService.approveAppointment(this.selectedApproveId, this.approveComment, assignedTime).subscribe({
       next: () => {
         this.toastService.showSuccess('Appointment has been approved and confirmed.');
         this.closeApproveModal();
@@ -223,10 +236,17 @@ export class DoctorRequestsComponent implements OnInit, OnDestroy {
   }
 
   getFilteredRequests(): Appointment[] {
-    if (!this.selectedClinicId) {
-      return this.pendingRequests;
+    let list = this.pendingRequests;
+    if (this.selectedClinicId) {
+      list = list.filter(app => app.clinicId === this.selectedClinicId);
     }
-    return this.pendingRequests.filter(req => req.clinicId === this.selectedClinicId);
+    if (this.dateFilter) {
+      list = list.filter(app => app.appointmentDate.startsWith(this.dateFilter));
+    }
+    if (this.consultationFilter) {
+      list = list.filter(app => app.consultationType === this.consultationFilter);
+    }
+    return list;
   }
 
   ngOnDestroy(): void {

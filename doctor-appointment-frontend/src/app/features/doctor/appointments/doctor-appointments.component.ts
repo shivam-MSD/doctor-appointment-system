@@ -17,8 +17,13 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
   // Filters
   selectedClinicId = '';
-  statusFilter = '';
   searchQuery = '';
+  statusFilter = '';
+  consultationFilter = '';
+  dateFilter = '';
+  
+  // Tabs: 'upcoming', 'past', 'cancelled', 'all'
+  activeTab: 'upcoming' | 'past' | 'cancelled' | 'all' = 'upcoming';
 
   // Pagination
   page = 1;
@@ -33,6 +38,20 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   showPatientDetailsModal = false;
   selectedPatientDetails: any = null;
   isDetailsLoading = false;
+
+  // Reschedule Propose Modal State
+  showRescheduleModal = false;
+  selectedRescheduleAppId = '';
+  rescheduleDate = '';
+  rescheduleTime = '';
+  rescheduleReason = '';
+
+  // Assign Time Modal State
+  showAssignTimeModal = false;
+  selectedAssignTimeAppId = '';
+  selectedAssignTimeAppDate = '';
+  assignTimeInput = '';
+  assignTimeComment = '';
 
   constructor(
     private appointmentService: AppointmentService,
@@ -90,10 +109,63 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     if (this.selectedClinicId) {
       list = list.filter(app => app.clinicId === this.selectedClinicId);
     }
-    if (!this.statusFilter) {
-      list = list.filter(app => app.status !== 'Pending');
+    if (this.statusFilter) {
+      list = list.filter(app => app.status === this.statusFilter);
     }
+    if (this.consultationFilter) {
+      list = list.filter(app => app.consultationType === this.consultationFilter);
+    }
+    if (this.dateFilter) {
+      list = list.filter(app => app.appointmentDate.startsWith(this.dateFilter));
+    }
+
+    // Apply Tab Filtering
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (this.activeTab === 'upcoming') {
+      list = list.filter(app => {
+        if (app.status === 'Pending' || app.status === 'Confirmed' || app.status === 'RescheduleProposed') {
+          const appDate = new Date(app.appointmentDate);
+          appDate.setHours(0, 0, 0, 0);
+          return appDate >= today;
+        }
+        return false;
+      });
+    } else if (this.activeTab === 'past') {
+      list = list.filter(app => {
+        if (app.status === 'Completed') return true;
+        if (app.status === 'Pending' || app.status === 'Confirmed') {
+          const appDate = new Date(app.appointmentDate);
+          appDate.setHours(0, 0, 0, 0);
+          return appDate < today;
+        }
+        return false;
+      });
+    } else if (this.activeTab === 'cancelled') {
+      list = list.filter(app => app.status === 'Cancelled' || app.status === 'Rejected');
+    }
+    // 'all' tab does no extra filtering
+
     return list;
+  }
+
+  setTab(tab: string): void {
+    this.activeTab = tab as any;
+    this.page = 1;
+    this.statusFilter = ''; // Reset status filter when switching tabs
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'Confirmed': return '#10b981';
+      case 'Pending': return '#f59e0b';
+      case 'Cancelled': return '#ef4444';
+      case 'Rejected': return '#dc2626';
+      case 'RescheduleProposed': return '#ec4899';
+      case 'Completed': return '#8b5cf6';
+      default: return '#8b5cf6';
+    }
   }
 
   selectClinic(clinicId: string): void {
@@ -107,9 +179,12 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   }
 
   resetFilters(): void {
-    this.selectedClinicId = '';
-    this.statusFilter = '';
     this.searchQuery = '';
+    this.statusFilter = '';
+    this.consultationFilter = '';
+    this.dateFilter = '';
+    this.activeTab = 'all';
+    this.selectedClinicId = '';
     this.page = 1;
     this.loadAppointments();
   }
@@ -141,6 +216,95 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
       case 'rejected': return 'badge badge-cancelled';
       default: return 'badge';
     }
+  }
+
+  cancelAppointment(appId: string): void {
+    if (confirm('Are you sure you want to cancel this appointment?')) {
+      const reason = prompt('Please enter a reason for cancellation (optional):') || 'Cancelled by doctor/admin.';
+      this.appointmentService.doctorCancelAppointment(appId, reason).subscribe({
+        next: () => {
+          this.toastService.showSuccess('Appointment cancelled successfully.');
+          this.loadAppointments();
+        },
+        error: (err: any) => {
+          this.toastService.showError(err, 'Failed to cancel appointment.');
+        }
+      });
+    }
+  }
+
+  // Reschedule Propose Methods
+  openRescheduleModal(appId: string): void {
+    this.selectedRescheduleAppId = appId;
+    this.rescheduleDate = '';
+    this.rescheduleTime = '';
+    this.rescheduleReason = '';
+    this.showRescheduleModal = true;
+  }
+
+  closeRescheduleModal(): void {
+    this.showRescheduleModal = false;
+    this.selectedRescheduleAppId = '';
+  }
+
+  submitReschedulePropose(): void {
+    if (!this.rescheduleDate || !this.rescheduleReason) {
+      this.toastService.showError('Date and Reason are required.');
+      return;
+    }
+
+    const payload = {
+      appointmentId: this.selectedRescheduleAppId,
+      proposedDate: new Date(this.rescheduleDate).toISOString(),
+      proposedTime: this.rescheduleTime ? new Date(`${this.rescheduleDate}T${this.rescheduleTime}`).toISOString() : null,
+      reason: this.rescheduleReason
+    };
+
+    this.appointmentService.proposeReschedule(payload).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Reschedule proposed successfully.');
+        this.closeRescheduleModal();
+        this.loadAppointments();
+      },
+      error: (err: any) => {
+        this.toastService.showError(err, 'Failed to propose reschedule.');
+      }
+    });
+  }
+
+  // Assign Time Methods
+  openAssignTimeModal(appId: string, appDate: string): void {
+    this.selectedAssignTimeAppId = appId;
+    this.selectedAssignTimeAppDate = new Date(appDate).toISOString().split('T')[0]; // Store as YYYY-MM-DD
+    this.assignTimeInput = '';
+    this.assignTimeComment = '';
+    this.showAssignTimeModal = true;
+  }
+
+  closeAssignTimeModal(): void {
+    this.showAssignTimeModal = false;
+    this.selectedAssignTimeAppId = '';
+    this.selectedAssignTimeAppDate = '';
+  }
+
+  submitAssignTime(): void {
+    if (!this.assignTimeInput) {
+      this.toastService.showError('Please select a time.');
+      return;
+    }
+
+    const formattedTime = `${this.selectedAssignTimeAppDate}T${this.assignTimeInput}:00`;
+    
+    this.appointmentService.assignAppointmentTime(this.selectedAssignTimeAppId, formattedTime, this.assignTimeComment).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Time assigned successfully.');
+        this.closeAssignTimeModal();
+        this.loadAppointments();
+      },
+      error: (err: any) => {
+        this.toastService.showError(err, 'Failed to assign time.');
+      }
+    });
   }
 
   openPatientDetailsModal(patientId: string): void {
@@ -184,16 +348,6 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     }
   }
 
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'Confirmed': return '#10b981';
-      case 'Pending': return '#f59e0b';
-      case 'Cancelled': return '#ef4444';
-      case 'Rejected': return '#dc2626';
-      case 'Completed': return '#8b5cf6';
-      default: return '#6b7280';
-    }
-  }
 
   getStatusTitle(status: string): string {
     switch (status) {

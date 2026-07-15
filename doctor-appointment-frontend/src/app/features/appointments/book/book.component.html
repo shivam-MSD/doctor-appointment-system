@@ -148,39 +148,45 @@
         ⚠️ {{ dateValidationError }}
       </div>
 
-      <!-- Time Interval Selection via Grid -->
-      <div class="form-group" style="margin-bottom: 20px;" *ngIf="appointmentDate && generatedSlots.length > 0 && !dateValidationError">
-        <label class="form-label">Available Time Slots * (Select one)</label>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 5px;">
-          <div *ngFor="let slot of generatedSlots"
-               (click)="selectSlot(slot)"
-               style="padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center; cursor: pointer; user-select: none; transition: all 0.2s;"
-               [style.background]="slot.isBooked ? 'rgba(255,255,255,0.02)' : (selectedSlot === slot ? 'rgba(6,182,212,0.15)' : 'rgba(255,255,255,0.01)')"
-               [style.color]="slot.isBooked ? 'var(--text-muted)' : (selectedSlot === slot ? 'var(--accent-cyan)' : 'var(--text-primary)')"
-               [style.border-color]="slot.isBooked ? 'rgba(255,255,255,0.05)' : (selectedSlot === slot ? 'var(--accent-cyan)' : 'var(--border-color)')"
-               [style.pointer-events]="slot.isBooked ? 'none' : 'auto'"
-               [style.text-decoration]="slot.isBooked ? 'line-through' : 'none'">
-            <div style="font-weight: 600; font-size: 0.85rem;">{{ slot.label }}</div>
-            <small style="font-size: 0.7rem; font-weight: 500; display: block; margin-top: 4px;" 
-                   [style.color]="slot.isBooked ? '#ef4444' : (selectedSlot === slot ? 'var(--accent-cyan)' : '#10b981')">
-              {{ slot.isBooked ? '⌛ Booked' : '🟢 Available' }}
-            </small>
+      <!-- Day Availability Status -->
+      <div class="form-group" style="margin-bottom: 20px;" *ngIf="appointmentDate && !dateValidationError && dayAvailability && !isLoadingAvailability">
+        <label class="form-label">Availability Status</label>
+        
+        <div style="padding: 16px; border-radius: 8px; border: 1.5px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 10px;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">
+              {{ dayAvailability.isFull ? '🔴 Fully Booked' : '🟢 Appointments Available' }}
+            </span>
+            <span *ngIf="dayAvailability.maxCapacity" class="badge" [style.background]="dayAvailability.isFull ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'" [style.color]="dayAvailability.isFull ? '#ef4444' : '#10b981'" style="padding: 4px 8px;">
+              {{ dayAvailability.bookedCount }} / {{ dayAvailability.maxCapacity }} Booked
+            </span>
+          </div>
+
+          <div *ngIf="dayAvailability.remainingCapacity !== null" style="font-size: 0.85rem; color: var(--text-secondary);">
+            <strong [style.color]="dayAvailability.remainingCapacity <= 3 ? '#f59e0b' : 'var(--accent-cyan)'">
+              {{ dayAvailability.remainingCapacity }} slots remaining
+            </strong>
+          </div>
+          
+          <div *ngIf="!dayAvailability.maxCapacity" style="font-size: 0.85rem; color: var(--text-secondary);">
+            <strong>Unlimited appointments</strong> allowed for this day.
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px;">
+            <span style="font-style: italic;">Note: Your exact consultation time will be assigned by the clinic based on your queue number.</span>
           </div>
         </div>
-        
-        <!-- Hidden inputs to satisfy form submit requirements -->
-        <input type="hidden" [(ngModel)]="startTime" name="startTime" required>
-        <input type="hidden" [(ngModel)]="endTime" name="endTime" required>
       </div>
 
-      <!-- No Working Hours Warning -->
-      <div *ngIf="appointmentDate && generatedSlots.length === 0 && !dateValidationError" style="background: rgba(245, 158, 11, 0.05); border: 1.5px solid rgba(245, 158, 11, 0.25); padding: 12px; border-radius: 6px; font-size: 0.85rem; color: #f59e0b; margin-top: 10px; margin-bottom: 15px;">
-        ⚠️ No working hours/timings are configured for this clinic branch. Please select another location.
+      <div *ngIf="isLoadingAvailability" style="padding: 20px; text-align: center; color: var(--accent-cyan);">
+        <span class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(6, 182, 212, 0.3); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle;"></span>
+        <span style="font-size: 0.9rem; font-weight: 600;">Checking availability...</span>
       </div>
 
       <!-- Select Date Placeholder -->
       <div *ngIf="!appointmentDate" style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 10px; margin-bottom: 15px; font-style: italic; display: flex; align-items: center; gap: 6px;">
-        <span>📅</span> Select a date to view available booking slots.
+        <span>📅</span> Select a date to view availability.
       </div>
 
       <!-- Consultation Mode -->

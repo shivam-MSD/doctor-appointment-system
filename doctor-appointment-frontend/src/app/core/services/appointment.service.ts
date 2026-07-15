@@ -16,8 +16,12 @@ export class AppointmentService {
     return this.http.post<any>(`/api/appointments/cancel/${id}`, {});
   }
 
-  getPatientDashboard(status?: string, page = 1, size = 10): Observable<PagedResult<Appointment>> {
-    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+  doctorCancelAppointment(id: string, reason: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/doctor-cancel/${id}`, { reason });
+  }
+
+  getPatientDashboard(status?: string, isHistory = false, page = 1, size = 10): Observable<PagedResult<Appointment>> {
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString()).set('isHistory', isHistory.toString());
     if (status) {
       params = params.set('status', status);
     }
@@ -80,19 +84,16 @@ export class AppointmentService {
     return this.http.get<any[]>(`/api/appointments/doctors/${doctorId}/clinics`);
   }
 
-  getBookedSlots(doctorId: string, clinicId: string, date: string, patientId?: string): Observable<any[]> {
-    let params = new HttpParams()
-      .set('doctorId', doctorId)
-      .set('clinicId', clinicId)
-      .set('date', date);
-    if (patientId) {
-      params = params.set('patientId', patientId);
-    }
-    return this.http.get<any[]>('/api/appointments/booked-slots', { params });
+  getDayAvailability(clinicId: string, date: string): Observable<any> {
+    return this.http.get<any>(`/api/appointments/day-availability?clinicId=${clinicId}&date=${date}`);
   }
 
-  approveAppointment(id: string, comment?: string): Observable<any> {
-    return this.http.post<any>(`/api/appointments/approve/${id}`, { comment });
+  assignAppointmentTime(id: string, doctorAssignedTime: string, comment?: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/assign-time/${id}`, { doctorAssignedTime, comment });
+  }
+
+  approveAppointment(id: string, comment?: string, doctorAssignedTime?: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/approve/${id}`, { comment, doctorAssignedTime });
   }
 
   rejectAppointment(id: string, reason: string): Observable<any> {
@@ -109,5 +110,13 @@ export class AppointmentService {
 
   getPatientDetails(patientId: string): Observable<any> {
     return this.http.get<any>(`/api/appointments/patients/${patientId}`);
+  }
+
+  proposeReschedule(payload: any): Observable<any> {
+    return this.http.post<any>(`/api/appointments/propose-reschedule`, payload);
+  }
+
+  respondReschedule(payload: any): Observable<any> {
+    return this.http.post<any>(`/api/appointments/respond-reschedule`, payload);
   }
 }

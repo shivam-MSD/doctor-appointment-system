@@ -49,6 +49,9 @@ namespace DoctorAppointmentSystem.Domain.Entities
 
 		public Guid? ParentClinicId { get; set; }
 
+		/// <summary>Maximum number of appointments allowed per day. Null = unlimited.</summary>
+		public int? MaxAppointmentsPerDay { get; set; }
+
 		[Required]
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 	}

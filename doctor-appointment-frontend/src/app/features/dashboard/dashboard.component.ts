@@ -19,9 +19,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   appointments: Appointment[] = [];
   totalCount = 0;
   statusFilter = '';
+  dateFilter = '';
+  consultationFilter = '';
   firstName = '';
   errorMessage = '';
   historyMode = false;
+  patientPage = 1;
   private signalrSub?: Subscription;
 
   // Doctor completeness state
@@ -42,6 +45,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedAppIdForNoShow = '';
   showCancelAppointmentConfirm = false;
   selectedAppIdForCancel = '';
+
+  // Assign Time Modal States
+  showAssignTimeModal = false;
+  selectedAppIdForAssignTime = '';
+  assignedTimeInput = '';
 
   // Patient Details Modal States
   showPatientDetailsModal = false;
@@ -83,7 +91,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Weekday definitions
   weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   selectedDaysRegister: string[] = [];
-  selectedDaysEdit: string[] = [];
   selectedDaysAdmin: string[] = [];
 
   // Split shift variables for Clinic Admin
@@ -99,33 +106,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   adminBookingCalDays: any[] = [];
   adminBookingPickStart = '';
   adminBookingPickEnd = '';
-
-  editBookingCalMonth = new Date();
-  editBookingCalDays: any[] = [];
-  editBookingPickStart = '';
-  editBookingPickEnd = '';
-
-  // Edit clinic states
-  showEditClinicModal = false;
-  selectedClinicIdForEdit = '';
-  clinicEditForm = {
-    clinicName: '',
-    clinicType: 'Clinic',
-    country: 'India',
-    state: '',
-    city: '',
-    area: '',
-    pincode: '',
-    addressline1: '',
-    addressline2: '',
-    openDays: '',
-    startTime: '',
-    endTime: '',
-    isAvailable: true,
-    unavailabilityReason: '',
-    bookingWindowStartDate: '',
-    bookingWindowEndDate: ''
-  };
 
   clinicOnlyForm = {
     clinicName: '',
@@ -167,7 +147,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     bookingWindowStartDate: '',
     bookingWindowEndDate: '',
     supportInPerson: true,
-    supportVideo: false
+    supportVideo: false,
+    maxAppointmentsPerDay: null as number | null
   };
 
   adminForm = {
@@ -218,7 +199,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadDashboardData(): void {
     if (this.role === 'Patient') {
-      this.appointmentService.getPatientDashboard(this.statusFilter, 1, 10).subscribe({
+      this.appointmentService.getPatientDashboard(this.statusFilter, this.historyMode, 1, 10).subscribe({
         next: (res) => {
           this.appointments = res.items;
           this.totalCount = res.totalCount;
@@ -295,6 +276,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  get filteredAppointments(): Appointment[] {
+    let list = this.appointments;
+    
+    // Clinic filtering for doctors
+    if (this.role === 'Doctor' && this.selectedClinicIds.length > 0) {
+      list = list.filter(app => app.clinicId && this.selectedClinicIds.includes(app.clinicId));
+    }
+
+    // Date filtering
+    if (this.dateFilter) {
+      list = list.filter(app => app.appointmentDate.startsWith(this.dateFilter));
+    }
+    
+    // Consultation filtering
+    if (this.consultationFilter) {
+      list = list.filter(app => app.consultationType === this.consultationFilter);
+    }
+    return list;
   }
 
   loadSuperAdminData(): void {
@@ -451,8 +452,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.doctorClinics.filter(c => c.isVerified && !c.hasAdmin);
   }
 
-  onFilterChange(status: string): void {
-    this.statusFilter = status;
+  onFilterChange(status?: string): void {
+    if (status !== undefined) {
+      this.statusFilter = status;
+    }
+    this.patientPage = 1;
+    this.doctorPage = 1;
+    // We only need to reload data if the status filter changes, because date/consultation are filtered locally on the fetched page.
     this.loadDashboardData();
   }
 
@@ -500,31 +506,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  getFilteredAppointments(): Appointment[] {
-    if (!this.appointments) return [];
-    if (this.role === 'Patient') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
 
-      return this.appointments.filter(app => {
-        const appDate = new Date(app.appointmentDate);
-        appDate.setHours(0, 0, 0, 0);
-
-        const isPastDate = appDate < today;
-        const isCompletedOrCancelledOrRejected = app.status === 'Completed' || app.status === 'Cancelled' || app.status === 'Rejected';
-
-        if (this.historyMode) {
-          return isCompletedOrCancelledOrRejected || isPastDate;
-        } else {
-          return !isCompletedOrCancelledOrRejected && !isPastDate;
-        }
-      });
-    }
-    if (this.role !== 'Doctor' || this.selectedClinicIds.length === 0) {
-      return this.appointments;
-    }
-    return this.appointments.filter(app => app.clinicId && this.selectedClinicIds.includes(app.clinicId));
-  }
 
   // Reject clinic methods
   openRejectClinicModal(clinicId: string): void {
@@ -557,59 +539,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Edit clinic methods
-  openEditClinicModal(clinic: any): void {
-    this.selectedClinicIdForEdit = clinic.clinicId;
-    this.selectedDaysEdit = clinic.openDays ? clinic.openDays.split(',').map((d: string) => d.trim()) : [];
-    this.clinicEditForm = {
-      clinicName: clinic.clinicName,
-      clinicType: clinic.clinicType,
-      country: 'India',
-      state: clinic.state,
-      city: clinic.city,
-      area: clinic.area || '',
-      pincode: clinic.pincode || '',
-      addressline1: clinic.addressline1 || '',
-      addressline2: clinic.addressline2 || '',
-      openDays: clinic.openDays || '',
-      startTime: clinic.startTime || '',
-      endTime: clinic.endTime || '',
-      isAvailable: clinic.isAvailable !== false,
-      unavailabilityReason: clinic.unavailabilityReason || '',
-      bookingWindowStartDate: clinic.bookingWindowStartDate ? clinic.bookingWindowStartDate.substring(0, 10) : '',
-      bookingWindowEndDate: clinic.bookingWindowEndDate ? clinic.bookingWindowEndDate.substring(0, 10) : ''
-    };
-    this.editBookingPickStart = this.clinicEditForm.bookingWindowStartDate;
-    this.editBookingPickEnd = this.clinicEditForm.bookingWindowEndDate;
-    this.editBookingCalMonth = this.editBookingPickStart ? new Date(this.editBookingPickStart) : new Date();
-    this.generateEditBookingCalendar();
-    this.showEditClinicModal = true;
-  }
-
-  closeEditClinicModal(): void {
-    this.showEditClinicModal = false;
-    this.selectedClinicIdForEdit = '';
-    this.selectedDaysEdit = [];
-  }
-
-  submitClinicEdit(): void {
-    if (!this.selectedClinicIdForEdit) return;
-
-    if (!this.validateClinicForm(this.clinicEditForm)) {
-      return;
-    }
-
-    this.adminService.updateClinic(this.selectedClinicIdForEdit, this.clinicEditForm).subscribe({
-      next: () => {
-        this.toastService.showSuccess('Clinic details updated. Awaiting Super Admin verification.');
-        this.closeEditClinicModal();
-        this.loadDoctorClinics();
-      },
-      error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'Failed to update clinic details.');
-      }
-    });
-  }
+  // Edit clinic methods (Admin only now)
 
   toggleDayRegister(day: string): void {
     const index = this.selectedDaysRegister.indexOf(day);
@@ -623,26 +553,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   isDaySelectedRegister(day: string): boolean {
     return this.selectedDaysRegister.includes(day);
-  }
-
-  toggleDayEdit(day: string): void {
-    const index = this.selectedDaysEdit.indexOf(day);
-    if (index > -1) {
-      this.selectedDaysEdit.splice(index, 1);
-    } else {
-      this.selectedDaysEdit.push(day);
-    }
-    this.clinicEditForm.openDays = this.selectedDaysEdit.join(',');
-    // Regenerate booking calendar to reflect updated open days
-    this.editBookingPickStart = '';
-    this.editBookingPickEnd = '';
-    this.clinicEditForm.bookingWindowStartDate = '';
-    this.clinicEditForm.bookingWindowEndDate = '';
-    this.generateEditBookingCalendar();
-  }
-
-  isDaySelectedEdit(day: string): boolean {
-    return this.selectedDaysEdit.includes(day);
   }
 
   // Clinic Admin Helpers
@@ -698,7 +608,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       bookingWindowStartDate: this.adminClinic.bookingWindowStartDate ? this.adminClinic.bookingWindowStartDate.substring(0, 10) : '',
       bookingWindowEndDate: this.adminClinic.bookingWindowEndDate ? this.adminClinic.bookingWindowEndDate.substring(0, 10) : '',
       supportInPerson: !this.adminClinic.supportedModes || this.adminClinic.supportedModes.includes('InPerson'),
-      supportVideo: this.adminClinic.supportedModes ? this.adminClinic.supportedModes.includes('VideoConsultation') : false
+      supportVideo: this.adminClinic.supportedModes ? this.adminClinic.supportedModes.includes('VideoConsultation') : false,
+      maxAppointmentsPerDay: this.adminClinic.maxAppointmentsPerDay ?? null
     };
     this.adminBookingPickStart = this.adminClinicForm.bookingWindowStartDate;
     this.adminBookingPickEnd = this.adminClinicForm.bookingWindowEndDate;
@@ -797,59 +708,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.adminBookingCalMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
   }
 
-  // ─── Booking Window Calendar: Doctor Edit ─────────────────────────────────
-
-  generateEditBookingCalendar(): void {
-    this.editBookingCalDays = this.generateBookingCalendarDays(
-      this.editBookingCalMonth,
-      this.selectedDaysEdit,
-      this.editBookingPickStart,
-      this.editBookingPickEnd
-    );
-  }
-
-  editBookingCalPrev(): void {
-    const m = this.editBookingCalMonth.getMonth();
-    this.editBookingCalMonth = new Date(this.editBookingCalMonth.getFullYear(), m - 1, 1);
-    this.generateEditBookingCalendar();
-  }
-
-  editBookingCalNext(): void {
-    const m = this.editBookingCalMonth.getMonth();
-    this.editBookingCalMonth = new Date(this.editBookingCalMonth.getFullYear(), m + 1, 1);
-    this.generateEditBookingCalendar();
-  }
-
-  onEditBookingDayClick(day: any): void {
-    if (!day.isOpenDay || day.dayNumber === null) return;
-    const clicked = day.dateString as string;
-    if (!this.editBookingPickStart || (this.editBookingPickStart && this.editBookingPickEnd)) {
-      this.editBookingPickStart = clicked;
-      this.editBookingPickEnd = '';
-    } else {
-      if (clicked < this.editBookingPickStart) {
-        this.editBookingPickEnd = this.editBookingPickStart;
-        this.editBookingPickStart = clicked;
-      } else {
-        this.editBookingPickEnd = clicked;
-      }
-    }
-    this.clinicEditForm.bookingWindowStartDate = this.editBookingPickStart;
-    this.clinicEditForm.bookingWindowEndDate = this.editBookingPickEnd;
-    this.generateEditBookingCalendar();
-  }
-
-  clearEditBookingWindow(): void {
-    this.editBookingPickStart = '';
-    this.editBookingPickEnd = '';
-    this.clinicEditForm.bookingWindowStartDate = '';
-    this.clinicEditForm.bookingWindowEndDate = '';
-    this.generateEditBookingCalendar();
-  }
-
-  getEditBookingCalMonthName(): string {
-    return this.editBookingCalMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-  }
 
   // ─── Shared calendar day-grid generator ───────────────────────────────────
 
@@ -1038,12 +896,53 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.appointmentService.movePendingAppointment(this.selectedAppIdForNoShow, comment).subscribe({
       next: () => {
-        this.toastService.showSuccess('Appointment has been set to Pending (No-Show).');
+        this.toastService.showSuccess('Appointment has been set to Pending (Absent).');
         this.closeNoShowConfirm();
         this.loadDashboardData();
       },
       error: (err) => {
         this.toastService.showError(err, 'Failed to mark appointment as pending.');
+      }
+    });
+  }
+
+  selectedAppDateForAssignTime = '';
+
+  openAssignTimeModal(appId: string, date: string): void {
+    this.selectedAppIdForAssignTime = appId;
+    this.selectedAppDateForAssignTime = new Date(date).toISOString().split('T')[0];
+    this.assignedTimeInput = '';
+    this.showAssignTimeModal = true;
+  }
+
+  closeAssignTimeModal(): void {
+    this.selectedAppIdForAssignTime = '';
+    this.selectedAppDateForAssignTime = '';
+    this.showAssignTimeModal = false;
+  }
+
+  submitAssignTime(): void {
+    if (!this.selectedAppIdForAssignTime || !this.assignedTimeInput) {
+      this.toastService.showError('Please select a valid time.');
+      return;
+    }
+
+    const comment = this.commentInputs[this.selectedAppIdForAssignTime] || '';
+    
+    // Combine the date and time strings without converting to UTC
+    let formattedTime = `${this.selectedAppDateForAssignTime}T${this.assignedTimeInput}`;
+    if (this.assignedTimeInput.length === 5) { // HH:mm
+      formattedTime += ':00';
+    }
+
+    this.appointmentService.assignAppointmentTime(this.selectedAppIdForAssignTime, formattedTime, comment).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Time assigned and appointment confirmed.');
+        this.closeAssignTimeModal();
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to assign time.');
       }
     });
   }

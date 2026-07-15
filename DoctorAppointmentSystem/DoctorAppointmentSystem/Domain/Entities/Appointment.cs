@@ -20,11 +20,17 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		[Required]
 		public DateTime AppointmentDate { get; set; }
 
-		[Required]
-		public DateTime StartTime { get; set; }
+		// Time fields are now optional — no longer required from patient at booking time.
+		// Doctor assigns DoctorAssignedTime after reviewing the patient queue.
+		public DateTime? StartTime { get; set; }
 
-		[Required]
-		public DateTime EndTime { get; set; }
+		public DateTime? EndTime { get; set; }
+
+		/// <summary>Sequential queue position for this clinic on the appointment date. e.g. Patient is #3 for Monday.</summary>
+		public int QueueNumber { get; set; } = 0;
+
+		/// <summary>Time assigned by doctor/admin after the appointment is booked. Shown to patient on dashboard.</summary>
+		public DateTime? DoctorAssignedTime { get; set; }
 
 		[Required]
 		public EAppointmentStatus EAppointmentStatus { get; set; }
@@ -46,6 +52,13 @@ namespace DoctorAppointmentSystem.Domain.Entities
 
 		[MaxLength(500)]
 		public string? RejectionReason { get; set; }
+
+		public DateTime? RescheduleProposedDate { get; set; }
+
+		public DateTime? RescheduleProposedTime { get; set; }
+
+		[MaxLength(500)]
+		public string? RescheduleReason { get; set; }
 	}
 
 	public enum EConsultationType
@@ -61,6 +74,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		Cancelled,
 		Completed,
 		Rejected,
-		Expired
+		Expired,
+		RescheduleProposed
 	}
 }

@@ -58,7 +58,7 @@ We will confirm we have these endpoints working:
 - **Checked Row Actions**:
   - Add text fields directly in the row to input **Comments** and **Clinical Reports**.
   - Provide a **✓ Complete** button (shows warning popup before finishing).
-  - Provide a **⚠️ No-Show (Pending)** button (shows warning popup before moving to no-show list).
+  - Provide a **⚠️  (Pending)** button (shows warning popup before moving to no-show list).
 - Add a compact clinics/centers overview card below the queue.
 
 #### [MODIFY] [patients.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patients/patients.component.ts) & [patients.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patients/patients.component.html)
