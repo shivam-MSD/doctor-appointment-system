@@ -8,11 +8,20 @@ using System.Text.Json;
 
 namespace DoctorAppointmentSystem.Application.Services
 {
+	using System.Collections.Concurrent;
+
 	public class AppointmentService : IAppointmentService
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly INotificationService _notificationService;
 		private readonly IDistributedCache _distributedCache;
+		private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
+
+		private static SemaphoreSlim GetLock(Guid? clinicId, DateTime date)
+		{
+			string key = $"{(clinicId.HasValue ? clinicId.Value.ToString() : "Direct")}_{date:yyyy-MM-dd}";
+			return _bookingLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+		}
 
 		public AppointmentService(
 			ApplicationDbContext dbContext,
@@ -77,75 +86,87 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new BadRequestException($"Appointments at this branch are only open until {clinic.BookingWindowEndDate.Value:yyyy-MM-dd}. Please choose an earlier date.");
 			}
 
-			// 6. Daily limit check — count active (Pending + Confirmed) appointments for this clinic on this date
-			if (clinic != null && clinic.MaxAppointmentsPerDay.HasValue)
+			// Get a specific lock for this clinic and date
+			var localLock = GetLock(clinic?.ClinicId, dto.AppointmentDate.Date);
+
+			// --- START CRITICAL SECTION ---
+			await localLock.WaitAsync();
+			try
 			{
-				var bookedCount = await _dbContext.Appointments
-					.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
-					.Where(app => app.AppointmentDate == dto.AppointmentDate.Date)
+				// 6. Daily limit check — count active (Pending + Confirmed) appointments for this clinic on this date
+				if (clinic != null && clinic.MaxAppointmentsPerDay.HasValue)
+				{
+					var bookedCount = await _dbContext.Appointments
+						.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
+						.Where(app => app.AppointmentDate == dto.AppointmentDate.Date)
 					.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed)
 					.CountAsync();
 
-				if (bookedCount >= clinic.MaxAppointmentsPerDay.Value)
-				{
-					throw new ConflictException($"This clinic is fully booked for {dto.AppointmentDate:yyyy-MM-dd}. Maximum {clinic.MaxAppointmentsPerDay.Value} appointments per day. Please choose another date.");
+					if (bookedCount >= clinic.MaxAppointmentsPerDay.Value)
+					{
+						throw new ConflictException($"This clinic is fully booked for {dto.AppointmentDate:yyyy-MM-dd}. Maximum {clinic.MaxAppointmentsPerDay.Value} appointments per day. Please choose another date.");
+					}
 				}
-			}
 
-			// 7. Assign queue number — next sequential position for this clinic on this date
-			int queueNumber = 1;
-			if (clinic != null)
-			{
-				var maxQueue = await _dbContext.Appointments
-					.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
-					.Where(app => app.AppointmentDate == dto.AppointmentDate.Date)
-					.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed)
-					.MaxAsync(app => (int?)app.QueueNumber) ?? 0;
-				queueNumber = maxQueue + 1;
-			}
-
-			// 8. Create the appointment with queue number
-			var appointment = new Appointment
-			{
-				AppointmentId = Guid.NewGuid(),
-				AppointmentDate = dto.AppointmentDate.Date,
-				QueueNumber = queueNumber,
-				Reason = dto.Reason,
-				EConsultationType = consultationType,
-				EAppointmentStatus = EAppointmentStatus.Pending,
-				CreatedDate = DateTime.UtcNow,
-				Clinic = clinic
-			};
-
-			_dbContext.Appointments.Add(appointment);
-
-			// Map shadow properties
-			_dbContext.Entry(appointment).Property("PatientId").CurrentValue = dto.PatientId;
-			_dbContext.Entry(appointment).Property("DoctorId").CurrentValue = dto.DoctorId;
-
-			await _dbContext.SaveChangesAsync();
-
-			// Trigger notifications
-			var dateStr = appointment.AppointmentDate.ToString("yyyy-MM-dd");
-			var msg = $"New appointment #{appointment.QueueNumber} booked by {patient.FirstName} {patient.LastName} for {dateStr}.";
-
-			// Notify Doctor
-			await _notificationService.CreateNotificationAsync(doctor.User.UserId, msg);
-
-			// Notify Clinic Admin
-			if (clinic != null)
-			{
-				var admin = await _dbContext.Admins
-					.Include(a => a.User)
-					.FirstOrDefaultAsync(a => a.Clinic.ClinicId == clinic.ClinicId);
-				if (admin != null)
+				// 7. Assign queue number — next sequential position for this clinic on this date
+				int queueNumber = 1;
+				if (clinic != null)
 				{
-					await _notificationService.CreateNotificationAsync(admin.User.UserId, msg);
+					var maxQueue = await _dbContext.Appointments
+						.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
+						.Where(app => app.AppointmentDate == dto.AppointmentDate.Date)
+						.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed)
+						.MaxAsync(app => (int?)app.QueueNumber) ?? 0;
+					queueNumber = maxQueue + 1;
 				}
-			}
-			await _notificationService.SendRefreshSignalAsync("Appointments");
 
-			return MapToDto(appointment, patient, doctor);
+				// 8. Create the appointment with queue number
+				var appointment = new Appointment
+				{
+					AppointmentId = Guid.NewGuid(),
+					AppointmentDate = dto.AppointmentDate.Date,
+					QueueNumber = queueNumber,
+					Reason = dto.Reason,
+					EConsultationType = consultationType,
+					EAppointmentStatus = EAppointmentStatus.Pending,
+					CreatedDate = DateTime.UtcNow,
+					Clinic = clinic
+				};
+
+				_dbContext.Appointments.Add(appointment);
+
+				// Map shadow properties
+				_dbContext.Entry(appointment).Property("PatientId").CurrentValue = dto.PatientId;
+				_dbContext.Entry(appointment).Property("DoctorId").CurrentValue = dto.DoctorId;
+
+				await _dbContext.SaveChangesAsync();
+
+				// Trigger notifications
+				var dateStr = appointment.AppointmentDate.ToString("yyyy-MM-dd");
+				var msg = $"New appointment #{appointment.QueueNumber} booked by {patient.FirstName} {patient.LastName} for {dateStr}.";
+
+				// Notify Doctor
+				await _notificationService.CreateNotificationAsync(doctor.User.UserId, msg);
+
+				// Notify Clinic Admin
+				if (clinic != null)
+				{
+					var admin = await _dbContext.Admins
+						.Include(a => a.User)
+						.FirstOrDefaultAsync(a => a.Clinic.ClinicId == clinic.ClinicId);
+					if (admin != null)
+					{
+						await _notificationService.CreateNotificationAsync(admin.User.UserId, msg);
+					}
+				}
+				await _notificationService.SendRefreshSignalAsync("Appointments");
+
+				return MapToDto(appointment, patient, doctor);
+			}
+			finally
+			{
+				localLock.Release();
+			}
 		}
 
 		public async Task CancelAppointmentAsync(Guid userId, Guid appointmentId)
@@ -1072,6 +1093,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Doctor)
 					.ThenInclude(d => d.User)
+				.Include(a => a.Clinic)
 				.FirstOrDefaultAsync(a => a.AppointmentId == dto.AppointmentId);
 
 			if (appointment == null)
@@ -1079,6 +1101,36 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			if (isDoctor && appointment.Doctor.User.UserId != userId)
 				throw new UnauthorizedAccessException("You can only reschedule your own appointments.");
+
+			var clinic = appointment.Clinic;
+
+			// Validation: Booking Window
+			if (clinic != null && clinic.BookingWindowEndDate.HasValue && dto.ProposedDate.Date > clinic.BookingWindowEndDate.Value.Date)
+			{
+				throw new BadRequestException($"Appointments at this branch are only open until {clinic.BookingWindowEndDate.Value:yyyy-MM-dd}. Please propose an earlier date.");
+			}
+
+			// Get a specific lock for this clinic and proposed date
+			var localLock = GetLock(clinic?.ClinicId, dto.ProposedDate.Date);
+
+			// --- START CRITICAL SECTION ---
+			await localLock.WaitAsync();
+			try
+			{
+				// Validation: Daily Max Limits
+				if (clinic != null && clinic.MaxAppointmentsPerDay.HasValue)
+				{
+					var bookedCount = await _dbContext.Appointments
+						.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
+						.Where(app => app.AppointmentDate == dto.ProposedDate.Date)
+					.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed)
+					.CountAsync();
+
+				if (bookedCount >= clinic.MaxAppointmentsPerDay.Value)
+				{
+					throw new ConflictException($"This clinic is fully booked for {dto.ProposedDate:yyyy-MM-dd}. Maximum {clinic.MaxAppointmentsPerDay.Value} appointments per day. Please propose another date.");
+				}
+			}
 
 			appointment.EAppointmentStatus = EAppointmentStatus.RescheduleProposed;
 			appointment.RescheduleProposedDate = dto.ProposedDate;
@@ -1088,6 +1140,11 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _dbContext.SaveChangesAsync();
 
 			await _notificationService.SendRefreshSignalAsync("Appointments");
+			}
+			finally
+			{
+				localLock.Release();
+			}
 		}
 
 		public async Task RespondToRescheduleAsync(Guid userId, RespondRescheduleDto dto)

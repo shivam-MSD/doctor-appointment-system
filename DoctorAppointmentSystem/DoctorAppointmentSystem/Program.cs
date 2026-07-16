@@ -56,6 +56,10 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAppoint
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IClinicService, DoctorAppointmentSystem.Application.Services.ClinicService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IEmailService, DoctorAppointmentSystem.Application.Services.EmailService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
+
+// Register background services
+builder.Services.AddHostedService<DoctorAppointmentSystem.Application.BackgroundServices.AppointmentCleanupService>();
+
 builder.Services.AddSignalR();
 builder.Services.AddStackExchangeRedisCache(options =>
 {
