@@ -601,12 +601,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
   getStatusClass(status: string): string {
     switch (status) {
       case 'Pending': return 'badge badge-pending';
+      case 'RescheduleProposed': return 'badge badge-pending';
       case 'Confirmed': return 'badge badge-confirmed';
       case 'Cancelled': return 'badge badge-cancelled';
       case 'Rejected': return 'badge badge-cancelled';
       case 'Completed': return 'badge badge-completed';
       default: return 'badge';
     }
+  }
+
+  formatHistoryStatus(status: string): string {
+    if (status === 'RescheduleProposed') return 'RESCHEDULING';
+    return status;
   }
 
   toggleClinicFilter(clinicId: string): void {

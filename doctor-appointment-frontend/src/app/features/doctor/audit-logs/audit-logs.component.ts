@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { AdminService } from '../../../core/services/admin.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-audit-logs',
@@ -12,7 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './audit-logs.component.html',
   styleUrls: ['./audit-logs.component.css']
 })
-export class AuditLogsComponent implements OnInit {
+export class AuditLogsComponent implements OnInit, OnDestroy {
   logs: any[] = [];
   clinics: any[] = [];
   selectedClinicId: string = '';
@@ -24,11 +26,13 @@ export class AuditLogsComponent implements OnInit {
   
   isLoading: boolean = false;
   userRole: string = '';
+  private signalrSub?: Subscription;
 
   constructor(
     private appointmentService: AppointmentService,
     private adminService: AdminService,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -38,6 +42,20 @@ export class AuditLogsComponent implements OnInit {
       this.loadClinics();
     } else {
       this.loadLogs();
+    }
+
+    this.signalrSub = this.notificationService.refreshData$.subscribe({
+      next: (area) => {
+        if (area === 'AuditLogs') {
+          this.loadLogs();
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.signalrSub) {
+      this.signalrSub.unsubscribe();
     }
   }
 
