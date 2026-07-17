@@ -33,6 +33,7 @@ import { SuperAdminDoctorsComponent } from './features/superadmin/doctors/super-
 import { SuperAdminClinicsComponent } from './features/superadmin/clinics/super-admin-clinics.component';
 import { SuperAdminAdminsComponent } from './features/superadmin/admins/super-admin-admins.component';
 import { PatientDoctorsComponent } from './features/patient/doctors/patient-doctors.component';
+import { CareTeamComponent } from './features/patient/care-team/care-team.component';
 
 @NgModule({
   declarations: [
@@ -55,7 +56,8 @@ import { PatientDoctorsComponent } from './features/patient/doctors/patient-doct
     SuperAdminDoctorsComponent,
     SuperAdminClinicsComponent,
     SuperAdminAdminsComponent,
-    PatientDoctorsComponent
+    PatientDoctorsComponent,
+    CareTeamComponent
   ],
   imports: [
     BrowserModule,

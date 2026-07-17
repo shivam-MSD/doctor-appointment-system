@@ -560,11 +560,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				.Include(app => app.Patient)
 				.Include(app => app.Doctor)
 				.ThenInclude(d => d.Specialization)
-				.Where(app => linkedPatientIds.Contains(EF.Property<Guid>(app, "PatientId")))
+				.Where(app => linkedPatientIds.Contains(app.Patient.PatientId))
 				.ToListAsync();
 
 			// Group appointments by Doctor
-			var groups = appointments.GroupBy(app => EF.Property<Guid>(app, "DoctorId"));
+			var groups = appointments.GroupBy(app => app.Doctor.DoctorId);
 
 			var consultedDoctors = new List<ConsultedDoctorDto>();
 
@@ -587,7 +587,6 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync()
 		{
-			System.Diagnostics.Debugger.Launch();
 			const string cacheKey = "available_doctors_list";
 			var cachedData = await _distributedCache.GetStringAsync(cacheKey);
 
@@ -962,6 +961,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
 			}
 
+			if (!assignedTime.HasValue)
+			{
+				throw new BadRequestException("An assigned time is required to approve the appointment.");
+			}
+
 			appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
 			appointment.ConfirmedDate = DateTime.UtcNow;
 			if (!string.IsNullOrWhiteSpace(comment))
@@ -1159,6 +1163,11 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (dto.ProposedDate.Date < DateTime.Today)
 			{
 				throw new BadRequestException("Proposed reschedule date cannot be in the past.");
+			}
+
+			if (!dto.ProposedTime.HasValue)
+			{
+				throw new BadRequestException("A proposed time is required when rescheduling an appointment.");
 			}
 
 			// Validation: Booking Window

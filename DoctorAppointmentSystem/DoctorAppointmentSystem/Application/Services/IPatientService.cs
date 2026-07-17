@@ -13,5 +13,6 @@ namespace DoctorAppointmentSystem.Application.Services
 			string? city,
 			int page,
 			int size);
+		Task<DoctorDto> GetDoctorDetailsForPatientAsync(Guid doctorId);
 	}
 }

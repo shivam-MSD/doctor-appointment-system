@@ -1,0 +1,48 @@
+# UI and Validation Updates Plan
+
+This document outlines the implementation plan for the 6 requested changes across the frontend portals and backend service.
+
+## 1. Cancel Appointment Popup
+**Goal:** Replace the native browser `confirm()` and `prompt()` alerts in the doctor's dashboard with a custom UI modal popup.
+*   **Frontend (Doctor Appointments):** 
+    *   Add `showCancelModal`, `cancelAppId`, and `cancelReason` state variables to `doctor-appointments.component.ts`.
+    *   Create HTML for the Cancel Modal in `doctor-appointments.component.html` mimicking the custom popup shown in the screenshot.
+    *   Implement `openCancelModal`, `closeCancelModal`, and `confirmCancel` methods.
+
+## 2. Mandatory Time Selection (Frontend & Backend)
+**Goal:** Ensure the user always selects a time when Rescheduling or Assigning Time.
+*   **Frontend:**
+    *   Update Reschedule and Assign Time modals in `doctor-appointments.component.html` and `dashboard.component.html` to mark the time input as `required`.
+    *   Disable the submission buttons if the time input is empty.
+*   **Backend:**
+    *   Update `ProposeRescheduleAsync`, `ConfirmAppointmentAsync` (and similar DTOs if applicable) in `AppointmentService.cs` to validate that the time is provided and throw a `BadRequestException` if missing.
+
+## 3. Remove "Actions" Column in Patient History
+**Goal:** Clean up the Patient Portal's Appointment History tab.
+*   **Frontend (Dashboard):**
+    *   Remove the "Actions" `<th>` and the corresponding `<td>` in the Appointment History table in `dashboard.component.html`.
+
+## 4. Disable Cancelled/Rejected Rows in Patient Upcoming List
+**Goal:** Visually disable rows for appointments that are Cancelled or Rejected in the Upcoming Appointments tab.
+*   **Frontend (Dashboard):**
+    *   In the Upcoming Appointments table in `dashboard.component.html`, apply a CSS class (like `opacity-50` or `pointer-events-none`) and conditionally hide the Action buttons if the status is `Cancelled` or `Rejected`.
+
+## 5. Move "Reason for Visit" to Medical Report Popup
+**Goal:** Clean up the doctor portal table by moving the Reason to the popup, and adding a View Report button.
+*   **Frontend (Doctor Appointments):**
+    *   Remove the "Reason / Reason for Visit" column from the main table in `doctor-appointments.component.html`.
+    *   Add a "View Report" button (or integrate it into the Actions column / Patient Name link) that opens the Patient Details / Medical Report popup.
+    *   Update the Patient Details popup HTML to clearly display the "Reason for Visit".
+
+## 6. Doctor Dashboard Daily Metrics
+**Goal:** Add a metrics header showing Today's total, completed, and remaining appointments.
+*   **Frontend (Doctor Appointments):**
+    *   Add computed properties in `doctor-appointments.component.ts` (e.g., `get todaysTotal()`, `get todaysCompleted()`, `get todaysRemaining()`) that filter `this.appointments` by today's date.
+    *   Build a visually appealing metrics header in `doctor-appointments.component.html` to display these numbers.
+
+---
+
+### Open Questions
+*   **For #2 (Mandatory Time):** Some previous logic allowed "Time not assigned" for confirmed appointments (so they could just show up during a clinic window). Do you want to completely remove the ability to have an appointment without an assigned time, forcing a specific time for *every* confirmed appointment?
+
+Please click **Proceed** if this plan looks good, and I will execute the changes!

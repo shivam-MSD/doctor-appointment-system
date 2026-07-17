@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { AppointmentService } from '../../core/services/appointment.service';
 import { AdminService } from '../../core/services/admin.service';
@@ -67,10 +68,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedAppIdForAssignTime = '';
   assignedTimeInput = '';
 
+  // Doctor metrics
+  get todaysTotal() {
+    return this.appointments.length;
+  }
+  
+  get todaysCompleted() {
+    return this.appointments.filter(a => a.status === 'Completed').length;
+  }
+  
+  get todaysRemaining() {
+    return this.appointments.filter(a => !['Completed', 'Cancelled', 'Rejected'].includes(a.status)).length;
+  }
+
+  // Patient metrics
+  isPatientStatsLoading = true;
+  patientTotalCompleted = 0;
+  patientTotalUpcoming = 0; // Excludes today
+  patientTotalPending = 0;
+
   // Patient Details Modal States
   showPatientDetailsModal = false;
   selectedPatientDetails: any = null;
   isDetailsLoading = false;
+
+  // View Doctor Details Modal (Patient Portal)
+  showDoctorDetailsModal = false;
+  selectedDoctorDetails: any = null;
+  isDoctorDetailsLoading = false;
 
   // Clinic Details Modal States
   showClinicDetailsModal = false;
@@ -231,6 +256,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.isDashboardLoading = false;
         }
       });
+      // Load all appointments to compute stats (both history and upcoming)
+      this.loadPatientStats();
     } else if (this.role === 'SuperAdmin') {
       this.loadSuperAdminData();
     } else {
@@ -285,6 +312,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.loadAdminClinic();
       }
     }
+  }
+
+  loadPatientStats(): void {
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    // Fetch upcoming and history simultaneously
+    this.isPatientStatsLoading = true;
+    forkJoin({
+      upcomingRes: this.appointmentService.getPatientDashboard('', false, 1, 1000),
+      historyRes: this.appointmentService.getPatientDashboard('', true, 1, 1000)
+    }).subscribe({
+      next: ({ upcomingRes, historyRes }) => {
+        const allApps = [...upcomingRes.items, ...historyRes.items];
+        
+        // Completed: Any appointment marked as completed, whether today or in the past
+        this.patientTotalCompleted = allApps.filter(a => a.status === 'Completed').length;
+        
+        // Pending: Any appointment waiting for confirmation
+        this.patientTotalPending = allApps.filter(a => a.status === 'Pending').length;
+        
+        // Upcoming: Any active/pending appointment that is specifically AFTER today
+        this.patientTotalUpcoming = allApps.filter(a => {
+          if (!a.appointmentDate) return false;
+          const isToday = a.appointmentDate.startsWith(todayStr);
+          const isActive = a.status === 'Confirmed' || a.status === 'Pending' || a.status === 'RescheduleProposed';
+          const appDate = new Date(a.appointmentDate);
+          const todayDate = new Date();
+          todayDate.setHours(0, 0, 0, 0);
+          
+          return !isToday && isActive && appDate > todayDate;
+        }).length;
+        this.isPatientStatsLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load patient stats', err);
+        this.isPatientStatsLoading = false;
+      }
+    });
   }
 
   checkDoctorProfileCompleteness(): void {
@@ -1155,6 +1220,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
   closePatientDetailsModal(): void {
     this.showPatientDetailsModal = false;
     this.selectedPatientDetails = null;
+  }
+
+  openDoctorDetailsModal(doctorId: string): void {
+    this.selectedDoctorDetails = null;
+    this.showDoctorDetailsModal = true;
+    this.isDoctorDetailsLoading = true;
+
+    this.patientService.getDoctorProfileById(doctorId).subscribe({
+      next: (res) => {
+        this.selectedDoctorDetails = res;
+        this.isDoctorDetailsLoading = false;
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to fetch doctor details.');
+        this.isDoctorDetailsLoading = false;
+        this.closeDoctorDetailsModal();
+      }
+    });
+  }
+
+  closeDoctorDetailsModal(): void {
+    this.showDoctorDetailsModal = false;
+    this.selectedDoctorDetails = null;
   }
 
   getAge(dob: string | Date | undefined): number {

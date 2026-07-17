@@ -1,0 +1,138 @@
+<div class="care-team-wrapper">
+  <!-- Portal Title -->
+  <div class="glass-card welcome-card">
+    <div class="welcome-text">
+      <h2>My Doctors</h2>
+      <p>A complete list of healthcare professionals you have previously consulted with.</p>
+    </div>
+    <div class="role-badge">Consulted Doctors</div>
+  </div>
+
+  <div *ngIf="isLoading" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+    Loading your doctors...
+  </div>
+
+  <div *ngIf="!isLoading && consultedDoctors.length === 0" class="glass-card" style="padding: 40px; text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 10px;">🩺</div>
+    <h3 style="color: var(--text-primary);">No Consulted Doctors Yet</h3>
+    <p style="color: var(--text-muted); margin-top: 10px;">Once you complete an appointment, the doctor will appear here.</p>
+    <a routerLink="/patient/book-appointment" class="btn btn-primary" style="margin-top: 20px; display: inline-block;">Book Your First Appointment</a>
+  </div>
+
+  <div *ngIf="!isLoading && consultedDoctors.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+    <!-- Doctor Card -->
+    <div *ngFor="let doc of consultedDoctors" class="glass-card doctor-card" style="padding: 24px; display: flex; flex-direction: column; gap: 20px; border-top: 4px solid var(--accent-cyan);">
+      
+      <!-- Header Profile Section -->
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3);">
+          {{ doc.doctorName.charAt(0) }}
+        </div>
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; color: var(--text-primary); font-weight: 700;">Dr. {{ doc.doctorName }}</h3>
+          <span style="color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+            🩺 {{ doc.specialization }}
+          </span>
+        </div>
+      </div>
+      
+      <!-- Stats / Badge -->
+      <div style="background: rgba(16, 185, 129, 0.1); padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.2rem;">🤝</span>
+        <div>
+          <div style="color: #10b981; font-weight: 700; font-size: 1rem;">{{ doc.appointments?.length || 0 }} Completed</div>
+          <div style="color: var(--text-secondary); font-size: 0.8rem;">Total Consultations</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
+        <a [routerLink]="['/patient/book-appointment']" [queryParams]="{ doctorId: doc.doctorId }" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: 600; text-decoration: none;">
+          📅 Book Again
+        </a>
+        <div style="display: flex; gap: 10px;">
+          <button (click)="openDoctorInfo(doc)" class="btn btn-secondary" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem; padding: 10px;">
+            ℹ️ Doctor Info
+          </button>
+          <button (click)="openAppointmentHistory(doc)" class="btn btn-secondary" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem; padding: 10px;">
+            📜 History
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Doctor Info Modal -->
+<div class="modal-overlay" *ngIf="selectedDoctorForInfo" (click)="closeDoctorInfo()">
+  <div class="modal-content glass-card" (click)="$event.stopPropagation()" style="max-width: 450px;">
+    <div class="modal-header">
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-cyan); display: flex; align-items: center; justify-content: center; color: white;">
+          {{ selectedDoctorForInfo.doctorName.charAt(0) }}
+        </div>
+        Dr. {{ selectedDoctorForInfo.doctorName }}
+      </h3>
+      <button class="close-btn" (click)="closeDoctorInfo()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding-top: 20px;">
+      <div style="display: grid; gap: 16px;">
+        <div class="info-group">
+          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Specialization</label>
+          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">🩺 {{ selectedDoctorForInfo.specialization }}</div>
+        </div>
+        <div class="info-group">
+          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Consultations</label>
+          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">✅ {{ selectedDoctorForInfo.appointments?.length || 0 }} completed appointments</div>
+        </div>
+        <div class="info-group">
+          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Availability</label>
+          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">Available for booking</div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" (click)="closeDoctorInfo()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Appointment History Modal -->
+<div class="modal-overlay" *ngIf="selectedDoctorForHistory" (click)="closeAppointmentHistory()">
+  <div class="modal-content glass-card" (click)="$event.stopPropagation()" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+        📜 History with Dr. {{ selectedDoctorForHistory.doctorName }}
+      </h3>
+      <button class="close-btn" (click)="closeAppointmentHistory()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding-top: 20px; max-height: 60vh; overflow-y: auto;">
+      
+      <div *ngIf="!selectedDoctorForHistory.appointments || selectedDoctorForHistory.appointments.length === 0" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+        No completed appointments found.
+      </div>
+
+      <div *ngIf="selectedDoctorForHistory.appointments?.length > 0" style="display: flex; flex-direction: column; gap: 12px;">
+        <div *ngFor="let app of selectedDoctorForHistory.appointments" class="glass-card" style="padding: 16px; border-left: 4px solid var(--accent-cyan); background: rgba(255, 255, 255, 0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem;">
+              {{ app.appointmentDate | date:'mediumDate' }}
+            </div>
+            <span class="badge" [ngClass]="'badge-' + app.status.toLowerCase()">
+              {{ app.status }}
+            </span>
+          </div>
+          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;">
+            <strong>Clinic:</strong> {{ app.clinicName }}
+          </div>
+          <div style="color: var(--text-secondary); font-size: 0.9rem;">
+            <strong>Reason:</strong> {{ app.reason || 'Not specified' }}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+

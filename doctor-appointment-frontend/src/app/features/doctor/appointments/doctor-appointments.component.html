@@ -7,7 +7,6 @@
     </div>
     <div class="role-badge">Appointments</div>
   </div>
-
   <!-- Filters Dashboard Panel -->
   <div class="glass-card filter-card">
     <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -211,7 +210,6 @@
                 <th>Patient</th>
                 <th>Clinic / Location</th>
                 <th>Date & Time</th>
-                <th>Reason / Reason for Visit</th>
                 <th>Clinical Note / Report</th>
                 <th>Actions</th>
               </tr>
@@ -219,7 +217,7 @@
             <tbody>
               <tr *ngFor="let app of getPaginatedAppointments()">
                 <td [style.border-left]="'4px solid ' + getStatusColor(app.status)" style="padding-left: 12px;">
-                  <a href="javascript:void(0)" (click)="openPatientDetailsModal(app.patientId)"
+                  <a href="javascript:void(0)" (click)="openPatientDetailsModal(app)"
                     style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;"
                     title="Click to view patient profile">
                     {{ app.patientName }} ℹ️
@@ -242,48 +240,47 @@
                   </div>
                 </td>
                 <td>
-                  <span class="truncate-text" [title]="app.reason">{{ app.reason }}</span>
-                </td>
-                <td>
-                  <div *ngIf="app.comment || app.report; else emptyNotes">
-                    <div *ngIf="app.comment"
-                      style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 2px;">
-                      💬 <strong>Comment:</strong> {{ app.comment }}
-                    </div>
-                    <div *ngIf="app.report" style="font-size: 0.8rem; color: var(--accent-cyan);">
-                      📋 <strong>Report:</strong> {{ app.report }}
-                    </div>
+                  <div style="margin-bottom: 8px;">
+                    <button class="btn btn-sm-outline" (click)="openMedicalHistoryModal(app)"
+                      style="border-color: var(--accent-cyan); color: var(--accent-cyan); padding: 4px 10px; font-size: 0.75rem; font-weight: 600; border-radius: 4px;">
+                      📄 View Report
+                    </button>
                   </div>
+
                   <div *ngIf="(app.status === 'Cancelled' || app.status === 'Rejected') && app.rejectionReason"
                     style="font-size: 0.8rem; color: #ef4444;">
                     ⚠️ <strong>Rejected:</strong> {{ app.rejectionReason }}
                   </div>
                   <ng-template #emptyNotes><span class="text-muted">-</span></ng-template>
                 </td>
-                <td style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <td style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; min-width: 200px;">
                   <button class="btn btn-sm-outline" (click)="openTimelineModal(app.appointmentId)"
-                    style="border: 1px solid #8b5cf6; color: #8b5cf6; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: transparent; cursor: pointer;"
+                    style="border: 1px solid #8b5cf6; color: #8b5cf6; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.05); cursor: pointer; width: 100%; font-weight: 600;"
                     title="View Audit Trail">
-                    ⏱️ Timeline
+                    <i class="fas fa-history" style="margin-right: 4px;"></i> Timeline
                   </button>
+                  
+                  <!-- Assign Time / Edit Time button for Pending/Confirmed -->
+                  <button *ngIf="(app.status === 'Pending' || app.status === 'Confirmed')" class="btn btn-edit"
+                    (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)"
+                    style="width: 100%; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; font-weight: 600;">
+                    <i class="fas fa-clock" style="margin-right: 4px;"></i> {{ app.doctorAssignedTime ? 'Edit Time' : 'Assign Time' }}
+                  </button>
+                  
+                  <!-- Propose Reschedule button for Pending/Confirmed -->
+                  <button *ngIf="app.status === 'Pending' || app.status === 'Confirmed'" class="btn btn-reschedule"
+                    (click)="openRescheduleModal(app.appointmentId)"
+                    style="width: 100%; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; font-weight: 600;">
+                    <i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> Reschedule
+                  </button>
+
                   <!-- Cancel button available for Pending/Confirmed/RescheduleProposed -->
                   <button
                     *ngIf="app.status === 'Pending' || app.status === 'Confirmed' || app.status === 'RescheduleProposed'"
                     class="btn btn-cancel"
-                    (click)="cancelAppointment(app.appointmentId)">
-                    Cancel
-                  </button>
-
-                  <!-- Propose Reschedule button for Pending/Confirmed -->
-                  <button *ngIf="app.status === 'Pending' || app.status === 'Confirmed'" class="btn btn-reschedule"
-                    (click)="openRescheduleModal(app.appointmentId)">
-                    Reschedule
-                  </button>
-
-                  <!-- Assign Time / Edit Time button for Pending/Confirmed -->
-                  <button *ngIf="(app.status === 'Pending' || app.status === 'Confirmed')" class="btn btn-edit"
-                    (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)">
-                    {{ app.doctorAssignedTime ? 'Edit Time' : 'Assign Time' }}
+                    (click)="openCancelModal(app.appointmentId)"
+                    style="width: 100%; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; font-weight: 600;">
+                    <i class="fas fa-times-circle" style="margin-right: 4px;"></i> Cancel
                   </button>
                 </td>
               </tr>
@@ -418,6 +415,107 @@
       </div>
     </div>
   </div>
+
+  <!-- MEDICAL HISTORY MODAL -->
+  <div class="modal-backdrop" *ngIf="showMedicalHistoryModal">
+    <div class="modal-container" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.5rem;">📚</span> Patient Medical History Details
+        </h3>
+        <button class="close-modal" (click)="closeMedicalHistoryModal()">&times;</button>
+      </div>
+      <div class="modal-body scrollable-body" style="padding: 20px;">
+        <!-- Current Appointment Details -->
+        <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+          <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--accent-cyan);">Current Appointment</h4>
+          <div style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 8px;">
+            <strong>Reason for Visit:</strong> {{ selectedAppointmentForDetails?.reason || 'None specified' }}
+          </div>
+          <div style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 8px;">
+            <strong>Doctor's Comment:</strong> {{ selectedAppointmentForDetails?.comment || 'No comment' }}
+          </div>
+          <div style="font-size: 0.9rem; color: var(--text-primary);">
+            <strong>Prescription / Report:</strong> <span style="color: var(--accent-cyan);">{{ selectedAppointmentForDetails?.report || 'No report attached' }}</span>
+          </div>
+        </div>
+
+        <h4 style="margin-bottom: 15px; color: var(--text-primary);">Past Appointments History</h4>
+        
+        <div *ngIf="isHistoryLoading" style="text-align: center; padding: 20px;">
+          <div class="skeleton-box" style="height: 40px; width: 100%; margin-bottom: 10px;"></div>
+          <div class="skeleton-box" style="height: 40px; width: 100%;"></div>
+        </div>
+        
+        <div *ngIf="!isHistoryLoading && patientHistory.length === 0" style="text-align: center; color: var(--text-muted); font-style: italic; padding: 20px; background: rgba(0,0,0,0.02); border-radius: 8px;">
+          No past medical history found for this patient.
+        </div>
+
+        <div *ngIf="!isHistoryLoading && patientHistory.length > 0">
+          <div *ngFor="let h of patientHistory" style="background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+              <div>
+                <div style="font-weight: 700; color: var(--accent-cyan); font-size: 0.9rem;">
+                  {{ h.appointmentDate | date:'mediumDate' }}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                  Clinic: {{ h.clinicName || 'Direct' }}
+                </div>
+              </div>
+              <span class="badge" [style.background]="getStatusColor(h.status)" style="color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;">
+                {{ getStatusTitle(h.status) }}
+              </span>
+            </div>
+            
+            <div style="font-size: 0.85rem; color: var(--text-primary);">
+              <div *ngIf="h.reason" style="margin-bottom: 8px;">
+                <strong>Reason for Visit:</strong> {{ h.reason }}
+              </div>
+              <div *ngIf="h.comment" style="margin-bottom: 8px;">
+                <strong>Doctor's Comment:</strong> <span style="color: var(--text-secondary);">{{ h.comment }}</span>
+              </div>
+              <div *ngIf="h.report">
+                <strong>Prescription / Report:</strong> <span style="color: var(--accent-cyan); font-weight: 600;">{{ h.report }}</span>
+              </div>
+              <div *ngIf="!h.reason && !h.comment && !h.report" style="color: var(--text-muted); font-style: italic;">
+                No clinical notes recorded.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" (click)="closeMedicalHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+  <!-- CANCEL APPOINTMENT MODAL -->
+  <div class="modal-backdrop" *ngIf="showCancelModal">
+    <div class="modal-content glass-card" style="max-width: 400px; padding: 0;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h4 style="margin: 0; color: #ef4444; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.5rem;">⚠️</span> Cancel Appointment
+        </h4>
+        <button class="btn-close" (click)="closeCancelModal()" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; text-align: center;">
+        <div style="font-size: 3rem; color: #ef4444; margin-bottom: 15px;">❓</div>
+        <h5 style="margin-bottom: 10px;">Confirm Cancellation</h5>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
+          Are you sure you want to cancel this appointment? This action cannot be undone.
+        </p>
+        <div class="form-group" style="text-align: left;">
+          <label class="form-label" style="font-size: 0.8rem;">Reason for cancellation (optional)</label>
+          <input type="text" class="form-control" [(ngModel)]="cancelReason" placeholder="e.g., Doctor unavailable">
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: center; gap: 15px; padding: 20px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary" (click)="closeCancelModal()" style="border-radius: 20px;">No, Keep Booking</button>
+        <button class="btn btn-cancel" (click)="submitCancel()" style="background: #ef4444; color: white; border: none; font-weight: 600; border-radius: 20px; padding: 8px 16px;">Yes, Cancel Appointment</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Reschedule Modal -->
   <div class="modal-backdrop" *ngIf="showRescheduleModal">
     <div class="modal-content glass-card" style="max-width: 500px; padding: 0;">
@@ -442,8 +540,8 @@
         </div>
 
         <div class="form-group" style="margin-bottom: 15px;">
-          <label class="form-label">Proposed Time (Optional)</label>
-          <input type="time" class="form-control" [(ngModel)]="rescheduleTime">
+          <label class="form-label">Proposed Time <span class="text-danger">*</span></label>
+          <input type="time" class="form-control" [(ngModel)]="rescheduleTime" required>
         </div>
 
         <div class="form-group" style="margin-bottom: 15px;">
@@ -456,7 +554,7 @@
         style="display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color);">
         <button class="btn btn-secondary" (click)="closeRescheduleModal()">Cancel</button>
         <button class="btn btn-primary" (click)="submitReschedulePropose()"
-          [disabled]="!rescheduleDate || !rescheduleReason" style="background: #ec4899; border-color: #ec4899;">Propose
+          [disabled]="!rescheduleDate || !rescheduleTime || !rescheduleReason" style="background: #ec4899; border-color: #ec4899;">Propose
           Reschedule</button>
       </div>
     </div>
@@ -480,8 +578,8 @@
         </p>
 
         <div class="form-group" style="margin-bottom: 15px;">
-          <label class="form-label">Assigned Time <span class="text-danger">*</span></label>
-          <input type="time" class="form-control" [(ngModel)]="assignTimeInput">
+          <label class="form-label">Select Time <span class="text-danger">*</span></label>
+          <input type="time" class="form-control" [(ngModel)]="assignTimeInput" required>
         </div>
 
         <div class="form-group" style="margin-bottom: 15px;">

@@ -30,6 +30,13 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		[HttpGet("doctors/{doctorId:guid}")]
+		public async Task<IActionResult> GetDoctorDetails(Guid doctorId)
+		{
+			var result = await _patientService.GetDoctorDetailsForPatientAsync(doctorId);
+			return Ok(result);
+		}
+
 		[HttpGet("{id:guid}")]
 		public async Task<IActionResult> GetProfile([FromHeader(Name = "X-User-Id")] Guid userId, Guid id)
 		{

@@ -1,69 +1,83 @@
-<div class="booking-container" *ngIf="doctorId && clinicId">
+<!-- Loading State -->
+<div class="booking-container" *ngIf="isInitializing" style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+  <div style="text-align: center; color: var(--accent-cyan);">
+    <div style="font-size: 3rem; animation: pulse 1.5s infinite;">⏳</div>
+    <h3 style="margin-top: 15px; font-weight: 600;">Loading Booking Details...</h3>
+  </div>
+</div>
+
+<div class="booking-container" *ngIf="!isInitializing && doctorId && clinicId">
   <div class="glass-card booking-card">
     <a routerLink="/patient/doctors" class="close-btn" title="Back to Doctors Directory">&times;</a>
     
-    <div class="booking-header">
-      <span class="header-icon">📅</span>
-      <h2>Book Medical Appointment</h2>
-      <p>Please review practitioner details and complete the reservation details below.</p>
-    </div>
+    <!-- LEFT SIDE: Practitioner Info -->
+    <div class="booking-left">
+      <div class="booking-header" style="text-align: left;">
+        <span class="header-icon" style="margin-left: 0;">📅</span>
+        <h2 style="font-size: 1.8rem; margin-bottom: 8px;">Book Appointment</h2>
+        <p style="font-size: 0.95rem;">Please review practitioner details and complete the reservation details to the right.</p>
+      </div>
 
-    <!-- Selected Practitioner & Location Info (Static Text Display) -->
-    <div class="glass-card selected-info-card" style="padding: 20px; border: 1.5px solid var(--border-color); background: rgba(255, 255, 255, 0.03); border-radius: 12px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="font-size: 1.8rem; background: rgba(6, 182, 212, 0.1); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--accent-cyan);">
-          🩺
+      <!-- Selected Practitioner & Location Info (Static Text Display) -->
+      <div class="glass-card selected-info-card" style="padding: 24px; border: 1.5px solid var(--border-color); background: rgba(255, 255, 255, 0.4); border-radius: 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="font-size: 2rem; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 16px; color: white; font-weight: 700; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
+            {{ selectedDoctor?.firstName?.charAt(0) }}{{ selectedDoctor?.lastName?.charAt(0) }}
+          </div>
+          <div>
+            <h4 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text-primary);">Dr. {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</h4>
+            <span style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; margin-top: 4px;">
+              🩺 {{ selectedDoctor?.specializationName }}
+            </span>
+          </div>
         </div>
+
+        <div style="border-top: 1px solid rgba(0, 0, 0, 0.06); padding-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <span style="background: rgba(6, 182, 212, 0.1); padding: 6px; border-radius: 6px;">🏢</span> 
+            {{ selectedClinic?.clinicName }} 
+            <span class="badge" style="font-size: 0.65rem; background: var(--text-primary); color: white; margin-left: auto; padding: 4px 8px; text-transform: uppercase; border-radius: 4px;">{{ selectedClinic?.clinicType }}</span>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px;">
+            <span style="margin-top: 2px;">📍</span>
+            <span>{{ selectedClinic?.addressline1 }}{{ selectedClinic?.addressline2 ? ', ' + selectedClinic?.addressline2 : '' }}, {{ selectedClinic?.area }}, {{ selectedClinic?.city }}, {{ selectedClinic?.state }}</span>
+          </div>
+          <div *ngIf="selectedDoctor" style="font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin-top: 8px; background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+            <span style="font-size: 1.2rem;">💳</span>
+            <span style="font-weight: 600; color: #10b981;">Consultation Fee: Rs. {{ selectedDoctor?.consultationFee }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div *ngIf="selectedClinic && !selectedClinic.isAvailable" style="background: rgba(239, 68, 68, 0.05); border: 1.5px solid rgba(239, 68, 68, 0.25); padding: 16px; border-radius: 12px; font-size: 0.9rem; color: #f87171; display: flex; gap: 12px; align-items: flex-start;">
+        <span style="font-size: 1.2rem;">⚠️</span>
         <div>
-          <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">Dr. {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</h4>
-          <span style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-            {{ selectedDoctor?.specializationName }}
-          </span>
+          <strong style="display: block; font-weight: 700; margin-bottom: 4px; color: #ef4444;">This branch is temporarily closed:</strong>
+          <span>{{ selectedClinic.unavailabilityReason || 'No appointments are currently being accepted at this branch.' }}</span>
         </div>
       </div>
 
-      <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 12px; display: flex; flex-direction: column; gap: 6px;">
-        <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; display: flex; align-items: center; gap: 6px;">
-          <span>🏢</span> {{ selectedClinic?.clinicName }} <span class="badge" style="font-size: 0.65rem; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); margin-left: 6px; padding: 2px 6px; text-transform: uppercase;">{{ selectedClinic?.clinicType }}</span>
-        </div>
-        <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; display: flex; align-items: flex-start; gap: 6px;">
-          <span>📍</span>
-          <span>{{ selectedClinic?.addressline1 }}{{ selectedClinic?.addressline2 ? ', ' + selectedClinic?.addressline2 : '' }}, {{ selectedClinic?.area }}, {{ selectedClinic?.city }}, {{ selectedClinic?.state }}</span>
-        </div>
-        <div *ngIf="selectedDoctor" style="font-size: 0.82rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin-top: 4px;">
-          <span>💵</span>
-          <span>Consultation Fee: <strong>Rs. {{ selectedDoctor?.consultationFee }}</strong></span>
+      <div *ngIf="selectedClinic && selectedClinic.isAvailable && selectedClinic.isDoctorAvailable === false" style="background: rgba(6, 182, 212, 0.08); border: 1.5px solid rgba(6, 182, 212, 0.25); padding: 16px; border-radius: 12px; font-size: 0.9rem; color: var(--accent-cyan); display: flex; gap: 12px; align-items: flex-start;">
+        <span style="font-size: 1.2rem;">ℹ️</span>
+        <div>
+          <strong style="display: block; font-weight: 700; margin-bottom: 4px; color: var(--accent-cyan);">Doctor is personally unavailable here:</strong>
+          <span>{{ selectedClinic.doctorUnavailabilityReason || 'Owner doctor is out. Clinical staff / physiotherapists will attend appointments.' }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Closed Clinic Alert -->
-    <div *ngIf="selectedClinic && !selectedClinic.isAvailable" style="background: rgba(239, 68, 68, 0.05); border: 1.5px solid rgba(239, 68, 68, 0.25); padding: 12px; border-radius: 6px; font-size: 0.85rem; color: #f87171; display: flex; gap: 8px; align-items: flex-start; margin-bottom: 20px;">
-      <span>⚠️</span>
-      <div>
-        <strong style="display: block; font-weight: 700; margin-bottom: 2px; color: #ef4444;">This branch is temporarily closed:</strong>
-        <span>{{ selectedClinic.unavailabilityReason || 'No appointments are currently being accepted at this branch.' }}</span>
-      </div>
-    </div>
+    <!-- RIGHT SIDE: Booking Form -->
+    <div class="booking-right">
+      <form (submit)="onSubmit(); $event.preventDefault()">
+        <!-- Messages -->
+        <div class="error-banner" *ngIf="errorMessage">
+          <span>⚠️</span> {{ errorMessage }}
+        </div>
 
-    <!-- Doctor Personally Unavailable Warning Banner -->
-    <div *ngIf="selectedClinic && selectedClinic.isAvailable && selectedClinic.isDoctorAvailable === false" style="background: rgba(6, 182, 212, 0.08); border: 1.5px solid rgba(6, 182, 212, 0.25); padding: 12px; border-radius: 6px; font-size: 0.85rem; color: var(--accent-cyan); display: flex; gap: 8px; align-items: flex-start; margin-bottom: 20px;">
-      <span>ℹ️</span>
-      <div>
-        <strong style="display: block; font-weight: 700; margin-bottom: 2px; color: var(--accent-cyan);">Doctor is personally unavailable at this branch:</strong>
-        <span>{{ selectedClinic.doctorUnavailabilityReason || 'Owner doctor is out. Clinical staff / physiotherapists will attend appointments.' }}</span>
-      </div>
-    </div>
-
-    <form (submit)="onSubmit(); $event.preventDefault()">
-      <!-- Messages -->
-      <div class="error-banner" *ngIf="errorMessage">
-        <span>⚠️</span> {{ errorMessage }}
-      </div>
-
-      <div class="success-banner" *ngIf="successMessage">
-        <span>✓</span> {{ successMessage }}
-      </div>
+        <div class="success-banner" *ngIf="successMessage">
+          <span>✓</span> {{ successMessage }}
+        </div>
 
       <!-- Patient Select -->
       <div class="form-group">
@@ -222,11 +236,12 @@
         <a routerLink="/patient/doctors" class="btn btn-secondary w-100 cancel-link">Cancel</a>
       </div>
     </form>
+    </div> <!-- Close booking-right -->
   </div>
 </div>
 
 <!-- PLACEHOLDER FOR DIRECT SIDEBAR NAVIGATION -->
-<div class="booking-container" *ngIf="!doctorId || !clinicId" style="display: flex; justify-content: center; align-items: center; min-height: 70vh; padding: 20px;">
+<div class="booking-container" *ngIf="!isInitializing && (!doctorId || !clinicId)" style="display: flex; justify-content: center; align-items: center; min-height: 70vh; padding: 20px;">
   <div class="glass-card booking-card" style="max-width: 500px; text-align: center; padding: 40px 30px;">
     <div style="font-size: 3rem; margin-bottom: 20px; color: var(--accent-cyan); line-height: 1;">📅</div>
     <h3 style="margin-bottom: 12px; font-weight: 700; color: var(--text-primary);">Choose a Practitioner First</h3>

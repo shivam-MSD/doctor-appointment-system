@@ -33,6 +33,7 @@ export class BookComponent implements OnInit {
   // Day availability info (for selected date)
   dayAvailability: any = null;
   isLoadingAvailability = false;
+  isInitializing = true;
 
   // Mandatory Filter Fields
   state = '';
@@ -104,10 +105,12 @@ export class BookComponent implements OnInit {
 
                 this.onClinicChange();
                 this.consultationType = 'InPerson';
+                this.isInitializing = false;
               },
               error: (err) => {
                 this.toastService.showError(err, 'Failed to load booking details.');
                 this.router.navigate(['/patient/dashboard']);
+                this.isInitializing = false;
               }
             });
           } else if (qDoctorId) {
@@ -128,16 +131,24 @@ export class BookComponent implements OnInit {
                         this.onClinicChange();
                       }
                       this.consultationType = 'InPerson';
-                    }
+                      this.isInitializing = false;
+                    },
+                    error: () => this.isInitializing = false
                   });
+                } else {
+                  this.isInitializing = false;
                 }
-              }
+              },
+              error: () => this.isInitializing = false
             });
+          } else {
+            this.isInitializing = false;
           }
         });
       },
       error: () => {
         this.errorMessage = 'Failed to load patient profiles.';
+        this.isInitializing = false;
       }
     });
   }

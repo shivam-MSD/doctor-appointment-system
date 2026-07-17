@@ -217,5 +217,40 @@ namespace DoctorAppointmentSystem.Application.Services
 				Addressline2 = address?.Addressline2
 			};
 		}
+
+		public async Task<DoctorDto> GetDoctorDetailsForPatientAsync(Guid doctorId)
+		{
+			var doctor = await _dbContext.Doctors
+				.Include(d => d.User)
+				.Include(d => d.Specialization)
+				.FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+
+			if (doctor == null)
+			{
+				throw new NotFoundException($"Doctor with ID '{doctorId}' not found.");
+			}
+
+			// We map the Doctor to DoctorDto
+			var doctorDto = new DoctorDto
+			{
+				DoctorId = doctor.DoctorId,
+				UserId = doctor.User.UserId,
+				FirstName = doctor.FirstName,
+				LastName = doctor.LastName,
+				Email = doctor.User.Email,
+				MobileNo = doctor.MobileNo,
+				SpecializationId = doctor.Specialization.SpecializationId,
+				SpecializationName = doctor.Specialization.SpecializationName,
+				YearsOfExperience = doctor.YearsOfExperience,
+				Qualification = doctor.Qualification,
+				ConsultationFee = doctor.ConsultationFee,
+				AboutDoctor = doctor.AboutDoctor,
+				VerificationStatus = doctor.VerificationStatus.ToString(),
+				LicenceNumber = doctor.LicenceNumber,
+				CreatedDate = doctor.CreatedDate,
+				UpdatedDate = doctor.UpdatedDate
+			};
+			return doctorDto;
+		}
 	}
 }

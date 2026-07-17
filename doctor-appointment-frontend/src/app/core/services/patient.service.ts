@@ -35,6 +35,10 @@ export class PatientService {
     return this.http.get<any>('/api/patients/doctors', { params });
   }
 
+  getDoctorProfileById(doctorId: string): Observable<any> {
+    return this.http.get<any>(`/api/patients/doctors/${doctorId}`);
+  }
+
   getClinicsByDoctorId(doctorId: string): Observable<any[]> {
     return this.http.get<any[]>(`/api/clinics/doctor/${doctorId}`);
   }

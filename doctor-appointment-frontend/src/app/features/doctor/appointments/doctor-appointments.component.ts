@@ -37,7 +37,10 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   // Patient Details Modal States
   showPatientDetailsModal = false;
   selectedPatientDetails: any = null;
+  selectedAppointmentForDetails: any = null;
   isDetailsLoading = false;
+  patientHistory: any[] = [];
+  isHistoryLoading = false;
 
   // Reschedule Propose Modal State
   showRescheduleModal = false;
@@ -53,6 +56,11 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   selectedAssignTimeAppDate = '';
   assignTimeInput = '';
   assignTimeComment = '';
+  
+  // Cancel Appointment Modal State
+  showCancelModal = false;
+  cancelAppId = '';
+  cancelReason = '';
 
   constructor(
     private appointmentService: AppointmentService,
@@ -229,19 +237,49 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     }
   }
 
-  cancelAppointment(appId: string): void {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
-      const reason = prompt('Please enter a reason for cancellation (optional):') || 'Cancelled by doctor/admin.';
-      this.appointmentService.doctorCancelAppointment(appId, reason).subscribe({
-        next: () => {
-          this.toastService.showSuccess('Appointment cancelled successfully.');
-          this.loadAppointments();
-        },
-        error: (err: any) => {
-          this.toastService.showError(err, 'Failed to cancel appointment.');
-        }
-      });
-    }
+  // Daily Metrics
+  get todaysAppointments() {
+    const today = new Date().toISOString().split('T')[0];
+    return this.appointments.filter(a => a.appointmentDate && a.appointmentDate.startsWith(today));
+  }
+  
+  get todaysTotal() {
+    return this.todaysAppointments.length;
+  }
+  
+  get todaysCompleted() {
+    return this.todaysAppointments.filter(a => a.status === 'Completed').length;
+  }
+  
+  get todaysRemaining() {
+    return this.todaysAppointments.filter(a => !['Completed', 'Cancelled', 'Rejected'].includes(a.status)).length;
+  }
+
+  openCancelModal(appId: string): void {
+    this.cancelAppId = appId;
+    this.cancelReason = '';
+    this.showCancelModal = true;
+  }
+
+  closeCancelModal(): void {
+    this.showCancelModal = false;
+    this.cancelAppId = '';
+    this.cancelReason = '';
+  }
+
+  submitCancel(): void {
+    if (!this.cancelAppId) return;
+    
+    this.appointmentService.doctorCancelAppointment(this.cancelAppId, this.cancelReason || 'Cancelled by doctor/admin.').subscribe({
+      next: () => {
+        this.toastService.showSuccess('Appointment cancelled successfully.');
+        this.closeCancelModal();
+        this.loadAppointments();
+      },
+      error: (err: any) => {
+        this.toastService.showError(err, 'Failed to cancel appointment.');
+      }
+    });
   }
 
   // Reschedule Propose Methods
@@ -338,12 +376,13 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     });
   }
 
-  openPatientDetailsModal(patientId: string): void {
-    this.selectedPatientDetails = null;
-    this.showPatientDetailsModal = true;
+  openPatientDetailsModal(app: any): void {
+    this.selectedAppointmentForDetails = app;
     this.isDetailsLoading = true;
-
-    this.appointmentService.getPatientDetails(patientId).subscribe({
+    this.showPatientDetailsModal = true;
+    
+    // Fetch Patient Details
+    this.appointmentService.getPatientDetails(app.patientId).subscribe({
       next: (res) => {
         this.selectedPatientDetails = res;
         this.isDetailsLoading = false;
@@ -351,9 +390,35 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.toastService.showError(err, 'Failed to fetch patient details.');
         this.isDetailsLoading = false;
-        this.closePatientDetailsModal();
       }
     });
+  }
+
+  // MEDICAL HISTORY MODAL
+  showMedicalHistoryModal = false;
+  
+  openMedicalHistoryModal(app: any): void {
+    this.selectedAppointmentForDetails = app;
+    this.showMedicalHistoryModal = true;
+    this.isHistoryLoading = true;
+    this.patientHistory = [];
+
+    // Fetch Medical History
+    this.appointmentService.getAdminDoctorDashboard({ patientId: app.patientId }, 1, 100).subscribe({
+      next: (res) => {
+        this.patientHistory = res.items.sort((a: any, b: any) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+        this.isHistoryLoading = false;
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to retrieve patient medical history.');
+        this.isHistoryLoading = false;
+      }
+    });
+  }
+
+  closeMedicalHistoryModal(): void {
+    this.showMedicalHistoryModal = false;
+    this.patientHistory = [];
   }
 
   closePatientDetailsModal(): void {
