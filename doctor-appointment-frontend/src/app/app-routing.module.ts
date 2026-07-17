@@ -21,7 +21,6 @@ import { SuperAdminDoctorsComponent } from './features/superadmin/doctors/super-
 import { SuperAdminClinicsComponent } from './features/superadmin/clinics/super-admin-clinics.component';
 import { SuperAdminAdminsComponent } from './features/superadmin/admins/super-admin-admins.component';
 import { PatientDoctorsComponent } from './features/patient/doctors/patient-doctors.component';
-import { CareTeamComponent } from './features/patient/care-team/care-team.component';
 import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
@@ -51,7 +50,6 @@ const routes: Routes = [
       { path: 'patient/book-appointment', component: BookComponent },
       { path: 'patient/profile', component: ProfileComponent },
       { path: 'patient/doctors', component: PatientDoctorsComponent },
-      { path: 'patient/care-team', component: CareTeamComponent },
       { path: 'patient/audit-logs', loadComponent: () => import('./features/doctor/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent) },
 
       // Doctor Routes

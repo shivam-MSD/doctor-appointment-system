@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { FamilyService } from '../../../core/services/family.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-book',
@@ -35,6 +37,18 @@ export class BookComponent implements OnInit {
   isLoadingAvailability = false;
   isInitializing = true;
 
+  // Patient Metrics
+  isPatientStatsLoading = true;
+  patientTotalCompleted = 0;
+  patientTotalUpcoming = 0;
+  patientTotalPending = 0;
+
+  // Consulted Doctors (My Care Team)
+  consultedDoctors: any[] = [];
+  isCareTeamLoading = true;
+  selectedDoctorForInfo: any = null;
+  selectedDoctorForHistory: any = null;
+
   // Mandatory Filter Fields
   state = '';
   city = '';
@@ -56,12 +70,21 @@ export class BookComponent implements OnInit {
   constructor(
     private appointmentService: AppointmentService,
     private familyService: FamilyService,
+    private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
     private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
+    if (this.authService.getRole() !== 'Patient') {
+      this.router.navigate(['/']);
+      return;
+    }
+
+    this.loadPatientStats();
+    this.loadCareTeam();
+
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -142,7 +165,15 @@ export class BookComponent implements OnInit {
               error: () => this.isInitializing = false
             });
           } else {
-            this.isInitializing = false;
+            this.appointmentService.getAvailableDoctors().subscribe({
+              next: (allDoctors) => {
+                this.doctors = allDoctors;
+                this.isInitializing = false;
+              },
+              error: () => {
+                this.isInitializing = false;
+              }
+            });
           }
         });
       },
@@ -151,6 +182,78 @@ export class BookComponent implements OnInit {
         this.isInitializing = false;
       }
     });
+  }
+
+  onDoctorSelect(docId: string): void {
+    if (!docId) return;
+    this.router.navigate(['/patient/book-appointment'], { queryParams: { doctorId: docId } });
+  }
+
+  loadPatientStats(): void {
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    this.isPatientStatsLoading = true;
+    forkJoin({
+      upcomingRes: this.appointmentService.getPatientDashboard('', false, 1, 1000),
+      historyRes: this.appointmentService.getPatientDashboard('', true, 1, 1000)
+    }).subscribe({
+      next: ({ upcomingRes, historyRes }) => {
+        const allApps = [...upcomingRes.items, ...historyRes.items];
+        
+        this.patientTotalCompleted = allApps.filter(a => a.status === 'Completed').length;
+        this.patientTotalPending = allApps.filter(a => a.status === 'Pending').length;
+        
+        this.patientTotalUpcoming = allApps.filter(a => {
+          if (!a.appointmentDate) return false;
+          const isToday = a.appointmentDate.startsWith(todayStr);
+          const isActive = a.status === 'Confirmed' || a.status === 'Pending' || a.status === 'RescheduleProposed';
+          const appDate = new Date(a.appointmentDate);
+          const todayDate = new Date();
+          todayDate.setHours(0, 0, 0, 0);
+          
+          return !isToday && isActive && appDate > todayDate;
+        }).length;
+        this.isPatientStatsLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load patient stats', err);
+        this.isPatientStatsLoading = false;
+      }
+    });
+  }
+
+  loadCareTeam(): void {
+    this.appointmentService.getConsultedDoctors().subscribe({
+      next: (docs: any[]) => {
+        this.consultedDoctors = docs.map(doc => {
+          if (doc.appointments) {
+            doc.appointments = doc.appointments.filter((a: any) => a.status === 'Completed');
+          }
+          return doc;
+        });
+        this.isCareTeamLoading = false;
+      },
+      error: (err: any) => {
+        console.error('Failed to load consulted doctors', err);
+        this.isCareTeamLoading = false;
+      }
+    });
+  }
+
+  openDoctorInfo(doc: any): void {
+    this.selectedDoctorForInfo = doc;
+  }
+
+  closeDoctorInfo(): void {
+    this.selectedDoctorForInfo = null;
+  }
+
+  openAppointmentHistory(doc: any): void {
+    this.selectedDoctorForHistory = doc;
+  }
+
+  closeAppointmentHistory(): void {
+    this.selectedDoctorForHistory = null;
   }
 
   // Trigger search whenever any filter (mandatory or custom name) is modified
