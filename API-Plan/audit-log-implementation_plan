@@ -1,0 +1,75 @@
+# Appointment Audit Logs & Timeline View Implementation Plan
+
+This plan details the implementation of a comprehensive audit logging system for appointments, including a global "Audit Logs" tab for Doctors/Admins and a per-appointment "Timeline" modal.
+
+## User Review Required
+> [!IMPORTANT]
+> The creation of a dedicated `AppointmentAuditLog` table will track every single state change historically. The logs will store exactly *who* (Patient, Doctor, or Admin) performed the action and *when*. 
+>
+> **Regarding your question about Admin actions:** Because the audit logs are tied to the Appointment, and the Appointment is tied to a specific Clinic, any action an Admin takes on a patient's appointment *will* show up in the Doctor's "Audit Logs" tab (and it will specifically indicate that the Admin performed the action).
+
+## Open Questions
+> [!WARNING]
+> None at this time. The requirements are clear and the proposed solution perfectly matches industry standards for EMR audit tracking.
+
+## Proposed Changes
+
+---
+
+### Backend Components
+
+#### [NEW] `Domain\Entities\AppointmentAuditLog.cs`
+- Create a new Entity to store the audit trail:
+  - `LogId` (Guid, PK)
+  - `AppointmentId` (Guid, FK)
+  - `Action` (string - e.g., "Created", "RescheduleProposed", "Confirmed", "Cancelled", "Completed")
+  - `Timestamp` (DateTime)
+  - `ActorUserId` (Guid? - the user who triggered the action)
+  - `ActorName` (string)
+  - `ActorRole` (string - "Patient", "Doctor", "Admin")
+  - `Notes` (string - optional context like reason for rejection)
+
+#### [MODIFY] `Application\Services\AppointmentService.cs`
+- Create a private helper `LogAppointmentActionAsync` that inserts rows into the new `AppointmentAuditLogs` table.
+- Call this helper inside all critical state-changing methods:
+  - `CreateAppointmentAsync` (Action: "Created")
+  - `ApproveAppointmentAsync` & `AssignAppointmentTimeAsync` (Action: "Confirmed")
+  - `ProposeRescheduleAsync` (Action: "RescheduleProposed")
+  - `RespondToRescheduleAsync` (Action: "RescheduleAccepted" or "Cancelled")
+  - `CancelAppointmentAsync` & `DoctorCancelAppointmentAsync` (Action: "Cancelled")
+  - `CompleteAppointmentAsync` (Action: "Completed")
+- Add a new query method to fetch logs: `GetAppointmentAuditLogsAsync(Guid? clinicId, Guid? appointmentId, ...)`
+
+#### [MODIFY] `WebAPI\Controllers\AppointmentsController.cs`
+- Expose `GET /api/Appointments/audit-logs` (For the global Audit Logs tab, with `clinicId` filters).
+- Expose `GET /api/Appointments/{id}/audit-logs` (For the specific appointment Timeline popup).
+
+---
+
+### Frontend Components
+
+#### [NEW] `src\app\features\doctor\audit-logs\audit-logs.component.*`
+- Create a new standalone (or module-based) Angular component for the **Global Audit Logs**.
+- **UI Details:** 
+  - A Clinic Selector Dropdown ("All Clinics", "Clinic A", "Clinic B").
+  - A paginated table showing: `Date/Time` | `Patient Name` | `Action Taken` | `Performed By` | `Notes`.
+
+#### [MODIFY] `src\app\app-routing.module.ts`
+- Add routing for the new Audit Logs tab:
+  - `{ path: 'doctor/audit-logs', component: AuditLogsComponent }`
+  - `{ path: 'admin/audit-logs', component: AuditLogsComponent }`
+
+#### [MODIFY] `src\app\features\dashboard\dashboard.component.html` & `doctor-appointments.component.html`
+- Add a `⏱️ Timeline` button next to the `📜 History` button in the action columns.
+- Add a new "Activity Timeline Modal" that opens when clicked.
+- This modal will call the `GET /api/Appointments/{id}/audit-logs` endpoint and render a beautiful chronological feed of everything that happened to that specific appointment.
+
+## Verification Plan
+### Automated Tests
+- Run `.NET` compilation and EF Core migrations.
+- Build Angular frontend to ensure no template or routing errors.
+
+### Manual Verification
+1. I will log in as a Patient and book an appointment (Verifying "Created" log).
+2. I will log in as a Doctor, go to the "Audit Logs" tab, filter by Clinic, and verify the log appears.
+3. I will click the "Timeline" button on the appointment in the Dashboard and verify the popup shows the chronological history.

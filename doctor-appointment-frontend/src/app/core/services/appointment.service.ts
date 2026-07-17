@@ -119,4 +119,15 @@ export class AppointmentService {
   respondReschedule(payload: any): Observable<any> {
     return this.http.post<any>(`/api/appointments/respond-reschedule`, payload);
   }
+
+  getAuditLogs(page: number, size: number, clinicId?: string, appointmentId?: string): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+      
+    if (clinicId) params = params.set('clinicId', clinicId);
+    if (appointmentId) params = params.set('appointmentId', appointmentId);
+
+    return this.http.get<any>(`/api/appointments/audit-logs`, { params });
+  }
 }

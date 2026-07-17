@@ -45,6 +45,13 @@
           <span class="label">Search Doctors</span>
         </a>
       </li>
+      <li>
+        <a class="nav-link" routerLink="/patient/audit-logs" routerLinkActive="active"
+          data-tooltip="Audit Logs">
+          <span class="icon">📜</span>
+          <span class="label">Audit Logs</span>
+        </a>
+      </li>
     </ng-container>
 
     <!-- Doctor-Specific Links -->
@@ -93,6 +100,13 @@
         </a>
       </li>
       <li>
+        <a class="nav-link" routerLink="/doctor/audit-logs" routerLinkActive="active"
+          data-tooltip="Audit Logs">
+          <span class="icon">📜</span>
+          <span class="label">Audit Logs</span>
+        </a>
+      </li>
+      <li>
         <a class="nav-link" routerLink="/doctor/profile" routerLinkActive="active"
           data-tooltip="My Profile">
           <span class="icon">👤</span>
@@ -115,6 +129,13 @@
           data-tooltip="Appointments">
           <span class="icon">📅</span>
           <span class="label">Appointments</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/admin/audit-logs" routerLinkActive="active"
+          data-tooltip="Audit Logs">
+          <span class="icon">📜</span>
+          <span class="label">Audit Logs</span>
         </a>
       </li>
       <li>
@@ -160,6 +181,12 @@
           <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingAdminsCount > 0">
             {{ pendingAdminsCount }}
           </span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/superadmin/audit-logs" routerLinkActive="active" data-tooltip="Audit Logs">
+          <span class="icon">📜</span>
+          <span class="label">Audit Logs</span>
         </a>
       </li>
     </ng-container>

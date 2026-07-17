@@ -1,0 +1,120 @@
+<div class="audit-logs-container fade-in">
+  <!-- Header Section -->
+  <div class="header-card">
+    <div class="header-content">
+      <div>
+        <h2 class="page-title">
+          <i class="fas fa-history text-primary me-2"></i> Audit Logs
+        </h2>
+        <p class="page-subtitle text-muted">Global master-list of all activity across your appointments.</p>
+      </div>
+
+      <!-- Clinic Filter for Doctors -->
+      <div *ngIf="userRole === 'Doctor'" class="clinic-filter glass-panel">
+        <label for="clinicSelect" class="form-label mb-0 me-2 text-muted fw-bold">Filter by Clinic:</label>
+        <select id="clinicSelect" class="form-select w-auto custom-select" [(ngModel)]="selectedClinicId"
+          (change)="onClinicChange()">
+          <option value="">All Clinics</option>
+          <option *ngFor="let clinic of clinics" [value]="clinic.clinicId">
+            {{ clinic.clinicName }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center my-5 fade-in">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2 text-muted">Loading audit logs...</p>
+  </div>
+
+  <!-- Logs Table -->
+  <div *ngIf="!isLoading" class="table-card glass-panel fade-in mt-4">
+    <div class="table-responsive">
+      <table class="table custom-table mb-0">
+        <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>Patient</th>
+            <th>Action</th>
+            <th>Performed By</th>
+            <th>Role</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of logs" class="align-middle">
+            <td>
+              <div class="fw-bold text-dark">{{ log.timestamp | date:'MMM dd, yyyy' }}</div>
+              <div class="text-muted small"><i class="far fa-clock me-1"></i>{{ log.timestamp | date:'shortTime' }}
+              </div>
+            </td>
+            <td>
+              <span class="patient-name">{{ log.patientName }}</span>
+            </td>
+            <td>
+              <span class="badge rounded-pill" [ngClass]="{
+                  'bg-success': log.action === 'Confirmed' || log.action === 'Completed',
+                  'bg-danger': log.action === 'Cancelled' || log.action === 'Rejected',
+                  'bg-primary': log.action === 'Created',
+                  'bg-warning text-dark': log.action === 'RescheduleProposed',
+                  'bg-secondary': log.action === 'Skipped'
+                }">
+                {{ log.action }}
+              </span>
+            </td>
+            <td>{{ log.actorName || 'System' }}</td>
+            <td>
+              <span class="badge bg-light text-dark border">{{ log.actorRole || 'System' }}</span>
+            </td>
+            <td class="text-muted small text-wrap" style="max-width: 300px;">
+              {{ log.notes || '-' }}
+            </td>
+          </tr>
+          <tr *ngIf="logs.length === 0">
+            <td colspan="6" class="text-center py-5">
+              <div class="empty-state">
+                <i class="fas fa-clipboard-list text-muted mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
+                <h5 class="text-muted">No audit logs found</h5>
+                <p class="text-muted small mb-0">There is no activity to display yet.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalLogs > 0"
+      class="card-footer bg-white border-0 d-flex justify-content-between align-items-center py-3 flex-wrap"
+      style="gap: 15px;">
+      <span class="text-muted small" style="margin-right: auto;">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalLogs) }} of {{
+        totalLogs }} logs
+      </span>
+
+      <div style="display: flex; gap: 5px; align-items: center; margin-top: 15px;">
+        <button class="btn btn-sm btn-outline-primary" [disabled]="currentPage === 1"
+          (click)="changePage(currentPage - 1)">
+          Prev
+        </button>
+
+        <ng-container *ngFor="let page of getPageNumbers()">
+          <button *ngIf="page !== '...'" class="btn btn-sm" [class.btn-primary]="currentPage === page"
+            [class.btn-outline-primary]="currentPage !== page" (click)="changePage($any(page))">
+            {{ page }}
+          </button>
+          <span *ngIf="page === '...'" style="padding: 0 5px; color: var(--text-secondary);">...</span>
+        </ng-container>
+
+        <button class="btn btn-sm btn-outline-primary" [disabled]="currentPage === totalPages"
+          (click)="changePage(currentPage + 1)">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

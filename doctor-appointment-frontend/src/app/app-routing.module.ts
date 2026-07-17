@@ -50,6 +50,7 @@ const routes: Routes = [
       { path: 'patient/book-appointment', component: BookComponent },
       { path: 'patient/profile', component: ProfileComponent },
       { path: 'patient/doctors', component: PatientDoctorsComponent },
+      { path: 'patient/audit-logs', loadComponent: () => import('./features/doctor/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent) },
 
       // Doctor Routes
       { path: 'doctor/dashboard', component: DashboardComponent },
@@ -59,17 +60,20 @@ const routes: Routes = [
       { path: 'doctor/clinics', component: ClinicsComponent },
       { path: 'doctor/admins', component: ClinicAdminsComponent },
       { path: 'doctor/profile', component: ProfileComponent },
+      { path: 'doctor/audit-logs', loadComponent: () => import('./features/doctor/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent) },
 
       // Clinic Admin Routes
       { path: 'admin/dashboard', component: DashboardComponent },
       { path: 'admin/appointments', component: DoctorAppointmentsComponent },
       { path: 'admin/profile', component: ProfileComponent },
+      { path: 'admin/audit-logs', loadComponent: () => import('./features/doctor/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent) },
 
       // Super Admin Routes
       { path: 'superadmin/dashboard', component: SuperAdminDashboardComponent },
       { path: 'superadmin/doctors', component: SuperAdminDoctorsComponent },
       { path: 'superadmin/clinics', component: SuperAdminClinicsComponent },
-      { path: 'superadmin/admins', component: SuperAdminAdminsComponent }
+      { path: 'superadmin/admins', component: SuperAdminAdminsComponent },
+      { path: 'superadmin/audit-logs', loadComponent: () => import('./features/doctor/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent) }
     ]
   },
   { path: '**', redirectTo: 'login' }

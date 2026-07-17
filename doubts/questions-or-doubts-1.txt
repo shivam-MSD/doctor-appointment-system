@@ -3,3 +3,98 @@ there are some problems :-
 1. if patient books appointment for date 12-07-2026 and doctor or admin has not yet confirm the appoitmnet and if that date is gone means - it is like appointment is expires then, what can be do?? Because that appointment is still showing in the doctors dashboard, eg, if todays date is 13-07-2026 then it should not show the appointment request for all the date before the current date. It should be expired.
 And what if this happens??? 
 So, patient is waiting for the appointment confitmation and but the date expires then what can patient do? he has to book nw appointment??
+
+-----------------------------------------------------------------------------
+Completed
+-----------------------------------------------------------------------------
+
+2. When doctors checkup and clinic on complete then then there is confirmation popup is opening.
+[Are you sure you want to mark this patient's appointment as completed? Any comments and report notes entered will be permanently saved to their medical records and this slot will move to the end of today's queue. btn-name = "Confirm Completion", please also add Note button and if note is not added then "disable the "Confirma Completion" btn enable only if Note is added, because once doctor complete the appoitmntment he is unable to add note. ]
+Else another option is - allow doctor to add note even after completing the appointment.
+-----------------------------------------------------------------------------
+Completed
+-----------------------------------------------------------------------------
+
+3. Doubt, is it ok to keep timing on the appointment booking? because currently, it happening like :-
+when patient book appointment at 2:00 to 2:30 and another patient bookm appointment 2:00 to 2:30, so patient 2 gets the error, already booked appointment.
+
+so, my question is - do we need to give option to patient to select appointment timings??
+generally, doctor approves and give the timeslot to the patient.
+
+what should be the approach please tell me.
+
+
+
+
+
+4. 
+
+in the first image, the "Book at this branch" button is enable, but the issue is :-
+there are no dates remaining for booking the appointment.
+
+example there are different cases possible ;-
+1. if booking window is from 10th July to 14th July 2026 - clinic open days are 
+Monday, Wend, Friday
+Todays date is 14th July, so the button is book at this branch is visible, but today is Tuesday.
+Which means patient cannot be able to book appointment because
+Tuesday - clinic is closed.
+
+So, solution for this is :- please add Calander type UI in the doctor and admin - "Edit timing Popup.
+where only days are enable in the calander , which they select above. [other days, dates are disable]
+So during section, the last date is always in which clinic remains open.
+Add to UI such that doctor and admin can select Dates, On first clic to last clinic in the calender, all the date are selected excluding the date in which clinc is closed.
+
+
+---------------------------------------------------------------------------------------------------------
+
+Why we are showing time slot selection? to the patient at the time of booking??
+is it good? 
+Because it is very hactic to mange each patient timeslot.
+So, it is good that patient should only select the date of the appointment and doctor should add the appointment timing for the patient. and patient should also visible the commnent and appointment timing on the dashboard.
+Available Time Slots * (Select one)
+
+Am i right?
+because patient has to manage the time not doctor manage the time because patient need doctor.
+
+---------------------------------------------------------------------------------------------------------
+
+1. when doctor rescedule the appointment, the time is not match, he set 4:00 PM time but it is showing 10:30 AM time.
+2. Also I just want to show the Confirmed, pending, reschedule appointments on the Patient dashboard means in the upcoming appointments, rest appointment status should not be displayed.
+-----
+And you have sort the data in Asending order to upcoming appointment, and then descending order for the expire or completed appointment.
+
+But sort the data in Asending order to upcoming appointment in order - asending by date, then by 
+
+
+
+____________________________________________________________
+
+1. You dont have to enhance the columns, just you have t show in the detail view means in the history popup, Not in the UI, TIMESTAMP is required for maintaining the history not to show in the column. or UI.
+
+2. Also, Patient, doctor, and admin can cancel the appointment do code according to it.
+
+3. Now, I think in the patient "Appoitment history" - it is ok to now show the upcoming and todays appointment, just show the past dates appointment, even if the appotiemt is completed today then it should be should on the dashboard and it will automatically move to appointment history next day.
+
+---------------------------------------------------------------------------------------
+
+Now, I have question that 
+There should be 2 tabs for appoitment for all the users - doctor, patient, admin.
+
+1 tab is My appoitment which shows all the past appointments 
+ - for Patient :- it will display all the past appoitment, it should also contain the todays date cancel appointment and that should not be shown in patient dashbard.
+- for doctor :- it will display 
+
+
+2 Appointment history which should show each and every appointment history according to the timestamp this timestamp is that timestamp that is actual time stamp, when the appoitmnt is created, edited, confirmed, cancelled, reschedule timestamp here status and date of the appointment does not matter. So that there is track or record of when the what was the status of the appointment at what time it was .......
+
+____________________________________________________
+
+added timestamp code, the track all the activities of each user.
+added new tab - audit logs for each user.
+
+________________________________________________________________________
+
+
+You have added "LogAppointmentActionAsync" in backend, which is independent and patient should not have to wait for that onl completing this, so we can implement this code using event and delegate. 
+Please implement the code for me and how you have implemented this event and delegate, please explain me in detail for me, along with the execution flow, how it executes. and why patient or doctor dont have to wait for completion of the LogAppointmentActionAsync
+

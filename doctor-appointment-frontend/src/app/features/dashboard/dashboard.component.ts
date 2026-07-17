@@ -32,6 +32,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   rescheduleDate = '';
   rescheduleTime = '';
   rescheduleReason = '';
+  todayDate = new Date().toISOString().split('T')[0];
 
   patientPage = 1;
   patientSize = 10;
@@ -222,13 +223,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.role === 'Patient') {
       this.appointmentService.getPatientDashboard(this.statusFilter, this.historyMode, 1, 1000).subscribe({
         next: (res) => {
-          let fetchedAppointments = res.items;
-          if (!this.historyMode) {
-            fetchedAppointments = fetchedAppointments.filter((a: any) => 
-              ['Confirmed', 'Pending', 'RescheduleProposed'].includes(a.status)
-            );
-          }
-          this.appointments = fetchedAppointments;
+          this.appointments = res.items;
           this.isDashboardLoading = false;
         },
         error: () => {
@@ -242,12 +237,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Doctor or Clinic Admin
       const filters: any = {};
       if (this.role === 'Doctor') {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-        filters.startDate = todayStart.toISOString();
-        filters.endDate = todayEnd.toISOString();
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayString = `${year}-${month}-${day}`;
+        filters.startDate = todayString;
+        filters.endDate = todayString;
       } else {
         if (this.statusFilter) filters.status = this.statusFilter;
       }
@@ -1236,6 +1232,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  getPatientBadgeText(status: string): string {
+    switch (status) {
+      case 'Completed': return '✓ Checked';
+      case 'Pending': return 'Waitlist';
+      case 'RescheduleProposed': return '⏳ Rescheduling';
+      case 'Cancelled': return '❌ Cancelled';
+      case 'Rejected': return '❌ Rejected';
+      case 'Skipped': return '⏳ Skip / Late';
+      default: return status;
+    }
+  }
+
   formatClinicTimings(startTime: string, endTime: string): string {
     if (!startTime || !endTime) return '';
     const starts = startTime.split(',').map(t => t.trim());
@@ -1309,5 +1317,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     return false;
+  }
+
+  showTimelineModal = false;
+  isTimelineLoading = false;
+  timelineLogs: any[] = [];
+
+  openTimelineModal(appointmentId: string): void {
+    this.showTimelineModal = true;
+    this.isTimelineLoading = true;
+    this.timelineLogs = [];
+    
+    this.appointmentService.getAuditLogs(1, 100, undefined, appointmentId).subscribe({
+      next: (res) => {
+        this.timelineLogs = res.items || [];
+        this.isTimelineLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load timeline', err);
+        this.isTimelineLoading = false;
+        this.toastService.showError('Failed to load audit trail.');
+      }
+    });
+  }
+
+  closeTimelineModal(): void {
+    this.showTimelineModal = false;
   }
 }

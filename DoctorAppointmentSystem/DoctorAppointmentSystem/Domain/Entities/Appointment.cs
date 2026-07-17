@@ -59,6 +59,14 @@ namespace DoctorAppointmentSystem.Domain.Entities
 
 		[MaxLength(500)]
 		public string? RescheduleReason { get; set; }
+
+		// Detailed Status Timestamps
+		public DateTime? ConfirmedDate { get; set; }
+		public DateTime? RescheduleProposedAt { get; set; }
+		public DateTime? CancelledDate { get; set; }
+		
+		[MaxLength(50)]
+		public string? CancelledBy { get; set; } // "Patient", "Doctor", or "Admin"
 	}
 
 	public enum EConsultationType

@@ -24,6 +24,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 		public DbSet<Admin> Admins { get; set; }
 		public DbSet<Notification> Notifications { get; set; }
 		public DbSet<ClinicAuditLog> ClinicAuditLogs { get; set; }
+		public DbSet<AppointmentAuditLog> AppointmentAuditLogs { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)

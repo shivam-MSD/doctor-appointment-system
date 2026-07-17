@@ -140,6 +140,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				_dbContext.Entry(appointment).Property("DoctorId").CurrentValue = dto.DoctorId;
 
 				await _dbContext.SaveChangesAsync();
+				await LogAppointmentActionAsync(appointment.AppointmentId, "Created", userId, "Patient", "Booked appointment.");
 
 				// Trigger notifications
 				var dateStr = appointment.AppointmentDate.ToString("yyyy-MM-dd");
@@ -193,9 +194,11 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				throw new ForbiddenException("You do not have permission to cancel appointments for this patient profile.");
 			}
-
 			appointment.EAppointmentStatus = EAppointmentStatus.Cancelled;
+			appointment.CancelledDate = DateTime.UtcNow;
+			appointment.CancelledBy = "Patient";
 			await _dbContext.SaveChangesAsync();
+			await LogAppointmentActionAsync(appointment.AppointmentId, "Cancelled", userId, "Patient", "Patient cancelled appointment.");
 
 			// Trigger cancellation notifications
 			var doctorIdObj = _dbContext.Entry(appointment).Property("DoctorId").CurrentValue;
@@ -249,6 +252,11 @@ namespace DoctorAppointmentSystem.Application.Services
                 }
             }
             await _dbContext.SaveChangesAsync();
+            
+            foreach (var app in staleAppointments)
+            {
+                await LogAppointmentActionAsync(app.AppointmentId, "Skipped", null, "System", "Auto-expired past pending appointment.");
+            }
             await _notificationService.SendRefreshSignalAsync("Appointments");
         }
     }
@@ -281,9 +289,12 @@ namespace DoctorAppointmentSystem.Application.Services
             throw new ForbiddenException("You do not have permission to cancel this appointment.");
         }
         appointment.EAppointmentStatus = EAppointmentStatus.Cancelled;
+        appointment.CancelledDate = DateTime.UtcNow;
+        appointment.CancelledBy = isDoctor ? "Doctor" : "Admin";
         // Optionally store cancellation reason if a property exists
         // appointment.CancellationReason = reason;
         await _dbContext.SaveChangesAsync();
+        await LogAppointmentActionAsync(appointment.AppointmentId, "Cancelled", userId, isDoctor ? "Doctor" : "Admin", string.IsNullOrWhiteSpace(reason) ? "Cancelled by clinic." : reason);
         var msg = $"Your appointment on {appointment.AppointmentDate:yyyy-MM-dd} with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been cancelled. Reason: {reason}";
         var patientUser = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
                 if (patientUser != null)
@@ -493,15 +504,33 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			var today = DateTime.Today;
+			if (isHistory)
+			{
+				query = query.Where(app => app.AppointmentDate < today);
+			}
+			else
+			{
+				query = query.Where(app => app.AppointmentDate >= today);
+			}
 
 			var totalCount = await query.CountAsync();
 			
-			// Custom Sort: Active (Confirmed/Pending) first (ascending), then Inactive (Completed/Cancelled/Rejected) (descending)
-			var items = await query
-				.OrderByDescending(app => app.EAppointmentStatus == EAppointmentStatus.Confirmed || app.EAppointmentStatus == EAppointmentStatus.Pending) // Active first
-				.ThenBy(app => (app.EAppointmentStatus == EAppointmentStatus.Confirmed || app.EAppointmentStatus == EAppointmentStatus.Pending) ? app.AppointmentDate : DateTime.MaxValue) // Active ascending
-				.ThenByDescending(app => (app.EAppointmentStatus == EAppointmentStatus.Confirmed || app.EAppointmentStatus == EAppointmentStatus.Pending) ? DateTime.MinValue : app.AppointmentDate) // Inactive descending
-				.ThenBy(app => app.QueueNumber)
+			IQueryable<Appointment> sortedQuery;
+			if (isHistory)
+			{
+				// History: Sort strictly by Date descending (most recent first)
+				sortedQuery = query.OrderByDescending(app => app.AppointmentDate);
+			}
+			else
+			{
+				// Dashboard: Active first, then Inactive
+				sortedQuery = query
+					.OrderByDescending(app => app.EAppointmentStatus == EAppointmentStatus.Confirmed || app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.RescheduleProposed)
+					.ThenBy(app => app.AppointmentDate)
+					.ThenBy(app => app.QueueNumber);
+			}
+
+			var items = await sortedQuery
 				.Skip((page - 1) * size)
 				.Take(size)
 				.ToListAsync();
@@ -698,7 +727,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				DoctorAssignedTime = app.DoctorAssignedTime,
 				RescheduleProposedDate = app.RescheduleProposedDate,
 				RescheduleProposedTime = app.RescheduleProposedTime,
-				RescheduleReason = app.RescheduleReason
+				RescheduleReason = app.RescheduleReason,
+				ConfirmedDate = app.ConfirmedDate,
+				RescheduleProposedAt = app.RescheduleProposedAt,
+				CancelledDate = app.CancelledDate,
+				CancelledBy = app.CancelledBy
 			};
 		}
 
@@ -792,10 +825,12 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			appointment.DoctorAssignedTime = dto.DoctorAssignedTime;
 			appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
+			appointment.ConfirmedDate = DateTime.UtcNow;
 			if (!string.IsNullOrWhiteSpace(dto.Comment))
 				appointment.Comment = dto.Comment.Trim();
 
 			await _dbContext.SaveChangesAsync();
+			await LogAppointmentActionAsync(appointment.AppointmentId, "Confirmed", userId, null, "Assigned time: " + dto.DoctorAssignedTime.ToString("h:mm tt"));
 
 			// Notify patient
 			var userPatient = await _dbContext.UserPatients
@@ -907,7 +942,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			};
 		}
 
-		public async Task ApproveAppointmentAsync(Guid appointmentId, string? comment, DateTime? assignedTime = null)
+		public async Task ApproveAppointmentAsync(Guid userId, Guid appointmentId, string? comment, DateTime? assignedTime = null)
 		{
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
@@ -920,6 +955,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
+			appointment.ConfirmedDate = DateTime.UtcNow;
 			if (!string.IsNullOrWhiteSpace(comment))
 			{
 				appointment.Comment = comment.Trim();
@@ -931,6 +967,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			await _dbContext.SaveChangesAsync();
+			await LogAppointmentActionAsync(appointment.AppointmentId, "Confirmed", userId, null, comment ?? "Approved appointment.");
 
 			// Refresh SignalR hubs
 			var userPatient = await _dbContext.UserPatients
@@ -942,7 +979,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
 
-		public async Task RejectAppointmentAsync(Guid appointmentId, string reason)
+		public async Task RejectAppointmentAsync(Guid userId, Guid appointmentId, string reason)
 		{
 			if (string.IsNullOrWhiteSpace(reason))
 			{
@@ -963,6 +1000,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			appointment.RejectionReason = reason.Trim();
 
 			await _dbContext.SaveChangesAsync();
+			await LogAppointmentActionAsync(appointment.AppointmentId, "Rejected", userId, null, reason ?? "Rejected appointment.");
 
 			// Refresh SignalR hubs
 			var userPatient = await _dbContext.UserPatients
@@ -974,7 +1012,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
 
-		public async Task CompleteAppointmentAsync(Guid appointmentId, string? comment, string? report)
+		public async Task CompleteAppointmentAsync(Guid userId, Guid appointmentId, string? comment, string? report)
 		{
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
@@ -997,6 +1035,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			await _dbContext.SaveChangesAsync();
+			await LogAppointmentActionAsync(appointment.AppointmentId, "Completed", userId, null, "Completed consultation.");
 
 			// Refresh SignalR hubs
 			var userPatient = await _dbContext.UserPatients
@@ -1008,7 +1047,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
 
-		public async Task MovePendingAppointmentAsync(Guid appointmentId, string? comment)
+		public async Task MovePendingAppointmentAsync(Guid userId, Guid appointmentId, string? comment)
 		{
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
@@ -1027,6 +1066,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			await _dbContext.SaveChangesAsync();
+			await LogAppointmentActionAsync(appointment.AppointmentId, "Skipped", userId, null, "Marked as no-show/late.");
 
 			// Refresh SignalR hubs
 			var userPatient = await _dbContext.UserPatients
@@ -1108,6 +1148,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			var clinic = appointment.Clinic;
 
+			if (dto.ProposedDate.Date < DateTime.Today)
+			{
+				throw new BadRequestException("Proposed reschedule date cannot be in the past.");
+			}
+
 			// Validation: Booking Window
 			if (clinic != null && clinic.BookingWindowEndDate.HasValue && dto.ProposedDate.Date > clinic.BookingWindowEndDate.Value.Date)
 			{
@@ -1140,8 +1185,18 @@ namespace DoctorAppointmentSystem.Application.Services
 			appointment.RescheduleProposedDate = dto.ProposedDate;
 			appointment.RescheduleProposedTime = dto.ProposedTime;
 			appointment.RescheduleReason = dto.Reason;
+			appointment.RescheduleProposedAt = DateTime.UtcNow;
 
 			await _dbContext.SaveChangesAsync();
+			await LogAppointmentActionAsync(appointment.AppointmentId, "RescheduleProposed", userId, isDoctor ? "Doctor" : "Admin", $"Proposed reschedule to {dto.ProposedDate:yyyy-MM-dd} at {dto.ProposedTime:h:mm tt}. Reason: {dto.Reason}");
+
+			var patientId = _dbContext.Entry(appointment).Property<Guid>("PatientId").CurrentValue;
+			var userPatients = await _dbContext.UserPatients.Where(up => up.PatientId == patientId).ToListAsync();
+			
+			foreach (var up in userPatients)
+			{
+				await _notificationService.CreateNotificationAsync(up.UserId, $"A new reschedule time has been proposed for your appointment on {appointment.AppointmentDate:MMM dd, yyyy}. Please review it.");
+			}
 
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 			}
@@ -1184,6 +1239,7 @@ namespace DoctorAppointmentSystem.Application.Services
 						throw new BadRequestException("This appointment was already updated.");
 
 					appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
+					appointment.ConfirmedDate = DateTime.UtcNow;
 					appointment.AppointmentDate = appointment.RescheduleProposedDate.Value;
 					appointment.DoctorAssignedTime = appointment.RescheduleProposedTime;
 					
@@ -1192,6 +1248,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					appointment.RescheduleReason = null;
 
 					await _dbContext.SaveChangesAsync();
+					await LogAppointmentActionAsync(appointment.AppointmentId, "Confirmed", userId, "Patient", "Patient accepted rescheduled time.");
 				}
 				finally
 				{
@@ -1201,11 +1258,131 @@ namespace DoctorAppointmentSystem.Application.Services
 			else
 			{
 				appointment.EAppointmentStatus = EAppointmentStatus.Cancelled;
+				appointment.CancelledDate = DateTime.UtcNow;
+				appointment.CancelledBy = "Patient";
 				appointment.Comment = "Patient declined the proposed reschedule date.";
 				await _dbContext.SaveChangesAsync();
+				await LogAppointmentActionAsync(appointment.AppointmentId, "Cancelled", userId, "Patient", "Patient declined the proposed reschedule date.");
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
+
+		private async Task LogAppointmentActionAsync(Guid appointmentId, string action, Guid? actorUserId, string? actorRole, string? notes)
+		{
+			var actorName = "System";
+			if (actorUserId.HasValue)
+			{
+				var user = await _dbContext.Users.FindAsync(actorUserId.Value);
+				if (user != null)
+				{
+					var patient = await _dbContext.Patients.FirstOrDefaultAsync(p => _dbContext.UserPatients.Any(up => up.PatientId == p.PatientId && up.UserId == user.UserId));
+					var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == user.UserId);
+					var admin = await _dbContext.Admins.FirstOrDefaultAsync(a => a.User.UserId == user.UserId);
+					
+					if (patient != null) { actorName = patient.FirstName + " " + patient.LastName; actorRole ??= "Patient"; }
+					else if (doctor != null) { actorName = doctor.FirstName + " " + doctor.LastName; actorRole ??= "Doctor"; }
+					else if (admin != null) { actorName = admin.FirstName + " " + admin.LastName; actorRole ??= "Admin"; }
+					else { actorName = user.Email; actorRole ??= "System"; }
+				}
+			}
+
+			var log = new DoctorAppointmentSystem.Domain.Entities.AppointmentAuditLog
+			{
+				LogId = Guid.NewGuid(),
+				AppointmentId = appointmentId,
+				Action = action,
+				Timestamp = DateTime.UtcNow,
+				ActorUserId = actorUserId,
+				ActorName = actorName,
+				ActorRole = actorRole ?? "System",
+				Notes = notes
+			};
+
+			_dbContext.AppointmentAuditLogs.Add(log);
+			await _dbContext.SaveChangesAsync();
+		}
+
+		public async Task<PagedResult<AppointmentAuditLogDto>> GetAppointmentAuditLogsAsync(Guid userId, Guid? clinicId, Guid? appointmentId, int page, int size)
+		{
+			var query = _dbContext.AppointmentAuditLogs
+				.Include(l => l.Appointment)
+				.ThenInclude(a => a.Patient)
+				.AsQueryable();
+
+			if (appointmentId.HasValue)
+			{
+				query = query.Where(l => l.AppointmentId == appointmentId.Value);
+			}
+			else
+			{
+				// If no specific appointment is requested, we need to apply role-based filtering (Global Audit Logs view)
+				var user = await _dbContext.Users.FindAsync(userId);
+				var isSuperAdmin = false;
+				if (user != null)
+				{
+					var roleId = _dbContext.Entry(user).Property<Guid>("RoleId").CurrentValue;
+					isSuperAdmin = await _dbContext.Roles.AnyAsync(r => r.RoleId == roleId && r.Role == ERole.SuperAdmin);
+				}
+				
+				if (!isSuperAdmin)
+				{
+					var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
+					var admin = await _dbContext.Admins.Include(a => a.Clinic).FirstOrDefaultAsync(a => a.User.UserId == userId);
+
+					if (doctor != null)
+					{
+						query = query.Where(l => l.Appointment.Doctor.DoctorId == doctor.DoctorId);
+						if (clinicId.HasValue)
+						{
+							query = query.Where(l => l.Appointment.Clinic.ClinicId == clinicId.Value);
+						}
+					}
+					else if (admin != null)
+					{
+						query = query.Where(l => l.Appointment.Clinic.ClinicId == admin.Clinic.ClinicId);
+					}
+					else
+					{
+						// Patients or Unassigned can only see logs for appointments where they are the patient.
+						var linkedPatientIds = await _dbContext.UserPatients
+							.Where(up => up.UserId == userId)
+							.Select(up => up.PatientId)
+							.ToListAsync();
+						
+						query = query.Where(l => linkedPatientIds.Contains(l.Appointment.Patient.PatientId));
+					}
+				}
+			}
+
+			var totalCount = await query.CountAsync();
+
+			var items = await query
+				.OrderByDescending(l => l.Timestamp)
+				.Skip((page - 1) * size)
+				.Take(size)
+				.Select(l => new AppointmentAuditLogDto
+				{
+					LogId = l.LogId,
+					AppointmentId = l.AppointmentId,
+					PatientName = l.Appointment.Patient.FirstName + " " + l.Appointment.Patient.LastName,
+					Action = l.Action,
+					Timestamp = l.Timestamp,
+					ActorName = l.ActorName,
+					ActorRole = l.ActorRole,
+					Notes = l.Notes
+				})
+				.ToListAsync();
+
+			// SQL Server datetime2 drops DateTimeKind. Explicitly specify Utc so the JSON serializer appends 'Z'
+			// This ensures the Angular frontend correctly parses it as UTC and converts it to the user's local timezone.
+			foreach (var item in items)
+			{
+				item.Timestamp = DateTime.SpecifyKind(item.Timestamp, DateTimeKind.Utc);
+			}
+
+			return new PagedResult<AppointmentAuditLogDto>(items, totalCount, page, size);
+		}
 	}
 }
+

@@ -45,6 +45,7 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   rescheduleDate = '';
   rescheduleTime = '';
   rescheduleReason = '';
+  todayDate = new Date().toISOString().split('T')[0];
 
   // Assign Time Modal State
   showAssignTimeModal = false;
@@ -392,5 +393,31 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
   getConsultationTypeLabel(type: string): string {
     return type === 'InPerson' ? '🏠 In-Person Visit' : '🎥 Video Consultation';
+  }
+
+  showTimelineModal = false;
+  isTimelineLoading = false;
+  timelineLogs: any[] = [];
+
+  openTimelineModal(appointmentId: string): void {
+    this.showTimelineModal = true;
+    this.isTimelineLoading = true;
+    this.timelineLogs = [];
+    
+    this.appointmentService.getAuditLogs(1, 100, undefined, appointmentId).subscribe({
+      next: (res) => {
+        this.timelineLogs = res.items || [];
+        this.isTimelineLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load timeline', err);
+        this.isTimelineLoading = false;
+        this.toastService.showError('Failed to load audit trail.');
+      }
+    });
+  }
+
+  closeTimelineModal(): void {
+    this.showTimelineModal = false;
   }
 }

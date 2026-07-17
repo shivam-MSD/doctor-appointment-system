@@ -28,6 +28,10 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public DateTime? RescheduleProposedDate { get; set; }
 		public DateTime? RescheduleProposedTime { get; set; }
 		public string? RescheduleReason { get; set; }
+		public DateTime? ConfirmedDate { get; set; }
+		public DateTime? RescheduleProposedAt { get; set; }
+		public DateTime? CancelledDate { get; set; }
+		public string? CancelledBy { get; set; }
 	}
 
 	public class CreateAppointmentDto
@@ -123,5 +127,17 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public Guid AppointmentId { get; set; }
 		[Required]
 		public bool Accept { get; set; }
+	}
+
+	public class AppointmentAuditLogDto
+	{
+		public Guid LogId { get; set; }
+		public Guid AppointmentId { get; set; }
+		public string? PatientName { get; set; }
+		public string Action { get; set; }
+		public DateTime Timestamp { get; set; }
+		public string? ActorName { get; set; }
+		public string? ActorRole { get; set; }
+		public string? Notes { get; set; }
 	}
 }

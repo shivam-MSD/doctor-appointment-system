@@ -18,10 +18,10 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<IEnumerable<DoctorDto>> SearchDoctorsAsync(string? state, string? city, Guid? specializationId, string? nameSearch);
 		Task<IEnumerable<ClinicDto>> GetClinicsByDoctorIdAsync(Guid doctorId);
 		Task<BookingDetailsDto> GetBookingDetailsAsync(Guid doctorId, Guid clinicId);
-		Task ApproveAppointmentAsync(Guid appointmentId, string? comment, DateTime? assignedTime = null);
-		Task RejectAppointmentAsync(Guid appointmentId, string reason);
-		Task CompleteAppointmentAsync(Guid appointmentId, string? comment, string? report);
-		Task MovePendingAppointmentAsync(Guid appointmentId, string? comment);
+		Task ApproveAppointmentAsync(Guid userId, Guid appointmentId, string? comment, DateTime? assignedTime = null);
+		Task RejectAppointmentAsync(Guid userId, Guid appointmentId, string reason);
+		Task CompleteAppointmentAsync(Guid userId, Guid appointmentId, string? comment, string? report);
+		Task MovePendingAppointmentAsync(Guid userId, Guid appointmentId, string? comment);
 		Task<PatientDto> GetPatientDetailsAsync(Guid userId, Guid patientId);
 
 		/// <summary>Returns booking capacity info for a specific clinic on a given date.</summary>
@@ -35,5 +35,8 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		/// <summary>Patient accepts or declines the proposed reschedule.</summary>
 		Task RespondToRescheduleAsync(Guid userId, RespondRescheduleDto dto);
+
+		/// <summary>Gets audit logs for appointments.</summary>
+		Task<PagedResult<AppointmentAuditLogDto>> GetAppointmentAuditLogsAsync(Guid userId, Guid? clinicId, Guid? appointmentId, int page, int size);
 	}
 }

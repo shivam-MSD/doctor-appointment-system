@@ -20,6 +20,10 @@ export interface Appointment {
   rescheduleProposedDate?: string;
   rescheduleProposedTime?: string;
   rescheduleReason?: string;
+  confirmedDate?: string;
+  rescheduleProposedAt?: string;
+  cancelledDate?: string;
+  cancelledBy?: string;
 }
 
 export enum EConsultationType {

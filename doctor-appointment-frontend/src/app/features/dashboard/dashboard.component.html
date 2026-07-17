@@ -251,10 +251,15 @@
                 {{ getStatusTitle(app.status) }}
               </span>
             </td>
-            <td>
+            <td style="display: flex; gap: 8px;">
               <button class="btn btn-sm-outline" (click)="openPatientHistoryModal(app)"
                 style="border-color: var(--accent-cyan); color: var(--accent-cyan); padding: 6px 12px; font-size: 0.8rem;">
-                📜 View Notes
+                📜 Notes
+              </button>
+              <button class="btn btn-sm-outline" (click)="openTimelineModal(app.appointmentId)"
+                style="border-color: #8b5cf6; color: #8b5cf6; padding: 6px 12px; font-size: 0.8rem;"
+                title="View Audit Trail">
+                ⏱️ Timeline
               </button>
             </td>
             <td>
@@ -402,8 +407,7 @@
                 <span *ngIf="app.status !== 'Confirmed'" class="badge"
                   [class.badge-confirmed]="app.status === 'Completed'" [class.badge-pending]="app.status === 'Pending'"
                   style="font-size: 0.68rem; padding: 2px 6px; margin-top: 4px; display: inline-block;">
-                  {{ app.status === 'Completed' ? '✓ Checked' : (app.status === 'Pending' ? 'Waitlist' : '⏳ Skip /
-                  Late') }}
+                  {{ getPatientBadgeText(app.status) }}
                 </span>
               </td>
               <td style="text-align: center;">
@@ -806,6 +810,11 @@
                         }}</span>
                       <span *ngIf="h.status === 'Cancelled' && h.rejectionReason"
                         style="display: block; color: #ef4444;">⚠️ Rejection: {{ h.rejectionReason }}</span>
+                      
+                      <!-- Timestamps -->
+                      <span *ngIf="h.confirmedDate" style="display: block; color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px;">✔️ Confirmed: {{ h.confirmedDate | date:'MMM d, y, h:mm a' }}</span>
+                      <span *ngIf="h.rescheduleProposedAt" style="display: block; color: var(--text-secondary); font-size: 0.75rem;">📅 Reschedule Proposed: {{ h.rescheduleProposedAt | date:'MMM d, y, h:mm a' }}</span>
+                      <span *ngIf="h.cancelledDate" style="display: block; color: #ef4444; font-size: 0.75rem; margin-top: 4px;">❌ Cancelled: {{ h.cancelledDate | date:'MMM d, y, h:mm a' }} <span *ngIf="h.cancelledBy">by {{ h.cancelledBy }}</span></span>
                     </div>
                   </td>
                 </tr>
@@ -863,7 +872,12 @@
           <tr>
             <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Status</td>
             <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
-              <span [class]="getStatusClass(selectedAppForHistory.status)">{{ selectedAppForHistory.status }}</span>
+              <span [class]="getStatusClass(selectedAppForHistory.status)" style="margin-bottom: 6px; display: inline-block;">{{ selectedAppForHistory.status }}</span>
+              <div style="font-size: 0.8rem;">
+                <span *ngIf="selectedAppForHistory.confirmedDate" style="display: block; color: var(--text-secondary);">✔️ Confirmed: {{ selectedAppForHistory.confirmedDate | date:'MMM d, y, h:mm a' }}</span>
+                <span *ngIf="selectedAppForHistory.rescheduleProposedAt" style="display: block; color: var(--text-secondary);">📅 Reschedule Proposed: {{ selectedAppForHistory.rescheduleProposedAt | date:'MMM d, y, h:mm a' }}</span>
+                <span *ngIf="selectedAppForHistory.cancelledDate" style="display: block; color: #ef4444;">❌ Cancelled: {{ selectedAppForHistory.cancelledDate | date:'MMM d, y, h:mm a' }} <span *ngIf="selectedAppForHistory.cancelledBy">by {{ selectedAppForHistory.cancelledBy }}</span></span>
+              </div>
             </td>
           </tr>
         </table>
@@ -1728,7 +1742,7 @@
         </p>
         <div class="form-group" style="margin-bottom: 15px;">
           <label class="form-label">Proposed Date <span class="text-danger">*</span></label>
-          <input type="date" class="form-control" [(ngModel)]="rescheduleDate" (change)="validateRescheduleDate()">
+          <input type="date" class="form-control" [(ngModel)]="rescheduleDate" (change)="validateRescheduleDate()" [min]="todayDate">
         </div>
 
         <div class="form-group" style="margin-bottom: 15px;">
@@ -1747,6 +1761,68 @@
         <button class="btn btn-primary" (click)="submitReschedulePropose()"
           [disabled]="!rescheduleDate || !rescheduleReason" style="background: #ec4899; border-color: #ec4899;">Propose
           Reschedule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline Modal -->
+  <div class="modal-backdrop" *ngIf="showTimelineModal" style="z-index: 1060;">
+    <div class="modal-container" style="max-width: 600px; width: 90%;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.25rem;">⏱️</span>
+          <h3 style="margin: 0; font-size: 1.2rem;">Appointment Audit Trail</h3>
+        </div>
+        <button class="btn-close" (click)="closeTimelineModal()"
+          style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+      </div>
+      
+      <div class="modal-body" style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+        
+        <div *ngIf="isTimelineLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Loading audit trail...</p>
+        </div>
+
+        <div *ngIf="!isTimelineLoading && timelineLogs.length === 0" class="text-center py-4 text-muted">
+          No audit trail available for this appointment.
+        </div>
+
+        <div *ngIf="!isTimelineLoading && timelineLogs.length > 0" class="timeline-container" style="position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 10px;">
+          <div *ngFor="let log of timelineLogs; let i = index" class="timeline-item" style="position: relative; margin-bottom: 25px;">
+            <!-- Timeline dot -->
+            <div class="timeline-dot" style="position: absolute; left: -26px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-cyan); border: 2px solid white; box-shadow: 0 0 0 2px var(--accent-cyan);"></div>
+            
+            <div class="timeline-content" style="background: rgba(255, 255, 255, 0.05); padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <span class="badge" 
+                  [ngClass]="{
+                    'bg-success': log.action === 'Confirmed' || log.action === 'Completed',
+                    'bg-danger': log.action === 'Cancelled' || log.action === 'Rejected',
+                    'bg-primary': log.action === 'Created',
+                    'bg-warning text-dark': log.action === 'RescheduleProposed',
+                    'bg-secondary': log.action === 'Skipped'
+                  }" style="font-size: 0.75rem;">
+                  {{ log.action }}
+                </span>
+                <span class="text-muted small" style="font-size: 0.75rem;">
+                  {{ log.timestamp | date:'MMM dd, yyyy, h:mm a' }}
+                </span>
+              </div>
+              
+              <div style="font-size: 0.9rem; color: var(--text-color); margin-bottom: 5px;">
+                <i class="fas fa-user-circle me-1 text-muted"></i> 
+                <strong>{{ log.actorName || 'System' }}</strong> 
+                <span class="text-muted small">({{ log.actorRole || 'System' }})</span>
+              </div>
+              
+              <div *ngIf="log.notes" style="font-size: 0.85rem; color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 8px; border-radius: 4px; margin-top: 8px;">
+                "{{ log.notes }}"
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

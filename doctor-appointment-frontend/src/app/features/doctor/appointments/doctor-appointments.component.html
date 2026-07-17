@@ -260,7 +260,12 @@
                   </div>
                   <ng-template #emptyNotes><span class="text-muted">-</span></ng-template>
                 </td>
-                <td style="display: flex; gap: 8px;">
+                <td style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button class="btn btn-sm-outline" (click)="openTimelineModal(app.appointmentId)"
+                    style="border: 1px solid #8b5cf6; color: #8b5cf6; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; background: transparent; cursor: pointer;"
+                    title="View Audit Trail">
+                    ⏱️ Timeline
+                  </button>
                   <!-- Cancel button available for Pending/Confirmed/RescheduleProposed -->
                   <button
                     *ngIf="app.status === 'Pending' || app.status === 'Confirmed' || app.status === 'RescheduleProposed'"
@@ -433,7 +438,7 @@
 
         <div class="form-group" style="margin-bottom: 15px;">
           <label class="form-label">Proposed Date <span class="text-danger">*</span></label>
-          <input type="date" class="form-control" [(ngModel)]="rescheduleDate" (change)="validateRescheduleDate()">
+          <input type="date" class="form-control" [(ngModel)]="rescheduleDate" (change)="validateRescheduleDate()" [min]="todayDate">
         </div>
 
         <div class="form-group" style="margin-bottom: 15px;">
@@ -494,4 +499,64 @@
     </div>
   </div>
 
+  <!-- Timeline Modal -->
+  <div class="modal-backdrop" *ngIf="showTimelineModal" style="z-index: 1060;">
+    <div class="modal-content glass-card" style="max-width: 600px; padding: 0; width: 90%;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.25rem;">⏱️</span>
+          <h3 style="margin: 0; font-size: 1.2rem;">Appointment Audit Trail</h3>
+        </div>
+        <button class="btn-close" (click)="closeTimelineModal()"
+          style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+      </div>
+      
+      <div class="modal-body" style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+        
+        <div *ngIf="isTimelineLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Loading audit trail...</p>
+        </div>
+
+        <div *ngIf="!isTimelineLoading && timelineLogs.length === 0" class="text-center py-4 text-muted">
+          No audit trail available for this appointment.
+        </div>
+
+        <div *ngIf="!isTimelineLoading && timelineLogs.length > 0" class="timeline-container" style="position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 10px;">
+          <div *ngFor="let log of timelineLogs; let i = index" class="timeline-item" style="position: relative; margin-bottom: 25px;">
+            <div class="timeline-dot" style="position: absolute; left: -26px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-cyan); border: 2px solid white; box-shadow: 0 0 0 2px var(--accent-cyan);"></div>
+            
+            <div class="timeline-content" style="background: rgba(255, 255, 255, 0.05); padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <span class="badge" 
+                  [ngClass]="{
+                    'bg-success': log.action === 'Confirmed' || log.action === 'Completed',
+                    'bg-danger': log.action === 'Cancelled' || log.action === 'Rejected',
+                    'bg-primary': log.action === 'Created',
+                    'bg-warning text-dark': log.action === 'RescheduleProposed',
+                    'bg-secondary': log.action === 'Skipped'
+                  }" style="font-size: 0.75rem; padding: 4px 8px; border-radius: 6px;">
+                  {{ log.action }}
+                </span>
+                <span class="text-muted small" style="font-size: 0.75rem;">
+                  {{ log.timestamp | date:'MMM dd, yyyy, h:mm a' }}
+                </span>
+              </div>
+              
+              <div style="font-size: 0.9rem; color: var(--text-color); margin-bottom: 5px;">
+                <i class="fas fa-user-circle me-1 text-muted"></i> 
+                <strong>{{ log.actorName || 'System' }}</strong> 
+                <span class="text-muted small">({{ log.actorRole || 'System' }})</span>
+              </div>
+              
+              <div *ngIf="log.notes" style="font-size: 0.85rem; color: var(--text-secondary); background: rgba(0,0,0,0.02); padding: 8px; border-radius: 4px; margin-top: 8px;">
+                "{{ log.notes }}"
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>
