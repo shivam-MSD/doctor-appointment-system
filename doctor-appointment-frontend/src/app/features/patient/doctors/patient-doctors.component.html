@@ -52,8 +52,31 @@
     </form>
   </div>
 
+  <!-- Doctors Skeleton Loader -->
+  <div class="doctors-list" *ngIf="isDoctorsLoading">
+    <div class="glass-card doctor-card" *ngFor="let i of [1, 2, 3]">
+      <div class="doctor-avatar-section" style="background: transparent;">
+        <div class="skeleton-box" style="height: 60px; width: 60px; border-radius: 50%;"></div>
+        <div class="skeleton-box" style="height: 20px; width: 100px; border-radius: 20px; margin-top: 10px;"></div>
+      </div>
+      <div class="doctor-details-section">
+        <div class="skeleton-box" style="height: 24px; width: 220px; margin-bottom: 6px;"></div>
+        <div class="skeleton-box" style="height: 16px; width: 280px; margin-bottom: 12px;"></div>
+        <div class="doctor-meta">
+          <div class="skeleton-box" style="height: 20px; width: 140px;"></div>
+          <div class="skeleton-box" style="height: 20px; width: 140px;"></div>
+        </div>
+      </div>
+      <div class="doctor-action-section">
+        <div class="skeleton-box" style="height: 24px; width: 120px; border-radius: 20px; margin-bottom: 12px;"></div>
+        <div class="skeleton-box" style="height: 38px; width: 100%; border-radius: 20px; margin-bottom: 8px;"></div>
+        <div class="skeleton-box" style="height: 38px; width: 100%; border-radius: 20px;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Doctors Listing Cards -->
-  <div class="doctors-list" *ngIf="doctors.length > 0; else noDoctors">
+  <div class="doctors-list" *ngIf="!isDoctorsLoading && doctors.length > 0">
     <div class="glass-card doctor-card" *ngFor="let doctor of doctors">
       <div class="doctor-avatar-section">
         <div [className]="'doctor-avatar-placeholder ' + getSpecialtyClass(doctor.specializationName)"
@@ -122,14 +145,14 @@
   </div>
 
   <!-- Empty State -->
-  <ng-template #noDoctors>
+  <ng-container *ngIf="!isDoctorsLoading && doctors.length === 0">
     <div class="glass-card empty-state">
       <span class="empty-icon">📭</span>
       <h4>No Doctors Found</h4>
       <p>Try resetting the search criteria or trying a different location or specialization.</p>
       <button class="btn btn-secondary" style="margin-top: 15px;" (click)="clearFilters()">Reset All Filters</button>
     </div>
-  </ng-template>
+  </ng-container>
 
   <!-- DOCTOR DETAIL POPUP MODAL -->
   <div class="modal-backdrop" *ngIf="selectedDoctorForModal" (click)="closeDoctorModal()">
@@ -220,8 +243,20 @@
             <span>🏢</span> Clinic Branches & Timing Schedules
           </h4>
 
-          <div *ngIf="modalClinicsLoading" style="text-align: center; padding: 20px; color: var(--text-secondary);">
-            <span>Loading clinic timings...</span>
+          <div *ngIf="modalClinicsLoading" style="display: flex; flex-direction: column; gap: 12px;">
+            <div *ngFor="let i of [1,2]" class="glass-card" style="padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                  <div class="skeleton-box" style="height: 18px; width: 140px;"></div>
+                  <div class="skeleton-box" style="height: 14px; width: 80px;"></div>
+                </div>
+                <div class="skeleton-box" style="height: 28px; width: 130px; border-radius: 6px;"></div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                <div class="skeleton-box" style="height: 12px; width: 90%;"></div>
+                <div class="skeleton-box" style="height: 12px; width: 70%;"></div>
+              </div>
+            </div>
           </div>
 
           <div *ngIf="!modalClinicsLoading && modalClinics.length === 0"
@@ -369,8 +404,19 @@
         locations. Please select a branch to book your appointment:
       </p>
 
-      <div *ngIf="bookingClinicsLoading" style="text-align: center; padding: 20px; color: var(--text-secondary);">
-        <span>Loading branches...</span>
+      <div *ngIf="bookingClinicsLoading" style="display: flex; flex-direction: column; gap: 12px;">
+        <div *ngFor="let i of [1,2,3]" class="glass-card" style="padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div class="skeleton-box" style="height: 18px; width: 140px;"></div>
+              <div class="skeleton-box" style="height: 14px; width: 80px;"></div>
+            </div>
+            <div class="skeleton-box" style="height: 28px; width: 110px; border-radius: 6px;"></div>
+          </div>
+          <div style="margin-top: 8px;">
+            <div class="skeleton-box" style="height: 34px; width: 100%; border-radius: 20px;"></div>
+          </div>
+        </div>
       </div>
 
       <div *ngIf="!bookingClinicsLoading"

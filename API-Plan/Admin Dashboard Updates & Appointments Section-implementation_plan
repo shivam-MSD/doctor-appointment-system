@@ -1,0 +1,42 @@
+# Admin Dashboard Updates & Appointments Section
+
+This plan covers fixing the Admin dashboard UI and introducing the Appointments list specifically scoped to the Admin's clinic.
+
+## User Review Required
+
+- **Edit Timings Button**: I will redesign the "Edit Timings & Availability" button on the Admin dashboard to look more sleek. Is there any specific *functionality* update you wanted for this modal, or was it primarily a visual UI improvement?
+
+## Proposed Changes
+
+### 1. Fix Admin Dashboard Empty State
+I will fix the bug where Admins see the "Book Appointment Now" button when their clinic has no upcoming appointments.
+#### [MODIFY] [dashboard.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.html)
+- Add a strict role check (`*ngIf="!historyMode && role === 'Patient'"`) around the "Book Appointment Now" button so it never displays for Admins.
+
+### 2. Update Edit Timings Button UI
+#### [MODIFY] [dashboard.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.html)
+- Update the "Edit Timings & Availability" button's styling to make it more distinct and move it closer to the clinic header.
+
+### 3. Add Admin Appointments Route
+#### [MODIFY] [app-routing.module.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/app-routing.module.ts)
+- Add the route `{ path: 'admin/appointments', component: DoctorAppointmentsComponent }` so Admins can access the appointments module.
+
+### 4. Update Sidebar
+#### [MODIFY] [sidebar.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/sidebar/sidebar.component.html)
+- Add the **Appointments** tab under the `Clinic Admin Links` block, linking to `/admin/appointments`.
+
+### 5. Adjust Doctor Appointments Component for Admin Role
+#### [MODIFY] [doctor-appointments.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.ts)
+- Add a `role` property and initialize it from `authService.getRole()`.
+#### [MODIFY] [doctor-appointments.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.html)
+- Hide the left "Clinic Locations" sidebar if `role === 'Admin'` since admins only manage a single clinic.
+- (Note: The backend API `GetAdminDoctorDashboardAppointmentsAsync` already strictly filters appointments so the admin will *only* see appointments for their specific clinic. No backend changes are required!)
+
+## Verification Plan
+
+### Manual Verification
+- Log in as an Admin.
+- Verify the "Book Appointment Now" button is gone from the dashboard.
+- Verify the "Edit Timings" button has an updated UI.
+- Verify the sidebar now has an "Appointments" link.
+- Click "Appointments" and ensure the list loads without the left clinic sidebar and only shows appointments for the admin's clinic.

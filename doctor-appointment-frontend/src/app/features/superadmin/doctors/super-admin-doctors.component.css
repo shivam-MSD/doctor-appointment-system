@@ -121,39 +121,7 @@
   gap: 8px;
 }
 
-.btn-confirm {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--status-confirmed);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  padding: 6px 12px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
 
-.btn-confirm:hover {
-  background: var(--status-confirmed);
-  color: #ffffff;
-}
-
-.btn-cancel {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--status-cancelled);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  padding: 6px 12px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-cancel:hover {
-  background: var(--status-cancelled);
-  color: #ffffff;
-}
 
 .empty-state {
   text-align: center;

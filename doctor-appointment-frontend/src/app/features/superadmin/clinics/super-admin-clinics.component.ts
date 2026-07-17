@@ -17,6 +17,7 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
   verifiedFilter: boolean | undefined = undefined;
   errorMessage = '';
   successMessage = '';
+  isClinicsLoading = true;
   private signalrSub?: Subscription;
 
   // Reject clinic states
@@ -60,12 +61,15 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
   }
 
   loadClinics(): void {
+    this.isClinicsLoading = true;
     this.adminService.getAllClinics(this.searchQuery, this.stateFilter, this.cityFilter, this.verifiedFilter).subscribe({
       next: (res) => {
         this.clinics = res;
+        this.isClinicsLoading = false;
       },
       error: () => {
         this.toastService.showError('Failed to load clinics list.');
+        this.isClinicsLoading = false;
       }
     });
   }

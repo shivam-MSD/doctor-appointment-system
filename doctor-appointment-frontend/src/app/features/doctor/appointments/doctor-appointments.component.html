@@ -31,10 +31,22 @@
       <!-- Consultation filter -->
       <div class="form-group" style="display: flex; flex-direction: column;">
         <label class="form-label" style="margin-bottom: 8px;">Consultation Type</label>
-        <div class="tabs-container" style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px; height: 100%;">
-          <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = ''; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">All</button>
-          <button class="btn" [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'InPerson'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">In-Person</button>
-          <button class="btn" [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'" [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'" (click)="consultationFilter = 'VideoCall'; onFilterChange()" style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">Video</button>
+        <div class="tabs-container"
+          style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px; height: 100%;">
+          <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'"
+            [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'"
+            (click)="consultationFilter = ''; onFilterChange()"
+            style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">All</button>
+          <button class="btn"
+            [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'"
+            [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'"
+            (click)="consultationFilter = 'InPerson'; onFilterChange()"
+            style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">In-Person</button>
+          <button class="btn"
+            [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'"
+            [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'"
+            (click)="consultationFilter = 'VideoCall'; onFilterChange()"
+            style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">Video</button>
         </div>
       </div>
 
@@ -57,7 +69,8 @@
   <div style="display: flex; gap: 24px; align-items: flex-start; margin-top: 20px; width: 100%;"
     class="appointments-split-layout">
     <!-- Left Sidebar (Clinic Locations) -->
-    <div class="glass-card clinic-sidebar" style="width: 280px; flex-shrink: 0; padding: 20px;">
+    <div *ngIf="role === 'Doctor'" class="glass-card clinic-sidebar"
+      style="width: 280px; flex-shrink: 0; padding: 20px;">
       <h4
         style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
         <span>🏢</span> Clinic Locations
@@ -85,10 +98,64 @@
 
     <!-- Right Panel (Main Content Table) -->
     <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
-      <!-- Loading State -->
-      <div class="loading-state" *ngIf="isLoading" style="margin: 0; padding: 40px 0;">
-        <div class="spinner"></div>
-        <p>Loading appointments registry...</p>
+      <!-- Loading State Skeleton -->
+      <div class="glass-card table-card" *ngIf="isLoading" style="margin: 0; padding: 20px;">
+        <div class="table-header" style="flex-direction: column; align-items: flex-start; gap: 20px;">
+          <div class="skeleton-box" style="height: 28px; width: 250px;"></div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; width: 100%;">
+            <div class="skeleton-box" style="height: 32px; width: 120px; border-radius: 20px;"></div>
+            <div class="skeleton-box" style="height: 32px; width: 150px; border-radius: 20px;"></div>
+            <div class="skeleton-box" style="height: 32px; width: 160px; border-radius: 20px;"></div>
+          </div>
+        </div>
+        <div class="table-responsive" style="margin-top: 20px;">
+          <table class="dashboard-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Clinic / Location</th>
+                <th>Date & Time</th>
+                <th>Reason / Reason for Visit</th>
+                <th>Clinical Note / Report</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let i of [1,2,3,4,5]">
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <div class="skeleton-box" style="height: 16px; width: 140px;"></div>
+                    <div class="skeleton-box" style="height: 12px; width: 80px;"></div>
+                  </div>
+                </td>
+                <td>
+                  <div class="skeleton-box" style="height: 18px; width: 150px;"></div>
+                </td>
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <div class="skeleton-box" style="height: 14px; width: 110px;"></div>
+                    <div class="skeleton-box" style="height: 14px; width: 60px;"></div>
+                  </div>
+                </td>
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div class="skeleton-box" style="height: 14px; width: 130px;"></div>
+                    <div class="skeleton-box" style="height: 12px; width: 90px;"></div>
+                  </div>
+                </td>
+                <td>
+                  <div class="skeleton-box" style="height: 20px; width: 120px;"></div>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 8px;">
+                    <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+                    <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Appointments List Table -->
@@ -141,7 +208,7 @@
           <table class="dashboard-table">
             <thead>
               <tr>
-                <th>Patient Name</th>
+                <th>Patient</th>
                 <th>Clinic / Location</th>
                 <th>Date & Time</th>
                 <th>Reason / Reason for Visit</th>
@@ -150,7 +217,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let app of getFilteredAppointments()">
+              <tr *ngFor="let app of getPaginatedAppointments()">
                 <td [style.border-left]="'4px solid ' + getStatusColor(app.status)" style="padding-left: 12px;">
                   <a href="javascript:void(0)" (click)="openPatientDetailsModal(app.patientId)"
                     style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;"
@@ -161,10 +228,17 @@
                 <td style="color: var(--accent-cyan); font-weight: 600;">{{ app.clinicName || 'Direct' }}</td>
                 <td>
                   <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM d, y' }}</span>
-                    <span *ngIf="app.startTime && app.endTime" style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.startTime | date:'shortTime' }} - {{ app.endTime | date:'shortTime' }} (Clinic Window)</span>
-                    <span *ngIf="app.doctorAssignedTime" style="font-family: monospace; font-weight: 700; color: #10b981; margin-top: 4px;">{{ app.doctorAssignedTime | date:'shortTime' }}</span>
-                    <span *ngIf="!app.doctorAssignedTime && (app.status === 'Pending' || app.status === 'Confirmed')" style="font-family: monospace; font-weight: 600; color: #f59e0b; margin-top: 4px;">⏳ Time not assigned</span>
+                    <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE,
+                      MMM d, y' }}</span>
+                    <span *ngIf="app.startTime && app.endTime"
+                      style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.startTime |
+                      date:'shortTime' }} - {{ app.endTime | date:'shortTime' }} (Clinic Window)</span>
+                    <span *ngIf="app.doctorAssignedTime"
+                      style="font-family: monospace; font-weight: 700; color: #10b981; margin-top: 4px;">{{
+                      app.doctorAssignedTime | date:'shortTime' }}</span>
+                    <span *ngIf="!app.doctorAssignedTime && (app.status === 'Pending' || app.status === 'Confirmed')"
+                      style="font-family: monospace; font-weight: 600; color: #f59e0b; margin-top: 4px;">⏳ Time not
+                      assigned</span>
                   </div>
                 </td>
                 <td>
@@ -190,22 +264,19 @@
                   <!-- Cancel button available for Pending/Confirmed/RescheduleProposed -->
                   <button
                     *ngIf="app.status === 'Pending' || app.status === 'Confirmed' || app.status === 'RescheduleProposed'"
-                    class="btn btn-outline"
-                    style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); font-size: 0.75rem; padding: 4px 10px;"
+                    class="btn btn-cancel"
                     (click)="cancelAppointment(app.appointmentId)">
                     Cancel
                   </button>
 
                   <!-- Propose Reschedule button for Pending/Confirmed -->
-                  <button *ngIf="app.status === 'Pending' || app.status === 'Confirmed'" class="btn btn-outline"
-                    style="color: #ec4899; border-color: rgba(236, 72, 153, 0.3); font-size: 0.75rem; padding: 4px 10px;"
+                  <button *ngIf="app.status === 'Pending' || app.status === 'Confirmed'" class="btn btn-reschedule"
                     (click)="openRescheduleModal(app.appointmentId)">
                     Reschedule
                   </button>
 
                   <!-- Assign Time / Edit Time button for Pending/Confirmed -->
-                  <button *ngIf="(app.status === 'Pending' || app.status === 'Confirmed')" class="btn btn-outline"
-                    style="color: #10b981; border-color: rgba(16, 185, 129, 0.3); font-size: 0.75rem; padding: 4px 10px;"
+                  <button *ngIf="(app.status === 'Pending' || app.status === 'Confirmed')" class="btn btn-edit"
                     (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)">
                     {{ app.doctorAssignedTime ? 'Edit Time' : 'Assign Time' }}
                   </button>
@@ -247,9 +318,17 @@
         <button class="close-modal" (click)="closePatientDetailsModal()">&times;</button>
       </div>
       <div class="modal-body scrollable-body">
-        <div class="loading-state" *ngIf="isDetailsLoading" style="padding: 20px 0;">
-          <div class="spinner"></div>
-          <p>Loading patient details...</p>
+        <div *ngIf="isDetailsLoading" style="padding: 20px 0;">
+          <table class="details-table" style="width: 100%;">
+            <tr *ngFor="let i of [1,2,3,4,5]">
+              <td style="width: 40%; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                <div class="skeleton-box" style="height: 20px; width: 60%;"></div>
+              </td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                <div class="skeleton-box" style="height: 20px; width: 85%;"></div>
+              </td>
+            </tr>
+          </table>
         </div>
 
         <div *ngIf="!isDetailsLoading && selectedPatientDetails">
@@ -337,20 +416,24 @@
   <!-- Reschedule Modal -->
   <div class="modal-backdrop" *ngIf="showRescheduleModal">
     <div class="modal-content glass-card" style="max-width: 500px; padding: 0;">
-      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-        <h4 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+      <div class="modal-header"
+        style="border-bottom: 1px solid var(--border-color); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h4
+          style="margin: 0; color: var(--text-primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
           <span>📅</span> Propose New Date/Time
         </h4>
-        <button class="btn-close" (click)="closeRescheduleModal()" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+        <button class="btn-close" (click)="closeRescheduleModal()"
+          style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
       </div>
       <div class="modal-body" style="padding: 20px;">
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
-          Select a new date and time for this appointment. The patient will be notified and asked to accept or decline the proposed reschedule.
+          Select a new date and time for this appointment. The patient will be notified and asked to accept or decline
+          the proposed reschedule.
         </p>
 
         <div class="form-group" style="margin-bottom: 15px;">
           <label class="form-label">Proposed Date <span class="text-danger">*</span></label>
-          <input type="date" class="form-control" [(ngModel)]="rescheduleDate">
+          <input type="date" class="form-control" [(ngModel)]="rescheduleDate" (change)="validateRescheduleDate()">
         </div>
 
         <div class="form-group" style="margin-bottom: 15px;">
@@ -364,7 +447,8 @@
             placeholder="e.g., Medical emergency, Doctor unavailable today"></textarea>
         </div>
       </div>
-      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color);">
+      <div class="modal-footer"
+        style="display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color);">
         <button class="btn btn-secondary" (click)="closeRescheduleModal()">Cancel</button>
         <button class="btn btn-primary" (click)="submitReschedulePropose()"
           [disabled]="!rescheduleDate || !rescheduleReason" style="background: #ec4899; border-color: #ec4899;">Propose
@@ -376,11 +460,14 @@
   <!-- ASSIGN TIME MODAL -->
   <div class="modal-backdrop" *ngIf="showAssignTimeModal">
     <div class="modal-content glass-card" style="max-width: 450px; padding: 0;">
-      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
-        <h4 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+      <div class="modal-header"
+        style="border-bottom: 1px solid var(--border-color); padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h4
+          style="margin: 0; color: var(--text-primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
           <span>⏰</span> Assign Appointment Time
         </h4>
-        <button class="btn-close" (click)="closeAssignTimeModal()" style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+        <button class="btn-close" (click)="closeAssignTimeModal()"
+          style="background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
       </div>
       <div class="modal-body" style="padding: 20px;">
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
@@ -398,10 +485,11 @@
             placeholder="e.g., Please arrive 10 mins early"></textarea>
         </div>
       </div>
-      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color);">
+      <div class="modal-footer"
+        style="display: flex; justify-content: flex-end; gap: 10px; padding: 20px; border-top: 1px solid var(--border-color);">
         <button class="btn btn-secondary" (click)="closeAssignTimeModal()">Cancel</button>
-        <button class="btn btn-primary" (click)="submitAssignTime()"
-          [disabled]="!assignTimeInput" style="background: #10b981; border-color: #10b981;">Assign Time</button>
+        <button class="btn btn-primary" (click)="submitAssignTime()" [disabled]="!assignTimeInput"
+          style="background: #10b981; border-color: #10b981;">Assign Time</button>
       </div>
     </div>
   </div>

@@ -1,0 +1,32 @@
+# Implementation Plan: Patient Reschedule Response & Race Condition Fix
+
+## Goal
+Allow patients to Accept or Reject an appointment that the doctor has set to `RescheduleProposed`, and ensure the backend is safe from race conditions when this happens.
+
+## Proposed Changes
+
+### Backend (C#)
+1. **`AppointmentDto.cs`**:
+   - Add `RescheduleProposedDate`, `RescheduleProposedTime`, and `RescheduleReason` so the frontend knows what date/time the doctor proposed.
+2. **`AppointmentService.cs`**:
+   - In `MapToDto` (or wherever mapping occurs), map the new fields from the entity to the DTO.
+   - In `RespondToRescheduleAsync`, add a concurrency lock using the `_bookingLocks` mechanism (specifically locking on the `ClinicId` and `RescheduleProposedDate`) to prevent a race condition where multiple patients accept an appointment at the same time and exceed capacity limits, or a user double-submits.
+
+### Frontend (Angular)
+1. **`appointment.model.ts`**:
+   - Update the `Appointment` interface to include `rescheduleProposedDate`, `rescheduleProposedTime`, and `rescheduleReason`.
+2. **`appointment.service.ts`**:
+   - Add a `respondToReschedule(appointmentId: string, accept: boolean)` method that POSTs to `/api/appointments/respond-reschedule`.
+3. **`dashboard.component.ts`**:
+   - Add `acceptReschedule(appointmentId)` and `rejectReschedule(appointmentId)` methods that call the service. Upon success, they will show a toast message and reload the dashboard.
+4. **`dashboard.component.html` (Patient Table)**:
+   - When an appointment's status is `RescheduleProposed`, visually display the *Proposed Date & Time* instead of the original date, or alongside it.
+   - In the Actions column for that status, hide the standard "Cancel" button.
+   - Add a green "✓ Accept" and a red "✕ Reject" button for the patient to respond.
+
+## Verification Plan
+- Build and run the backend & frontend.
+- From a doctor account, propose a reschedule for a patient's appointment.
+- Log in as the patient and check the dashboard to verify the new Accept/Reject UI appears correctly.
+- Click "Accept" and verify the status becomes "Confirmed" and the time/date update.
+- Verify the race condition fix by inspecting the backend lock logic in `RespondToRescheduleAsync`.

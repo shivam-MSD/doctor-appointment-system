@@ -1,0 +1,34 @@
+# Implement Skeleton UI Loaders
+
+This plan outlines the steps to replace basic "Loading..." text with modern, engaging "Skeleton" UI loaders across the entire application, as per your request and design example.
+
+## Proposed Changes
+
+### 1. Global Styles (`styles.css`)
+- Introduce a new `.skeleton` and `.skeleton-box` CSS class structure to `src/styles.css`.
+- Implement a sleek, dark-theme compatible shimmering animation using CSS `@keyframes`. This animation will look like a wave of light passing over placeholders.
+
+### 2. Angular Components
+I will update the HTML templates of all components that currently display basic loading text or spinners. For each component, the skeleton loader will be structurally similar to the actual data (e.g., table-like skeleton for tables, card-like skeleton for clinic cards).
+
+#### [MODIFY] [dashboard.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.html)
+- Replace `Loading patient details...` and `Loading history...` with structured skeleton placeholders.
+
+#### [MODIFY] [doctor-appointments.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.html)
+- Replace main `Loading appointments...` text with a skeleton table mimicking the appointment list.
+
+#### [MODIFY] [doctor-requests.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/requests/doctor-requests.component.html)
+- Replace `Loading pending appointments...` with a skeleton table layout.
+
+#### [MODIFY] [patient-doctors.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patient/doctors/patient-doctors.component.html)
+- Add skeleton cards while fetching doctors and clinics data instead of simple loading indicators.
+
+#### [MODIFY] [patients.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patients/patients.component.html)
+- Replace the main patient list loading state with a table-row skeleton layout.
+
+## Open Questions
+
+> [!TIP]
+> The current application has a dark, glassmorphism theme. I will design the skeletons to be a subtle, translucent dark gray with a sweeping shine animation that perfectly matches this aesthetic!
+
+Please let me know if you approve this approach so I can begin execution!

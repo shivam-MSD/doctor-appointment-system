@@ -28,7 +28,7 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   // Pagination
   page = 1;
   size = 10;
-  totalCount = 0;
+  role = '';
 
   isLoading = false;
   errorMessage = '';
@@ -61,7 +61,10 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.loadDoctorClinics();
+    this.role = this.authService.getRole() || '';
+    if (this.role === 'Doctor') {
+      this.loadDoctorClinics();
+    }
     this.loadAppointments();
 
     this.signalrSub = this.notificationService.refreshData$.subscribe({
@@ -91,10 +94,9 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     if (this.statusFilter) filters.status = this.statusFilter;
     if (this.searchQuery) filters.search = this.searchQuery;
 
-    this.appointmentService.getAdminDoctorDashboard(filters, this.page, this.size).subscribe({
+    this.appointmentService.getAdminDoctorDashboard(filters, 1, 1000).subscribe({
       next: (res) => {
         this.appointments = res.items;
-        this.totalCount = res.totalCount;
         this.isLoading = false;
       },
       error: (err) => {
@@ -150,6 +152,16 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     return list;
   }
 
+  get totalCount(): number {
+    return this.getFilteredAppointments().length;
+  }
+
+  getPaginatedAppointments(): Appointment[] {
+    const list = this.getFilteredAppointments();
+    const startIndex = (this.page - 1) * this.size;
+    return list.slice(startIndex, startIndex + this.size);
+  }
+
   setTab(tab: string): void {
     this.activeTab = tab as any;
     this.page = 1;
@@ -192,14 +204,12 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   prevPage(): void {
     if (this.page > 1) {
       this.page--;
-      this.loadAppointments();
     }
   }
 
   nextPage(): void {
     if (this.page * this.size < this.totalCount) {
       this.page++;
-      this.loadAppointments();
     }
   }
 
@@ -238,8 +248,28 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.selectedRescheduleAppId = appId;
     this.rescheduleDate = '';
     this.rescheduleTime = '';
+    this.rescheduleTime = '';
     this.rescheduleReason = '';
     this.showRescheduleModal = true;
+  }
+
+  validateRescheduleDate(): void {
+    if (!this.rescheduleDate || !this.selectedRescheduleAppId) return;
+    
+    const app = this.appointments.find(a => a.appointmentId === this.selectedRescheduleAppId);
+    if (!app) return;
+
+    const clinic = this.doctorClinics.find(c => c.clinicId === app.clinicId);
+    if (!clinic || !clinic.openDays) return;
+
+    const selectedDate = new Date(this.rescheduleDate);
+    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const openDays = clinic.openDays.toLowerCase();
+
+    if (!openDays.includes(dayName)) {
+      this.toastService.showError(`The clinic is completely closed on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}s. Please select a configured Working Day or Reschedule-Only day.`);
+      this.rescheduleDate = '';
+    }
   }
 
   closeRescheduleModal(): void {
@@ -255,8 +285,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
     const payload = {
       appointmentId: this.selectedRescheduleAppId,
-      proposedDate: new Date(this.rescheduleDate).toISOString(),
-      proposedTime: this.rescheduleTime ? new Date(`${this.rescheduleDate}T${this.rescheduleTime}`).toISOString() : null,
+      proposedDate: this.rescheduleDate,
+      proposedTime: this.rescheduleTime ? `${this.rescheduleDate}T${this.rescheduleTime}:00` : null,
       reason: this.rescheduleReason
     };
 

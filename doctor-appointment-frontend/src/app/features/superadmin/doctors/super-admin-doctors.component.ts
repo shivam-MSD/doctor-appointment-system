@@ -15,6 +15,7 @@ export class SuperAdminDoctorsComponent implements OnInit, OnDestroy {
 	statusFilter = ''; // Empty for all, Verified, Pending
 	errorMessage = '';
 	successMessage = '';
+	isDoctorsLoading = true;
 	private signalrSub?: Subscription;
 
 	// View Details modal states
@@ -48,12 +49,15 @@ export class SuperAdminDoctorsComponent implements OnInit, OnDestroy {
   }
 
   loadDoctors(): void {
+    this.isDoctorsLoading = true;
     this.adminService.getAllDoctors(this.searchQuery, this.statusFilter).subscribe({
       next: (res) => {
         this.doctors = res;
+        this.isDoctorsLoading = false;
       },
       error: () => {
         this.errorMessage = 'Failed to load doctors list.';
+        this.isDoctorsLoading = false;
       }
     });
   }

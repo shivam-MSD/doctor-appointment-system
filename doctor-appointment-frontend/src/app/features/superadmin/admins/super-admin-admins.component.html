@@ -48,7 +48,32 @@
       <h3>Administrators Roster</h3>
     </div>
     
-    <div class="table-responsive" *ngIf="admins.length > 0; else noAdmins">
+    <div class="table-responsive" *ngIf="isAdminsLoading">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Admin Name</th>
+            <th>Assigned Clinic</th>
+            <th>Contact Mobile</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of [1, 2, 3]">
+            <td><div class="skeleton-box" style="height: 16px; width: 140px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 160px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 100px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 12px;"></div></td>
+            <td class="text-end">
+              <div class="skeleton-box" style="height: 32px; width: 100px; border-radius: 6px; float: right;"></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-responsive" *ngIf="!isAdminsLoading && admins.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -79,13 +104,13 @@
         </tbody>
       </table>
     </div>
-    <ng-template #noAdmins>
+    <ng-container *ngIf="!isAdminsLoading && admins.length === 0">
       <div class="empty-state">
         <span class="empty-icon">📭</span>
         <h4>No Administrators Found</h4>
         <p>No registered clinic administrators matched your search queries.</p>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- CLINIC STAFF ADMIN REGISTRATION DETAILS MODAL -->

@@ -27,6 +27,10 @@
             <span *ngIf="!isClinicCurrentlyOpen(adminClinic) && adminClinic.isAvailable !== false">🔴 Closed (Outside
               Working Hours)</span>
           </span>
+          <button class="btn btn-outline" (click)="openAdminEditClinicModal()"
+            style="display: flex; align-items: center; gap: 6px; font-weight: 600; padding: 4px 12px; font-size: 0.75rem; border-color: rgba(6, 182, 212, 0.4); color: var(--accent-cyan); background: transparent; border-radius: 20px; transition: all 0.2s ease;">
+            ⚙️ Edit Timings & Availability
+          </button>
         </div>
         <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">
           📍 {{ adminClinic.addressline1 }}{{ adminClinic.addressline2 ? ', ' + adminClinic.addressline2 : '' }}, {{
@@ -75,12 +79,6 @@
         </div>
       </div>
 
-      <div>
-        <button class="btn btn-primary" (click)="openAdminEditClinicModal()"
-          style="display: flex; align-items: center; gap: 6px; font-weight: 600; background: rgba(6, 182, 212, 0.15); border-color: rgba(6, 182, 212, 0.3); color: var(--accent-cyan);">
-          ⚙️ Edit Timings & Availability
-        </button>
-      </div>
     </div>
   </div>
 
@@ -195,7 +193,7 @@
     </div>
 
     <!-- Appointments Table -->
-    <div class="table-responsive" *ngIf="filteredAppointments.length > 0; else emptyState">
+    <div class="table-responsive" *ngIf="!isDashboardLoading && filteredAppointments.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -209,7 +207,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let app of filteredAppointments" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
+          <tr *ngFor="let app of paginatedAppointments" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
             <td class="bold">{{ app.doctorName }}</td>
             <td>{{ app.patientName }}</td>
             <td>
@@ -221,12 +219,26 @@
             </td>
             <td>
               <div style="display: flex; flex-direction: column; gap: 2px;">
-                <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE, MMM
-                  d, y' }}</span>
+                <span style="font-size: 0.78rem; color: var(--text-secondary);"
+                  [style.text-decoration]="app.status === 'RescheduleProposed' ? 'line-through' : 'none'">
+                  {{ app.appointmentDate | date:'EEE, MMM d, y' }}
+                </span>
+                
+                <span *ngIf="app.status === 'RescheduleProposed'" style="font-size: 0.78rem; color: #ec4899; font-weight: 700;">
+                  Proposes: {{ app.rescheduleProposedDate | date:'EEE, MMM d, y' }}
+                </span>
+
                 <span *ngIf="app.doctorAssignedTime"
-                  style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);">{{ app.doctorAssignedTime
-                  | date:'shortTime' }}</span>
-                <span *ngIf="!app.doctorAssignedTime && app.status !== 'Pending'"
+                  style="font-family: monospace; font-weight: 700; color: var(--accent-cyan);"
+                  [style.text-decoration]="app.status === 'RescheduleProposed' ? 'line-through' : 'none'">
+                  {{ app.doctorAssignedTime | date:'shortTime' }}
+                </span>
+                
+                <span *ngIf="app.status === 'RescheduleProposed' && app.rescheduleProposedTime" style="font-family: monospace; font-weight: 700; color: #ec4899;">
+                  {{ app.rescheduleProposedTime | date:'shortTime' }}
+                </span>
+
+                <span *ngIf="!app.doctorAssignedTime && app.status !== 'Pending' && app.status !== 'RescheduleProposed'"
                   style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Time not assigned</span>
                 <span *ngIf="app.status === 'Pending'"
                   style="font-size: 0.75rem; color: #f59e0b; font-weight: 600;">Pending Assignment</span>
@@ -246,10 +258,21 @@
               </button>
             </td>
             <td>
-              <button *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' "
+              <button *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed'"
                 class="btn btn-cancel" (click)="openCancelAppointmentConfirm(app.appointmentId)">
                 Cancel
               </button>
+              
+              <div *ngIf="app.status === 'RescheduleProposed'" style="display: flex; gap: 5px;">
+                <button class="btn btn-confirm" (click)="acceptReschedule(app.appointmentId)"
+                  style="background: #10b981; border-color: #10b981; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  ✓ Accept
+                </button>
+                <button class="btn btn-cancel" (click)="rejectReschedule(app.appointmentId)"
+                  style="background: #ef4444; border-color: #ef4444; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  ✕ Reject
+                </button>
+              </div>
               <span *ngIf="app.status === 'Cancelled' || app.status === 'Completed' || app.status === 'Rejected' "
                 class="text-muted">-</span>
             </td>
@@ -258,7 +281,8 @@
       </table>
     </div>
 
-    <ng-template #emptyState>
+    <!-- Empty State -->
+    <ng-container *ngIf="!isDashboardLoading && filteredAppointments.length === 0">
       <div class="empty-state" style="text-align: center; padding: 40px 20px;">
         <span class="empty-icon" style="font-size: 3.5rem; display: block; margin-bottom: 15px;">{{ historyMode ? '📭' :
           '📅' }}</span>
@@ -270,14 +294,14 @@
           {{ historyMode ? 'You have no previously completed, cancelled, or past-date check-up records.' : 'You do not
           have any consultations currently scheduled.' }}
         </p>
-        <div *ngIf="!historyMode">
+        <div *ngIf="!historyMode && role === 'Patient'">
           <a routerLink="/patient/doctors" class="btn btn-primary"
             style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; font-weight: 600; text-decoration: none; border-radius: 8px;">
             📅 Book Appointment Now
           </a>
         </div>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- DOCTOR ONLY: Patient Appointments Today Daily Queue -->
@@ -335,12 +359,12 @@
         Completed</span>
     </div>
 
-    <div class="table-responsive" *ngIf="appointments.length > 0; else emptyDoctorState">
+    <div class="table-responsive" *ngIf="!isDashboardLoading && appointments.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
             <th>Date & Time</th>
-            <th>Patient Name</th>
+            <th>Patient</th>
             <th>Queue No</th>
             <th>Clinic Location</th>
             <th>Reason for Visit</th>
@@ -349,7 +373,7 @@
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let app of filteredAppointments">
+          <ng-container *ngFor="let app of paginatedAppointments">
             <!-- Main appointment row -->
             <tr
               [style.opacity]="(app.status === 'Completed' || app.status === 'Cancelled' || app.status === 'Rejected') ? '0.55' : '1'"
@@ -404,8 +428,18 @@
                   *ngIf="app.status === 'Pending' || app.status === 'Confirmed'; else processedText">
                   <button class="btn btn-sm-outline"
                     (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)"
-                    style="background: #0284c7; color: white; border: none;">
-                    {{ app.doctorAssignedTime ? 'Edit Time' : 'Assign Time' }}
+                    style="background: #0284c7; color: white; border: none; font-size: 0.76rem; font-weight: 600;">
+                    {{ app.status === 'Pending' ? '✓ Confirm & Assign Time' : (app.doctorAssignedTime ? 'Edit Time' : 'Assign Time') }}
+                  </button>
+                  <button class="btn btn-reschedule"
+                    (click)="openRescheduleModal(app.appointmentId)"
+                    style="background: #ec4899; border: none; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600; border-radius: 6px;">
+                    📅 Reschedule
+                  </button>
+                  <button *ngIf="app.status === 'Pending'" class="btn btn-cancel"
+                    (click)="openRejectConfirm(app.appointmentId)"
+                    style="background: #ef4444; border-color: #ef4444; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
+                    ✕ Reject
                   </button>
                   <button *ngIf="app.status === 'Confirmed'" class="btn btn-confirm"
                     (click)="openCompleteConfirm(app.appointmentId)"
@@ -445,13 +479,14 @@
       </div>
     </div>
 
-    <ng-template #emptyDoctorState>
+    <!-- Empty State -->
+    <ng-container *ngIf="!isDashboardLoading && appointments.length === 0">
       <div class="empty-state" style="padding: 40px 20px;">
         <span class="empty-icon">📅</span>
         <h4>No Appointments Scheduled Today</h4>
         <p>Your calendar is empty for today. Take rest or schedule walk-in slots.</p>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- Compact Clinics Overview Card -->
@@ -564,6 +599,31 @@
     </div>
   </div>
 
+  <!-- REJECT CONFIRMATION MODAL -->
+  <div class="modal-backdrop" *ngIf="showRejectConfirm">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 style="color: #ef4444 !important;">✕ Reject Appointment</h3>
+        <button class="close-modal" (click)="closeRejectConfirm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 15px; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">
+          Are you sure you want to reject this appointment? Please provide a reason below.
+        </p>
+        <textarea class="form-control" rows="3" [(ngModel)]="rejectReasonInput"
+          placeholder="Reason for rejection (required)..."
+          style="font-size: 0.88rem; padding: 10px; width: 100%; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" (click)="closeRejectConfirm()">Cancel</button>
+        <button class="btn btn-cancel"
+          style="background: #ef4444; border-color: #ef4444; color: white; font-weight: 600;" (click)="submitReject()" [disabled]="!rejectReasonInput.trim()">
+          Confirm Rejection
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- VIEW PATIENT DETAILS MODAL (WITHOUT ADDRESS) -->
   <div class="modal-backdrop" *ngIf="showPatientDetailsModal">
     <div class="modal-container" style="max-width: 550px;">
@@ -572,9 +632,17 @@
         <button class="close-modal" (click)="closePatientDetailsModal()">&times;</button>
       </div>
       <div class="modal-body scrollable-body">
-        <div class="loading-state" *ngIf="isDetailsLoading" style="padding: 20px 0;">
-          <div class="spinner"></div>
-          <p>Loading patient details...</p>
+        <div *ngIf="isDetailsLoading" style="padding: 20px 0;">
+          <table class="details-table" style="width: 100%;">
+            <tr *ngFor="let i of [1,2,3,4,5]">
+              <td style="width: 40%; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                <div class="skeleton-box" style="height: 20px; width: 60%;"></div>
+              </td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                <div class="skeleton-box" style="height: 20px; width: 85%;"></div>
+              </td>
+            </tr>
+          </table>
         </div>
 
         <div *ngIf="!isDetailsLoading && selectedPatientDetails">
@@ -668,9 +736,36 @@
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
       </div>
       <div class="modal-body scrollable-body" style="max-height: 480px; overflow-y: auto;">
-        <div class="loading-state" *ngIf="isHistoryLoading" style="padding: 20px 0;">
-          <div class="spinner"></div>
-          <p>Retrieving historical bookings...</p>
+        <div *ngIf="isHistoryLoading" style="padding: 20px 0;">
+          <table class="dashboard-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Clinic</th>
+                <th>Date & Time</th>
+                <th>Status</th>
+                <th>Reason & Clinical Records</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let i of [1,2,3]">
+                <td>
+                  <div class="skeleton-box" style="height: 20px; width: 80%;"></div>
+                </td>
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div class="skeleton-box" style="height: 14px; width: 90%;"></div>
+                    <div class="skeleton-box" style="height: 14px; width: 60%;"></div>
+                  </div>
+                </td>
+                <td>
+                  <div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 12px;"></div>
+                </td>
+                <td>
+                  <div class="skeleton-box" style="height: 20px; width: 100%;"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div *ngIf="!isHistoryLoading">
@@ -814,7 +909,7 @@
       <div class="table-header">
         <h3>Pending Doctor Verifications</h3>
       </div>
-      <div class="table-responsive" *ngIf="pendingDoctors.length > 0; else noDoctors">
+      <div class="table-responsive" *ngIf="!isSuperAdminLoading && pendingDoctors.length > 0">
         <table class="dashboard-table">
           <thead>
             <tr>
@@ -843,12 +938,12 @@
           </tbody>
         </table>
       </div>
-      <ng-template #noDoctors>
-        <div class="empty-state">
-          <span class="empty-icon">✓</span>
-          <h4>No Doctors Pending Verification</h4>
+      <ng-container *ngIf="!isSuperAdminLoading && pendingDoctors.length === 0">
+        <div style="text-align: center; padding: 40px; color: var(--text-secondary); background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-color);">
+          <span style="font-size: 2rem; display: block; margin-bottom: 10px;">✅</span>
+          All caught up! No pending doctor verifications.
         </div>
-      </ng-template>
+      </ng-container>
     </div>
 
     <!-- Pending Clinics -->
@@ -856,7 +951,7 @@
       <div class="table-header">
         <h3>Pending Clinic / Center Verifications</h3>
       </div>
-      <div class="table-responsive" *ngIf="pendingClinics.length > 0; else noPendingClinics">
+      <div class="table-responsive" *ngIf="!isSuperAdminLoading && pendingClinics.length > 0">
         <table class="dashboard-table">
           <thead>
             <tr>
@@ -887,12 +982,12 @@
           </tbody>
         </table>
       </div>
-      <ng-template #noPendingClinics>
-        <div class="empty-state">
-          <span class="empty-icon">✓</span>
-          <h4>No Clinics Pending Verification</h4>
+      <ng-container *ngIf="!isSuperAdminLoading && pendingClinics.length === 0">
+        <div style="text-align: center; padding: 40px; color: var(--text-secondary); background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-color);">
+          <span style="font-size: 2rem; display: block; margin-bottom: 10px;">✅</span>
+          All caught up! No pending clinic verifications.
         </div>
-      </ng-template>
+      </ng-container>
     </div>
 
     <!-- Pending Admins -->
@@ -900,7 +995,7 @@
       <div class="table-header">
         <h3>Pending Clinic Admin Verifications</h3>
       </div>
-      <div class="table-responsive" *ngIf="pendingAdmins.length > 0; else noAdmins">
+      <div class="table-responsive" *ngIf="!isSuperAdminLoading && pendingAdmins.length > 0">
         <table class="dashboard-table">
           <thead>
             <tr>
@@ -1614,3 +1709,44 @@
   </div>
 
 </div>
+
+  <!-- Reschedule Modal -->
+  <div class="modal-backdrop" *ngIf="showRescheduleModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.25rem;">🗓️</span>
+          <h3 style="margin: 0;">Propose New Date/Time</h3>
+        </div>
+        <button class="btn-close" (click)="closeRescheduleModal()"
+          style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
+          Select a new date and time for this appointment. The patient will be notified and asked to accept or decline
+          the proposed reschedule.
+        </p>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label class="form-label">Proposed Date <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" [(ngModel)]="rescheduleDate" (change)="validateRescheduleDate()">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label class="form-label">Proposed Time (Optional)</label>
+          <input type="time" class="form-control" [(ngModel)]="rescheduleTime">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 5px;">
+          <label class="form-label">Reason for Reschedule <span class="text-danger">*</span></label>
+          <textarea class="form-control" [(ngModel)]="rescheduleReason" rows="3"
+            placeholder="e.g., Medical emergency, Doctor unavailable today"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 15px 20px;">
+        <button class="btn btn-secondary" (click)="closeRescheduleModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitReschedulePropose()"
+          [disabled]="!rescheduleDate || !rescheduleReason" style="background: #ec4899; border-color: #ec4899;">Propose
+          Reschedule</button>
+      </div>
+    </div>
+  </div>

@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
 export class ClinicsComponent implements OnInit, OnDestroy {
   doctorClinics: any[] = [];
   errorMessage = '';
+  isClinicsLoading = true;
   successMessage = '';
   showClinicModal = false;
   showAdminModal = false;
@@ -24,6 +25,7 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   selectedDaysRegister: string[] = [];
   selectedDaysEdit: string[] = [];
   selectedDaysTimings: string[] = [];
+  selectedRescheduleDaysTimings: string[] = [];
 
   // Edit clinic states
   showEditClinicModal = false;
@@ -135,8 +137,10 @@ export class ClinicsComponent implements OnInit, OnDestroy {
 
   getSortedDays(openDaysStr: string): string[] {
     if (!openDaysStr) return [];
-    const days = openDaysStr.split(',').map(d => d.trim());
-    return days.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
+    const days = openDaysStr.split(',')
+      .map(d => d.trim())
+      .map(d => d.toLowerCase().startsWith('[reschedule:') ? d.replace(/\[reschedule:(.*?)\]/i, '$1 (Reschedule)') : d);
+    return days.sort((a, b) => this.weekDays.indexOf(a.replace(' (Reschedule)', '')) - this.weekDays.indexOf(b.replace(' (Reschedule)', '')));
   }
 
   formatClinicTimings(startTime: string, endTime: string): string {
@@ -217,12 +221,15 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   }
 
   loadDoctorClinics(): void {
+    this.isClinicsLoading = true;
     this.adminService.getDoctorClinics().subscribe({
       next: (res) => {
         this.doctorClinics = res;
+        this.isClinicsLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Failed to load clinic locations.';
+        this.errorMessage = 'Failed to load clinics.';
+        this.isClinicsLoading = false;
       }
     });
   }
@@ -402,7 +409,16 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   openTimingsModal(clinic: any): void {
     this.selectedClinicIdForTimings = clinic.clinicId;
     this.selectedClinicNameForTimings = clinic.clinicName;
-    this.selectedDaysTimings = clinic.openDays ? clinic.openDays.split(',').map((d: string) => d.trim()) : [];
+    
+    // Parse normal days and reschedule-only days
+    const allDays = clinic.openDays ? clinic.openDays.split(',').map((d: string) => d.trim()) : [];
+    this.selectedDaysTimings = allDays.filter((d: string) => !d.toLowerCase().startsWith('[reschedule:'));
+    this.selectedRescheduleDaysTimings = allDays
+      .filter((d: string) => d.toLowerCase().startsWith('[reschedule:'))
+      .map((d: string) => {
+        const match = d.match(/\[reschedule:(.*?)\]/i);
+        return match ? match[1] : d;
+      });
     
     const startTimeStr = clinic.startTime || '';
     const endTimeStr = clinic.endTime || '';
@@ -471,7 +487,14 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     }
     // Sort array elements by standard weekday index sequence
     this.selectedDaysTimings.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
-    this.clinicTimingsForm.openDays = this.selectedDaysTimings.join(',');
+    
+    // Ensure day is not in both arrays
+    if (this.selectedRescheduleDaysTimings.includes(day)) {
+      this.selectedRescheduleDaysTimings = this.selectedRescheduleDaysTimings.filter(d => d !== day);
+    }
+    
+    this.clinicTimingsForm.openDays = this.buildOpenDaysString();
+    
     this.bookingPickStart = '';
     this.bookingPickEnd = '';
     this.clinicTimingsForm.bookingWindowStartDate = '';
@@ -482,6 +505,41 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   isDaySelectedTimings(day: string): boolean {
     return this.selectedDaysTimings.includes(day);
   }
+
+  isDaySelectedReschedule(day: string): boolean {
+    return this.selectedRescheduleDaysTimings.includes(day);
+  }
+
+  toggleDayReschedule(day: string): void {
+    if (this.isDaySelectedReschedule(day)) {
+      this.selectedRescheduleDaysTimings = this.selectedRescheduleDaysTimings.filter(d => d !== day);
+    } else {
+      this.selectedRescheduleDaysTimings.push(day);
+    }
+    // Sort array elements by standard weekday index sequence
+    this.selectedRescheduleDaysTimings.sort((a, b) => this.weekDays.indexOf(a) - this.weekDays.indexOf(b));
+    
+    // Ensure day is not in both arrays
+    if (this.selectedDaysTimings.includes(day)) {
+      this.selectedDaysTimings = this.selectedDaysTimings.filter(d => d !== day);
+    }
+    
+    this.clinicTimingsForm.openDays = this.buildOpenDaysString();
+    
+    this.bookingPickStart = '';
+    this.bookingPickEnd = '';
+    this.clinicTimingsForm.bookingWindowStartDate = '';
+    this.clinicTimingsForm.bookingWindowEndDate = '';
+    this.generateBookingCalendar();
+  }
+
+  private buildOpenDaysString(): string {
+    const normalDays = [...this.selectedDaysTimings];
+    const rescheduleDays = this.selectedRescheduleDaysTimings.map(d => `[Reschedule:${d}]`);
+    return [...normalDays, ...rescheduleDays].join(', ');
+  }
+
+
 
   submitClinicTimings(): void {
     if (!this.selectedClinicIdForTimings) return;

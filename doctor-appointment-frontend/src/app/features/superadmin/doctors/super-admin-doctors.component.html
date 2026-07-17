@@ -49,7 +49,42 @@
       <h3>Doctors Roster</h3>
     </div>
     
-    <div class="table-responsive" *ngIf="doctors.length > 0; else noDoctors">
+    <div class="table-responsive" *ngIf="isDoctorsLoading">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Doctor Details</th>
+            <th>Specialization</th>
+            <th>Licence Number</th>
+            <th>Experience</th>
+            <th>Status</th>
+            <th>Registered Date</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of [1, 2, 3]">
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div class="skeleton-box" style="height: 16px; width: 140px;"></div>
+                <div class="skeleton-box" style="height: 12px; width: 100px;"></div>
+                <div class="skeleton-box" style="height: 12px; width: 90px;"></div>
+              </div>
+            </td>
+            <td><div class="skeleton-box" style="height: 16px; width: 120px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 90px; border-radius: 6px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 50px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 12px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 100px;"></div></td>
+            <td class="text-end">
+              <div class="skeleton-box" style="height: 32px; width: 100px; border-radius: 6px; float: right;"></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-responsive" *ngIf="!isDoctorsLoading && doctors.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -87,13 +122,13 @@
         </tbody>
       </table>
     </div>
-    <ng-template #noDoctors>
+    <ng-container *ngIf="!isDoctorsLoading && doctors.length === 0">
       <div class="empty-state">
         <span class="empty-icon">📭</span>
         <h4>No Doctors Found</h4>
         <p>No registered doctor accounts matched your search queries.</p>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- DOCTOR REGISTRATION DETAILS MODAL -->

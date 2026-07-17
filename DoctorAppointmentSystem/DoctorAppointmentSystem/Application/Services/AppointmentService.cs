@@ -695,7 +695,10 @@ namespace DoctorAppointmentSystem.Application.Services
 				Report = app.Report,
 				RejectionReason = app.RejectionReason,
 				QueueNumber = app.QueueNumber,
-				DoctorAssignedTime = app.DoctorAssignedTime
+				DoctorAssignedTime = app.DoctorAssignedTime,
+				RescheduleProposedDate = app.RescheduleProposedDate,
+				RescheduleProposedTime = app.RescheduleProposedTime,
+				RescheduleReason = app.RescheduleReason
 			};
 		}
 
@@ -788,6 +791,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new ForbiddenException("Only the treating doctor or clinic admin can assign appointment times.");
 
 			appointment.DoctorAssignedTime = dto.DoctorAssignedTime;
+			appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
 			if (!string.IsNullOrWhiteSpace(dto.Comment))
 				appointment.Comment = dto.Comment.Trim();
 
@@ -1151,6 +1155,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
+				.Include(a => a.Clinic)
 				.FirstOrDefaultAsync(a => a.AppointmentId == dto.AppointmentId);
 
 			if (appointment == null)
@@ -1165,21 +1170,41 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			if (dto.Accept)
 			{
-				appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
-				appointment.AppointmentDate = appointment.RescheduleProposedDate.Value;
-				appointment.DoctorAssignedTime = appointment.RescheduleProposedTime;
-				
-				appointment.RescheduleProposedDate = null;
-				appointment.RescheduleProposedTime = null;
-				appointment.RescheduleReason = null;
+				var localLock = GetLock(appointment.Clinic?.ClinicId, appointment.RescheduleProposedDate.Value.Date);
+				await localLock.WaitAsync();
+				try
+				{
+					// Re-check status inside lock to prevent race conditions
+					var currentStatus = await _dbContext.Appointments
+						.Where(a => a.AppointmentId == dto.AppointmentId)
+						.Select(a => a.EAppointmentStatus)
+						.FirstOrDefaultAsync();
+
+					if (currentStatus != EAppointmentStatus.RescheduleProposed)
+						throw new BadRequestException("This appointment was already updated.");
+
+					appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
+					appointment.AppointmentDate = appointment.RescheduleProposedDate.Value;
+					appointment.DoctorAssignedTime = appointment.RescheduleProposedTime;
+					
+					appointment.RescheduleProposedDate = null;
+					appointment.RescheduleProposedTime = null;
+					appointment.RescheduleReason = null;
+
+					await _dbContext.SaveChangesAsync();
+				}
+				finally
+				{
+					localLock.Release();
+				}
 			}
 			else
 			{
 				appointment.EAppointmentStatus = EAppointmentStatus.Cancelled;
 				appointment.Comment = "Patient declined the proposed reschedule date.";
+				await _dbContext.SaveChangesAsync();
 			}
 
-			await _dbContext.SaveChangesAsync();
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
 	}

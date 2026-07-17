@@ -25,6 +25,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public int QueueNumber { get; set; }
 		/// <summary>Approximate time assigned by the doctor/admin after booking.</summary>
 		public DateTime? DoctorAssignedTime { get; set; }
+		public DateTime? RescheduleProposedDate { get; set; }
+		public DateTime? RescheduleProposedTime { get; set; }
+		public string? RescheduleReason { get; set; }
 	}
 
 	public class CreateAppointmentDto

@@ -17,6 +17,9 @@ export interface Appointment {
   rejectionReason?: string;
   queueNumber?: number;
   doctorAssignedTime?: string;
+  rescheduleProposedDate?: string;
+  rescheduleProposedTime?: string;
+  rescheduleReason?: string;
 }
 
 export enum EConsultationType {

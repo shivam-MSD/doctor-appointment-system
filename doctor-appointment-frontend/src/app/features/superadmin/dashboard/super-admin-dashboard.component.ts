@@ -15,6 +15,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   pendingAdmins: any[] = [];
   errorMessage = '';
   successMessage = '';
+  isSuperAdminLoading = true;
   private signalrSub?: Subscription;
 
   // Reject clinic states
@@ -48,6 +49,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   loadPendingRequests(): void {
+    this.isSuperAdminLoading = true;
     this.adminService.getPendingDoctors().subscribe({
       next: (res) => this.pendingDoctors = res,
       error: () => this.errorMessage = 'Failed to load pending doctors.'
@@ -59,8 +61,14 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     });
 
     this.adminService.getPendingAdmins().subscribe({
-      next: (res) => this.pendingAdmins = res,
-      error: () => this.errorMessage = 'Failed to load pending admins.'
+      next: (res) => {
+        this.pendingAdmins = res;
+        this.isSuperAdminLoading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load pending admins.';
+        this.isSuperAdminLoading = false;
+      }
     });
   }
 

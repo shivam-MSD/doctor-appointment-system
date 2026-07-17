@@ -29,6 +29,7 @@ export class PatientDoctorsComponent implements OnInit, OnDestroy {
   totalPages = 1;
 
   errorMessage = '';
+  isDoctorsLoading = true;
 
   // Tracks which doctor card is expanded for biography
   expandedDoctorIds: { [id: string]: boolean } = {};
@@ -107,14 +108,17 @@ export class PatientDoctorsComponent implements OnInit, OnDestroy {
       params.city = this.cityFilter.trim();
     }
 
+    this.isDoctorsLoading = true;
     this.patientService.getDoctorsDirectory(params).subscribe({
       next: (res) => {
         this.doctors = res.items;
         this.totalCount = res.totalCount;
-        this.totalPages = res.totalPages;
+        this.totalPages = Math.ceil(this.totalCount / this.size);
+        this.isDoctorsLoading = false;
       },
       error: () => {
-        this.errorMessage = 'Failed to load doctors list. Please try again.';
+        this.errorMessage = 'Failed to load doctors directory.';
+        this.isDoctorsLoading = false;
       }
     });
   }

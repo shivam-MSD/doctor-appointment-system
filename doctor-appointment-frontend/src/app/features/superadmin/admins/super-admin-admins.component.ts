@@ -15,6 +15,7 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
 	verifiedFilter: boolean | undefined = undefined;
 	errorMessage = '';
 	successMessage = '';
+	isAdminsLoading = true;
 	private signalrSub?: Subscription;
 
 	// View Details modal states
@@ -48,12 +49,15 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
   }
 
   loadAdmins(): void {
+    this.isAdminsLoading = true;
     this.adminService.getAllAdmins(this.searchQuery, this.verifiedFilter).subscribe({
       next: (res) => {
         this.admins = res;
+        this.isAdminsLoading = false;
       },
       error: () => {
         this.errorMessage = 'Failed to load clinic administrators list.';
+        this.isAdminsLoading = false;
       }
     });
   }

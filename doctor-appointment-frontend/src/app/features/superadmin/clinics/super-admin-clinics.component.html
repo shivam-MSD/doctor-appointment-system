@@ -52,7 +52,44 @@
       <h3>Clinics Roster</h3>
     </div>
 
-    <div class="table-responsive" *ngIf="clinics.length > 0; else noClinics">
+    <div class="table-responsive" *ngIf="isClinicsLoading">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Clinic Name</th>
+            <th>Clinic Type</th>
+            <th>Registered By</th>
+            <th>Location</th>
+            <th>Pincode</th>
+            <th>Admin Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of [1, 2, 3]">
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div class="skeleton-box" style="height: 16px; width: 160px;"></div>
+                <div class="skeleton-box" style="height: 18px; width: 80px; border-radius: 4px;"></div>
+              </div>
+            </td>
+            <td><div class="skeleton-box" style="height: 24px; width: 70px; border-radius: 12px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 120px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 140px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 6px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 12px;"></div></td>
+            <td>
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <div class="skeleton-box" style="height: 32px; width: 100px; border-radius: 6px;"></div>
+                <div class="skeleton-box" style="height: 32px; width: 100px; border-radius: 6px;"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-responsive" *ngIf="!isClinicsLoading && clinics.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -138,13 +175,13 @@
         </tbody>
       </table>
     </div>
-    <ng-template #noClinics>
+    <ng-container *ngIf="!isClinicsLoading && clinics.length === 0">
       <div class="empty-state">
         <span class="empty-icon">📭</span>
         <h4>No Clinics Found</h4>
         <p>No registered clinic locations matched your search filters.</p>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- SUPER ADMIN REJECTION REASON MODAL -->

@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 export class ClinicAdminsComponent implements OnInit, OnDestroy {
   clinicAdmins: any[] = [];
   errorMessage = '';
+  isAdminsLoading = true;
   private signalrSub?: Subscription;
 
   constructor(
@@ -38,12 +39,15 @@ export class ClinicAdminsComponent implements OnInit, OnDestroy {
   }
 
   loadClinicAdmins(): void {
+    this.isAdminsLoading = true;
     this.adminService.getDoctorAdmins().subscribe({
       next: (res) => {
         this.clinicAdmins = res;
+        this.isAdminsLoading = false;
       },
       error: () => {
         this.errorMessage = 'Failed to load clinic administrators.';
+        this.isAdminsLoading = false;
       }
     });
   }

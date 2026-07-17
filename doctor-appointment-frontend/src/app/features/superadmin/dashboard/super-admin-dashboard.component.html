@@ -21,7 +21,40 @@
       <h3>🩺 Pending Doctors Verification ({{ pendingDoctors.length }})</h3>
     </div>
     
-    <div class="table-responsive" *ngIf="pendingDoctors.length > 0; else noDoctors">
+    <div class="table-responsive" *ngIf="isSuperAdminLoading">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Doctor Name</th>
+            <th>Specialization</th>
+            <th>Licence Number</th>
+            <th>Reg. Date</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of [1,2,3]">
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div class="skeleton-box" style="height: 16px; width: 140px;"></div>
+                <div class="skeleton-box" style="height: 12px; width: 100px;"></div>
+              </div>
+            </td>
+            <td><div class="skeleton-box" style="height: 16px; width: 120px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 90px; border-radius: 6px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 100px;"></div></td>
+            <td>
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+                <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="table-responsive" *ngIf="!isSuperAdminLoading && pendingDoctors.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -51,13 +84,13 @@
         </tbody>
       </table>
     </div>
-    <ng-template #noDoctors>
+    <ng-container *ngIf="!isSuperAdminLoading && pendingDoctors.length === 0">
       <div class="empty-state">
         <span class="empty-icon">📭</span>
         <h4>No Pending Doctors</h4>
         <p>There are no doctor accounts waiting for approval.</p>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- PENDING CLINICS SECTION -->
@@ -66,7 +99,42 @@
       <h3>🏢 Pending Clinics Verification ({{ pendingClinics.length }})</h3>
     </div>
     
-    <div class="table-responsive" *ngIf="pendingClinics.length > 0; else noClinics">
+    <div class="table-responsive" *ngIf="isSuperAdminLoading">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Clinic Name</th>
+            <th>Requested By</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Pincode</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of [1,2,3]">
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div class="skeleton-box" style="height: 16px; width: 160px;"></div>
+                <div class="skeleton-box" style="height: 18px; width: 70px; border-radius: 4px;"></div>
+              </div>
+            </td>
+            <td><div class="skeleton-box" style="height: 16px; width: 120px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 70px; border-radius: 12px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 140px;"></div></td>
+            <td><div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 6px;"></div></td>
+            <td>
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+                <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="table-responsive" *ngIf="!isSuperAdminLoading && pendingClinics.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -107,13 +175,13 @@
         </tbody>
       </table>
     </div>
-    <ng-template #noClinics>
+    <ng-container *ngIf="!isSuperAdminLoading && pendingClinics.length === 0">
       <div class="empty-state">
         <span class="empty-icon">📭</span>
         <h4>No Pending Clinics</h4>
         <p>There are no clinic branches waiting for verification.</p>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- PENDING CLINIC ADMINS SECTION -->
@@ -122,7 +190,35 @@
       <h3>👤 Pending Clinic Admins ({{ pendingAdmins.length }})</h3>
     </div>
     
-    <div class="table-responsive" *ngIf="pendingAdmins.length > 0; else noAdmins">
+    <div class="table-responsive" *ngIf="isSuperAdminLoading">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Admin Name</th>
+            <th>Assigned Clinic</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of [1,2]">
+            <td><div class="skeleton-box" style="height: 16px; width: 140px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 160px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 130px;"></div></td>
+            <td><div class="skeleton-box" style="height: 16px; width: 100px;"></div></td>
+            <td>
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+                <div class="skeleton-box" style="height: 32px; width: 70px; border-radius: 6px;"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="table-responsive" *ngIf="!isSuperAdminLoading && pendingAdmins.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -151,13 +247,13 @@
         </tbody>
       </table>
     </div>
-    <ng-template #noAdmins>
+    <ng-container *ngIf="!isSuperAdminLoading && pendingAdmins.length === 0">
       <div class="empty-state">
         <span class="empty-icon">📭</span>
-        <h4>No Pending Admins</h4>
-        <p>There are no clinic admins waiting for approval.</p>
+        <h4>No Pending Clinic Admins</h4>
+        <p>There are no administrators waiting for verification.</p>
       </div>
-    </ng-template>
+    </ng-container>
   </div>
 
   <!-- SUPER ADMIN REJECTION REASON MODAL -->

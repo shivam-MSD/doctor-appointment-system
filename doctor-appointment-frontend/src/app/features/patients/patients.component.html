@@ -14,7 +14,7 @@
       <h3>🔍 Directory Filters</h3>
       <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
     </div>
-    
+
     <div class="filters-grid">
       <!-- Keyword search -->
       <div class="form-group">
@@ -67,10 +67,47 @@
   <div class="error-banner" *ngIf="errorMessage">
     <span>⚠️</span> {{ errorMessage }}
   </div>
-  
-  <div class="loading-state" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Retrieving directory database...</p>
+
+  <div class="glass-card table-card" *ngIf="isLoading">
+    <div class="table-header">
+      <div class="skeleton-box" style="height: 28px; width: 180px;"></div>
+    </div>
+    <div class="table-responsive" style="margin-top: 10px;">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Gender</th>
+            <th>Blood Group</th>
+            <th>Phone</th>
+            <th style="text-align: center;">Profile Details</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of [1,2,3,4,5]">
+            <td>
+              <div class="skeleton-box" style="height: 20px; width: 150px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 20px; width: 60px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 20px; width: 50px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 20px; width: 100px;"></div>
+            </td>
+            <td align="center">
+              <div class="skeleton-box" style="height: 32px; width: 100px; border-radius: 6px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 32px; width: 120px; border-radius: 6px;"></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Patients List Table -->
@@ -83,7 +120,7 @@
       <table class="dashboard-table">
         <thead>
           <tr>
-            <th>Patient Name</th>
+            <th>Patient</th>
             <th>Gender</th>
             <th>Blood Group</th>
             <th>Phone</th>
@@ -107,7 +144,8 @@
               </button>
             </td>
             <td style="text-align: center;">
-              <button class="btn btn-sm-outline" (click)="openHistoryModal(patient)" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">
+              <button class="btn btn-sm-outline" (click)="openHistoryModal(patient)"
+                style="border-color: var(--accent-cyan); color: var(--accent-cyan);">
                 📜 Visit History
               </button>
             </td>
@@ -133,7 +171,9 @@
         <button class="close-modal" (click)="closeDetailsModal()">&times;</button>
       </div>
       <div class="modal-body scrollable-body">
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">📋 Personal Demographics</h4>
+        <h4 class="section-title"
+          style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">
+          📋 Personal Demographics</h4>
         <table class="details-table">
           <tr>
             <td>Full Name</td>
@@ -141,7 +181,8 @@
           </tr>
           <tr>
             <td>Date of Birth</td>
-            <td>{{ selectedPatientDetails.dob | date:'mediumDate' }} ({{ getAge(selectedPatientDetails.dob) }} years)</td>
+            <td>{{ selectedPatientDetails.dob | date:'mediumDate' }} ({{ getAge(selectedPatientDetails.dob) }} years)
+            </td>
           </tr>
           <tr>
             <td>Gender</td>
@@ -157,7 +198,9 @@
           </tr>
         </table>
 
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 20px;">🚨 Emergency Contact Registry</h4>
+        <h4 class="section-title"
+          style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 20px;">
+          🚨 Emergency Contact Registry</h4>
         <table class="details-table" *ngIf="selectedPatientDetails.emergencyContactName; else noEmergency">
           <tr>
             <td>Contact Name</td>
@@ -177,7 +220,9 @@
             No emergency contact details uploaded for this patient.
           </div>
         </ng-template>
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 20px;">📍 Residence Address</h4>
+        <h4 class="section-title"
+          style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 20px;">
+          📍 Residence Address</h4>
         <table class="details-table">
           <tr>
             <td style="width: 35%;">Address Line 1</td>
@@ -215,9 +260,36 @@
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
       </div>
       <div class="modal-body scrollable-body" style="max-height: 480px; overflow-y: auto;">
-        <div class="loading-state" *ngIf="isHistoryLoading" style="padding: 20px 0;">
-          <div class="spinner"></div>
-          <p>Retrieving historical bookings...</p>
+        <div *ngIf="isHistoryLoading" style="padding: 20px 0;">
+          <table class="dashboard-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Clinic</th>
+                <th>Date & Time</th>
+                <th>Status</th>
+                <th>Doctor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let i of [1,2,3]">
+                <td>
+                  <div class="skeleton-box" style="height: 20px; width: 80%;"></div>
+                </td>
+                <td>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <div class="skeleton-box" style="height: 14px; width: 90%;"></div>
+                    <div class="skeleton-box" style="height: 14px; width: 60%;"></div>
+                  </div>
+                </td>
+                <td>
+                  <div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 12px;"></div>
+                </td>
+                <td>
+                  <div class="skeleton-box" style="height: 20px; width: 100%;"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div *ngIf="!isHistoryLoading">
@@ -236,8 +308,11 @@
                   <td style="font-weight: 600;">{{ h.clinicName || 'Direct' }}</td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 2px;">
-                      <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ h.appointmentDate | date:'EEE, MMM d, y' }}</span>
-                      <span style="font-family: monospace; font-weight: 700; color: var(--accent-cyan); font-size: 0.8rem;">{{ h.startTime | date:'shortTime' }}</span>
+                      <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ h.appointmentDate | date:'EEE,
+                        MMM d, y' }}</span>
+                      <span
+                        style="font-family: monospace; font-weight: 700; color: var(--accent-cyan); font-size: 0.8rem;">{{
+                        h.startTime | date:'shortTime' }}</span>
                     </div>
                   </td>
                   <td>
@@ -245,10 +320,16 @@
                   </td>
                   <td>
                     <div style="font-size: 0.8rem;">
-                      <span *ngIf="h.reason" style="display: block; color: var(--text-secondary); margin-bottom: 2px;">💬 Visit: {{ h.reason }}</span>
-                      <span *ngIf="h.comment" style="display: block; color: var(--text-secondary); margin-bottom: 2px;">💬 Note: {{ h.comment }}</span>
-                      <span *ngIf="h.report" style="display: block; color: var(--accent-cyan);">📋 Report: {{ h.report }}</span>
-                      <span *ngIf="(h.status === 'Cancelled' || h.status === 'Rejected') && h.rejectionReason" style="display: block; color: #ef4444;">⚠️ Rejection: {{ h.rejectionReason }}</span>
+                      <span *ngIf="h.reason"
+                        style="display: block; color: var(--text-secondary); margin-bottom: 2px;">💬 Visit: {{ h.reason
+                        }}</span>
+                      <span *ngIf="h.comment"
+                        style="display: block; color: var(--text-secondary); margin-bottom: 2px;">💬 Note: {{ h.comment
+                        }}</span>
+                      <span *ngIf="h.report" style="display: block; color: var(--accent-cyan);">📋 Report: {{ h.report
+                        }}</span>
+                      <span *ngIf="(h.status === 'Cancelled' || h.status === 'Rejected') && h.rejectionReason"
+                        style="display: block; color: #ef4444;">⚠️ Rejection: {{ h.rejectionReason }}</span>
                     </div>
                   </td>
                 </tr>

@@ -62,6 +62,7 @@ const routes: Routes = [
 
       // Clinic Admin Routes
       { path: 'admin/dashboard', component: DashboardComponent },
+      { path: 'admin/appointments', component: DoctorAppointmentsComponent },
       { path: 'admin/profile', component: ProfileComponent },
 
       // Super Admin Routes
