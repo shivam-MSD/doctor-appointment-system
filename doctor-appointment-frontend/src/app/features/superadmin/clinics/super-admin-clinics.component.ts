@@ -159,6 +159,7 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
       const fieldLabels: { [key: string]: string } = {
         ClinicName: 'Clinic Name',
         ClinicType: 'Clinic Type',
+        ContactNumber: 'Contact Number',
         OpenDays: 'Open Days',
         StartTime: 'Opening Time',
         EndTime: 'Closing Time',
@@ -169,6 +170,7 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
         BookingWindowEndDate: 'Booking End Date',
         BookingWindowStartDate: 'Booking Start Date',
         SupportedModes: 'Supported Modes',
+        MaxAppointmentsPerDay: 'Max Appointments/Day',
         State: 'State',
         City: 'City',
         Pincode: 'Pincode',
@@ -179,8 +181,9 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
 
       const keys = Object.keys(fieldLabels);
       for (const key of keys) {
-        let oldVal = oldObj[key];
-        let newVal = newObj[key];
+        const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+        let oldVal = oldObj[key] !== undefined ? oldObj[key] : oldObj[camelKey];
+        let newVal = newObj[key] !== undefined ? newObj[key] : newObj[camelKey];
 
         if (key === 'BookingWindowEndDate' || key === 'BookingWindowStartDate') {
           if (oldVal) oldVal = new Date(oldVal).toLocaleDateString();

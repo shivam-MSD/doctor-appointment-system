@@ -110,12 +110,12 @@
                 <!-- New Record Badge -->
                 <span class="badge" *ngIf="clinic.verificationStatus === 'Pending'"
                   style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
-                  🆕 New Record
+                  🆕 Pending New
                 </span>
                 <!-- Edit Request Badge -->
                 <span class="badge" *ngIf="clinic.verificationStatus === 'UpdatedPending'"
                   style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
-                  ✏️ Edit Request
+                  ✏️ Pending Edit
                 </span>
                 <!-- Verified Badge -->
                 <span class="badge" *ngIf="clinic.verificationStatus === 'Verified'"
@@ -155,7 +155,7 @@
                 <button class="btn btn-secondary"
                   style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);"
                   (click)="openDetailsModal(clinic)">
-                  👁️ View Details
+                  👁️ Verify Details
                 </button>
                 <button class="btn btn-secondary"
                   style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color);"

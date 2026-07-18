@@ -98,3 +98,28 @@ ________________________________________________________________________
 You have added "LogAppointmentActionAsync" in backend, which is independent and patient should not have to wait for that onl completing this, so we can implement this code using event and delegate. 
 Please implement the code for me and how you have implemented this event and delegate, please explain me in detail for me, along with the execution flow, how it executes. and why patient or doctor dont have to wait for completion of the LogAppointmentActionAsync
 
+_______________________________________________________
+Bugs :- 
+
+1. Patient is not receiving the notification for the reschedule appointment.
+
+2. Doctor is should not allow to give appointment or reschedule appointment to past dates.
+
+____________________________________________________________________________________________
+
+
+This application is build for the PC and UI is not compatible to all the devices. 
+Please add the UI code means css code such that 
+So, My question is :-
+we can make UI for this application which is compatible to all teh devices -
+UI For the patient, doctor, admin.
+do we need to make the UIcompatible for all device for the superadmin?? because superadmin - uses PC or desktop for this in most cases.
+
+
+But it is best to all UI compatible with all the devices for patient, doctor, admin because 
+patient and doctor can view this on any where on mobile, laptop, ipad, tablet.
+most cases admin can have there PC or PC in teh cliininc or ipad to view, and may or may not be on mobile.
+
+______________________________________________________________________________________________
+
+

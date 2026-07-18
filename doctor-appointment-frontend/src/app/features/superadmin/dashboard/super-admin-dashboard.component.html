@@ -75,10 +75,10 @@
             <td><code>{{ doctor.licenceNumber }}</code></td>
             <td>{{ doctor.createdDate | date:'mediumDate' }}</td>
             <td class="text-end">
-              <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
-                <button class="btn" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3);" (click)="openDoctorDetails(doctor)">View Details</button>
-                <button class="btn btn-confirm" (click)="approveDoctor(doctor.doctorId)">Approve</button>
-                <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" (click)="rejectDoctor(doctor.doctorId)">Reject</button>
+              <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);" (click)="openDoctorDetails(doctor)">
+                  👁️ Verify Details
+                </button>
               </div>
             </td>
           </tr>
@@ -153,10 +153,10 @@
               <span class="truncate-text" [title]="clinic.clinicName">{{ clinic.clinicName }}</span>
               <div style="margin-top: 4px;">
                 <span class="badge" *ngIf="clinic.verificationStatus === 'Pending'" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
-                  New Record
+                  🆕 Pending New
                 </span>
                 <span class="badge" *ngIf="clinic.verificationStatus === 'UpdatedPending'" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
-                  Edit Request
+                  ✏️ Pending Edit
                 </span>
               </div>
             </td>
@@ -168,10 +168,12 @@
             <td><code>{{ clinic.pincode }}</code></td>
             <td class="text-end">
               <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
-                <button class="btn" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3); font-size: 0.75rem; padding: 4px 8px;" (click)="openClinicDetails(clinic)">View Details</button>
-                <button class="btn" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3); font-size: 0.75rem; padding: 4px 8px;" (click)="openClinicHistory(clinic)">View History</button>
-                <button class="btn btn-confirm" style="font-size: 0.75rem; padding: 4px 8px;" (click)="verifyClinic(clinic.clinicId)">Approve</button>
-                <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 0.75rem; padding: 4px 8px;" (click)="openRejectClinicModal(clinic.clinicId)">Reject</button>
+                <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);" (click)="openClinicDetails(clinic)">
+                  👁️ Verify Details
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color);" (click)="openClinicHistory(clinic)">
+                  ⏳ History
+                </button>
               </div>
             </td>
           </tr>
@@ -241,10 +243,10 @@
             <td>{{ admin.email }}</td>
             <td>{{ admin.mobileNo }}</td>
             <td class="text-end">
-              <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end;">
-                <button class="btn" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3);" (click)="openAdminDetails(admin)">View Details</button>
-                <button class="btn btn-confirm" (click)="verifyAdmin(admin.adminId)">Approve</button>
-                <button class="btn btn-cancel" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" (click)="rejectAdmin(admin.adminId)">Reject</button>
+              <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);" (click)="openAdminDetails(admin)">
+                  👁️ Verify Details
+                </button>
               </div>
             </td>
           </tr>
@@ -294,190 +296,378 @@
 
   <!-- DOCTOR DETAILS MODAL -->
   <div class="modal-backdrop" *ngIf="showDoctorDetailsModal && selectedDoctorDetails">
-    <div class="glass-card modal-container" style="max-width: 600px;">
+    <div class="modal-container">
       <div class="modal-header">
-        <h3>👨‍⚕️ Doctor Details</h3>
+        <h3>👁️ Verify Doctor Registration Details</h3>
         <button class="close-modal" (click)="closeDoctorDetails()">&times;</button>
       </div>
-      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Name</label>
-            <div style="font-weight: 600;">Dr. {{ selectedDoctorDetails.firstName }} {{ selectedDoctorDetails.lastName }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Specialization</label>
-            <div style="font-weight: 600; color: var(--accent-cyan);">{{ selectedDoctorDetails.specializationName }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Email</label>
-            <div>{{ selectedDoctorDetails.email }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Mobile</label>
-            <div>{{ selectedDoctorDetails.mobileNo }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Licence Number</label>
-            <div><code>{{ selectedDoctorDetails.licenceNumber }}</code></div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Experience</label>
-            <div>{{ selectedDoctorDetails.yearsOfExperience }} Years</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Qualification</label>
-            <div>{{ selectedDoctorDetails.qualification }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Consultation Fee</label>
-            <div style="color: #10b981; font-weight: 600;">Rs. {{ selectedDoctorDetails.consultationFee }}</div>
-          </div>
-        </div>
-        <div *ngIf="selectedDoctorDetails.aboutDoctor">
-          <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">About</label>
-          <div style="font-size: 0.9rem; line-height: 1.5;">{{ selectedDoctorDetails.aboutDoctor }}</div>
-        </div>
+
+      <div class="modal-body scrollable-body">
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">👤 Personal & Professional Information</h4>
+        <table class="details-table">
+          <tr>
+            <td>Doctor Name</td>
+            <td>Dr. {{ selectedDoctorDetails.firstName }} {{ selectedDoctorDetails.lastName }}</td>
+          </tr>
+          <tr>
+            <td>Email Address</td>
+            <td>{{ selectedDoctorDetails.email }}</td>
+          </tr>
+          <tr>
+            <td>Mobile Number</td>
+            <td>{{ selectedDoctorDetails.mobileNo || 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td>Specialization</td>
+            <td style="color: var(--accent-cyan) !important;">{{ selectedDoctorDetails.specializationName || 'General Medicine' }}</td>
+          </tr>
+          <tr>
+            <td>Licence Number</td>
+            <td><code>{{ selectedDoctorDetails.licenceNumber }}</code></td>
+          </tr>
+          <tr>
+            <td>Experience (Years)</td>
+            <td>{{ selectedDoctorDetails.yearsOfExperience }} Years</td>
+          </tr>
+          <tr>
+            <td>Registered Date</td>
+            <td>{{ selectedDoctorDetails.createdDate | date:'mediumDate' }}</td>
+          </tr>
+          <tr>
+            <td>Verification Status</td>
+            <td>
+              <span *ngIf="selectedDoctorDetails.verificationStatus === 'Verified'" class="badge badge-confirmed">Approved / Verified</span>
+              <span *ngIf="selectedDoctorDetails.verificationStatus === 'Pending'" class="badge badge-pending">Pending Verification</span>
+              <span *ngIf="selectedDoctorDetails.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 2px 6px; border-radius: 6px;">Rejected</span>
+            </td>
+          </tr>
+          <tr *ngIf="selectedDoctorDetails.bio">
+            <td>Professional Bio</td>
+            <td style="line-height: 1.4; max-width: 300px; word-break: break-word;">{{ selectedDoctorDetails.bio }}</td>
+          </tr>
+        </table>
       </div>
-      <div class="modal-footer" style="justify-content: flex-end;">
-        <button class="btn btn-cancel" (click)="closeDoctorDetails()">Close</button>
+
+      <!-- Verification Checkbox -->
+      <div class="verification-checkbox-bar">
+        <input type="checkbox" id="doctorVerifyCheckDash" [(ngModel)]="isDoctorVerified">
+        <label for="doctorVerifyCheckDash">
+          I have reviewed and verified all the registration details above.
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDoctorDetails()" style="font-size: 0.85rem; padding: 8px 16px;">Close</button>
+        
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-confirm" style="background: #10b981; border-color: #10b981; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="approveDoctor(selectedDoctorDetails.doctorId); closeDoctorDetails()" [disabled]="!isDoctorVerified">
+            ✓ Approve Doctor
+          </button>
+          <button class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="rejectDoctor(selectedDoctorDetails.doctorId); closeDoctorDetails()" [disabled]="!isDoctorVerified">
+            ✕ Reject Doctor
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- CLINIC DETAILS MODAL -->
   <div class="modal-backdrop" *ngIf="showClinicDetailsModal && selectedClinicDetails">
-    <div class="glass-card modal-container" style="max-width: 600px;">
+    <div class="modal-container">
       <div class="modal-header">
-        <h3>🏢 Clinic Details</h3>
+        <h3>👁️ Verify Clinic Location Details</h3>
         <button class="close-modal" (click)="closeClinicDetails()">&times;</button>
       </div>
-      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div style="grid-column: span 2;">
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Clinic Name</label>
-            <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent-cyan);">{{ selectedClinicDetails.clinicName }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Type</label>
-            <div><span class="type-indicator">{{ selectedClinicDetails.clinicType }}</span></div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Contact Number</label>
-            <div>📞 {{ selectedClinicDetails.contactNumber || 'Not available' }}</div>
-          </div>
-          <div style="grid-column: span 2;">
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Full Address</label>
-            <div style="line-height: 1.4;">
-              {{ selectedClinicDetails.addressline1 }}<br>
-              <ng-container *ngIf="selectedClinicDetails.addressline2">{{ selectedClinicDetails.addressline2 }}<br></ng-container>
-              {{ selectedClinicDetails.area }}, {{ selectedClinicDetails.city }}<br>
-              {{ selectedClinicDetails.state }} - <code>{{ selectedClinicDetails.pincode }}</code>
-            </div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Operating Days</label>
-            <div>{{ selectedClinicDetails.openDays || 'Not set' }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Timings</label>
-            <div>{{ selectedClinicDetails.startTime || 'Not set' }} to {{ selectedClinicDetails.endTime || 'Not set' }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Assigned Doctor</label>
-            <div style="font-weight: 600;">{{ selectedClinicDetails.doctorName }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Supported Modes</label>
-            <div>{{ selectedClinicDetails.supportedModes || 'Not set' }}</div>
-          </div>
-        </div>
+
+      <div class="modal-body scrollable-body">
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">🏥 Clinic Information</h4>
+        <table class="details-table">
+          <tr>
+            <td>Clinic Name</td>
+            <td>{{ selectedClinicDetails.clinicName }}</td>
+          </tr>
+          <tr>
+            <td>Clinic Type</td>
+            <td>{{ selectedClinicDetails.clinicType }}</td>
+          </tr>
+          <tr>
+            <td>Registered By</td>
+            <td style="color: var(--accent-cyan) !important;">{{ selectedClinicDetails.doctorName }}</td>
+          </tr>
+          <tr>
+            <td>Verification Status</td>
+            <td>
+              <span *ngIf="selectedClinicDetails.verificationStatus === 'Verified'" class="badge badge-confirmed">Verified / Approved</span>
+              <span *ngIf="selectedClinicDetails.verificationStatus === 'Pending' || selectedClinicDetails.verificationStatus === 'UpdatedPending'" class="badge badge-pending">Pending Verification</span>
+              <span *ngIf="selectedClinicDetails.verificationStatus === 'Rejected'" class="badge badge-cancelled" style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 2px 6px; border-radius: 6px;">Rejected</span>
+            </td>
+          </tr>
+          <tr *ngIf="selectedClinicDetails.rejectionReason">
+            <td style="color: #f87171 !important;">Rejection Reason</td>
+            <td style="color: #f87171 !important; font-style: italic;">{{ selectedClinicDetails.rejectionReason }}</td>
+          </tr>
+        </table>
+
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">📍 Full Address Details</h4>
+        <table class="details-table">
+          <tr>
+            <td>Address Line 1</td>
+            <td>{{ selectedClinicDetails.addressline1 }}</td>
+          </tr>
+          <tr>
+            <td>Address Line 2</td>
+            <td>{{ selectedClinicDetails.addressline2 || 'N/A' }}</td>
+          </tr>
+          <tr *ngIf="selectedClinicDetails.contactNumber">
+            <td>Contact Number</td>
+            <td>📞 {{ selectedClinicDetails.contactNumber }}</td>
+          </tr>
+          <tr>
+            <td>Area / Locality</td>
+            <td>{{ selectedClinicDetails.area || 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td>City</td>
+            <td>{{ selectedClinicDetails.city }}</td>
+          </tr>
+          <tr>
+            <td>State</td>
+            <td>{{ selectedClinicDetails.state }}</td>
+          </tr>
+          <tr>
+            <td>Country</td>
+            <td>{{ selectedClinicDetails.country || 'India' }}</td>
+          </tr>
+          <tr>
+            <td>Pincode</td>
+            <td>{{ selectedClinicDetails.pincode }}</td>
+          </tr>
+        </table>
+
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">🕒 Working Schedule & Timings</h4>
+        <table class="details-table" style="margin-bottom: 12px;">
+          <tr>
+            <td>Days Open</td>
+            <td>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;" *ngIf="selectedClinicDetails.openDays; else noDays">
+                <span *ngFor="let day of selectedClinicDetails.openDays.split(',')" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px;">
+                  {{ day.trim() }}
+                </span>
+              </div>
+              <ng-template #noDays><span style="color: var(--text-muted); font-style: italic;">No timing schedule configured yet</span></ng-template>
+            </td>
+          </tr>
+          <tr *ngIf="selectedClinicDetails.openDays">
+            <td>Clinic Working Hours</td>
+            <td style="color: var(--accent-cyan) !important;">{{ selectedClinicDetails.startTime }} - {{ selectedClinicDetails.endTime }}</td>
+          </tr>
+          <tr>
+            <td>Supported Consultation Modes</td>
+            <td>
+              <span *ngIf="selectedClinicDetails.supportedModes?.includes('InPerson')" style="display: inline-block; margin-right: 12px;">✙ In-Person Visit</span>
+              <span *ngIf="selectedClinicDetails.supportedModes?.includes('VideoConsultation')">🎥 Video Consultation</span>
+              <span *ngIf="!selectedClinicDetails.supportedModes" style="color: var(--text-muted); font-style: italic;">In-Person Visit (Default)</span>
+            </td>
+          </tr>
+          <tr *ngIf="selectedClinicDetails.bookingWindowStartDate">
+            <td>Booking Window Range</td>
+            <td style="font-size: 0.82rem;">
+              Available from <strong>{{ selectedClinicDetails.bookingWindowStartDate | date:'mediumDate' }}</strong>
+              <span *ngIf="selectedClinicDetails.bookingWindowEndDate"> to <strong>{{ selectedClinicDetails.bookingWindowEndDate | date:'mediumDate' }}</strong></span>
+            </td>
+          </tr>
+        </table>
+        
+        <ng-container *ngIf="selectedClinicDetails.hasAdmin || selectedClinicDetails.adminName">
+          <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 24px;">👤 Clinic Admin Contact Details</h4>
+          <table class="details-table" style="margin-bottom: 12px;">
+            <tr>
+              <td>Admin Name</td>
+              <td>{{ selectedClinicDetails.adminName }}</td>
+            </tr>
+            <tr>
+              <td>Mobile</td>
+              <td>{{ selectedClinicDetails.adminMobileNo || 'Not available' }}</td>
+            </tr>
+            <tr>
+              <td>Email</td>
+              <td>{{ selectedClinicDetails.adminEmail || 'Not available' }}</td>
+            </tr>
+          </table>
+        </ng-container>
       </div>
-      <div class="modal-footer" style="justify-content: flex-end;">
-        <button class="btn btn-cancel" (click)="closeClinicDetails()">Close</button>
+
+      <!-- Verification Checkbox -->
+      <div class="verification-checkbox-bar">
+        <input type="checkbox" id="clinicVerifyCheckDash" [(ngModel)]="isClinicVerified">
+        <label for="clinicVerifyCheckDash">
+          I have reviewed and verified all the registration details above.
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeClinicDetails()" style="font-size: 0.85rem; padding: 8px 16px;">Close</button>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-confirm" style="background: #10b981; border-color: #10b981; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="verifyClinic(selectedClinicDetails.clinicId); closeClinicDetails()" [disabled]="!isClinicVerified">
+            ✓ Approve Clinic
+          </button>
+          <button class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="openRejectClinicModal(selectedClinicDetails.clinicId); closeClinicDetails()" [disabled]="!isClinicVerified">
+            ✕ Reject Clinic
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ADMIN DETAILS MODAL -->
   <div class="modal-backdrop" *ngIf="showAdminDetailsModal && selectedAdminDetails">
-    <div class="glass-card modal-container" style="max-width: 500px;">
+    <div class="modal-container">
       <div class="modal-header">
-        <h3>👤 Admin Details</h3>
+        <h3>👁️ Verify Clinic Staff Admin Credentials</h3>
         <button class="close-modal" (click)="closeAdminDetails()">&times;</button>
       </div>
-      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Name</label>
-            <div style="font-weight: 600;">{{ selectedAdminDetails.firstName }} {{ selectedAdminDetails.lastName }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Gender</label>
-            <div>{{ selectedAdminDetails.gender }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Email</label>
-            <div>{{ selectedAdminDetails.email }}</div>
-          </div>
-          <div>
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Mobile</label>
-            <div>{{ selectedAdminDetails.mobileNo }}</div>
-          </div>
-          <div style="grid-column: span 2;">
-            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Assigned Clinic</label>
-            <div style="font-weight: 600; color: var(--accent-cyan);">{{ selectedAdminDetails.clinicName }}</div>
-          </div>
-        </div>
+
+      <div class="modal-body scrollable-body">
+        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">🛡️ Administrator Information</h4>
+        <table class="details-table">
+          <tr>
+            <td>Admin Name</td>
+            <td>{{ selectedAdminDetails.firstName }} {{ selectedAdminDetails.lastName }}</td>
+          </tr>
+          <tr>
+            <td>Email Address (Login ID)</td>
+            <td>{{ selectedAdminDetails.email }}</td>
+          </tr>
+          <tr>
+            <td>Mobile Number</td>
+            <td>{{ selectedAdminDetails.mobileNo || 'N/A' }}</td>
+          </tr>
+          <tr>
+            <td>Assigned Clinic Name</td>
+            <td style="color: var(--accent-cyan) !important;">{{ selectedAdminDetails.clinicName }}</td>
+          </tr>
+          <tr>
+            <td>Verification Status</td>
+            <td>
+              <span *ngIf="selectedAdminDetails.isVerified" class="badge badge-confirmed">Active / Approved</span>
+              <span *ngIf="!selectedAdminDetails.isVerified" class="badge badge-pending">Pending Verification</span>
+            </td>
+          </tr>
+        </table>
       </div>
-      <div class="modal-footer" style="justify-content: flex-end;">
-        <button class="btn btn-cancel" (click)="closeAdminDetails()">Close</button>
+
+      <!-- Verification Checkbox -->
+      <div class="verification-checkbox-bar">
+        <input type="checkbox" id="adminVerifyCheckDash" [(ngModel)]="isAdminVerified">
+        <label for="adminVerifyCheckDash">
+          I have reviewed and verified all the registration details above.
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAdminDetails()" style="font-size: 0.85rem; padding: 8px 16px;">Close</button>
+        
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-confirm" style="background: #10b981; border-color: #10b981; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="verifyAdmin(selectedAdminDetails.adminId); closeAdminDetails()" [disabled]="!isAdminVerified">
+            ✓ Approve Admin
+          </button>
+          <button class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="rejectAdmin(selectedAdminDetails.adminId); closeAdminDetails()" [disabled]="!isAdminVerified">
+            ✕ Reject Admin
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- CLINIC HISTORY MODAL -->
+  <!-- CLINIC CHANGE HISTORY TIMELINE MODAL -->
   <div class="modal-backdrop" *ngIf="showHistoryModal">
-    <div class="glass-card modal-container" style="max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;">
-      <div class="modal-header" style="flex-shrink: 0;">
-        <h3>📜 History: {{ selectedClinicNameForHistory }}</h3>
+    <div class="glass-card modal-container" style="max-width: 650px; width: 90%; max-height: 85vh; overflow-y: auto;">
+      <div class="modal-header"
+        style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+        <h3
+          style="margin: 0; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+          <span>⏳</span> {{ selectedClinicNameForHistory }} - Change History
+        </h3>
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
       </div>
-      <div class="modal-body" style="overflow-y: auto; flex-grow: 1;">
-        <div *ngIf="clinicHistory.length === 0" style="text-align: center; padding: 30px; color: var(--text-muted);">
-          No history found for this clinic.
+
+      <div class="modal-body" style="padding-top: 0;">
+        <div *ngIf="clinicHistory.length === 0"
+          style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+          <span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">📭</span>
+          No audit history records found for this clinic.
         </div>
-        
-        <div *ngIf="clinicHistory.length > 0" style="display: flex; flex-direction: column; gap: 20px;">
-          <div *ngFor="let log of clinicHistory" style="border-left: 3px solid var(--accent-cyan); padding-left: 15px; position: relative;">
-            <div style="position: absolute; left: -8px; top: 0; width: 13px; height: 13px; border-radius: 50%; background: var(--accent-cyan);"></div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-              <div>
-                <span class="badge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); margin-bottom: 4px; display: inline-block;">{{ log.action }}</span>
-                <div style="font-weight: 600;">By: {{ log.actorName }}</div>
-              </div>
-              <div style="font-size: 0.8rem; color: var(--text-muted);">{{ log.timestamp | date:'medium' }}</div>
-            </div>
-            
-            <div *ngIf="log.notes" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px; font-style: italic;">
-              "{{ log.notes }}"
+
+        <div *ngIf="clinicHistory.length > 0" class="history-timeline"
+          style="position: relative; padding-left: 30px; margin-left: 10px; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 24px;">
+
+          <div *ngFor="let log of clinicHistory" class="timeline-item" style="position: relative;">
+
+            <!-- Timeline indicator node -->
+            <div class="timeline-indicator"
+              style="position: absolute; left: -39px; top: 2px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #0f172a; display: flex; align-items: center; justify-content: center; font-size: 0.65rem;"
+              [style.background]="log.action === 'Approved' ? '#10b981' : (log.action === 'Rejected' ? '#ef4444' : (log.action === 'Created' ? '#06b6d4' : '#8b5cf6'))">
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
-              <div *ngIf="log.oldDataJson" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px;">
-                <div style="font-size: 0.75rem; font-weight: 700; color: #ef4444; margin-bottom: 6px; text-transform: uppercase;">Previous State</div>
-                <pre style="font-size: 0.8rem; white-space: pre-wrap; margin: 0; font-family: monospace;">{{ parseJson(log.oldDataJson) | json }}</pre>
+            <!-- Content Card -->
+            <div
+              style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <span class="badge"
+                  style="font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;"
+                  [style.background]="log.action === 'Approved' ? 'rgba(16, 185, 129, 0.1)' : (log.action === 'Rejected' ? 'rgba(239, 68, 68, 0.1)' : (log.action === 'Created' ? 'rgba(6, 182, 212, 0.1)' : 'rgba(139, 92, 246, 0.1)'))"
+                  [style.color]="log.action === 'Approved' ? '#10b981' : (log.action === 'Rejected' ? '#ef4444' : (log.action === 'Created' ? 'var(--accent-cyan)' : '#a78bfa'))"
+                  [style.border]="log.action === 'Approved' ? '1px solid rgba(16, 185, 129, 0.2)' : (log.action === 'Rejected' ? '1px solid rgba(239, 68, 68, 0.2)' : (log.action === 'Created' ? '1px solid rgba(6, 182, 212, 0.2)' : '1px solid rgba(139, 92, 246, 0.2)'))">
+                  {{ log.action === 'EditSubmitted' ? 'Edit Request' : (log.action === 'TimingsUpdated' ? 'Timings Edit'
+                  : log.action) }}
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ log.timestamp | date:'medium'
+                  }}</span>
               </div>
-              <div *ngIf="log.newDataJson" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px;">
-                <div style="font-size: 0.75rem; font-weight: 700; color: #10b981; margin-bottom: 6px; text-transform: uppercase;">New State</div>
-                <pre style="font-size: 0.8rem; white-space: pre-wrap; margin: 0; font-family: monospace;">{{ parseJson(log.newDataJson) | json }}</pre>
+
+              <div style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px; font-weight: 500;">
+                <span style="color: var(--text-secondary);">By:</span> <strong>{{ log.actorName || 'System / Admin'
+                  }}</strong>
               </div>
+
+              <!-- Notes -->
+              <div *ngIf="log.notes"
+                style="background: rgba(255,255,255,0.01); border-left: 3px solid var(--accent-cyan); padding: 6px 10px; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px; border-radius: 0 4px 4px 0; font-style: italic;">
+                {{ log.notes }}
+              </div>
+
+              <!-- Change Diff details -->
+              <div *ngIf="parseChanges(log).length > 0"
+                style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                <h5
+                  style="margin: 0 0 6px 0; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                  Changes Modified:</h5>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div *ngFor="let chg of parseChanges(log)"
+                    style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 0.78rem; padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,0.03);">
+                    <span style="font-weight: 600; color: var(--text-primary);">{{ chg.label }}</span>
+                    <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+                      <span
+                        style="text-decoration: line-through; color: #ef4444; background: rgba(239, 68, 68, 0.05); padding: 1px 4px; border-radius: 3px;">{{
+                        chg.oldVal }}</span>
+                      <span>&rarr;</span>
+                      <span
+                        style="color: #10b981; background: rgba(16, 185, 129, 0.05); padding: 1px 4px; border-radius: 3px; font-weight: 600;">{{
+                        chg.newVal }}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
             </div>
+
           </div>
         </div>
       </div>
-      <div class="modal-footer" style="flex-shrink: 0; justify-content: flex-end;">
-        <button class="btn btn-cancel" (click)="closeHistoryModal()">Close</button>
+      <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 16px;">
+        <button type="button" class="btn btn-secondary" (click)="closeHistoryModal()"
+          style="width: 100%; font-size: 0.85rem; padding: 8px;">Close History</button>
       </div>
     </div>
   </div>

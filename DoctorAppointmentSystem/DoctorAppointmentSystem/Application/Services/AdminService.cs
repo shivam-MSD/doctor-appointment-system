@@ -8,6 +8,7 @@ using DoctorAppointmentSystem.Domain.Entities;
 using DoctorAppointmentSystem.Domain.Exceptions;
 using DoctorAppointmentSystem.Persistent.Context;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace DoctorAppointmentSystem.Application.Services
 {
@@ -43,8 +44,20 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new BadRequestException($"VerificationStatus '{status}' is invalid. Allowed: Verified, Pending, Rejected.");
 			}
 
+			var oldData = JsonSerializer.Serialize(new { doctor.VerificationStatus });
 			doctor.VerificationStatus = parsedStatus;
 			doctor.UpdatedDate = DateTime.UtcNow;
+
+			var auditLog = new DoctorAuditLog
+			{
+				DoctorId = doctor.DoctorId,
+				Action = parsedStatus == EVerificationStatus.Verified ? "Approved" : "Rejected",
+				Timestamp = DateTime.UtcNow,
+				OldDataJson = oldData,
+				NewDataJson = JsonSerializer.Serialize(new { doctor.VerificationStatus }),
+				Notes = $"Doctor verification status changed to {status}"
+			};
+			_dbContext.DoctorAuditLogs.Add(auditLog);
 
 			await _dbContext.SaveChangesAsync();
 
@@ -285,6 +298,84 @@ namespace DoctorAppointmentSystem.Application.Services
 					IsVerified = a.IsVerified
 				})
 				.ToListAsync();
+		}
+		public async Task<PagedResult<SystemAuditLogDto>> GetSystemAuditLogsAsync(string? entityType, string? action, DateTime? startDate, DateTime? endDate, int page, int size)
+		{
+			var clinicLogs = _dbContext.ClinicAuditLogs.Select(l => new SystemAuditLogDto
+			{
+				LogId = l.LogId,
+				EntityType = "Clinic",
+				EntityId = l.ClinicId,
+				EntityName = _dbContext.Clinics.Where(c => c.ClinicId == l.ClinicId).Select(c => c.ClinicName).FirstOrDefault() ?? "Unknown",
+				Action = l.Action,
+				ActorUserId = l.ActorUserId,
+				ActorName = l.ActorName,
+				Timestamp = l.Timestamp,
+				OldDataJson = l.OldDataJson,
+				NewDataJson = l.NewDataJson,
+				Notes = l.Notes
+			});
+
+			var doctorLogs = _dbContext.DoctorAuditLogs.Select(l => new SystemAuditLogDto
+			{
+				LogId = l.LogId,
+				EntityType = "Doctor",
+				EntityId = l.DoctorId,
+				EntityName = _dbContext.Doctors.Where(d => d.DoctorId == l.DoctorId).Select(d => "Dr. " + d.FirstName + " " + d.LastName).FirstOrDefault() ?? "Unknown",
+				Action = l.Action,
+				ActorUserId = l.ActorUserId,
+				ActorName = l.ActorName,
+				Timestamp = l.Timestamp,
+				OldDataJson = l.OldDataJson,
+				NewDataJson = l.NewDataJson,
+				Notes = l.Notes
+			});
+
+			var adminLogs = _dbContext.AdminAuditLogs.Select(l => new SystemAuditLogDto
+			{
+				LogId = l.LogId,
+				EntityType = "Admin",
+				EntityId = l.AdminId,
+				EntityName = _dbContext.Admins.Where(a => a.AdminId == l.AdminId).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault() ?? "Unknown",
+				Action = l.Action,
+				ActorUserId = l.ActorUserId,
+				ActorName = l.ActorName,
+				Timestamp = l.Timestamp,
+				OldDataJson = l.OldDataJson,
+				NewDataJson = l.NewDataJson,
+				Notes = l.Notes
+			});
+
+			var query = clinicLogs.Union(doctorLogs).Union(adminLogs);
+
+			if (!string.IsNullOrEmpty(entityType))
+			{
+				query = query.Where(q => q.EntityType == entityType);
+			}
+
+			if (!string.IsNullOrEmpty(action))
+			{
+				query = query.Where(q => q.Action == action);
+			}
+
+			if (startDate.HasValue)
+			{
+				query = query.Where(q => q.Timestamp >= startDate.Value);
+			}
+
+			if (endDate.HasValue)
+			{
+				query = query.Where(q => q.Timestamp <= endDate.Value);
+			}
+
+			var totalCount = await query.CountAsync();
+
+			var items = await query.OrderByDescending(q => q.Timestamp)
+				.Skip((page - 1) * size)
+				.Take(size)
+				.ToListAsync();
+
+			return new PagedResult<SystemAuditLogDto>(items, totalCount, page, size);
 		}
 	}
 }

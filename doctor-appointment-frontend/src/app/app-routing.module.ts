@@ -73,7 +73,7 @@ const routes: Routes = [
       { path: 'superadmin/doctors', component: SuperAdminDoctorsComponent },
       { path: 'superadmin/clinics', component: SuperAdminClinicsComponent },
       { path: 'superadmin/admins', component: SuperAdminAdminsComponent },
-      { path: 'superadmin/audit-logs', loadComponent: () => import('./features/doctor/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent) }
+      { path: 'superadmin/audit-logs', loadComponent: () => import('./features/superadmin/audit-logs/superadmin-audit-logs.component').then(m => m.SuperadminAuditLogsComponent) }
     ]
   },
   { path: '**', redirectTo: 'login' }

@@ -26,12 +26,15 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   // Detail Modal States
   showDoctorDetailsModal = false;
   selectedDoctorDetails: any = null;
+  isDoctorVerified = false;
 
   showClinicDetailsModal = false;
   selectedClinicDetails: any = null;
+  isClinicVerified = false;
 
   showAdminDetailsModal = false;
   selectedAdminDetails: any = null;
+  isAdminVerified = false;
 
   // Clinic History State
   showHistoryModal = false;
@@ -181,6 +184,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   // --- Doctor Details Modal ---
   openDoctorDetails(doctor: any): void {
     this.selectedDoctorDetails = doctor;
+    this.isDoctorVerified = false;
     this.showDoctorDetailsModal = true;
   }
 
@@ -192,6 +196,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   // --- Clinic Details Modal ---
   openClinicDetails(clinic: any): void {
     this.selectedClinicDetails = clinic;
+    this.isClinicVerified = false;
     this.showClinicDetailsModal = true;
   }
 
@@ -203,6 +208,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   // --- Admin Details Modal ---
   openAdminDetails(admin: any): void {
     this.selectedAdminDetails = admin;
+    this.isAdminVerified = false;
     this.showAdminDetailsModal = true;
   }
 
@@ -214,7 +220,8 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   // --- Clinic History Modal ---
   openClinicHistory(clinic: any): void {
     this.selectedClinicNameForHistory = clinic.clinicName;
-    this.adminService.getClinicHistory(clinic.clinicId).subscribe({
+    const targetId = clinic.parentClinicId || clinic.clinicId;
+    this.adminService.getClinicHistory(targetId).subscribe({
       next: (history) => {
         this.clinicHistory = history;
         this.showHistoryModal = true;
@@ -237,6 +244,65 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
       return jsonString ? JSON.parse(jsonString) : null;
     } catch {
       return null;
+    }
+  }
+
+  parseChanges(log: any): any[] {
+    try {
+      const oldObj = JSON.parse(log.oldDataJson || '{}');
+      const newObj = JSON.parse(log.newDataJson || '{}');
+      const changes: any[] = [];
+
+      const fieldLabels: { [key: string]: string } = {
+        ClinicName: 'Clinic Name',
+        ClinicType: 'Clinic Type',
+        ContactNumber: 'Contact Number',
+        OpenDays: 'Open Days',
+        StartTime: 'Opening Time',
+        EndTime: 'Closing Time',
+        IsAvailable: 'Branch Active/Open',
+        UnavailabilityReason: 'Branch Closed Reason',
+        IsDoctorAvailable: 'Doctor Available Personally',
+        DoctorUnavailabilityReason: 'Unavailability Reason',
+        BookingWindowEndDate: 'Booking End Date',
+        BookingWindowStartDate: 'Booking Start Date',
+        SupportedModes: 'Supported Modes',
+        MaxAppointmentsPerDay: 'Max Appointments/Day',
+        State: 'State',
+        City: 'City',
+        Pincode: 'Pincode',
+        Area: 'Area',
+        Addressline1: 'Address Line 1',
+        Addressline2: 'Address Line 2'
+      };
+
+      const keys = Object.keys(fieldLabels);
+      for (const key of keys) {
+        const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+        let oldVal = oldObj[key] !== undefined ? oldObj[key] : oldObj[camelKey];
+        let newVal = newObj[key] !== undefined ? newObj[key] : newObj[camelKey];
+
+        if (key === 'BookingWindowEndDate' || key === 'BookingWindowStartDate') {
+          if (oldVal) oldVal = new Date(oldVal).toLocaleDateString();
+          if (newVal) newVal = new Date(newVal).toLocaleDateString();
+        }
+
+        if (typeof oldVal === 'boolean') oldVal = oldVal ? 'Yes' : 'No';
+        if (typeof newVal === 'boolean') newVal = newVal ? 'Yes' : 'No';
+
+        const normalize = (val: any) => (val === null || val === undefined) ? '' : String(val).trim();
+        if (normalize(oldVal) !== normalize(newVal)) {
+          changes.push({
+            label: fieldLabels[key],
+            oldVal: normalize(oldVal) || 'N/A',
+            newVal: normalize(newVal) || 'N/A'
+          });
+        }
+      }
+
+      return changes;
+    } catch (e) {
+      return [];
     }
   }
 }

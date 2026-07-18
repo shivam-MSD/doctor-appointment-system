@@ -73,5 +73,18 @@ namespace DoctorAppointmentSystem.Controllers
 			var result = await _adminService.GetAllAdminsAsync(search, isVerified);
 			return Ok(result);
 		}
+
+		[HttpGet("system-audit-logs")]
+		public async Task<IActionResult> GetSystemAuditLogs(
+			[FromQuery] string? entityType,
+			[FromQuery] string? action,
+			[FromQuery] DateTime? startDate,
+			[FromQuery] DateTime? endDate,
+			[FromQuery] int page = 1,
+			[FromQuery] int size = 10)
+		{
+			var result = await _adminService.GetSystemAuditLogsAsync(entityType, action, startDate, endDate, page, size);
+			return Ok(result);
+		}
 	}
 }

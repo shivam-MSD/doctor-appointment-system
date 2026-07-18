@@ -31,6 +31,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				clinic.ClinicName,
 				clinic.ClinicType,
+				clinic.ContactNumber,
 				clinic.OpenDays,
 				clinic.StartTime,
 				clinic.EndTime,
@@ -59,6 +60,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				dto.ClinicName,
 				dto.ClinicType,
+				dto.ContactNumber,
 				dto.OpenDays,
 				dto.StartTime,
 				dto.EndTime,
@@ -616,6 +618,18 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException($"Clinic Admin with ID '{adminId}' was not found.");
 			}
 			admin.IsVerified = true;
+			
+			var auditLog = new AdminAuditLog
+			{
+				AdminId = admin.AdminId,
+				Action = "Approved",
+				Timestamp = DateTime.UtcNow,
+				OldDataJson = JsonSerializer.Serialize(new { IsVerified = false }),
+				NewDataJson = JsonSerializer.Serialize(new { admin.IsVerified }),
+				Notes = "Admin verified and activated by Super Admin"
+			};
+			_dbContext.AdminAuditLogs.Add(auditLog);
+
 			await _dbContext.SaveChangesAsync();
 
 			// Notify Admin user they have been approved
@@ -648,6 +662,18 @@ namespace DoctorAppointmentSystem.Application.Services
 			// Remove admin record and deactivate user
 			_dbContext.Admins.Remove(admin);
 			admin.User.IsActive = false;
+
+			var auditLog = new AdminAuditLog
+			{
+				AdminId = admin.AdminId,
+				Action = "Rejected",
+				Timestamp = DateTime.UtcNow,
+				OldDataJson = JsonSerializer.Serialize(new { IsVerified = false }),
+				NewDataJson = JsonSerializer.Serialize(new { IsVerified = false }),
+				Notes = "Admin registration rejected by Super Admin"
+			};
+			_dbContext.AdminAuditLogs.Add(auditLog);
+
 			await _dbContext.SaveChangesAsync();
 
 			// Notify the admin user
@@ -750,14 +776,23 @@ namespace DoctorAppointmentSystem.Application.Services
 			                       string.IsNullOrWhiteSpace(clinic.StartTime) && 
 			                       string.IsNullOrWhiteSpace(clinic.EndTime);
 
-			if (dto.IsAvailable && !isDtoTimingEmpty && 
-			    (string.IsNullOrWhiteSpace(dto.OpenDays) || string.IsNullOrWhiteSpace(dto.StartTime) || string.IsNullOrWhiteSpace(dto.EndTime)))
-			{
-				throw new BadRequestException("Active/Open clinics must have a timing schedule (open days, start time, and end time) configured.");
-			}
+			bool timingsChanged = clinic.OpenDays != dto.OpenDays ||
+			                      clinic.StartTime != dto.StartTime ||
+			                      clinic.EndTime != dto.EndTime ||
+			                      clinic.IsAvailable != dto.IsAvailable ||
+			                      clinic.IsDoctorAvailable != dto.IsDoctorAvailable;
 
-			// Validate timing clashes (exclude this clinic itself from clash check)
-			await ValidateNoClinicClashAsync(clinic.Doctor.DoctorId, clinicId, dto.OpenDays, dto.StartTime, dto.EndTime, dto.IsAvailable, dto.IsDoctorAvailable);
+			if (timingsChanged)
+			{
+				if (dto.IsAvailable && !isDtoTimingEmpty && 
+				    (string.IsNullOrWhiteSpace(dto.OpenDays) || string.IsNullOrWhiteSpace(dto.StartTime) || string.IsNullOrWhiteSpace(dto.EndTime)))
+				{
+					throw new BadRequestException("Active/Open clinics must have a timing schedule (open days, start time, and end time) configured.");
+				}
+
+				// Validate timing clashes (exclude this clinic itself from clash check)
+				await ValidateNoClinicClashAsync(clinic.Doctor.DoctorId, clinicId, dto.OpenDays, dto.StartTime, dto.EndTime, dto.IsAvailable, dto.IsDoctorAvailable);
+			}
 
 			bool detailsChanged = clinic.ClinicName != dto.ClinicName ||
 			                      clinic.ClinicType != dto.ClinicType ||
@@ -1087,12 +1122,14 @@ namespace DoctorAppointmentSystem.Application.Services
 				.ToList();
 
 			// Fetch all clinics of this doctor that are active and available (ignore closed or doctor unavailable branches)
+			// Also ignore edit clones (ParentClinicId != null) because they are just pending edits, not separate schedules.
 			var query = _dbContext.Clinics
 				.Include(c => c.Doctor)
 				.Where(c => c.Doctor.DoctorId == doctorId 
 				         && c.VerificationStatus != EVerificationStatus.Rejected
 				         && c.IsAvailable == true
-				         && c.IsDoctorAvailable == true);
+				         && c.IsDoctorAvailable == true
+				         && c.ParentClinicId == null);
 
 			if (excludingClinicId.HasValue)
 			{
