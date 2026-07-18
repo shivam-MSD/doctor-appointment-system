@@ -12,6 +12,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string MobileNo { get; set; }
 		public string Gender { get; set; }
 		public DateTime DOB { get; set; }
+		public int Age { get; set; }
 		public string BloodGroup { get; set; }
 		public string EmergencyContactName { get; set; }
 		public string EmergencyContactNumber { get; set; }

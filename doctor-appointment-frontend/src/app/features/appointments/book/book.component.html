@@ -1,301 +1,31 @@
-<!-- Unified Booking Hub Layout -->
-<div class="hub-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+<!-- Patient Header (Banner + Metrics) -->
+<app-patient-header></app-patient-header>
 
-  <!-- TOP SECTION: Metrics -->
-  <div class="metrics-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
-    <!-- Upcoming -->
-    <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #8b5cf6;">
-      <div style="font-size: 2rem; color: #8b5cf6; background: rgba(139, 92, 246, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">🚀</div>
+<!-- FULL WIDTH: Smart Dropdown (if no doctor selected) -->
+<div class="booking-wrapper" *ngIf="!isInitializing && (!doctorId || !clinicId)"
+  style="padding: 0 20px; margin-bottom: 20px; width: 100%;">
+  <div class="glass-card"
+    style="width: 100%; padding: 30px 40px; display: flex; align-items: center; justify-content: space-between; gap: 40px; background: linear-gradient(145deg, var(--glass-overlay) 0%, rgba(6, 182, 212, 0.05) 100%); border: 1px solid rgba(6, 182, 212, 0.15); border-radius: 20px;">
+
+    <div style="display: flex; align-items: center; gap: 20px; flex: 1; min-width: 350px;">
+      <div
+        style="width: 64px; height: 64px; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4); flex-shrink: 0;">
+        <span style="font-size: 2rem; color: white;">🗓️</span>
+      </div>
       <div>
-        <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
-          <ng-container *ngIf="isPatientStatsLoading; else upcomingLoaded">...</ng-container>
-          <ng-template #upcomingLoaded>{{ patientTotalUpcoming }}</ng-template>
-        </h2>
-        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Upcoming Appointments</p>
-      </div>
-    </div>
-    
-    <!-- Pending -->
-    <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #f59e0b;">
-      <div style="font-size: 2rem; color: #f59e0b; background: rgba(245, 158, 11, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">⏳</div>
-      <div>
-        <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
-          <ng-container *ngIf="isPatientStatsLoading; else pendingLoaded">...</ng-container>
-          <ng-template #pendingLoaded>{{ patientTotalPending }}</ng-template>
-        </h2>
-        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Pending Appointments</p>
+        <h2 style="font-size: 1.6rem; color: var(--text-primary); margin-bottom: 4px; font-weight: 700;">Start Your Booking</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Select a specialized healthcare professional from our directory.</p>
       </div>
     </div>
 
-    <!-- Completed -->
-    <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #10b981;">
-      <div style="font-size: 2rem; color: #10b981; background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">✅</div>
-      <div>
-        <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
-          <ng-container *ngIf="isPatientStatsLoading; else completedLoaded">...</ng-container>
-          <ng-template #completedLoaded>{{ patientTotalCompleted }}</ng-template>
-        </h2>
-        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Completed Appointments</p>
-      </div>
-    </div>
-  </div>
-
-<!-- Loading State -->
-<div class="booking-container" *ngIf="isInitializing" style="display: flex; justify-content: center; align-items: center; min-height: 40vh;">
-  <div style="text-align: center; color: var(--accent-cyan);">
-    <div style="font-size: 3rem; animation: pulse 1.5s infinite;">⏳</div>
-    <h3 style="margin-top: 15px; font-weight: 600;">Loading Booking Details...</h3>
-  </div>
-</div>
-
-<div class="booking-container" *ngIf="!isInitializing && doctorId && clinicId" style="padding: 0; min-height: auto; margin-bottom: 40px;">
-  <div class="glass-card booking-card">
-    <a routerLink="/patient/doctors" class="close-btn" title="Back to Doctors Directory">&times;</a>
-    
-    <!-- LEFT SIDE: Practitioner Info -->
-    <div class="booking-left">
-      <div class="booking-header" style="text-align: left;">
-        <span class="header-icon" style="margin-left: 0;">📅</span>
-        <h2 style="font-size: 1.8rem; margin-bottom: 8px;">Book Appointment</h2>
-        <p style="font-size: 0.95rem;">Please review practitioner details and complete the reservation details to the right.</p>
-      </div>
-
-      <!-- Selected Practitioner & Location Info (Static Text Display) -->
-      <div class="glass-card selected-info-card" style="padding: 24px; border: 1.5px solid var(--border-color); background: rgba(255, 255, 255, 0.4); border-radius: 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
-        <div style="display: flex; align-items: center; gap: 16px;">
-          <div style="font-size: 2rem; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 16px; color: white; font-weight: 700; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
-            {{ selectedDoctor?.firstName?.charAt(0) }}{{ selectedDoctor?.lastName?.charAt(0) }}
-          </div>
-          <div>
-            <h4 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text-primary);">Dr. {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</h4>
-            <span style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; margin-top: 4px;">
-              🩺 {{ selectedDoctor?.specializationName }}
-            </span>
-          </div>
-        </div>
-
-        <div style="border-top: 1px solid rgba(0, 0, 0, 0.06); padding-top: 16px; display: flex; flex-direction: column; gap: 12px;">
-          <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 700; display: flex; align-items: center; gap: 8px;">
-            <span style="background: rgba(6, 182, 212, 0.1); padding: 6px; border-radius: 6px;">🏢</span> 
-            {{ selectedClinic?.clinicName }} 
-            <span class="badge" style="font-size: 0.65rem; background: var(--text-primary); color: white; margin-left: auto; padding: 4px 8px; text-transform: uppercase; border-radius: 4px;">{{ selectedClinic?.clinicType }}</span>
-          </div>
-          <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px;">
-            <span style="margin-top: 2px;">📍</span>
-            <span>{{ selectedClinic?.addressline1 }}{{ selectedClinic?.addressline2 ? ', ' + selectedClinic?.addressline2 : '' }}, {{ selectedClinic?.area }}, {{ selectedClinic?.city }}, {{ selectedClinic?.state }}</span>
-          </div>
-          <div *ngIf="selectedDoctor" style="font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin-top: 8px; background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
-            <span style="font-size: 1.2rem;">💳</span>
-            <span style="font-weight: 600; color: #10b981;">Consultation Fee: Rs. {{ selectedDoctor?.consultationFee }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Alerts -->
-      <div *ngIf="selectedClinic && !selectedClinic.isAvailable" style="background: rgba(239, 68, 68, 0.05); border: 1.5px solid rgba(239, 68, 68, 0.25); padding: 16px; border-radius: 12px; font-size: 0.9rem; color: #f87171; display: flex; gap: 12px; align-items: flex-start;">
-        <span style="font-size: 1.2rem;">⚠️</span>
-        <div>
-          <strong style="display: block; font-weight: 700; margin-bottom: 4px; color: #ef4444;">This branch is temporarily closed:</strong>
-          <span>{{ selectedClinic.unavailabilityReason || 'No appointments are currently being accepted at this branch.' }}</span>
-        </div>
-      </div>
-
-      <div *ngIf="selectedClinic && selectedClinic.isAvailable && selectedClinic.isDoctorAvailable === false" style="background: rgba(6, 182, 212, 0.08); border: 1.5px solid rgba(6, 182, 212, 0.25); padding: 16px; border-radius: 12px; font-size: 0.9rem; color: var(--accent-cyan); display: flex; gap: 12px; align-items: flex-start;">
-        <span style="font-size: 1.2rem;">ℹ️</span>
-        <div>
-          <strong style="display: block; font-weight: 700; margin-bottom: 4px; color: var(--accent-cyan);">Doctor is personally unavailable here:</strong>
-          <span>{{ selectedClinic.doctorUnavailabilityReason || 'Owner doctor is out. Clinical staff / physiotherapists will attend appointments.' }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT SIDE: Booking Form -->
-    <div class="booking-right">
-      <form (submit)="onSubmit(); $event.preventDefault()">
-        <!-- Messages -->
-        <div class="error-banner" *ngIf="errorMessage">
-          <span>⚠️</span> {{ errorMessage }}
-        </div>
-
-        <div class="success-banner" *ngIf="successMessage">
-          <span>✓</span> {{ successMessage }}
-        </div>
-
-      <!-- Patient Select -->
-      <div class="form-group">
-        <label class="form-label" for="patient">Select Patient *</label>
-        <select class="form-control" id="patient" name="patientId" [(ngModel)]="patientId" (ngModelChange)="onDateChange()" required>
-          <option value="" disabled selected>-- Choose Patient Profile --</option>
-          <option *ngFor="let p of patients" [value]="p.patientId">
-            {{ p.firstName }} {{ p.lastName }} (Self)
-          </option>
-        </select>
-      </div>
-
-      <!-- Details Section -->
-      <h3 class="section-title">Appointment Timing & Details</h3>
-
-      <!-- Date Selection (Custom Premium Calendar Control) -->
-      <div class="form-group">
-        <label class="form-label" style="font-weight: 700;">Select Appointment Date *</label>
-        
-        <!-- Premium Calendar Card -->
-        <div class="glass-card custom-calendar" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, 0.02); padding: 16px; margin-bottom: 12px;">
-          
-          <!-- Month Selector Header -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <button type="button" class="btn btn-secondary" (click)="prevMonth()" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px;">&larr; Prev</button>
-            <strong style="font-size: 1.05rem; color: var(--text-primary); text-transform: capitalize;">{{ getMonthName() }}</strong>
-            <button type="button" class="btn btn-secondary" (click)="nextMonth()" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px;">Next &rarr;</button>
-          </div>
-
-          <!-- Weekday Headers -->
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">
-            <div>Su</div>
-            <div>Mo</div>
-            <div>Tu</div>
-            <div>We</div>
-            <div>Th</div>
-            <div>Fr</div>
-            <div>Sa</div>
-          </div>
-
-          <!-- Days Grid -->
-          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;">
-            <ng-container *ngFor="let day of calendarDays">
-              <!-- Empty padding slots -->
-              <div *ngIf="day.dayNumber === null" style="height: 36px;"></div>
-              
-              <!-- Clickable day item -->
-              <button *ngIf="day.dayNumber !== null" 
-                      type="button" 
-                      (click)="selectCalendarDate(day)"
-                      [disabled]="!day.isAvailable"
-                      style="height: 38px; border: 1px solid transparent; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s;"
-                      [style.background]="appointmentDate === day.dateString ? 'var(--accent-cyan)' : (day.isToday ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255, 255, 255, 0.02)')"
-                      [style.color]="appointmentDate === day.dateString ? '#000' : (day.isAvailable ? 'var(--text-primary)' : 'var(--text-muted)')"
-                      [style.opacity]="day.isAvailable ? '1' : '0.25'"
-                      [style.cursor]="day.isAvailable ? 'pointer' : 'not-allowed'"
-                      [style.border-color]="day.isToday && appointmentDate !== day.dateString ? 'var(--accent-cyan)' : 'transparent'"
-                      title="{{ !day.isAvailable ? (day.isPast ? 'Past Date' : (day.exceedsMin ? 'Booking window not started yet' : (day.exceedsMax ? 'Exceeds Booking Window' : 'Clinic Closed'))) : day.dateString }}">
-                <span>{{ day.dayNumber }}</span>
-              </button>
-            </ng-container>
-          </div>
-        </div>
-
-        <div *ngIf="appointmentDate" style="font-size: 0.88rem; color: var(--accent-cyan); font-weight: 600; display: flex; align-items: center; gap: 6px; margin-top: 4px; margin-bottom: 12px;">
-          <span>📅 Selected Date:</span>
-          <span>{{ appointmentDate | date:'fullDate' }}</span>
-        </div>
-
-        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
-          <small class="form-text text-muted" *ngIf="minBookingDate" style="color: var(--accent-cyan) !important; font-size: 0.8rem; display: block; margin: 0;">
-            📅 Booking starts from: {{ minBookingDate | date:'mediumDate' }}
-          </small>
-          <small class="form-text text-muted" *ngIf="maxBookingDate" style="color: var(--accent-cyan) !important; font-size: 0.8rem; display: block; margin: 0;">
-            📅 Booking window open until: {{ maxBookingDate | date:'mediumDate' }}
-          </small>
-        </div>
-      </div>
-
-      <!-- Closed Weekday Warning -->
-      <div *ngIf="dateValidationError" style="background: rgba(239, 68, 68, 0.05); border: 1.5px solid rgba(239, 68, 68, 0.25); padding: 12px; border-radius: 6px; font-size: 0.85rem; color: #f87171; margin-top: 10px; margin-bottom: 15px;">
-        ⚠️ {{ dateValidationError }}
-      </div>
-
-      <!-- Day Availability Status -->
-      <div class="form-group" style="margin-bottom: 20px;" *ngIf="appointmentDate && !dateValidationError && dayAvailability && !isLoadingAvailability">
-        <label class="form-label">Availability Status</label>
-        
-        <div style="padding: 16px; border-radius: 8px; border: 1.5px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 10px;">
-          
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">
-              {{ dayAvailability.isFull ? '🔴 Fully Booked' : '🟢 Appointments Available' }}
-            </span>
-            <span *ngIf="dayAvailability.maxCapacity" class="badge" [style.background]="dayAvailability.isFull ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'" [style.color]="dayAvailability.isFull ? '#ef4444' : '#10b981'" style="padding: 4px 8px;">
-              {{ dayAvailability.bookedCount }} / {{ dayAvailability.maxCapacity }} Booked
-            </span>
-          </div>
-
-          <div *ngIf="dayAvailability.remainingCapacity !== null" style="font-size: 0.85rem; color: var(--text-secondary);">
-            <strong [style.color]="dayAvailability.remainingCapacity <= 3 ? '#f59e0b' : 'var(--accent-cyan)'">
-              {{ dayAvailability.remainingCapacity }} slots remaining
-            </strong>
-          </div>
-          
-          <div *ngIf="!dayAvailability.maxCapacity" style="font-size: 0.85rem; color: var(--text-secondary);">
-            <strong>Unlimited appointments</strong> allowed for this day.
-          </div>
-
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px;">
-            <span style="font-style: italic;">Note: Your exact consultation time will be assigned by the clinic based on your queue number.</span>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="isLoadingAvailability" style="padding: 20px; text-align: center; color: var(--accent-cyan);">
-        <span class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(6, 182, 212, 0.3); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle;"></span>
-        <span style="font-size: 0.9rem; font-weight: 600;">Checking availability...</span>
-      </div>
-
-      <!-- Select Date Placeholder -->
-      <div *ngIf="!appointmentDate" style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 10px; margin-bottom: 15px; font-style: italic; display: flex; align-items: center; gap: 6px;">
-        <span>📅</span> Select a date to view availability.
-      </div>
-
-      <!-- Consultation Mode -->
-      <div class="form-group">
-        <label class="form-label">Consultation Mode *</label>
-        <div class="type-selector">
-          <label class="type-option">
-            <input type="radio" name="consultationType" [(ngModel)]="consultationType" value="InPerson">
-            <span class="type-card">✙ In Person</span>
-          </label>
-          <label class="type-option" *ngIf="selectedClinic?.supportedModes?.includes('VideoConsultation')">
-            <input type="radio" name="consultationType" [(ngModel)]="consultationType" value="VideoConsultation">
-            <span class="type-card">🎥 Video Consult</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Consultation Reason -->
-      <div class="form-group">
-        <label class="form-label" for="reason">Reason for Appointment (Optional)</label>
-        <textarea 
-          class="form-control text-area" 
-          id="reason" 
-          name="reason" 
-          [(ngModel)]="reason" 
-          placeholder="Briefly describe your symptoms or medical concern..." 
-          rows="3"></textarea>
-      </div>
-
-      <!-- Submit & Navigation buttons -->
-      <div class="actions">
-        <button class="btn btn-primary w-100" type="submit" [disabled]="selectedClinic && selectedClinic.isAvailable === false" [title]="(selectedClinic && selectedClinic.isAvailable === false) ? 'This clinic branch is temporarily closed' : ''">Confirm Reservation</button>
-        <a routerLink="/patient/doctors" class="btn btn-secondary w-100 cancel-link">Cancel</a>
-      </div>
-    </form>
-    </div> <!-- Close booking-right -->
-  </div>
-</div>
-
-<!-- MIDDLE SECTION: Smart Dropdown (if no doctor selected) -->
-<div class="booking-container" *ngIf="!isInitializing && (!doctorId || !clinicId)" style="padding: 0; min-height: auto; margin-bottom: 40px; justify-content: center; align-items: flex-start;">
-  <div class="glass-card booking-card" style="max-width: 600px; padding: 40px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <span class="header-icon">📅</span>
-      <h2 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 8px;">Book Appointment</h2>
-      <p style="color: var(--text-secondary); font-size: 0.95rem;">Select a practitioner to proceed with booking.</p>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Search & Select Practitioner</label>
-      <select class="form-control" (change)="onDoctorSelect($any($event.target).value)" style="padding: 12px; font-size: 1rem; border-radius: 8px;">
-        <option value="" disabled selected>-- Select a Doctor --</option>
-        <option *ngFor="let doc of doctors" [value]="doc.doctorId">
+    <div style="flex: 2; position: relative;">
+      <span
+        style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: var(--text-muted); pointer-events: none;">🔍</span>
+      <select class="form-control" (change)="onDoctorSelect($any($event.target).value)"
+        style="width: 100%; padding: 18px 20px 18px 54px; font-size: 1.1rem; border-radius: 16px; background: var(--glass-overlay); border: 2px solid var(--glass-border); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);">
+        <option value="" disabled selected style="background: var(--bg-card-solid); color: var(--text-secondary);">-- Search & Select a Healthcare Professional --</option>
+        <option *ngFor="let doc of doctors" [value]="doc.doctorId"
+          style="background: var(--bg-card-solid); color: var(--text-primary); padding: 10px;">
           Dr. {{ doc.firstName }} {{ doc.lastName }} ({{ doc.specializationName || 'General' }})
         </option>
       </select>
@@ -303,155 +33,304 @@
   </div>
 </div>
 
-<!-- BOTTOM SECTION: My Doctors (Care Team) -->
-  <div style="margin-top: 20px;">
-    <h2 style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
-      <span style="font-size: 1.8rem;">👨‍⚕️</span> My Doctors
-    </h2>
-    
-    <div *ngIf="isCareTeamLoading" style="text-align: center; padding: 40px; color: var(--text-secondary);">
-      Loading your doctors...
+<!-- Unified Booking Hub Layout -->
+<div class="hub-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+  <!-- Loading State -->
+  <div class="booking-container" *ngIf="isInitializing"
+    style="display: flex; justify-content: center; align-items: center; min-height: 40vh;">
+    <div style="text-align: center; color: var(--accent-cyan);">
+      <div style="font-size: 3rem; animation: pulse 1.5s infinite;">⏳</div>
+      <h3 style="margin-top: 15px; font-weight: 600;">Loading Booking Details...</h3>
     </div>
+  </div>
 
-    <div *ngIf="!isCareTeamLoading && consultedDoctors.length === 0" class="glass-card" style="padding: 40px; text-align: center;">
-      <div style="font-size: 3rem; margin-bottom: 10px;">🩺</div>
-      <h3 style="color: var(--text-primary);">No Consulted Doctors Yet</h3>
-      <p style="color: var(--text-muted); margin-top: 10px;">Once you complete an appointment, the doctor will appear here.</p>
-    </div>
+  <div class="booking-container" *ngIf="!isInitializing && doctorId && clinicId"
+    style="padding: 0; min-height: auto; margin-bottom: 40px;">
+    <div class="glass-card booking-card">
+      <a routerLink="/patient/doctors" class="close-btn" title="Back to Doctors Directory">&times;</a>
 
-    <div *ngIf="!isCareTeamLoading && consultedDoctors.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
-      <!-- Doctor Card -->
-      <div *ngFor="let doc of consultedDoctors" class="glass-card doctor-card" style="padding: 24px; display: flex; flex-direction: column; gap: 20px; border-top: 4px solid var(--accent-cyan);">
-        
-        <!-- Header Profile Section -->
-        <div style="display: flex; gap: 16px; align-items: center;">
-          <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3);">
-            {{ doc.doctorName.charAt(0) }}
-          </div>
-          <div>
-            <h3 style="margin: 0; font-size: 1.25rem; color: var(--text-primary); font-weight: 700;">Dr. {{ doc.doctorName }}</h3>
-            <span style="color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-top: 4px;">
-              🩺 {{ doc.specialization }}
-            </span>
-          </div>
-        </div>
-        
-        <!-- Stats / Badge -->
-        <div style="background: rgba(16, 185, 129, 0.1); padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.2rem;">🤝</span>
-          <div>
-            <div style="color: #10b981; font-weight: 700; font-size: 1rem;">{{ doc.appointments?.length || 0 }} Completed</div>
-            <div style="color: var(--text-secondary); font-size: 0.8rem;">Total Consultations</div>
-          </div>
+      <!-- LEFT SIDE: Practitioner Info -->
+      <div class="booking-left">
+        <div class="booking-header" style="text-align: left;">
+          <span class="header-icon" style="margin-left: 0;">📅</span>
+          <h2 style="font-size: 1.8rem; margin-bottom: 8px;">Book Appointment</h2>
+          <p style="font-size: 0.95rem;">Please review practitioner details and complete the reservation details to the
+            right.</p>
         </div>
 
-        <!-- Actions -->
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
-          <button (click)="onDoctorSelect(doc.doctorId)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: 600; text-decoration: none;">
-            📅 Book Again
-          </button>
-          <div style="display: flex; gap: 10px;">
-            <button class="btn btn-secondary" (click)="openDoctorInfo(doc)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem;">
-              👤 Doctor Info
-            </button>
-            <button class="btn btn-secondary" (click)="openAppointmentHistory(doc)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem;">
-              📜 History
-            </button>
+        <!-- Selected Practitioner & Location Info (Static Text Display) -->
+        <div class="glass-card selected-info-card"
+          style="padding: 24px; border: 1.5px solid var(--border-color); background: rgba(255, 255, 255, 0.4); border-radius: 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div
+              style="font-size: 2rem; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 16px; color: white; font-weight: 700; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
+              {{ selectedDoctor?.firstName?.charAt(0) }}{{ selectedDoctor?.lastName?.charAt(0) }}
+            </div>
+            <div>
+              <h4 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text-primary);">Dr. {{
+                selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</h4>
+              <span
+                style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; margin-top: 4px;">
+                🩺 {{ selectedDoctor?.specializationName }}
+              </span>
+            </div>
+          </div>
+
+          <div
+            style="border-top: 1px solid rgba(0, 0, 0, 0.06); padding-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+            <div *ngIf="clinics.length > 1" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Select Clinic Location</label>
+              <select class="form-control" [(ngModel)]="clinicId" (ngModelChange)="onClinicChange()" name="clinicSelect" style="font-weight: 600; padding: 12px; border: 2px solid var(--accent-cyan); border-radius: 8px; background-color: rgba(255, 255, 255, 0.8);">
+                <option *ngFor="let c of clinics" [value]="c.clinicId">
+                  {{ c.clinicName }} ({{ c.area }}, {{ c.city }})
+                </option>
+              </select>
+            </div>
+
+            <div *ngIf="selectedClinic" class="glass-card" style="background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(6, 182, 212, 0.25); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+              <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                <span style="background: rgba(6, 182, 212, 0.15); padding: 8px; border-radius: 8px; font-size: 1.1rem;">🏢</span>
+                {{ selectedClinic?.clinicName }}
+                <span class="badge" style="font-size: 0.65rem; background: var(--text-primary); color: white; margin-left: auto; padding: 4px 8px; text-transform: uppercase; border-radius: 6px; letter-spacing: 0.5px;">
+                  {{ selectedClinic?.clinicType }}
+                </span>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: flex; align-items: flex-start; gap: 10px;">
+                <span style="margin-top: 2px;">📍</span>
+                <span>{{ selectedClinic?.addressline1 }}{{ selectedClinic?.addressline2 ? ', ' + selectedClinic?.addressline2 : '' }}, {{ selectedClinic?.area }}, {{ selectedClinic?.city }}, {{ selectedClinic?.state }}</span>
+              </div>
+              <div *ngIf="selectedClinic?.contactNumber" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; display: flex; align-items: center; gap: 10px;">
+                <span>📞</span>
+                <span style="font-weight: 600; color: var(--text-primary);">{{ selectedClinic?.contactNumber }}</span>
+              </div>
+            </div>
+
+            <div *ngIf="selectedDoctor"
+              style="font-size: 0.95rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin-top: 8px; background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+              <span style="font-size: 1.2rem;">💳</span>
+              <span style="font-weight: 600; color: #10b981;">Consultation Fee: Rs. {{ selectedDoctor?.consultationFee
+                }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div *ngIf="selectedClinic && !selectedClinic.isAvailable"
+          style="background: rgba(239, 68, 68, 0.05); border: 1.5px solid rgba(239, 68, 68, 0.25); padding: 16px; border-radius: 12px; font-size: 0.9rem; color: #f87171; display: flex; gap: 12px; align-items: flex-start;">
+          <span style="font-size: 1.2rem;">⚠️</span>
+          <div>
+            <strong style="display: block; font-weight: 700; margin-bottom: 4px; color: #ef4444;">This branch is
+              temporarily closed:</strong>
+            <span>{{ selectedClinic.unavailabilityReason || 'No appointments are currently being accepted at this
+              branch.' }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="selectedClinic && selectedClinic.isAvailable && selectedClinic.isDoctorAvailable === false"
+          style="background: rgba(6, 182, 212, 0.08); border: 1.5px solid rgba(6, 182, 212, 0.25); padding: 16px; border-radius: 12px; font-size: 0.9rem; color: var(--accent-cyan); display: flex; gap: 12px; align-items: flex-start;">
+          <span style="font-size: 1.2rem;">ℹ️</span>
+          <div>
+            <strong style="display: block; font-weight: 700; margin-bottom: 4px; color: var(--accent-cyan);">Doctor is
+              personally unavailable here:</strong>
+            <span>{{ selectedClinic.doctorUnavailabilityReason || 'Owner doctor is out. Clinical staff /
+              physiotherapists will attend appointments.' }}</span>
           </div>
         </div>
       </div>
+
+      <!-- RIGHT SIDE: Booking Form -->
+      <div class="booking-right">
+        <form (submit)="onSubmit(); $event.preventDefault()">
+          <!-- Messages -->
+          <div class="error-banner" *ngIf="errorMessage">
+            <span>⚠️</span> {{ errorMessage }}
+          </div>
+
+          <div class="success-banner" *ngIf="successMessage">
+            <span>✓</span> {{ successMessage }}
+          </div>
+
+          <!-- Patient Select -->
+          <div class="form-group">
+            <label class="form-label" for="patient">Select Patient *</label>
+            <select class="form-control" id="patient" name="patientId" [(ngModel)]="patientId"
+              (ngModelChange)="onDateChange()" required>
+              <option value="" disabled selected>-- Choose Patient Profile --</option>
+              <option *ngFor="let p of patients" [value]="p.patientId">
+                {{ p.firstName }} {{ p.lastName }} (Self)
+              </option>
+            </select>
+          </div>
+
+          <!-- Details Section -->
+          <h3 class="section-title">Appointment Timing & Details</h3>
+
+          <!-- Date Selection (Custom Premium Calendar Control) -->
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 700;">Select Appointment Date *</label>
+
+            <!-- Premium Calendar Card -->
+            <div class="glass-card custom-calendar"
+              style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, 0.02); padding: 16px; margin-bottom: 12px;">
+
+              <!-- Month Selector Header -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <button type="button" class="btn btn-secondary" (click)="prevMonth()"
+                  style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px;">&larr; Prev</button>
+                <strong style="font-size: 1.05rem; color: var(--text-primary); text-transform: capitalize;">{{
+                  getMonthName() }}</strong>
+                <button type="button" class="btn btn-secondary" (click)="nextMonth()"
+                  style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px;">Next &rarr;</button>
+              </div>
+
+              <!-- Weekday Headers -->
+              <div
+                style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">
+                <div>Su</div>
+                <div>Mo</div>
+                <div>Tu</div>
+                <div>We</div>
+                <div>Th</div>
+                <div>Fr</div>
+                <div>Sa</div>
+              </div>
+
+              <!-- Days Grid -->
+              <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;">
+                <ng-container *ngFor="let day of calendarDays">
+                  <!-- Empty padding slots -->
+                  <div *ngIf="day.dayNumber === null" style="height: 36px;"></div>
+
+                  <!-- Clickable day item -->
+                  <button *ngIf="day.dayNumber !== null" type="button" (click)="selectCalendarDate(day)"
+                    [disabled]="!day.isAvailable"
+                    style="height: 38px; border: 1px solid transparent; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s;"
+                    [style.background]="appointmentDate === day.dateString ? 'var(--accent-cyan)' : (day.isToday ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255, 255, 255, 0.02)')"
+                    [style.color]="appointmentDate === day.dateString ? '#000' : (day.isAvailable ? 'var(--text-primary)' : 'var(--text-muted)')"
+                    [style.opacity]="day.isAvailable ? '1' : '0.25'"
+                    [style.cursor]="day.isAvailable ? 'pointer' : 'not-allowed'"
+                    [style.border-color]="day.isToday && appointmentDate !== day.dateString ? 'var(--accent-cyan)' : 'transparent'"
+                    title="{{ !day.isAvailable ? (day.isPast ? 'Past Date' : (day.exceedsMin ? 'Booking window not started yet' : (day.exceedsMax ? 'Exceeds Booking Window' : 'Clinic Closed'))) : day.dateString }}">
+                    <span>{{ day.dayNumber }}</span>
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+
+            <div *ngIf="appointmentDate"
+              style="font-size: 0.88rem; color: var(--accent-cyan); font-weight: 600; display: flex; align-items: center; gap: 6px; margin-top: 4px; margin-bottom: 12px;">
+              <span>📅 Selected Date:</span>
+              <span>{{ appointmentDate | date:'fullDate' }}</span>
+            </div>
+
+            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+              <small class="form-text text-muted" *ngIf="minBookingDate"
+                style="color: var(--accent-cyan) !important; font-size: 0.8rem; display: block; margin: 0;">
+                📅 Booking starts from: {{ minBookingDate | date:'mediumDate' }}
+              </small>
+              <small class="form-text text-muted" *ngIf="maxBookingDate"
+                style="color: var(--accent-cyan) !important; font-size: 0.8rem; display: block; margin: 0;">
+                📅 Booking window open until: {{ maxBookingDate | date:'mediumDate' }}
+              </small>
+            </div>
+          </div>
+
+          <!-- Closed Weekday Warning -->
+          <div *ngIf="dateValidationError"
+            style="background: rgba(239, 68, 68, 0.05); border: 1.5px solid rgba(239, 68, 68, 0.25); padding: 12px; border-radius: 6px; font-size: 0.85rem; color: #f87171; margin-top: 10px; margin-bottom: 15px;">
+            ⚠️ {{ dateValidationError }}
+          </div>
+
+          <!-- Day Availability Status -->
+          <div class="form-group" style="margin-bottom: 20px;"
+            *ngIf="appointmentDate && !dateValidationError && dayAvailability && !isLoadingAvailability">
+            <label class="form-label">Availability Status</label>
+
+            <div
+              style="padding: 16px; border-radius: 8px; border: 1.5px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 10px;">
+
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">
+                  {{ dayAvailability.isFull ? '🔴 Fully Booked' : '🟢 Appointments Available' }}
+                </span>
+                <span *ngIf="dayAvailability.maxCapacity" class="badge"
+                  [style.background]="dayAvailability.isFull ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'"
+                  [style.color]="dayAvailability.isFull ? '#ef4444' : '#10b981'" style="padding: 4px 8px;">
+                  {{ dayAvailability.bookedCount }} / {{ dayAvailability.maxCapacity }} Booked
+                </span>
+              </div>
+
+              <div *ngIf="dayAvailability.remainingCapacity !== null"
+                style="font-size: 0.85rem; color: var(--text-secondary);">
+                <strong [style.color]="dayAvailability.remainingCapacity <= 3 ? '#f59e0b' : 'var(--accent-cyan)'">
+                  {{ dayAvailability.remainingCapacity }} slots remaining
+                </strong>
+              </div>
+
+              <div *ngIf="!dayAvailability.maxCapacity" style="font-size: 0.85rem; color: var(--text-secondary);">
+                <strong>Unlimited appointments</strong> allowed for this day.
+              </div>
+
+              <div
+                style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px;">
+                <span style="font-style: italic;">Note: Your exact consultation time will be assigned by the clinic
+                  based on your queue number.</span>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="isLoadingAvailability" style="padding: 20px; text-align: center; color: var(--accent-cyan);">
+            <span class="spinner"
+              style="display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(6, 182, 212, 0.3); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; vertical-align: middle;"></span>
+            <span style="font-size: 0.9rem; font-weight: 600;">Checking availability...</span>
+          </div>
+
+          <!-- Select Date Placeholder -->
+          <div *ngIf="!appointmentDate"
+            style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 10px; margin-bottom: 15px; font-style: italic; display: flex; align-items: center; gap: 6px;">
+            <span>📅</span> Select a date to view availability.
+          </div>
+
+          <!-- Consultation Mode -->
+          <div class="form-group">
+            <label class="form-label">Consultation Mode *</label>
+            <div class="type-selector">
+              <label class="type-option">
+                <input type="radio" name="consultationType" [(ngModel)]="consultationType" value="InPerson">
+                <span class="type-card">✙ In Person</span>
+              </label>
+              <label class="type-option" *ngIf="selectedClinic?.supportedModes?.includes('VideoConsultation')">
+                <input type="radio" name="consultationType" [(ngModel)]="consultationType" value="VideoConsultation">
+                <span class="type-card">🎥 Video Consult</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Consultation Reason -->
+          <div class="form-group">
+            <label class="form-label" for="reason">Reason for Appointment (Optional)</label>
+            <textarea class="form-control text-area" id="reason" name="reason" [(ngModel)]="reason"
+              placeholder="Briefly describe your symptoms or medical concern..." rows="3"></textarea>
+          </div>
+
+          <!-- Submit & Navigation buttons -->
+          <div class="actions">
+            <button class="btn btn-primary w-100" type="submit"
+              [disabled]="selectedClinic && selectedClinic.isAvailable === false"
+              [title]="(selectedClinic && selectedClinic.isAvailable === false) ? 'This clinic branch is temporarily closed' : ''">Confirm
+              Reservation</button>
+            <a routerLink="/patient/doctors" class="btn btn-secondary w-100 cancel-link">Cancel</a>
+          </div>
+        </form>
+      </div> <!-- Close booking-right -->
     </div>
   </div>
 
 </div> <!-- Close hub-container -->
 
-<!-- MODALS -->
-
-<!-- Doctor Info Modal -->
-<div class="modal-overlay" *ngIf="selectedDoctorForInfo" (click)="closeDoctorInfo()">
-  <div class="modal-card" style="max-width: 450px;" (click)="$event.stopPropagation()">
-    <!-- Header -->
-    <div class="modal-header">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-cyan); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;">
-          {{ selectedDoctorForInfo.doctorName.charAt(0) }}
-        </div>
-        <h3 style="margin: 0; color: var(--accent-cyan);">Dr. {{ selectedDoctorForInfo.doctorName }}</h3>
-      </div>
-      <button class="close-btn" (click)="closeDoctorInfo()">&times;</button>
-    </div>
-    
-    <!-- Body -->
-    <div class="modal-body" style="padding: 24px;">
-      <div style="margin-bottom: 20px;">
-        <label style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; display: block;">Specialization</label>
-        <div style="font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-weight: 600;">
-          🩺 {{ selectedDoctorForInfo.specialization }}
-        </div>
-      </div>
-      <div style="margin-bottom: 20px;">
-        <label style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; display: block;">Consultations</label>
-        <div style="font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-weight: 600;">
-          ✅ {{ selectedDoctorForInfo.appointments?.length || 0 }} completed appointments
-        </div>
-      </div>
-      <div>
-        <label style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; display: block;">Availability</label>
-        <div style="font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-weight: 600;">
-          Available for booking
-        </div>
-      </div>
-    </div>
-    
-    <!-- Footer -->
-    <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color);">
-      <button class="btn btn-secondary" (click)="closeDoctorInfo()">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Appointment History Modal -->
-<div class="modal-overlay" *ngIf="selectedDoctorForHistory" (click)="closeAppointmentHistory()">
-  <div class="modal-card" style="max-width: 600px; max-height: 85vh; display: flex; flex-direction: column;" (click)="$event.stopPropagation()">
-    <!-- Header -->
-    <div class="modal-header" style="flex-shrink: 0;">
-      <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 1.4rem;">📜</span> History with Dr. {{ selectedDoctorForHistory.doctorName }}
-      </h3>
-      <button class="close-btn" (click)="closeAppointmentHistory()">&times;</button>
-    </div>
-    
-    <!-- Body (Scrollable) -->
-    <div class="modal-body" style="padding: 24px; overflow-y: auto; flex-grow: 1;">
-      <div *ngIf="!selectedDoctorForHistory.appointments || selectedDoctorForHistory.appointments.length === 0" style="text-align: center; color: var(--text-muted); padding: 20px;">
-        No completed appointments found.
-      </div>
-      
-      <div *ngIf="selectedDoctorForHistory.appointments && selectedDoctorForHistory.appointments.length > 0" style="display: flex; flex-direction: column; gap: 16px;">
-        <div *ngFor="let app of selectedDoctorForHistory.appointments" class="glass-card" style="padding: 16px; border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.03);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-            <div>
-              <div style="font-weight: 700; color: var(--text-primary); font-size: 1.05rem;">
-                {{ app.appointmentDate | date:'fullDate' }}
-              </div>
-              <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
-                <span>⏱️</span> {{ app.doctorAssignedTime ? (app.doctorAssignedTime | date:'shortTime') : 'Time N/A' }}
-              </div>
-            </div>
-            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-weight: 700; padding: 6px 12px; border-radius: 6px;">Completed</span>
-          </div>
-          
-          <div *ngIf="app.reason" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
-            <strong style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase;">Reason for visit</strong>
-            <span style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.4;">{{ app.reason }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Footer -->
-    <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); flex-shrink: 0;">
-      <button class="btn btn-secondary" (click)="closeAppointmentHistory()">Close</button>
-    </div>
+<!-- FULL WIDTH: My Doctors (Care Team) -->
+<div style="padding: 0 20px; width: 100%; margin-bottom: 40px;">
+  <div style="width: 100%;">
+    <app-my-doctors (bookDoctor)="onDoctorSelect($event)"></app-my-doctors>
   </div>
 </div>

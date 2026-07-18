@@ -23,6 +23,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   pendingClinicsCount = 0;
   pendingAdminsCount = 0;
 
+  // Patient pending counters
+  patientPendingActionCount = 0;
+
   // Doctor pending counters
   pendingRequestsCount = 0;
 
@@ -46,6 +49,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const role = this.authService.getRole();
     if (role === 'Patient') {
       this.loadPatientCompletion();
+      this.loadPatientCounts();
+
+      this.signalrSub = this.notificationService.refreshData$.subscribe({
+        next: () => {
+          this.loadPatientCounts();
+        }
+      });
     } else if (role === 'SuperAdmin') {
       this.loadSuperAdminCounts();
       
@@ -81,6 +91,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private loadDoctorCounts(): void {
     this.appointmentService.getAdminDoctorDashboard({ status: 'Pending' }, 1, 1).subscribe({
       next: (res) => this.pendingRequestsCount = res.totalCount
+    });
+  }
+
+  private loadPatientCounts(): void {
+    this.appointmentService.getPatientDashboard('RescheduleProposed', false, 1, 1).subscribe({
+      next: (res) => this.patientPendingActionCount = res.totalCount
     });
   }
 

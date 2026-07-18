@@ -82,7 +82,18 @@ namespace DoctorAppointmentSystem.Application.Services
 					State = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.State).FirstOrDefault() ?? string.Empty,
 					City = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.City).FirstOrDefault() ?? string.Empty,
 					CreatedDate = d.CreatedDate,
-					UpdatedDate = d.UpdatedDate
+					UpdatedDate = d.UpdatedDate,
+					Age = DateTime.UtcNow.Year - d.DOB.Year,
+					Clinics = d.Clinics.Select(c => new ClinicBasicDto
+					{
+						ClinicId = c.ClinicId,
+						ClinicName = c.ClinicName,
+						ClinicType = c.ClinicType,
+						State = c.Address.State,
+						City = c.Address.City,
+						Area = c.Address.Area,
+						ContactNumber = c.ContactNumber
+					}).ToList()
 				})
 				.ToListAsync();
 		}
@@ -146,7 +157,18 @@ namespace DoctorAppointmentSystem.Application.Services
 					State = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.State).FirstOrDefault() ?? string.Empty,
 					City = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.City).FirstOrDefault() ?? string.Empty,
 					CreatedDate = d.CreatedDate,
-					UpdatedDate = d.UpdatedDate
+					UpdatedDate = d.UpdatedDate,
+					Age = DateTime.UtcNow.Year - d.DOB.Year,
+					Clinics = d.Clinics.Select(c => new ClinicBasicDto
+					{
+						ClinicId = c.ClinicId,
+						ClinicName = c.ClinicName,
+						ClinicType = c.ClinicType,
+						State = c.Address.State,
+						City = c.Address.City,
+						Area = c.Address.Area,
+						ContactNumber = c.ContactNumber
+					}).ToList()
 				})
 				.ToListAsync();
 		}

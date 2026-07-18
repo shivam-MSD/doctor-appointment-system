@@ -12,6 +12,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[MaxLength(50)]
 		public string ClinicType { get; set; } // e.g. Clinic, Center, Hospital
 
+		[MaxLength(20)]
+		public string? ContactNumber { get; set; }
+
 		// Address Details
 		[Required]
 		[MaxLength(100)]
@@ -143,6 +146,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public Guid ClinicId { get; set; }
 		public string ClinicName { get; set; }
 		public string ClinicType { get; set; }
+		public string? ContactNumber { get; set; }
 		public Guid DoctorId { get; set; }
 		public string DoctorName { get; set; }
 		public string State { get; set; }
@@ -182,6 +186,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[Required]
 		[MaxLength(50)]
 		public string ClinicType { get; set; }
+
+		[MaxLength(20)]
+		public string? ContactNumber { get; set; }
 
 		[Required]
 		[MaxLength(100)]

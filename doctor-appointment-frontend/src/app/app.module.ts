@@ -34,6 +34,11 @@ import { SuperAdminClinicsComponent } from './features/superadmin/clinics/super-
 import { SuperAdminAdminsComponent } from './features/superadmin/admins/super-admin-admins.component';
 import { PatientDoctorsComponent } from './features/patient/doctors/patient-doctors.component';
 import { CareTeamComponent } from './features/patient/care-team/care-team.component';
+import { PatientHeaderComponent } from './shared/components/patient-header/patient-header.component';
+import { MyDoctorsComponent } from './shared/components/my-doctors/my-doctors.component';
+import { DoctorHeaderComponent } from './shared/components/doctor-header/doctor-header.component';
+import { AdminHeaderComponent } from './shared/components/admin-header/admin-header.component';
+import { SuperadminHeaderComponent } from './shared/components/superadmin-header/superadmin-header.component';
 
 @NgModule({
   declarations: [
@@ -57,7 +62,12 @@ import { CareTeamComponent } from './features/patient/care-team/care-team.compon
     SuperAdminClinicsComponent,
     SuperAdminAdminsComponent,
     PatientDoctorsComponent,
-    CareTeamComponent
+    CareTeamComponent,
+    PatientHeaderComponent,
+    MyDoctorsComponent,
+    DoctorHeaderComponent,
+    AdminHeaderComponent,
+    SuperadminHeaderComponent
   ],
   imports: [
     BrowserModule,

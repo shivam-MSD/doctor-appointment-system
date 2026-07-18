@@ -1,0 +1,75 @@
+<div class="admin-header-wrapper">
+  <!-- Greeting Banner -->
+  <div class="glass-card welcome-card" style="margin-bottom: 24px;">
+    <div class="welcome-text">
+      <h2>Welcome Back, {{ firstName }}!</h2>
+      <p>Here is an overview of your medical bookings and scheduled appointments.</p>
+    </div>
+    <div class="role-badge">Admin Portal</div>
+  </div>
+
+  <!-- Assigned Clinic Details & Quick Availability Toggle -->
+  <div class="glass-card clinic-alert" *ngIf="adminClinic"
+    style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); margin-bottom: 24px; padding: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--accent-cyan);">🏥 {{ adminClinic.clinicName }}</h3>
+          <span class="badge"
+            [style.background]="isClinicCurrentlyOpen(adminClinic) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'"
+            [style.color]="isClinicCurrentlyOpen(adminClinic) ? '#10b981' : '#ef4444'"
+            [style.border]="isClinicCurrentlyOpen(adminClinic) ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)'"
+            style="padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.75rem;">
+            <span *ngIf="isClinicCurrentlyOpen(adminClinic)">🟢 Open</span>
+            <span *ngIf="!isClinicCurrentlyOpen(adminClinic) && adminClinic.isAvailable === false">🔴 Closed (Temporarily Closed)</span>
+            <span *ngIf="!isClinicCurrentlyOpen(adminClinic) && adminClinic.isAvailable !== false">🔴 Closed (Outside Working Hours)</span>
+          </span>
+          <button class="btn btn-outline" (click)="onOpenAdminEditClinicModal()"
+            style="display: flex; align-items: center; gap: 6px; font-weight: 600; padding: 4px 12px; font-size: 0.75rem; border-color: rgba(6, 182, 212, 0.4); color: var(--accent-cyan); background: transparent; border-radius: 20px; transition: all 0.2s ease;">
+            ⚙️ Edit Timings & Availability
+          </button>
+        </div>
+        <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">
+          📍 {{ adminClinic.addressline1 }}{{ adminClinic.addressline2 ? ', ' + adminClinic.addressline2 : '' }}, {{ adminClinic.area }}, {{ adminClinic.city }}, {{ adminClinic.state }} - <code>{{ adminClinic.pincode }}</code>
+        </p>
+
+        <!-- Timings details -->
+        <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
+          <div *ngIf="adminClinic.openDays" style="font-size: 0.82rem;">
+            <span style="color: var(--text-secondary); display: block; margin-bottom: 2px;">📅 Days Open:</span>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <span *ngFor="let day of adminClinic.openDays.split(',')"
+                style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;">
+                {{ day.trim() }}
+              </span>
+            </div>
+          </div>
+          <div *ngIf="adminClinic.startTime && adminClinic.endTime" style="font-size: 0.82rem;">
+            <span style="color: var(--text-secondary); display: block; margin-bottom: 2px;">🕒 Working Hours:</span>
+            <span style="font-weight: 600; color: var(--text-primary);">{{ adminClinic.startTime }} - {{ adminClinic.endTime }}</span>
+          </div>
+        </div>
+
+        <!-- Temporary Unavailability Notice -->
+        <div *ngIf="!adminClinic.isAvailable && adminClinic.unavailabilityReason"
+          style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); padding: 12px; border-radius: 6px; font-size: 0.82rem; color: #f87171; display: flex; gap: 8px; align-items: flex-start; margin-top: 15px; max-width: 600px;">
+          <span>⚠️</span>
+          <div>
+            <strong style="display: block; font-weight: 700; margin-bottom: 2px; color: #ef4444;">Unavailability Notice:</strong>
+            <span>{{ adminClinic.unavailabilityReason }}</span>
+          </div>
+        </div>
+
+        <!-- Doctor Unavailability Notice -->
+        <div *ngIf="adminClinic.isAvailable && adminClinic.isDoctorAvailable === false"
+          style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.15); padding: 12px; border-radius: 6px; font-size: 0.82rem; color: var(--accent-cyan); display: flex; gap: 8px; align-items: flex-start; margin-top: 15px; max-width: 600px;">
+          <span>ℹ️</span>
+          <div>
+            <strong style="display: block; font-weight: 700; margin-bottom: 2px; color: var(--accent-cyan);">Doctor Unavailability Notice:</strong>
+            <span>{{ adminClinic.doctorUnavailabilityReason || 'Doctor is out. Other clinical staff/physiotherapists are attending patients.' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

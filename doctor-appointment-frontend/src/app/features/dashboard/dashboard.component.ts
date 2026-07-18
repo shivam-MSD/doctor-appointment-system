@@ -1245,17 +1245,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.selectedDoctorDetails = null;
   }
 
-  getAge(dob: string | Date | undefined): number {
-    if (!dob) return 0;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
+
 
   openHistoryModal(patientId: string, patientName: string): void {
     this.selectedPatientName = patientName;

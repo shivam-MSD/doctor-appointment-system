@@ -2,8 +2,11 @@ export interface Appointment {
   appointmentId: string;
   patientId: string;
   patientName: string;
+  patientAge: number;
+  patientGender: string;
   doctorId: string;
   doctorName: string;
+  doctorSpecialization: string;
   appointmentDate: string;
   startTime: string;
   endTime: string;

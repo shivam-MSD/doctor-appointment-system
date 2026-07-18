@@ -350,6 +350,10 @@
             <td>Address Line 2</td>
             <td>{{ selectedClinicForDetails.addressline2 || 'N/A' }}</td>
           </tr>
+          <tr *ngIf="selectedClinicForDetails.contactNumber">
+            <td>Contact Number</td>
+            <td>📞 {{ selectedClinicForDetails.contactNumber }}</td>
+          </tr>
           <tr>
             <td>Area / Locality</td>
             <td>{{ selectedClinicForDetails.area || 'N/A' }}</td>

@@ -59,17 +59,7 @@ export class PatientsComponent implements OnInit {
     });
   }
 
-  getAge(dob: string | Date | undefined): number {
-    if (!dob) return 0;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
+
 
   getFilteredPatients(): Patient[] {
     return this.patients.filter(p => {
@@ -95,7 +85,7 @@ export class PatientsComponent implements OnInit {
 
       // 4. Age group filter
       if (this.ageGroupFilter) {
-        const age = this.getAge(p.dob);
+        const age = p.age || 0;
         if (this.ageGroupFilter === 'under18' && age >= 18) return false;
         if (this.ageGroupFilter === '18to35' && (age < 18 || age > 35)) return false;
         if (this.ageGroupFilter === '36to60' && (age < 36 || age > 60)) return false;

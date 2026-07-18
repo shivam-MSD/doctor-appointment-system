@@ -181,14 +181,14 @@
           </tr>
           <tr>
             <td>Date of Birth</td>
-            <td>{{ selectedPatientDetails.dob | date:'mediumDate' }} ({{ getAge(selectedPatientDetails.dob) }} years)
+            <td>{{ selectedPatientDetails.dob | date:'mediumDate' }} ({{ selectedPatientDetails.age }} years)
             </td>
           </tr>
           <tr>
             <td>Gender</td>
             <td>{{ selectedPatientDetails.gender }}</td>
           </tr>
-          <tr>
+          <tr *ngIf="selectedPatientDetails.bloodGroup">
             <td>Blood Group</td>
             <td>{{ selectedPatientDetails.bloodGroup }}</td>
           </tr>
@@ -224,17 +224,17 @@
           style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; margin-top: 20px;">
           📍 Residence Address</h4>
         <table class="details-table">
-          <tr>
+          <tr *ngIf="selectedPatientDetails.addressline1">
             <td style="width: 35%;">Address Line 1</td>
-            <td>{{ selectedPatientDetails.addressline1 || 'N/A' }}</td>
+            <td>{{ selectedPatientDetails.addressline1 }}</td>
           </tr>
-          <tr>
+          <tr *ngIf="selectedPatientDetails.addressline2">
             <td>Address Line 2</td>
-            <td>{{ selectedPatientDetails.addressline2 || 'N/A' }}</td>
+            <td>{{ selectedPatientDetails.addressline2 }}</td>
           </tr>
-          <tr>
+          <tr *ngIf="selectedPatientDetails.area || selectedPatientDetails.pincode">
             <td>Area / Pincode</td>
-            <td>{{ selectedPatientDetails.area || 'N/A' }} - {{ selectedPatientDetails.pincode || 'N/A' }}</td>
+            <td>{{ selectedPatientDetails.area || 'N/A' }} <span *ngIf="selectedPatientDetails.area && selectedPatientDetails.pincode">-</span> {{ selectedPatientDetails.pincode || 'N/A' }}</td>
           </tr>
           <tr>
             <td>City / State</td>

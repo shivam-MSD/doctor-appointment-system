@@ -24,6 +24,9 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		[Required]
 		public Address Address { get; set; }
 
+		[MaxLength(20)]
+		public string? ContactNumber { get; set; }
+
 		[Required]
 		public EVerificationStatus VerificationStatus { get; set; } = EVerificationStatus.Pending;
 

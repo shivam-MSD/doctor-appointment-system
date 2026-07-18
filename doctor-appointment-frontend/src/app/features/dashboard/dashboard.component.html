@@ -1,152 +1,27 @@
 <div class="dashboard-wrapper">
-  <!-- Greeting Banner -->
-  <div class="glass-card welcome-card">
-    <div class="welcome-text">
-      <h2>Welcome Back, {{ role === 'Doctor' ? 'Dr. ' : '' }} {{ firstName }}!</h2>
-      <p>Here is an overview of your medical bookings and scheduled appointments.</p>
-    </div>
-    <div class="role-badge">{{ role }} Portal</div>
-  </div>
+  <!-- SuperAdmin Header -->
+  <app-superadmin-header *ngIf="role === 'SuperAdmin'"
+    [firstName]="firstName">
+  </app-superadmin-header>
 
-  <!-- CLINIC ADMIN ONLY: Assigned Clinic Details & Quick Availability Toggle -->
-  <div class="glass-card clinic-alert" *ngIf="role === 'Admin' && adminClinic"
-    style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); margin-bottom: 24px; padding: 24px;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--accent-cyan);">🏥 {{
-            adminClinic.clinicName }}</h3>
-          <span class="badge"
-            [style.background]="isClinicCurrentlyOpen(adminClinic) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'"
-            [style.color]="isClinicCurrentlyOpen(adminClinic) ? '#10b981' : '#ef4444'"
-            [style.border]="isClinicCurrentlyOpen(adminClinic) ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)'"
-            style="padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.75rem;">
-            <span *ngIf="isClinicCurrentlyOpen(adminClinic)">🟢 Open</span>
-            <span *ngIf="!isClinicCurrentlyOpen(adminClinic) && adminClinic.isAvailable === false">🔴 Closed
-              (Temporarily Closed)</span>
-            <span *ngIf="!isClinicCurrentlyOpen(adminClinic) && adminClinic.isAvailable !== false">🔴 Closed (Outside
-              Working Hours)</span>
-          </span>
-          <button class="btn btn-outline" (click)="openAdminEditClinicModal()"
-            style="display: flex; align-items: center; gap: 6px; font-weight: 600; padding: 4px 12px; font-size: 0.75rem; border-color: rgba(6, 182, 212, 0.4); color: var(--accent-cyan); background: transparent; border-radius: 20px; transition: all 0.2s ease;">
-            ⚙️ Edit Timings & Availability
-          </button>
-        </div>
-        <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">
-          📍 {{ adminClinic.addressline1 }}{{ adminClinic.addressline2 ? ', ' + adminClinic.addressline2 : '' }}, {{
-          adminClinic.area }}, {{ adminClinic.city }}, {{ adminClinic.state }} - <code>{{ adminClinic.pincode }}</code>
-        </p>
+  <!-- Doctor Header -->
+  <app-doctor-header *ngIf="role === 'Doctor'"
+    [firstName]="firstName"
+    [isDoctorAddressIncomplete]="isDoctorAddressIncomplete"
+    [doctorClinics]="doctorClinics"
+    [isClinicsLoading]="isClinicsLoading"
+    (openClinicModal)="openClinicModal()">
+  </app-doctor-header>
 
-        <!-- Timings details -->
-        <div style="display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;">
-          <div *ngIf="adminClinic.openDays" style="font-size: 0.82rem;">
-            <span style="color: var(--text-secondary); display: block; margin-bottom: 2px;">📅 Days Open:</span>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-              <span *ngFor="let day of adminClinic.openDays.split(',')"
-                style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;">
-                {{ day.trim() }}
-              </span>
-            </div>
-          </div>
-          <div *ngIf="adminClinic.startTime && adminClinic.endTime" style="font-size: 0.82rem;">
-            <span style="color: var(--text-secondary); display: block; margin-bottom: 2px;">🕒 Working Hours:</span>
-            <span style="font-weight: 600; color: var(--text-primary);">{{ adminClinic.startTime }} - {{
-              adminClinic.endTime }}</span>
-          </div>
-        </div>
-
-        <!-- Temporary Unavailability Notice -->
-        <div *ngIf="!adminClinic.isAvailable && adminClinic.unavailabilityReason"
-          style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); padding: 12px; border-radius: 6px; font-size: 0.82rem; color: #f87171; display: flex; gap: 8px; align-items: flex-start; margin-top: 15px; max-width: 600px;">
-          <span>⚠️</span>
-          <div>
-            <strong style="display: block; font-weight: 700; margin-bottom: 2px; color: #ef4444;">Unavailability
-              Notice:</strong>
-            <span>{{ adminClinic.unavailabilityReason }}</span>
-          </div>
-        </div>
-
-        <!-- Doctor Unavailability Notice -->
-        <div *ngIf="adminClinic.isAvailable && adminClinic.isDoctorAvailable === false"
-          style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.15); padding: 12px; border-radius: 6px; font-size: 0.82rem; color: var(--accent-cyan); display: flex; gap: 8px; align-items: flex-start; margin-top: 15px; max-width: 600px;">
-          <span>ℹ️</span>
-          <div>
-            <strong style="display: block; font-weight: 700; margin-bottom: 2px; color: var(--accent-cyan);">Doctor
-              Unavailability Notice:</strong>
-            <span>{{ adminClinic.doctorUnavailabilityReason || 'Doctor is out. Other clinical staff/physiotherapists are
-              attending patients.' }}</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- DOCTOR ONLY: Profile address completeness alert -->
-  <div class="glass-card warning-card clinic-alert" *ngIf="role === 'Doctor' && isDoctorAddressIncomplete"
-    style="background: rgba(245, 158, 11, 0.05) !important; border: 1.5px solid rgba(245, 158, 11, 0.25) !important;">
-    <span class="alert-icon">⚠️</span>
-    <div class="alert-info">
-      <h4>Complete Your Profile Address</h4>
-      <p>You have not fully filled in your personal profile address details. Please update your address in the profile
-        section to complete your profile.</p>
-      <a routerLink="/doctor/profile" class="btn btn-primary alert-btn" style="text-decoration: none;">Update Profile
-        Address</a>
-    </div>
-  </div>
-
-  <!-- DOCTOR ONLY: Practice setup alert when clinic list is empty -->
-  <div class="glass-card warning-card clinic-alert" *ngIf="role === 'Doctor' && doctorClinics.length === 0">
-    <span class="alert-icon">🏢</span>
-    <div class="alert-info">
-      <h4>Complete Your Practice Setup</h4>
-      <p>Patients will only be able to view your details and schedule appointments after you add at least one practice
-        clinic, hospital, or physiotherapy center. Registered centers require verification by the Super Admin.</p>
-      <button class="btn btn-primary alert-btn" (click)="openClinicModal()">Register Clinic Location Now</button>
-    </div>
-  </div>
-
-
-  <!-- PATIENT / CLINIC ADMIN: Appointments Dashboard Grid -->
-  <div *ngIf="role === 'Patient'" class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
-    
-    <!-- Upcoming -->
-    <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #8b5cf6;">
-      <div style="font-size: 2rem; color: #8b5cf6; background: rgba(139, 92, 246, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">🚀</div>
-      <div>
-        <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
-          <ng-container *ngIf="isPatientStatsLoading; else upcomingLoaded">...</ng-container>
-          <ng-template #upcomingLoaded>{{ patientTotalUpcoming }}</ng-template>
-        </h2>
-        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Upcoming Appointments</p>
-      </div>
-    </div>
-    
-    <!-- Pending -->
-    <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #f59e0b;">
-      <div style="font-size: 2rem; color: #f59e0b; background: rgba(245, 158, 11, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">⏳</div>
-      <div>
-        <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
-          <ng-container *ngIf="isPatientStatsLoading; else pendingLoaded">...</ng-container>
-          <ng-template #pendingLoaded>{{ patientTotalPending }}</ng-template>
-        </h2>
-        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Pending Appointments</p>
-      </div>
-    </div>
-
-    <!-- Completed -->
-    <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #10b981;">
-      <div style="font-size: 2rem; color: #10b981; background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">✅</div>
-      <div>
-        <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
-          <ng-container *ngIf="isPatientStatsLoading; else completedLoaded">...</ng-container>
-          <ng-template #completedLoaded>{{ patientTotalCompleted }}</ng-template>
-        </h2>
-        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Completed Appointments</p>
-      </div>
-    </div>
-  </div>
-
+  <!-- Admin Header -->
+  <app-admin-header *ngIf="role === 'Admin'"
+    [firstName]="firstName"
+    [adminClinic]="adminClinic"
+    (openAdminEditClinicModal)="openAdminEditClinicModal()">
+  </app-admin-header>
+  
+  <!-- Patient Header & Metrics -->
+  <app-patient-header *ngIf="role === 'Patient'"></app-patient-header>
 
   <div class="glass-card table-card" *ngIf="role === 'Patient' || role === 'Admin'">
     <div class="table-header">
@@ -155,9 +30,12 @@
       <div class="filters-row">
         <select class="form-control filter-select" [ngModel]="statusFilter" (ngModelChange)="onFilterChange($event)">
           <ng-container *ngIf="!historyMode">
-            <option value="">All Active Statuses</option>
+            <option value="">All Statuses</option>
             <option value="Pending">Pending (Confirmation Pending)</option>
             <option value="Confirmed">Confirmed</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Rejected">Rejected</option>
           </ng-container>
           <ng-container *ngIf="historyMode">
             <option value="">All Past Statuses</option>
@@ -720,7 +598,7 @@
             <tr>
               <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Age</td>
               <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
-                getAge(selectedPatientDetails.dob) }} years</td>
+                selectedPatientDetails.age }} years</td>
             </tr>
             <tr>
               <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Date of Birth
@@ -733,7 +611,7 @@
               <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{
                 selectedPatientDetails.gender }}</td>
             </tr>
-            <tr>
+            <tr *ngIf="selectedPatientDetails.bloodGroup">
               <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Blood Group
               </td>
               <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{

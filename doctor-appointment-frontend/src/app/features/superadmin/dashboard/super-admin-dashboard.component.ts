@@ -23,6 +23,21 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   selectedClinicIdForRejection = '';
   rejectionReason = '';
 
+  // Detail Modal States
+  showDoctorDetailsModal = false;
+  selectedDoctorDetails: any = null;
+
+  showClinicDetailsModal = false;
+  selectedClinicDetails: any = null;
+
+  showAdminDetailsModal = false;
+  selectedAdminDetails: any = null;
+
+  // Clinic History State
+  showHistoryModal = false;
+  clinicHistory: any[] = [];
+  selectedClinicNameForHistory = '';
+
   constructor(
     private adminService: AdminService,
     private toastService: ToastService,
@@ -161,5 +176,67 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
         this.toastService.showError(err?.error?.detail || 'Failed to reject clinic.');
       }
     });
+  }
+
+  // --- Doctor Details Modal ---
+  openDoctorDetails(doctor: any): void {
+    this.selectedDoctorDetails = doctor;
+    this.showDoctorDetailsModal = true;
+  }
+
+  closeDoctorDetails(): void {
+    this.showDoctorDetailsModal = false;
+    this.selectedDoctorDetails = null;
+  }
+
+  // --- Clinic Details Modal ---
+  openClinicDetails(clinic: any): void {
+    this.selectedClinicDetails = clinic;
+    this.showClinicDetailsModal = true;
+  }
+
+  closeClinicDetails(): void {
+    this.showClinicDetailsModal = false;
+    this.selectedClinicDetails = null;
+  }
+
+  // --- Admin Details Modal ---
+  openAdminDetails(admin: any): void {
+    this.selectedAdminDetails = admin;
+    this.showAdminDetailsModal = true;
+  }
+
+  closeAdminDetails(): void {
+    this.showAdminDetailsModal = false;
+    this.selectedAdminDetails = null;
+  }
+
+  // --- Clinic History Modal ---
+  openClinicHistory(clinic: any): void {
+    this.selectedClinicNameForHistory = clinic.clinicName;
+    this.adminService.getClinicHistory(clinic.clinicId).subscribe({
+      next: (history) => {
+        this.clinicHistory = history;
+        this.showHistoryModal = true;
+      },
+      error: () => {
+        this.toastService.showError('Failed to load clinic history.');
+      }
+    });
+  }
+
+  closeHistoryModal(): void {
+    this.showHistoryModal = false;
+    this.clinicHistory = [];
+    this.selectedClinicNameForHistory = '';
+  }
+
+  // Helper method for safely parsing JSON in HTML template
+  parseJson(jsonString: string): any {
+    try {
+      return jsonString ? JSON.parse(jsonString) : null;
+    } catch {
+      return null;
+    }
   }
 }

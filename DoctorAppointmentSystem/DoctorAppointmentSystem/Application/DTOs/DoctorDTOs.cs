@@ -24,6 +24,19 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string City { get; set; } = string.Empty;
 		public DateTime CreatedDate { get; set; }
 		public DateTime UpdatedDate { get; set; }
+		public int Age { get; set; }
+		public List<ClinicBasicDto> Clinics { get; set; } = new List<ClinicBasicDto>();
+	}
+
+	public class ClinicBasicDto
+	{
+		public Guid ClinicId { get; set; }
+		public string ClinicName { get; set; }
+		public string ClinicType { get; set; }
+		public string State { get; set; }
+		public string City { get; set; }
+		public string Area { get; set; }
+		public string? ContactNumber { get; set; }
 	}
 
 	public class DoctorRegisterDto

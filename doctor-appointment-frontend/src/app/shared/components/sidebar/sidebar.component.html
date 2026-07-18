@@ -15,6 +15,9 @@
           [routerLinkActiveOptions]="{exact: true}" data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
+          <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="patientPendingActionCount > 0">
+            {{ patientPendingActionCount }}
+          </span>
         </a>
       </li>
       <li>

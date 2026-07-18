@@ -48,8 +48,8 @@
         </div>
       </div>
 
-      <!-- Demographics Section -->
-      <h3 class="section-title">1. Personal Information</h3>
+      <div class="glass-card form-section-card">
+        <h3 class="section-title">1. Personal Information</h3>
       
       <div class="form-row">
         <div class="form-group flex-1">
@@ -112,8 +112,11 @@
         </div>
       </div>
 
+      </div>
+
       <!-- Emergency Contact Section -->
-      <h3 class="section-title">2. Emergency Contact</h3>
+      <div class="glass-card form-section-card">
+        <h3 class="section-title">2. Emergency Contact</h3>
       
       <div class="form-row">
         <div class="form-group flex-1">
@@ -127,8 +130,11 @@
         </div>
       </div>
 
+      </div>
+
       <!-- Address Details Section -->
-      <h3 class="section-title">3. Address Details</h3>
+      <div class="glass-card form-section-card">
+        <h3 class="section-title">3. Address Details</h3>
       <div class="form-row">
         <div class="form-group flex-1">
           <label class="form-label">Country *</label>
@@ -161,6 +167,7 @@
         <label class="form-label">Address Line 2 (Optional)</label>
         <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2" placeholder="e.g. Near Metro Station">
       </div>
+      </div>
 
       <div class="form-actions">
         <button class="btn btn-cancel flex-1" type="button" [disabled]="!profileForm.dirty" (click)="loadProfile(profileForm)">Discard Changes</button>
@@ -170,7 +177,8 @@
 
     <!-- DOCTOR PROFILE FORM -->
     <form #doctorForm="ngForm" (submit)="onSubmit(doctorForm); $event.preventDefault()" *ngIf="role === 'Doctor'">
-      <h3 class="section-title">🩺 Professional Doctor Profile</h3>
+      <div class="glass-card form-section-card">
+        <h3 class="section-title">🩺 Professional Doctor Profile</h3>
       
       <div class="form-row">
         <div class="form-group flex-1">
@@ -264,8 +272,11 @@
                   [attr.title]="backendErrors['AboutDoctor'] || backendErrors['aboutDoctor'] || null"></textarea>
       </div>
 
+      </div>
+
       <!-- Address Details Section -->
-      <h3 class="section-title">Address Details</h3>
+      <div class="glass-card form-section-card">
+        <h3 class="section-title">Address Details</h3>
       <div class="form-row">
         <div class="form-group flex-1">
           <label class="form-label">Country *</label>
@@ -312,6 +323,7 @@
                [class.is-invalid]="backendErrors['Addressline2'] || backendErrors['addressline2']"
                [attr.title]="backendErrors['Addressline2'] || backendErrors['addressline2'] || null">
       </div>
+      </div>
 
       <div class="form-actions">
         <button class="btn btn-cancel flex-1" type="button" [disabled]="!doctorForm.dirty" (click)="loadProfile(doctorForm)">Discard Changes</button>
@@ -321,7 +333,8 @@
 
     <!-- CLINIC ADMIN PROFILE FORM -->
     <form #adminForm="ngForm" (submit)="onSubmit(adminForm); $event.preventDefault()" *ngIf="role === 'Admin'">
-      <h3 class="section-title">🏢 Clinic Admin Profile</h3>
+      <div class="glass-card form-section-card">
+        <h3 class="section-title">🏢 Clinic Admin Profile</h3>
       
       <div class="form-group">
         <label class="form-label">Assigned Work Center</label>
@@ -344,8 +357,11 @@
         <input class="form-control" type="tel" id="adminMobile" name="mobileNo" [(ngModel)]="mobileNo" required>
       </div>
 
+      </div>
+
       <!-- Address Details Section -->
-      <h3 class="section-title">Address Details</h3>
+      <div class="glass-card form-section-card">
+        <h3 class="section-title">Address Details</h3>
       <div class="form-row">
         <div class="form-group flex-1">
           <label class="form-label">Country *</label>
@@ -377,6 +393,7 @@
       <div class="form-group">
         <label class="form-label">Address Line 2 (Optional)</label>
         <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2" placeholder="e.g. Near Metro Station">
+      </div>
       </div>
 
       <div class="form-actions">

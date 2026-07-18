@@ -4,6 +4,7 @@ using DoctorAppointmentSystem.Persistent.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DoctorAppointmentSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260718142306_AddClinicContactNumber")]
+    partial class AddClinicContactNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -774,7 +777,7 @@ namespace DoctorAppointmentSystem.Migrations
                         .IsRequired();
 
                     b.HasOne("DoctorAppointmentSystem.Domain.Entities.Doctor", "Doctor")
-                        .WithMany("Clinics")
+                        .WithMany()
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -862,11 +865,6 @@ namespace DoctorAppointmentSystem.Migrations
                     b.Navigation("Patient");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.Doctor", b =>
-                {
-                    b.Navigation("Clinics");
                 });
 #pragma warning restore 612, 618
         }

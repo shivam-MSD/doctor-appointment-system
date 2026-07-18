@@ -186,7 +186,17 @@ namespace DoctorAppointmentSystem.Application.Services
 					State = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.State).FirstOrDefault() ?? string.Empty,
 					City = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.City).FirstOrDefault() ?? string.Empty,
 					CreatedDate = d.CreatedDate,
-					UpdatedDate = d.UpdatedDate
+					UpdatedDate = d.UpdatedDate,
+					Clinics = d.Clinics.Select(c => new ClinicBasicDto
+					{
+						ClinicId = c.ClinicId,
+						ClinicName = c.ClinicName,
+						ClinicType = c.ClinicType,
+						State = c.Address.State,
+						City = c.Address.City,
+						Area = c.Address.Area,
+						ContactNumber = c.ContactNumber
+					}).ToList()
 				})
 				.ToListAsync();
 
@@ -205,6 +215,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				MobileNo = patient.MobileNo,
 				Gender = patient.Gender.ToString(),
 				DOB = patient.DOB,
+				Age = CalculateAge(patient.DOB),
 				BloodGroup = patient.BloodGroup.ToString(),
 				EmergencyContactName = patient.EmergencyConactName,
 				EmergencyContactNumber = patient.EmergencyConactNumber,
@@ -248,9 +259,28 @@ namespace DoctorAppointmentSystem.Application.Services
 				VerificationStatus = doctor.VerificationStatus.ToString(),
 				LicenceNumber = doctor.LicenceNumber,
 				CreatedDate = doctor.CreatedDate,
-				UpdatedDate = doctor.UpdatedDate
+				UpdatedDate = doctor.UpdatedDate,
+				Age = CalculateAge(doctor.DOB),
+				Clinics = doctor.Clinics.Select(c => new ClinicBasicDto
+				{
+					ClinicId = c.ClinicId,
+					ClinicName = c.ClinicName,
+					ClinicType = c.ClinicType,
+					State = c.Address.State,
+					City = c.Address.City,
+					Area = c.Address.Area,
+					ContactNumber = c.ContactNumber
+				}).ToList()
 			};
 			return doctorDto;
+		}
+
+		private static int CalculateAge(DateTime dob)
+		{
+			var today = DateTime.Today;
+			var age = today.Year - dob.Year;
+			if (dob.Date > today.AddYears(-age)) age--;
+			return age;
 		}
 	}
 }

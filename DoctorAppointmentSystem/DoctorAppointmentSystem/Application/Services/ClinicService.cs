@@ -146,6 +146,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				ClinicId = Guid.NewGuid(),
 				ClinicName = dto.ClinicName,
 				ClinicType = dto.ClinicType,
+				ContactNumber = dto.ContactNumber,
 				Doctor = doctor,
 				Address = clinicAddress,
 				VerificationStatus = EVerificationStatus.Pending,
@@ -353,6 +354,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					Area = c.Address.Area,
 					Addressline1 = c.Address.Addressline1,
 					Addressline2 = c.Address.Addressline2,
+					ContactNumber = c.ContactNumber,
 					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
 					VerificationStatus = _dbContext.Clinics.Any(clone => clone.ParentClinicId == c.ClinicId && clone.VerificationStatus == EVerificationStatus.UpdatedPending)
 						? "UpdatedPending"
@@ -397,6 +399,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					Area = c.Address.Area,
 					Addressline1 = c.Address.Addressline1,
 					Addressline2 = c.Address.Addressline2,
+					ContactNumber = c.ContactNumber,
 					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
 					VerificationStatus = c.VerificationStatus.ToString(),
 					RejectionReason = c.RejectionReason,
@@ -460,6 +463,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					Area = c.Address.Area,
 					Addressline1 = c.Address.Addressline1,
 					Addressline2 = c.Address.Addressline2,
+					ContactNumber = c.ContactNumber,
 					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
 					VerificationStatus = c.VerificationStatus.ToString(),
 					RejectionReason = c.RejectionReason,
@@ -540,6 +544,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					// Update parent details from the approved edit clone
 					parent.ClinicName = clinic.ClinicName;
 					parent.ClinicType = clinic.ClinicType;
+					parent.ContactNumber = clinic.ContactNumber;
 					parent.Address.State = clinic.Address.State;
 					parent.Address.City = clinic.Address.City;
 					parent.Address.Pincode = clinic.Address.Pincode;
@@ -761,7 +766,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			                      clinic.Address.Area != dto.Area ||
 			                      clinic.Address.Pincode != dto.Pincode ||
 			                      clinic.Address.Addressline1 != dto.Addressline1 ||
-			                      clinic.Address.Addressline2 != (dto.Addressline2 ?? string.Empty);
+			                      clinic.Address.Addressline2 != (dto.Addressline2 ?? string.Empty) ||
+			                      clinic.ContactNumber != dto.ContactNumber;
 
 			if (detailsChanged)
 			{
@@ -790,6 +796,7 @@ namespace DoctorAppointmentSystem.Application.Services
 						ClinicId = Guid.NewGuid(),
 						ClinicName = dto.ClinicName,
 						ClinicType = dto.ClinicType,
+						ContactNumber = dto.ContactNumber,
 						Doctor = clinic.Doctor,
 						Address = proposedAddress,
 						VerificationStatus = EVerificationStatus.UpdatedPending,
@@ -812,6 +819,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					// Update existing edit request clone record
 					clone.ClinicName = dto.ClinicName;
 					clone.ClinicType = dto.ClinicType;
+					clone.ContactNumber = dto.ContactNumber;
 					clone.OpenDays = string.IsNullOrWhiteSpace(dto.OpenDays) ? clinic.OpenDays : dto.OpenDays;
 					clone.StartTime = string.IsNullOrWhiteSpace(dto.StartTime) ? clinic.StartTime : dto.StartTime;
 					clone.EndTime = string.IsNullOrWhiteSpace(dto.EndTime) ? clinic.EndTime : dto.EndTime;
@@ -944,9 +952,11 @@ namespace DoctorAppointmentSystem.Application.Services
 			};
 			_dbContext.ClinicAuditLogs.Add(auditLog);
 
-			clinic.ClinicName = dto.ClinicName;
-			clinic.ClinicType = dto.ClinicType;
-			clinic.OpenDays = string.IsNullOrWhiteSpace(dto.OpenDays) ? clinic.OpenDays : dto.OpenDays;
+			if (!string.IsNullOrEmpty(dto.ClinicName)) clinic.ClinicName = dto.ClinicName;
+			
+			if (dto.ContactNumber != null) clinic.ContactNumber = dto.ContactNumber;
+
+			if (!string.IsNullOrEmpty(dto.OpenDays)) clinic.OpenDays = dto.OpenDays;
 			clinic.StartTime = string.IsNullOrWhiteSpace(dto.StartTime) ? clinic.StartTime : dto.StartTime;
 			clinic.EndTime = string.IsNullOrWhiteSpace(dto.EndTime) ? clinic.EndTime : dto.EndTime;
 			clinic.IsAvailable = dto.IsAvailable;
@@ -956,7 +966,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			clinic.BookingWindowEndDate = dto.BookingWindowEndDate;
 			clinic.BookingWindowStartDate = dto.BookingWindowStartDate;
 			clinic.SupportedModes = dto.SupportedModes;
-		clinic.MaxAppointmentsPerDay = dto.MaxAppointmentsPerDay;
+			clinic.MaxAppointmentsPerDay = dto.MaxAppointmentsPerDay;
 
 			// Don't drop verification status of a clinic for trusted admin edits
 			clinic.VerificationStatus = EVerificationStatus.Verified;
@@ -1000,6 +1010,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				Area = c.Address.Area,
 				Addressline1 = c.Address.Addressline1,
 				Addressline2 = c.Address.Addressline2,
+				ContactNumber = c.ContactNumber,
 				IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
 				VerificationStatus = c.VerificationStatus.ToString(),
 				RejectionReason = c.RejectionReason,

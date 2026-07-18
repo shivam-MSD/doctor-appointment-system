@@ -8,14 +8,22 @@
 
 .profile-card {
   width: 100%;
-  max-width: 580px;
-  padding: 32px 40px;
+  max-width: 800px;
   position: relative;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  backdrop-filter: none !important;
 }
 
 .profile-header {
   text-align: center;
   margin-bottom: 28px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
 .header-icon {
@@ -38,13 +46,25 @@
 }
 
 .section-title {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   color: var(--accent-cyan);
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
-  margin: 28px 0 16px 0;
+  padding-bottom: 12px;
+  margin: 0 0 20px 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-section-card {
+  padding: 32px 40px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
 }
 
 .form-row {

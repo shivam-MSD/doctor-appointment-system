@@ -5,6 +5,7 @@ export interface Patient {
   mobileNo: string;
   gender: string;
   dob: string;
+  age: number;
   bloodGroup?: string;
   emergencyContactName: string;
   emergencyContactNumber: string;

@@ -426,17 +426,7 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.selectedPatientDetails = null;
   }
 
-  getAge(dob: string | Date | undefined): number {
-    if (!dob) return 0;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
+
 
   ngOnDestroy(): void {
     if (this.signalrSub) {

@@ -60,6 +60,8 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
 		public DateTime UpdatedDate { get; set; }
+
+		public ICollection<Clinic> Clinics { get; set; }
 	}
 
 	public enum EVerificationStatus

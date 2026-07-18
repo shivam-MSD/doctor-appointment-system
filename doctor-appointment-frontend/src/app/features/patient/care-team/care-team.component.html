@@ -81,13 +81,60 @@
           <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Specialization</label>
           <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">🩺 {{ selectedDoctorForInfo.specialization }}</div>
         </div>
-        <div class="info-group">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="info-group">
+            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Qualification</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">🎓 {{ selectedDoctorForInfo.qualification || 'N/A' }}</div>
+          </div>
+          <div class="info-group">
+            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Experience</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">⭐ {{ selectedDoctorForInfo.yearsOfExperience || 0 }} years</div>
+          </div>
+          <div class="info-group">
+            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Licence</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">📜 {{ selectedDoctorForInfo.licenceNumber || 'N/A' }}</div>
+          </div>
+          <div class="info-group">
+            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Age</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">🎂 {{ selectedDoctorForInfo.age || 'N/A' }}</div>
+          </div>
+        </div>
+
+        <div class="info-group" style="padding-top: 10px; border-top: 1px solid var(--border-color);">
           <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Consultations</label>
           <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">✅ {{ selectedDoctorForInfo.appointments?.length || 0 }} completed appointments</div>
         </div>
-        <div class="info-group">
-          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Availability</label>
-          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">Available for booking</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="info-group">
+            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Fee</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">💰 {{ selectedDoctorForInfo.consultationFee | currency:'INR' }}</div>
+          </div>
+          <div class="info-group">
+            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Location</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">📍 {{ selectedDoctorForInfo.city || 'N/A' }}, {{ selectedDoctorForInfo.state || 'N/A' }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedDoctorForInfo.clinics && selectedDoctorForInfo.clinics.length > 0" style="padding-top: 15px; border-top: 1px solid var(--border-color);">
+          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: block;">Available at Clinics</label>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div *ngFor="let clinic of selectedDoctorForInfo.clinics" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                <div>
+                  <div style="font-size: 0.95rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px;">{{ clinic.clinicName }} <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">({{ clinic.clinicType }})</span></div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">📍 {{ clinic.area ? clinic.area + ', ' : '' }}{{ clinic.city }}, {{ clinic.state }}</div>
+                  <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">📞 {{ clinic.contactNumber || 'Not available' }}</div>
+                </div>
+                <a [routerLink]="['/patient/book-appointment']" [queryParams]="{ doctorId: selectedDoctorForInfo.doctorId, clinicId: clinic.clinicId }" (click)="closeDoctorInfo()" class="btn btn-primary" style="font-size: 0.75rem; padding: 6px 12px; text-decoration: none; white-space: nowrap;">Book Here</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-group" *ngIf="selectedDoctorForInfo.aboutDoctor && selectedDoctorForInfo.aboutDoctor.trim() !== ''" style="padding-top: 10px;">
+          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">About Doctor</label>
+          <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500; line-height: 1.5; white-space: pre-wrap;">{{ selectedDoctorForInfo.aboutDoctor }}</div>
         </div>
       </div>
       

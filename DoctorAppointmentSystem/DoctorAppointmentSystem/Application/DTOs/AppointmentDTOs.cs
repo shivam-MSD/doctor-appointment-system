@@ -7,8 +7,11 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public Guid AppointmentId { get; set; }
 		public Guid PatientId { get; set; }
 		public string PatientName { get; set; }
+		public int PatientAge { get; set; }
+		public string PatientGender { get; set; }
 		public Guid DoctorId { get; set; }
 		public string DoctorName { get; set; }
+		public string DoctorSpecialization { get; set; }
 		public Guid? ClinicId { get; set; }
 		public string? ClinicName { get; set; }
 		public DateTime AppointmentDate { get; set; }
@@ -65,6 +68,13 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public Guid DoctorId { get; set; }
 		public string DoctorName { get; set; }
 		public string Specialization { get; set; }
+		public double ConsultationFee { get; set; }
+		public string? AboutDoctor { get; set; }
+		public int Age { get; set; }
+		public int YearsOfExperience { get; set; }
+		public string Qualification { get; set; }
+		public string LicenceNumber { get; set; }
+		public IEnumerable<ClinicBasicDto> Clinics { get; set; } = Enumerable.Empty<ClinicBasicDto>();
 		public IEnumerable<AppointmentDto> Appointments { get; set; } = Enumerable.Empty<AppointmentDto>();
 	}
 

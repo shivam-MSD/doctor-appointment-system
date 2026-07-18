@@ -76,6 +76,7 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   clinicEditForm = {
     clinicName: '',
     clinicType: 'Clinic',
+    contactNumber: '',
     country: 'India',
     state: '',
     city: '',
@@ -93,6 +94,7 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   clinicOnlyForm = {
     clinicName: '',
     clinicType: 'Clinic',
+    contactNumber: '',
     country: 'India',
     state: '',
     city: '',
@@ -246,6 +248,7 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     this.clinicOnlyForm = {
       clinicName: '',
       clinicType: 'Clinic',
+      contactNumber: '',
       country: 'India',
       state: '',
       city: '',
@@ -364,6 +367,7 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     this.clinicEditForm = {
       clinicName: clinic.clinicName,
       clinicType: clinic.clinicType,
+      contactNumber: clinic.contactNumber || '',
       country: 'India',
       state: clinic.state,
       city: clinic.city,

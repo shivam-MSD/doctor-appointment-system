@@ -1,0 +1,61 @@
+<!-- Welcome Banner -->
+<div class="glass-card welcome-card" *ngIf="showWelcomeBanner" style="padding: 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent-cyan);">
+  <div class="welcome-text">
+    <h2 style="margin: 0 0 8px 0; font-size: 1.5rem; color: var(--text-primary);">Welcome Back, {{ firstName }}!</h2>
+    <p style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;">Here is an overview of your medical bookings and scheduled appointments.</p>
+  </div>
+  <div class="role-badge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(6, 182, 212, 0.2);">
+    PATIENT PORTAL
+  </div>
+</div>
+
+<!-- TOP SECTION: Metrics -->
+<div class="metrics-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+  <!-- Upcoming -->
+  <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #8b5cf6;">
+    <div style="font-size: 2rem; color: #8b5cf6; background: rgba(139, 92, 246, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">🚀</div>
+    <div>
+      <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
+        <ng-container *ngIf="isPatientStatsLoading; else upcomingLoaded">...</ng-container>
+        <ng-template #upcomingLoaded>{{ patientTotalUpcoming }}</ng-template>
+      </h2>
+      <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Upcoming</p>
+    </div>
+  </div>
+  
+  <!-- Pending -->
+  <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #f59e0b;">
+    <div style="font-size: 2rem; color: #f59e0b; background: rgba(245, 158, 11, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">⏳</div>
+    <div>
+      <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
+        <ng-container *ngIf="isPatientStatsLoading; else pendingLoaded">...</ng-container>
+        <ng-template #pendingLoaded>{{ patientTotalPending }}</ng-template>
+      </h2>
+      <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Pending</p>
+    </div>
+  </div>
+
+  <!-- Completed -->
+  <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #10b981;">
+    <div style="font-size: 2rem; color: #10b981; background: rgba(16, 185, 129, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">✅</div>
+    <div>
+      <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
+        <ng-container *ngIf="isPatientStatsLoading; else completedLoaded">...</ng-container>
+        <ng-template #completedLoaded>{{ patientTotalCompleted }}</ng-template>
+      </h2>
+      <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Completed</p>
+    </div>
+  </div>
+
+  <!-- Rescheduled -->
+  <div class="glass-card metric-card" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-left: 4px solid #ef4444;">
+    <div style="font-size: 2rem; color: #ef4444; background: rgba(239, 68, 68, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">📅</div>
+    <div>
+      <h2 style="margin: 0; font-size: 1.8rem; color: var(--text-primary);">
+        <ng-container *ngIf="isPatientStatsLoading; else rescheduledLoaded">...</ng-container>
+        <ng-template #rescheduledLoaded>{{ patientTotalRescheduled }}</ng-template>
+      </h2>
+      <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Rescheduled</p>
+    </div>
+  </div>
+</div>

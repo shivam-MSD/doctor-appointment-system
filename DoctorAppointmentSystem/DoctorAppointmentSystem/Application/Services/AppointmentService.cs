@@ -317,7 +317,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var query = _dbContext.Appointments
 				.Include(app => app.Patient)
-				.Include(app => app.Doctor)
+				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
 				.Include(app => app.Clinic)
 				.AsQueryable();
 
@@ -498,7 +498,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			var query = _dbContext.Appointments
 				.Include(app => app.Patient)
-				.Include(app => app.Doctor)
+				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
 				.Include(app => app.Clinic)
 				.Where(app => linkedPatientIds.Contains(EF.Property<Guid>(app, "PatientId")))
 				.AsQueryable();
@@ -558,8 +558,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			// Fetch all appointments for these patients
 			var appointments = await _dbContext.Appointments
 				.Include(app => app.Patient)
-				.Include(app => app.Doctor)
-				.ThenInclude(d => d.Specialization)
+				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
+				.Include(app => app.Doctor).ThenInclude(d => d.Clinics).ThenInclude(c => c.Address)
 				.Where(app => linkedPatientIds.Contains(app.Patient.PatientId))
 				.ToListAsync();
 
@@ -578,6 +578,22 @@ namespace DoctorAppointmentSystem.Application.Services
 					DoctorId = doctor.DoctorId,
 					DoctorName = $"{doctor.FirstName} {doctor.LastName}",
 					Specialization = doctor.Specialization?.SpecializationName ?? "General Physician",
+					ConsultationFee = doctor.ConsultationFee,
+					AboutDoctor = doctor.AboutDoctor,
+					Age = DateTime.UtcNow.Year - doctor.DOB.Year,
+					YearsOfExperience = doctor.YearsOfExperience,
+					Qualification = doctor.Qualification,
+					LicenceNumber = doctor.LicenceNumber,
+					Clinics = doctor.Clinics.Select(c => new ClinicBasicDto
+					{
+						ClinicId = c.ClinicId,
+						ClinicName = c.ClinicName,
+						ClinicType = c.ClinicType,
+						State = c.Address.State,
+						City = c.Address.City,
+						Area = c.Address.Area,
+						ContactNumber = c.ContactNumber
+					}).ToList(),
 					Appointments = group.Select(app => MapToDto(app, app.Patient, doctor))
 				});
 			}
@@ -614,7 +630,18 @@ namespace DoctorAppointmentSystem.Application.Services
 					YearsOfExperience = d.YearsOfExperience,
 					ConsultationFee = d.ConsultationFee,
 					VerificationStatus = d.VerificationStatus.ToString(),
-					AboutDoctor = d.AboutDoctor
+					AboutDoctor = d.AboutDoctor,
+					Age = DateTime.UtcNow.Year - d.DOB.Year,
+					Clinics = d.Clinics.Select(c => new ClinicBasicDto
+					{
+						ClinicId = c.ClinicId,
+						ClinicName = c.ClinicName,
+						ClinicType = c.ClinicType,
+						State = c.Address.State,
+						City = c.Address.City,
+						Area = c.Address.Area,
+						ContactNumber = c.ContactNumber
+					}).ToList()
 				})
 				.ToListAsync();
 
@@ -702,7 +729,18 @@ namespace DoctorAppointmentSystem.Application.Services
 					YearsOfExperience = d.YearsOfExperience,
 					ConsultationFee = d.ConsultationFee,
 					VerificationStatus = d.VerificationStatus.ToString(),
-					AboutDoctor = d.AboutDoctor
+					AboutDoctor = d.AboutDoctor,
+					Age = DateTime.UtcNow.Year - d.DOB.Year,
+					Clinics = d.Clinics.Select(c => new ClinicBasicDto
+					{
+						ClinicId = c.ClinicId,
+						ClinicName = c.ClinicName,
+						ClinicType = c.ClinicType,
+						State = c.Address.State,
+						City = c.Address.City,
+						Area = c.Address.Area,
+						ContactNumber = c.ContactNumber
+					}).ToList()
 				})
 				.ToListAsync();
 
@@ -716,8 +754,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				AppointmentId = app.AppointmentId,
 				PatientId = patient.PatientId,
 				PatientName = $"{patient.FirstName} {patient.LastName}",
+				PatientAge = CalculateAge(patient.DOB),
+				PatientGender = patient.Gender.ToString(),
 				DoctorId = doctor.DoctorId,
 				DoctorName = $"{doctor.FirstName} {doctor.LastName}",
+				DoctorSpecialization = doctor.Specialization?.SpecializationName ?? string.Empty,
 				ClinicId = app.Clinic?.ClinicId,
 				ClinicName = app.Clinic?.ClinicName,
 				AppointmentDate = app.AppointmentDate,
@@ -764,6 +805,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					Addressline1 = c.Address.Addressline1,
 					Addressline2 = c.Address.Addressline2,
 					Area = c.Address.Area,
+					ContactNumber = c.ContactNumber,
 					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == c.ClinicId),
 					AdminName = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault(),
 					AdminEmail = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.User.Email).FirstOrDefault(),
@@ -909,7 +951,18 @@ namespace DoctorAppointmentSystem.Application.Services
 				YearsOfExperience = doctor.YearsOfExperience,
 				ConsultationFee = doctor.ConsultationFee,
 				VerificationStatus = doctor.VerificationStatus.ToString(),
-				AboutDoctor = doctor.AboutDoctor ?? string.Empty
+				AboutDoctor = doctor.AboutDoctor ?? string.Empty,
+				Age = DateTime.UtcNow.Year - doctor.DOB.Year,
+				Clinics = doctor.Clinics.Select(c => new ClinicBasicDto
+				{
+					ClinicId = c.ClinicId,
+					ClinicName = c.ClinicName,
+					ClinicType = c.ClinicType,
+					State = c.Address.State,
+					City = c.Address.City,
+					Area = c.Address.Area,
+					ContactNumber = c.ContactNumber
+				}).ToList()
 			};
 
 			var clinicDto = new ClinicDto
@@ -925,6 +978,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				Area = clinic.Address.Area,
 				Addressline1 = clinic.Address.Addressline1,
 				Addressline2 = clinic.Address.Addressline2,
+				ContactNumber = clinic.ContactNumber,
 				IsVerified = clinic.VerificationStatus == EVerificationStatus.Verified,
 				VerificationStatus = clinic.VerificationStatus.ToString(),
 				RejectionReason = clinic.RejectionReason,
@@ -1461,6 +1515,13 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			return new PagedResult<AppointmentAuditLogDto>(items, totalCount, page, size);
+		}
+		private static int CalculateAge(DateTime dob)
+		{
+			var today = DateTime.Today;
+			var age = today.Year - dob.Year;
+			if (dob.Date > today.AddYears(-age)) age--;
+			return age;
 		}
 	}
 }

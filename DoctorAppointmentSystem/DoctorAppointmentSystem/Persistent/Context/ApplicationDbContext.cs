@@ -218,7 +218,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 
 				// Doctor to Clinic (1 to Many)
 				entity.HasOne(c => c.Doctor)
-					.WithMany()
+					.WithMany(d => d.Clinics)
 					.HasForeignKey("DoctorId")
 					.OnDelete(DeleteBehavior.Restrict);
 
