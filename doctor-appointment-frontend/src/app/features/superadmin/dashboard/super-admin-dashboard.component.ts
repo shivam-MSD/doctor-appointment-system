@@ -1,3 +1,4 @@
+// now we will start updating the UI for all the devices
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -45,7 +46,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     private adminService: AdminService,
     private toastService: ToastService,
     private notificationService: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadPendingRequests();
