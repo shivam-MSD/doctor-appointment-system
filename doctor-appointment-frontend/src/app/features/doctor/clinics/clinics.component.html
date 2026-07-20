@@ -5,7 +5,7 @@
       <h2>🏢 My Clinic Locations</h2>
       <p>Register and manage your clinic or hospital branches.</p>
     </div>
-    <button class="btn btn-primary" (click)="openClinicModal()">+ Register Clinic Branch</button>
+    <button class="btn btn-primary" (click)="openClinicModal()">+ Register New Clinic</button>
   </div>
 
   <!-- <div *ngIf="successMessage" class="success-banner">
@@ -18,7 +18,7 @@
       <h3>Clinical Locations Registry</h3>
     </div>
 
-    <div class="table-responsive" *ngIf="isClinicsLoading">
+    <div class="table-responsive hide-on-mobile" *ngIf="isClinicsLoading">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -51,16 +51,24 @@
                 <div class="skeleton-box" style="height: 12px; width: 100px;"></div>
               </div>
             </td>
-            <td><div class="skeleton-box" style="height: 28px; width: 90px; border-radius: 6px;"></div></td>
-            <td><div class="skeleton-box" style="height: 32px; width: 90px; border-radius: 6px;"></div></td>
-            <td><div class="skeleton-box" style="height: 32px; width: 90px; border-radius: 6px;"></div></td>
-            <td class="text-end"><div class="skeleton-box" style="height: 32px; width: 60px; border-radius: 6px; float: right;"></div></td>
+            <td>
+              <div class="skeleton-box" style="height: 28px; width: 90px; border-radius: 6px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 32px; width: 90px; border-radius: 6px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 32px; width: 90px; border-radius: 6px;"></div>
+            </td>
+            <td class="text-end">
+              <div class="skeleton-box" style="height: 32px; width: 60px; border-radius: 6px; float: right;"></div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="table-responsive" *ngIf="!isClinicsLoading && doctorClinics.length > 0">
+    <div class="table-responsive hide-on-mobile" *ngIf="!isClinicsLoading && doctorClinics.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -117,8 +125,10 @@
                   [style.color]="isClinicCurrentlyOpen(clinic) ? '#10b981' : '#f59e0b'"
                   style="font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 2px;">
                   <span *ngIf="isClinicCurrentlyOpen(clinic)">🟢 Open</span>
-                  <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed (Temporarily Closed)</span>
-                  <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside Working Hours)</span>
+                  <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed (Temporarily
+                    Closed)</span>
+                  <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside
+                    Working Hours)</span>
                 </span>
               </div>
 
@@ -204,11 +214,106 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Mobile UI Cards -->
+    <div class="clinics-mobile-cards hide-on-desktop" *ngIf="!isClinicsLoading && doctorClinics.length > 0">
+      <div class="glass-card doctor-card" *ngFor="let clinic of doctorClinics"
+        [style.border-left]="isClinicCurrentlyOpen(clinic) ? '4px solid #10b981' : '4px solid #f59e0b'"
+        style="margin-bottom: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+
+        <!-- Header: Name & Badges -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+          <div style="flex: 1; min-width: 0;">
+            <h4
+              style="margin: 0; font-size: 1rem; color: var(--text-primary); font-weight: 700; display: flex; align-items: center; gap: 6px; width: 100%;">
+              <span [style.background]="isClinicCurrentlyOpen(clinic) ? '#10b981' : '#f59e0b'"
+                style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; flex: 1;"
+                [title]="clinic.clinicName">{{ clinic.clinicName }}</span>
+            </h4>
+            <div style="margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap;">
+              <span class="type-indicator text-uppercase"
+                style="font-size: 0.65rem; padding: 2px 6px; white-space: nowrap;">{{ clinic.clinicType }}</span>
+              <span *ngIf="clinic.verificationStatus === 'Verified'" class="badge badge-confirmed"
+                style="font-size: 0.65rem; padding: 2px 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px;">✔
+                Verified</span>
+              <span *ngIf="clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'UpdatedPending'"
+                class="badge badge-pending"
+                style="font-size: 0.65rem; padding: 2px 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px;">⌛
+                Pending</span>
+              <span *ngIf="clinic.verificationStatus === 'Rejected'" class="badge badge-cancelled"
+                style="background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px;">❌
+                Rejected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false"
+          style="font-size: 0.8rem; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 8px; border-radius: 6px;">
+          🔴 Temporarily Closed <span *ngIf="clinic.unavailabilityReason"><br><i>{{ clinic.unavailabilityReason
+              }}</i></span>
+        </div>
+
+        <!-- Info Grid -->
+        <div
+          style="display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.2rem;">📍</span>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ clinic.city }}, {{ clinic.state }}</span>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 8px;">
+            <span style="font-size: 1.2rem;">🕒</span>
+            <div style="font-size: 0.85rem;">
+              <span style="font-weight: 600; color: var(--accent-cyan);">{{ clinic.openDays ?
+                formatClinicTimings(clinic.startTime, clinic.endTime) : 'Not scheduled yet' }}</span>
+              <div *ngIf="clinic.openDays" style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                <span *ngFor="let day of getSortedDays(clinic.openDays)"
+                  style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px;">{{
+                  day }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+          <!-- Admin Action -->
+          <button
+            *ngIf="(clinic.verificationStatus === 'Verified' || clinic.verificationStatus === 'UpdatedPending') && !clinic.hasAdmin"
+            class="btn btn-confirm" style="font-size: 0.75rem; padding: 8px;"
+            (click)="openAdminModal(clinic.clinicId, clinic.clinicName)">+ Add Admin</button>
+          <span
+            *ngIf="(clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'Rejected') && !clinic.hasAdmin"
+            class="badge"
+            style="background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); font-size: 0.75rem; padding: 8px; display: flex; align-items: center; justify-content: center; text-align: center;">No
+            Admin Assigned</span>
+          <button *ngIf="clinic.hasAdmin" class="btn btn-confirm"
+            style="background: rgba(6, 182, 212, 0.15); border-color: rgba(6,182,212,0.3); color: var(--accent-cyan); font-size: 0.75rem; padding: 8px;"
+            (click)="openAdminDetailModal(clinic)">👤 Admin Details</button>
+
+          <!-- Edit Timing -->
+          <button class="btn btn-confirm"
+            style="background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3); font-size: 0.75rem; padding: 8px;"
+            (click)="openTimingsModal(clinic)">📅 Edit Timing</button>
+
+          <!-- View Details -->
+          <button class="btn btn-confirm"
+            style="background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border-color: rgba(255, 255, 255, 0.15); font-size: 0.75rem; padding: 8px;"
+            (click)="openClinicDetailsModal(clinic)">👁️ Details</button>
+
+          <!-- Edit -->
+          <button class="btn btn-confirm"
+            style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.2); font-size: 0.75rem; padding: 8px;"
+            (click)="openEditClinicModal(clinic)">✏️ Edit</button>
+        </div>
+      </div>
+    </div>
     <ng-container *ngIf="!isClinicsLoading && doctorClinics.length === 0">
       <div class="empty-state">
         <span class="empty-icon">📭</span>
         <h4>No Clinic Branches Registered</h4>
-        <p>Click "+ Register Clinic Branch" to add your practice locations.</p>
+        <p>Click "+ Register New Clinic" to add your practice locations.</p>
       </div>
     </ng-container>
   </div>
@@ -473,8 +578,9 @@
               {{ day }}
             </span>
           </div>
-          
-          <label class="form-label" style="margin-top: 15px; color: var(--accent-cyan);">Reschedule-Only Days (Hidden from public)</label>
+
+          <label class="form-label" style="margin-top: 15px; color: var(--accent-cyan);">Reschedule-Only Days (Hidden
+            from public)</label>
           <div class="weekday-selector" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px;">
             <span *ngFor="let day of weekDays" [class.selected]="isDaySelectedReschedule(day)"
               (click)="toggleDayReschedule(day)"
@@ -594,29 +700,40 @@
         <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
           <label class="form-label" style="font-weight: 700;">📅 Open Booking Window (Available Dates)</label>
           <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.4;">
-            Click a <strong>start date</strong>, then click an <strong>end date</strong>. Only your selected open days are clickable.
+            Click a <strong>start date</strong>, then click an <strong>end date</strong>. Only your selected open days
+            are clickable.
           </p>
 
-          <div *ngIf="selectedDaysTimings.length === 0" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #f59e0b; margin-bottom: 10px;">
+          <div *ngIf="selectedDaysTimings.length === 0"
+            style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #f59e0b; margin-bottom: 10px;">
             ⚠️ Select open days above first to enable date picking.
           </div>
 
-          <div *ngIf="selectedDaysTimings.length > 0" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.02); padding: 14px;">
+          <div *ngIf="selectedDaysTimings.length > 0"
+            style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.02); padding: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              <button type="button" class="btn btn-secondary" (click)="bookingCalPrev()" style="padding: 4px 10px; font-size: 0.8rem;">← Prev</button>
+              <button type="button" class="btn btn-secondary" (click)="bookingCalPrev()"
+                style="padding: 4px 10px; font-size: 0.8rem;">← Prev</button>
               <strong style="font-size: 0.95rem; color: var(--text-primary);">{{ getBookingCalMonthName() }}</strong>
-              <button type="button" class="btn btn-secondary" (click)="bookingCalNext()" style="padding: 4px 10px; font-size: 0.8rem;">Next →</button>
+              <button type="button" class="btn btn-secondary" (click)="bookingCalNext()"
+                style="padding: 4px 10px; font-size: 0.8rem;">Next →</button>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
-              <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            <div
+              style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
+              <div>Su</div>
+              <div>Mo</div>
+              <div>Tu</div>
+              <div>We</div>
+              <div>Th</div>
+              <div>Fr</div>
+              <div>Sa</div>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">
               <ng-container *ngFor="let day of bookingCalDays">
                 <div *ngIf="day.dayNumber === null" style="height: 34px;"></div>
-                <button *ngIf="day.dayNumber !== null" type="button"
-                  (click)="onBookingDayClick(day)"
+                <button *ngIf="day.dayNumber !== null" type="button" (click)="onBookingDayClick(day)"
                   [disabled]="!day.isOpenDay"
                   style="height: 34px; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; transition: all 0.15s; display: flex; align-items: center; justify-content: center;"
                   [style.background]="day.isStart || day.isEnd ? '#10b981' : (day.inRange ? 'rgba(16,185,129,0.18)' : (day.isOpenDay ? 'rgba(6,182,212,0.08)' : 'transparent'))"
@@ -630,11 +747,13 @@
             </div>
           </div>
 
-          <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div
+            style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
             <span *ngIf="bookingPickStart" style="color: #10b981; font-weight: 600;">
               📅 From: {{ bookingPickStart | date:'dd MMM yyyy' }}
               <span *ngIf="bookingPickEnd"> → To: {{ bookingPickEnd | date:'dd MMM yyyy' }}</span>
-              <span *ngIf="!bookingPickEnd" style="color: var(--text-secondary); font-weight: 400;"> → (click end date)</span>
+              <span *ngIf="!bookingPickEnd" style="color: var(--text-secondary); font-weight: 400;"> → (click end
+                date)</span>
             </span>
             <span *ngIf="!bookingPickStart" style="font-style: italic;">No date restriction set (open-ended)</span>
             <button *ngIf="bookingPickStart" type="button" (click)="clearBookingWindow()"
@@ -648,17 +767,10 @@
         <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
           <label class="form-label" style="font-weight: 700;">👥 Max Patients Per Day</label>
           <div style="display: flex; align-items: center; gap: 10px;">
-            <input
-              type="number"
-              class="form-control"
-              [(ngModel)]="clinicTimingsForm.maxAppointmentsPerDay"
-              name="maxAppointmentsPerDay"
-              min="1"
-              max="500"
-              placeholder="e.g. 20"
-              style="max-width: 180px;"
-            >
-            <span style="font-size: 0.82rem; color: var(--text-secondary); font-style: italic;">Leave blank for unlimited</span>
+            <input type="number" class="form-control" [(ngModel)]="clinicTimingsForm.maxAppointmentsPerDay"
+              name="maxAppointmentsPerDay" min="1" max="500" placeholder="e.g. 20" style="max-width: 180px;">
+            <span style="font-size: 0.82rem; color: var(--text-secondary); font-style: italic;">Leave blank for
+              unlimited</span>
           </div>
           <small class="form-text text-muted" style="margin-top: 4px; display: block; color: var(--text-secondary);">
             Patients cannot book on a day that has already reached this limit. Leave blank for no cap.
@@ -740,135 +852,183 @@
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" style="width: 100%;" (click)="closeAdminDetailModal()">Close Details</button>
+      <button type="button" class="btn btn-secondary" style="width: 100%;" (click)="closeAdminDetailModal()">Close
+        Details</button>
     </div>
   </div>
 </div>
 
-  <!-- CLINIC DETAILS POPUP MODAL (WITH ADMIN IF ASSIGNED) -->
-  <div class="modal-backdrop" *ngIf="showClinicDetailsModal">
-    <div class="modal-container" style="max-width: 600px;">
-      <div class="modal-header">
-        <h3>🏢 Clinic Branch Details</h3>
-        <button class="close-modal" (click)="closeClinicDetailsModal()">&times;</button>
+<!-- CLINIC DETAILS POPUP MODAL (WITH ADMIN IF ASSIGNED) -->
+<div class="modal-backdrop" *ngIf="showClinicDetailsModal">
+  <div class="modal-container" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3>🏢 Clinic Branch Details</h3>
+      <button class="close-modal" (click)="closeClinicDetailsModal()">&times;</button>
+    </div>
+    <div class="modal-body scrollable-body" *ngIf="selectedClinicDetails">
+      <!-- Clinic Status Summary Header Card -->
+      <div
+        style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h4 style="margin: 0 0 4px 0; font-size: 1.15rem; font-weight: 700; color: var(--accent-cyan);">{{
+            selectedClinicDetails.clinicName }}</h4>
+          <span class="type-indicator text-uppercase" style="font-size: 0.65rem; padding: 2px 6px;">{{
+            selectedClinicDetails.clinicType }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+          <span class="badge"
+            [style.background]="selectedClinicDetails.verificationStatus === 'Verified' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)'"
+            [style.color]="selectedClinicDetails.verificationStatus === 'Verified' ? '#10b981' : '#f59e0b'"
+            style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; border: 1px solid;">
+            {{ selectedClinicDetails.verificationStatus }}
+          </span>
+          <span class="badge"
+            [style.background]="isClinicCurrentlyOpen(selectedClinicDetails) ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)'"
+            [style.color]="isClinicCurrentlyOpen(selectedClinicDetails) ? '#10b981' : '#ef4444'"
+            style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; border: 1px solid;">
+            <span *ngIf="isClinicCurrentlyOpen(selectedClinicDetails)">🟢 Open & Available</span>
+            <span
+              *ngIf="!isClinicCurrentlyOpen(selectedClinicDetails) && selectedClinicDetails.isAvailable === false">🔴
+              Closed (Temporarily Closed)</span>
+            <span
+              *ngIf="!isClinicCurrentlyOpen(selectedClinicDetails) && selectedClinicDetails.isAvailable !== false">🔴
+              Closed (Outside Working Hours)</span>
+          </span>
+        </div>
       </div>
-      <div class="modal-body scrollable-body" *ngIf="selectedClinicDetails">
-        <!-- Clinic Status Summary Header Card -->
-        <div style="background: rgba(255, 255, 255, 0.02); border: 1.5px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <h4 style="margin: 0 0 4px 0; font-size: 1.15rem; font-weight: 700; color: var(--accent-cyan);">{{ selectedClinicDetails.clinicName }}</h4>
-            <span class="type-indicator text-uppercase" style="font-size: 0.65rem; padding: 2px 6px;">{{ selectedClinicDetails.clinicType }}</span>
-          </div>
-          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
-            <span class="badge" [style.background]="selectedClinicDetails.verificationStatus === 'Verified' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)'"
-                                [style.color]="selectedClinicDetails.verificationStatus === 'Verified' ? '#10b981' : '#f59e0b'"
-                                style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; border: 1px solid;">
-              {{ selectedClinicDetails.verificationStatus }}
-            </span>
-             <span class="badge" [style.background]="isClinicCurrentlyOpen(selectedClinicDetails) ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)'"
-                                 [style.color]="isClinicCurrentlyOpen(selectedClinicDetails) ? '#10b981' : '#ef4444'"
-                                 style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; border: 1px solid;">
-               <span *ngIf="isClinicCurrentlyOpen(selectedClinicDetails)">🟢 Open & Available</span>
-               <span *ngIf="!isClinicCurrentlyOpen(selectedClinicDetails) && selectedClinicDetails.isAvailable === false">🔴 Closed (Temporarily Closed)</span>
-               <span *ngIf="!isClinicCurrentlyOpen(selectedClinicDetails) && selectedClinicDetails.isAvailable !== false">🔴 Closed (Outside Working Hours)</span>
-             </span>
-          </div>
+
+      <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <!-- Location and Address Details -->
+        <div>
+          <h5
+            style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">
+            📍 Location & Address Details</h5>
+          <table class="details-table" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td
+                style="font-weight: 700; width: 35%; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">
+                Street Address 1</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{
+                selectedClinicDetails.addressline1 || 'N/A' }}</td>
+            </tr>
+            <tr *ngIf="selectedClinicDetails.addressline2">
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Street
+                Address 2</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{
+                selectedClinicDetails.addressline2 }}</td>
+            </tr>
+            <tr *ngIf="selectedClinicDetails.contactNumber">
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Contact
+                Number</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">📞 {{
+                selectedClinicDetails.contactNumber }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Area /
+                Pincode</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.area
+                || 'N/A' }} - {{ selectedClinicDetails.pincode || 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">City /
+                State</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.city
+                }}, {{ selectedClinicDetails.state }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Country
+              </td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{
+                selectedClinicDetails.country || 'India' }}</td>
+            </tr>
+          </table>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
-          <!-- Location and Address Details -->
-          <div>
-            <h5 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">📍 Location & Address Details</h5>
+        <!-- Schedule & Hours -->
+        <div>
+          <h5
+            style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">
+            📅 Timing Schedule</h5>
+          <table class="details-table" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td
+                style="font-weight: 700; width: 35%; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">
+                Operational Hours</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; font-weight: 600; color: var(--accent-cyan);">
+                {{ selectedClinicDetails.startTime ? formatClinicTimings(selectedClinicDetails.startTime,
+                selectedClinicDetails.endTime) : 'Not Scheduled' }}
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Weekly
+                Open Days</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">
+                {{ selectedClinicDetails.openDays || 'None configured' }}
+              </td>
+            </tr>
+            <tr *ngIf="!selectedClinicDetails.isAvailable && selectedClinicDetails.unavailabilityReason">
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: #f59e0b;">Closure Reason</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: #f59e0b; font-style: italic;">{{
+                selectedClinicDetails.unavailabilityReason }}</td>
+            </tr>
+            <tr
+              *ngIf="selectedClinicDetails.isDoctorAvailable === false && selectedClinicDetails.doctorUnavailabilityReason">
+              <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--accent-cyan);">Doctor
+                Absence Reason</td>
+              <td style="padding: 8px 0; font-size: 0.85rem; color: var(--accent-cyan); font-style: italic;">{{
+                selectedClinicDetails.doctorUnavailabilityReason }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Associated Clinic Admin Details -->
+        <div>
+          <h5
+            style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">
+            👤 Associated Clinic Admin</h5>
+          <div *ngIf="selectedClinicDetails.hasAdmin; else noAdminAssigned"
+            style="background: rgba(6, 182, 212, 0.05); border: 1px dashed rgba(6, 182, 212, 0.2); border-radius: 8px; padding: 12px 16px;">
             <table class="details-table" style="width: 100%; border-collapse: collapse;">
               <tr>
-                <td style="font-weight: 700; width: 35%; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Street Address 1</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.addressline1 || 'N/A' }}</td>
-              </tr>
-              <tr *ngIf="selectedClinicDetails.addressline2">
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Street Address 2</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.addressline2 }}</td>
-              </tr>
-              <tr *ngIf="selectedClinicDetails.contactNumber">
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Contact Number</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">📞 {{ selectedClinicDetails.contactNumber }}</td>
+                <td
+                  style="font-weight: 700; width: 35%; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">
+                  Admin Username / Email</td>
+                <td style="padding: 6px 0; font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">{{
+                  selectedClinicDetails.adminEmail || 'N/A' }}</td>
               </tr>
               <tr>
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Area / Pincode</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.area || 'N/A' }} - {{ selectedClinicDetails.pincode || 'N/A' }}</td>
+                <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Full
+                  Name</td>
+                <td style="padding: 6px 0; font-size: 0.85rem; color: var(--text-primary);">{{
+                  selectedClinicDetails.adminName || 'N/A' }}</td>
               </tr>
               <tr>
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">City / State</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.city }}, {{ selectedClinicDetails.state }}</td>
+                <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Phone /
+                  Mobile No</td>
+                <td style="padding: 6px 0; font-size: 0.85rem; color: var(--text-primary);">{{
+                  selectedClinicDetails.adminMobileNo || 'N/A' }}</td>
               </tr>
               <tr>
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Country</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.country || 'India' }}</td>
+                <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Status
+                </td>
+                <td style="padding: 6px 0; font-size: 0.85rem;">
+                  <span class="badge badge-confirmed" style="font-size: 0.65rem; padding: 2px 6px;">✓ Active
+                    Admin</span>
+                </td>
               </tr>
             </table>
           </div>
-
-          <!-- Schedule & Hours -->
-          <div>
-            <h5 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">📅 Timing Schedule</h5>
-            <table class="details-table" style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="font-weight: 700; width: 35%; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Operational Hours</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; font-weight: 600; color: var(--accent-cyan);">
-                  {{ selectedClinicDetails.startTime ? formatClinicTimings(selectedClinicDetails.startTime, selectedClinicDetails.endTime) : 'Not Scheduled' }}
-                </td>
-              </tr>
-              <tr>
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary);">Weekly Open Days</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--text-primary);">
-                  {{ selectedClinicDetails.openDays || 'None configured' }}
-                </td>
-              </tr>
-              <tr *ngIf="!selectedClinicDetails.isAvailable && selectedClinicDetails.unavailabilityReason">
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: #f59e0b;">Closure Reason</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: #f59e0b; font-style: italic;">{{ selectedClinicDetails.unavailabilityReason }}</td>
-              </tr>
-              <tr *ngIf="selectedClinicDetails.isDoctorAvailable === false && selectedClinicDetails.doctorUnavailabilityReason">
-                <td style="font-weight: 700; padding: 8px 0; font-size: 0.85rem; color: var(--accent-cyan);">Doctor Absence Reason</td>
-                <td style="padding: 8px 0; font-size: 0.85rem; color: var(--accent-cyan); font-style: italic;">{{ selectedClinicDetails.doctorUnavailabilityReason }}</td>
-              </tr>
-            </table>
-          </div>
-
-          <!-- Associated Clinic Admin Details -->
-          <div>
-            <h5 style="margin: 0 0 10px 0; font-size: 0.9rem; font-weight: 700; color: var(--text-primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px;">👤 Associated Clinic Admin</h5>
-            <div *ngIf="selectedClinicDetails.hasAdmin; else noAdminAssigned" style="background: rgba(6, 182, 212, 0.05); border: 1px dashed rgba(6, 182, 212, 0.2); border-radius: 8px; padding: 12px 16px;">
-              <table class="details-table" style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="font-weight: 700; width: 35%; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Admin Username / Email</td>
-                  <td style="padding: 6px 0; font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">{{ selectedClinicDetails.adminEmail || 'N/A' }}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Full Name</td>
-                  <td style="padding: 6px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.adminName || 'N/A' }}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Phone / Mobile No</td>
-                  <td style="padding: 6px 0; font-size: 0.85rem; color: var(--text-primary);">{{ selectedClinicDetails.adminMobileNo || 'N/A' }}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 700; padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">Status</td>
-                  <td style="padding: 6px 0; font-size: 0.85rem;">
-                    <span class="badge badge-confirmed" style="font-size: 0.65rem; padding: 2px 6px;">✓ Active Admin</span>
-                  </td>
-                </tr>
-              </table>
+          <ng-template #noAdminAssigned>
+            <div
+              style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 15px; text-align: center; color: #ef4444; font-size: 0.85rem; font-weight: 500;">
+              ⚠️ No Admin Assigned to this clinic location branch.
             </div>
-            <ng-template #noAdminAssigned>
-              <div style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 15px; text-align: center; color: #ef4444; font-size: 0.85rem; font-weight: 500;">
-                ⚠️ No Admin Assigned to this clinic location branch.
-              </div>
-            </ng-template>
-          </div>
+          </ng-template>
         </div>
-      </div>
-      <div class="modal-footer" style="display: flex; justify-content: flex-end;">
-        <button class="btn btn-secondary" (click)="closeClinicDetailsModal()">Close</button>
       </div>
     </div>
+    <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+      <button class="btn btn-secondary" (click)="closeClinicDetailsModal()">Close</button>
+    </div>
   </div>
+</div>

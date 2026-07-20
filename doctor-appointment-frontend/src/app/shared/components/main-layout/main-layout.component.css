@@ -7,12 +7,20 @@
 .main-body {
   display: flex;
   flex: 1;
+  min-width: 0;
 }
 
 .content-area {
   flex: 1;
+  min-width: 0;
   padding: 32px;
   background: var(--bg-primary);
   overflow-y: auto;
   max-height: calc(100vh - 70px);
+}
+
+@media (max-width: 768px) {
+  .content-area {
+    padding: 16px;
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -11,8 +11,10 @@ import { Subscription, interval, timer } from 'rxjs';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent implements OnInit, OnDestroy {
+  @Output() toggleMobileMenu = new EventEmitter<void>();
   notifications: NotificationDto[] = [];
   showNotificationsPanel = false;
+  showProfilePanel = false;
   currentDateTime: Date = new Date();
   private signalrSub?: Subscription;
   private clockSub?: Subscription;
@@ -20,9 +22,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    const clickedInside = target.closest('.notification-container');
-    if (!clickedInside) {
+    const clickedInsideNotification = target.closest('.notification-container');
+    const clickedInsideProfile = target.closest('.profile-container');
+    
+    if (!clickedInsideNotification) {
       this.showNotificationsPanel = false;
+    }
+    if (!clickedInsideProfile) {
+      this.showProfilePanel = false;
     }
   }
 
@@ -82,9 +89,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleNotificationsPanel(): void {
     this.showNotificationsPanel = !this.showNotificationsPanel;
+    this.showProfilePanel = false;
     if (this.showNotificationsPanel) {
       this.loadNotifications();
     }
+  }
+
+  toggleProfilePanel(): void {
+    this.showProfilePanel = !this.showProfilePanel;
+    this.showNotificationsPanel = false;
   }
 
   markAllAsRead(): void {

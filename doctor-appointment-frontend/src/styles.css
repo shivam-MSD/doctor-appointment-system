@@ -180,6 +180,16 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--text-secondary);
 }
 
+@media (max-width: 768px) {
+  /* Simplify Table Card Container on Mobile */
+  .table-card.glass-card {
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+
 /* Global Action Buttons Hover States */
 .btn-cancel {
   background: rgba(239, 68, 68, 0.1) !important;
@@ -603,6 +613,13 @@ body.light-theme .role-badge {
   color: #0891b2 !important;
 }
 
+/* -------------------------------------
+ * MOBILE VISIBILITY UTILITIES
+ * ------------------------------------- */
+.show-on-mobile, .show-on-mobile-flex {
+  display: none !important;
+}
+
 /* --- SKELETON LOADER UI --- */
 .skeleton-box {
   display: inline-block;
@@ -648,5 +665,410 @@ body.light-theme .skeleton-box::after {
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+/* =========================================================================
+   RESPONSIVE DESIGN (MOBILE & TABLET)
+   ========================================================================= */
+
+/* Hamburger Menu Toggle (Hidden by default on Desktop) */
+.mobile-menu-toggle {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--accent-cyan);
+}
+
+.mobile-menu-toggle i {
+  font-size: 1.2rem;
+}
+
+/* Responsive Table Scroll Wrapper */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 992px) {
+  /* Tablet / iPad Layouts */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 16px !important;
+  }
+  
+  .sidebar-container {
+    transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px !important;
+    max-width: 85vw;
+    z-index: 999;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* Overrides to ensure sidebar displays fully on mobile even if collapsed on desktop */
+  .sidebar-container.collapsed {
+    width: 280px !important;
+    padding: 24px 16px !important;
+  }
+  .sidebar-container.collapsed .nav-link {
+    justify-content: flex-start !important;
+    padding: 12px 16px !important;
+  }
+  .sidebar-container.collapsed .label,
+  .sidebar-container.collapsed .sidebar-circle-text {
+    display: flex !important;
+  }
+  .sidebar-container.collapsed .sidebar-completion-card {
+    padding: 14px 16px !important;
+    justify-content: flex-start !important;
+  }
+  
+  .sidebar-container.sidebar-open {
+    transform: translateX(0);
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  /* Overlay behind sidebar on mobile */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    z-index: 998;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .sidebar-overlay.open {
+    display: block;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Global Mobile Flat Design - Remove all box shadows as requested */
+  div, section, article, main, aside, nav, header, footer, 
+  .glass-card, .modal-container, .card, .metric-card, .table-card {
+    box-shadow: none !important;
+  }
+
+  /* Force shrink inline styled elements */
+  .welcome-text h2 { font-size: 1.25rem !important; }
+  .welcome-text p { font-size: 0.8rem !important; }
+  .role-badge { font-size: 0.75rem !important; padding: 4px 8px !important; }
+  
+  .metric-card h2, .stat-info h3 { font-size: 1.4rem !important; }
+  .metric-card p, .stat-info p { font-size: 0.8rem !important; }
+  .metric-card > div:first-child, .stat-icon { 
+    width: 45px !important; 
+    height: 45px !important; 
+    font-size: 1.4rem !important; 
+  }
+  
+  .booking-wrapper h2 { font-size: 1.25rem !important; }
+  .booking-wrapper p { font-size: 0.8rem !important; }
+  .booking-wrapper > div > div > div:first-child { 
+    width: 45px !important; 
+    height: 45px !important; 
+  }
+  .booking-wrapper { height: auto !important; padding: 15px !important; }
+  .booking-wrapper span { font-size: 1.4rem !important; }
+
+  .doctor-card h3 { font-size: 1.1rem !important; }
+  .doctor-card span { font-size: 0.8rem !important; }
+  .doctor-card > div:first-child > div:first-child { 
+    width: 45px !important; 
+    height: 45px !important; 
+    font-size: 1.2rem !important; 
+  }
+  .doctor-card { height: auto !important; padding: 15px !important; }
+
+  .toast-container {
+    top: 16px !important;
+    right: 16px !important;
+    left: 16px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  .toast-card {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+  .toast-title { font-size: 0.85rem !important; }
+  .toast-msg { font-size: 0.75rem !important; }
+  .toast-icon { font-size: 1.2rem !important; }
+
+  /* Mobile Layouts */
+  
+  /* Force metric cards into a 2-column grid on mobile */
+  .stats-row, .metrics-row, .metrics-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+  
+  /* Force other flex containers to wrap */
+  .filters-grid, .filters-row, .form-row {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+  }
+  
+  .stat-card {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  .form-group, .col-4, .col-6 {
+    width: 100% !important;
+    flex: none !important;
+  }
+  
+  /* Global Resizing */
+  h1 { font-size: 1.8rem !important; }
+  h2 { font-size: 1.5rem !important; }
+  h3 { font-size: 1.2rem !important; }
+  h4 { font-size: 1.1rem !important; }
+  
+  body, p, .form-control {
+    font-size: 0.85rem !important;
+  }
+  
+  .glass-card {
+    padding: 16px !important;
+  }
+  
+  .btn {
+    padding: 10px 16px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  /* Mobile Visibility Utilities */
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  .show-on-mobile {
+    display: block !important;
+  }
+  
+  .show-on-mobile-flex {
+    display: flex !important;
+  }
+  
+  /* Metric Card Adjustments */
+  .stat-icon {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 1.6rem !important;
+  }
+  
+  .stat-info h3 {
+    font-size: 1.4rem !important;
+  }
+  
+  .stat-info p {
+    font-size: 0.75rem !important;
+  }
+  
+  /* Mobile Tables - Horizontal Scroll instead of Stacked Cards */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  
+  .dashboard-table, .premium-table {
+    min-width: 600px;
+  }
+  
+  .dashboard-table th, .dashboard-table td,
+  .premium-table th, .premium-table td {
+    white-space: nowrap;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  /* Custom Horizontal Scrollbar for Mobile */
+  .table-responsive::-webkit-scrollbar,
+  .scrollable-body::-webkit-scrollbar,
+  .modal-body::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  .table-responsive::-webkit-scrollbar-track,
+  .scrollable-body::-webkit-scrollbar-track,
+  .modal-body::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+    border-radius: 4px;
+  }
+  .table-responsive::-webkit-scrollbar-thumb,
+  .scrollable-body::-webkit-scrollbar-thumb,
+  .modal-body::-webkit-scrollbar-thumb {
+    background: var(--accent-cyan);
+    border-radius: 4px;
+  }
+
+  /* Selective Table-to-Card class for small datasets (Clinics, Admins) */
+  .table-stacked-mobile {
+    border: none !important;
+    min-width: 100% !important;
+  }
+  
+  .table-stacked-mobile thead {
+    display: none !important;
+  }
+  
+  .table-stacked-mobile tr {
+    display: block !important;
+    margin-bottom: 16px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+  }
+  
+  .table-stacked-mobile td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 1px dashed rgba(255,255,255,0.05) !important;
+    padding: 8px 4px !important;
+    text-align: right !important;
+    white-space: normal !important;
+  }
+  
+  .table-stacked-mobile td:last-child {
+    border-bottom: none !important;
+  }
+  
+  .table-stacked-mobile td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    text-align: left;
+    margin-right: 12px;
+    display: inline-block !important;
+  }
+
+  /* Fix Split Layout on Mobile (Sidebar + Content) */
+  .appointments-split-layout {
+    flex-direction: column !important;
+  }
+  .appointments-split-layout .clinic-sidebar {
+    width: 100% !important;
+    position: relative !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  /* Mobile Modals (Bottom Sheets) */
+  .modal-backdrop {
+    padding: 0 !important;
+    align-items: flex-end !important; /* Slide from bottom */
+  }
+  
+  .modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: 24px 24px 0 0 !important; /* Round top corners only */
+    border: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    animation: slideUpBottomSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    position: relative;
+    padding-top: 12px;
+  }
+  
+  .modal-container::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    z-index: 10;
+  }
+  
+  body.light-theme .modal-container::before {
+    background: rgba(0, 0, 0, 0.15);
+  }
+  
+  @keyframes slideUpBottomSheet {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* Mobile Tables Data Label (Disabled for scroll mode) */
+  .dashboard-table td::before {
+    display: none;
+  }
+
+  /* Utility */
+  /* Global Typography Reductions for Mobile */
+  h1 { font-size: 1.4rem !important; }
+  h2, .section-title { font-size: 1.2rem !important; }
+  h3, .card-title { font-size: 1.05rem !important; }
+  h4 { font-size: 0.95rem !important; }
+  p, .form-label, .table-header h3 { font-size: 0.85rem !important; }
+  .btn { font-size: 0.82rem !important; padding: 8px 12px !important; }
+
+  /* Welcome Banner Adjustments (Stack items) */
+  .welcome-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .welcome-card .btn {
+    width: 100% !important;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .hide-on-desktop {
+    display: none !important;
   }
 }

@@ -5,7 +5,7 @@
       <h2>Welcome Back, Dr. {{ firstName }}!</h2>
       <p>Here is an overview of your medical bookings and scheduled appointments.</p>
     </div>
-    <div class="role-badge">Doctor Portal</div>
+    <div class="role-badge">Doctor</div>
   </div>
 
   <!-- Profile address completeness alert -->
@@ -14,17 +14,21 @@
     <span class="alert-icon">⚠️</span>
     <div class="alert-info">
       <h4>Complete Your Profile Address</h4>
-      <p>You have not fully filled in your personal profile address details. Please update your address in the profile section to complete your profile.</p>
-      <a routerLink="/doctor/profile" class="btn btn-primary alert-btn" style="text-decoration: none;">Update Profile Address</a>
+      <p>You have not fully filled in your personal profile address details. Please update your address in the profile
+        section to complete your profile.</p>
+      <a routerLink="/doctor/profile" class="btn btn-primary alert-btn" style="text-decoration: none;">Update Profile
+        Address</a>
     </div>
   </div>
 
   <!-- Practice setup alert when clinic list is empty -->
-  <div class="glass-card warning-card clinic-alert" *ngIf="!isClinicsLoading && doctorClinics.length === 0" style="margin-bottom: 24px;">
+  <div class="glass-card warning-card clinic-alert" *ngIf="!isClinicsLoading && doctorClinics.length === 0"
+    style="margin-bottom: 24px;">
     <span class="alert-icon">🏢</span>
     <div class="alert-info">
       <h4>Complete Your Practice Setup</h4>
-      <p>Patients will only be able to view your details and schedule appointments after you add at least one practice clinic, hospital, or physiotherapy center. Registered centers require verification by the Super Admin.</p>
+      <p>Patients will only be able to view your details and schedule appointments after you add at least one practice
+        clinic, hospital, or physiotherapy center. Registered centers require verification by the Super Admin.</p>
       <button class="btn btn-primary alert-btn" (click)="onOpenClinicModal()">Register Clinic Location Now</button>
     </div>
   </div>

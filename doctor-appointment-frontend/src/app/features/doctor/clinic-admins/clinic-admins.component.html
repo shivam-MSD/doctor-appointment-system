@@ -13,7 +13,7 @@
       <h3>Clinic Staff Administrators</h3>
     </div>
     
-    <div class="table-responsive" *ngIf="isAdminsLoading">
+    <div class="table-responsive hide-on-mobile" *ngIf="isAdminsLoading">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -34,7 +34,7 @@
       </table>
     </div>
     
-    <div class="table-responsive" *ngIf="!isAdminsLoading && clinicAdmins.length > 0">
+    <div class="table-responsive hide-on-mobile" *ngIf="!isAdminsLoading && clinicAdmins.length > 0">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -58,6 +58,44 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile UI Cards -->
+    <div class="hide-on-desktop" *ngIf="!isAdminsLoading && clinicAdmins.length > 0">
+      <div class="glass-card doctor-card" *ngFor="let admin of clinicAdmins" 
+           [style.border-left]="admin.isVerified ? '4px solid #10b981' : '4px solid #f59e0b'"
+           style="margin-bottom: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+        
+        <!-- Header: Name & Badge -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+            <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: 700; flex-shrink: 0;">
+              {{ admin.firstName.charAt(0) }}{{ admin.lastName.charAt(0) }}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ admin.firstName }} {{ admin.lastName }}
+              </h4>
+              <div style="margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap;">
+                <span *ngIf="admin.isVerified" class="badge badge-confirmed" style="font-size: 0.65rem; padding: 2px 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px;">✔ Active</span>
+                <span *ngIf="!admin.isVerified" class="badge badge-pending" style="font-size: 0.65rem; padding: 2px 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px;">⌛ Pending Verification</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div style="display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+            <span style="font-size: 1.2rem; flex-shrink: 0;">🏢</span>
+            <span style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; flex: 1;" [title]="admin.clinicName">{{ admin.clinicName }}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.2rem;">📞</span>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ admin.mobileNo }}</span>
+          </div>
+        </div>
+      </div>
     </div>
     <ng-container *ngIf="!isAdminsLoading && clinicAdmins.length === 0">
       <div class="empty-state">

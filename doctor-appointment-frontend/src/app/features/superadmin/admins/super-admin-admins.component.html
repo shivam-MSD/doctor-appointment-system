@@ -5,7 +5,7 @@
       <h2>🛡️ Manage Clinic Administrators</h2>
       <p>Review, filter, and approve clinic managers or front-desk administrators registered by clinical doctors.</p>
     </div>
-    <div class="role-badge">SuperAdmin Portal</div>
+    <div class="role-badge">SuperAdmin</div>
   </div>
 
 
@@ -16,23 +16,12 @@
     <form (submit)="loadAdmins(); $event.preventDefault()" class="filter-form">
       <div class="filter-col flex-2">
         <label class="form-label">Search Admin Name / Mobile / Assigned Clinic</label>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="Search administrators..."
-          [(ngModel)]="searchQuery"
-          name="searchQuery"
-          (ngModelChange)="loadAdmins()"
-        >
+        <input type="text" class="form-control" placeholder="Search administrators..." [(ngModel)]="searchQuery"
+          name="searchQuery" (ngModelChange)="loadAdmins()">
       </div>
       <div class="filter-col flex-1">
         <label class="form-label">Approval Status</label>
-        <select
-          class="form-control"
-          [(ngModel)]="verifiedFilter"
-          name="verifiedFilter"
-          (change)="loadAdmins()"
-        >
+        <select class="form-control" [(ngModel)]="verifiedFilter" name="verifiedFilter" (change)="loadAdmins()">
           <option [value]="undefined">All Statuses</option>
           <option [value]="true">Verified / Active</option>
           <option [value]="false">Pending Verification</option>
@@ -47,7 +36,7 @@
     <div class="table-header">
       <h3>Administrators Roster</h3>
     </div>
-    
+
     <div class="table-responsive" *ngIf="isAdminsLoading">
       <table class="dashboard-table">
         <thead>
@@ -61,10 +50,18 @@
         </thead>
         <tbody>
           <tr *ngFor="let i of [1, 2, 3]">
-            <td><div class="skeleton-box" style="height: 16px; width: 140px;"></div></td>
-            <td><div class="skeleton-box" style="height: 16px; width: 160px;"></div></td>
-            <td><div class="skeleton-box" style="height: 16px; width: 100px;"></div></td>
-            <td><div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 12px;"></div></td>
+            <td>
+              <div class="skeleton-box" style="height: 16px; width: 140px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 16px; width: 160px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 16px; width: 100px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 24px; width: 80px; border-radius: 12px;"></div>
+            </td>
             <td class="text-end">
               <div class="skeleton-box" style="height: 32px; width: 100px; border-radius: 6px; float: right;"></div>
             </td>
@@ -96,7 +93,9 @@
               <span class="badge badge-pending" *ngIf="!admin.isVerified">Pending</span>
             </td>
             <td class="text-end">
-              <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);" (click)="openDetailsModal(admin)">
+              <button class="btn btn-secondary"
+                style="font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);"
+                (click)="openDetailsModal(admin)">
                 👁️ Verify Details
               </button>
             </td>
@@ -122,7 +121,9 @@
       </div>
 
       <div class="modal-body scrollable-body">
-        <h4 class="section-title" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">🛡️ Administrator Information</h4>
+        <h4 class="section-title"
+          style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); border-bottom: 1.5px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px;">
+          🛡️ Administrator Information</h4>
         <table class="details-table">
           <tr>
             <td>Admin Name</td>
@@ -159,13 +160,18 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()" style="font-size: 0.85rem; padding: 8px 16px;">Close</button>
-        
+        <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()"
+          style="font-size: 0.85rem; padding: 8px 16px;">Close</button>
+
         <div style="display: flex; gap: 10px;" *ngIf="!selectedAdminForDetails.isVerified">
-          <button class="btn btn-confirm" style="background: #10b981; border-color: #10b981; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="verifyAdmin(selectedAdminForDetails.adminId); closeDetailsModal()" [disabled]="!isDetailsVerified">
+          <button class="btn btn-confirm"
+            style="background: #10b981; border-color: #10b981; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;"
+            (click)="verifyAdmin(selectedAdminForDetails.adminId); closeDetailsModal()" [disabled]="!isDetailsVerified">
             ✓ Approve Admin
           </button>
-          <button class="btn btn-cancel" style="background: #ef4444; border-color: #ef4444; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;" (click)="rejectAdmin(selectedAdminForDetails.adminId); closeDetailsModal()" [disabled]="!isDetailsVerified">
+          <button class="btn btn-cancel"
+            style="background: #ef4444; border-color: #ef4444; color: white; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; font-weight: 600;"
+            (click)="rejectAdmin(selectedAdminForDetails.adminId); closeDetailsModal()" [disabled]="!isDetailsVerified">
             ✕ Reject Admin
           </button>
         </div>

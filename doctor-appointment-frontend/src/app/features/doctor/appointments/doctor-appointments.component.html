@@ -127,22 +127,22 @@
                     <div class="skeleton-box" style="height: 12px; width: 80px;"></div>
                   </div>
                 </td>
-                <td>
+                <td data-label="Clinic / Location">
                   <div class="skeleton-box" style="height: 18px; width: 150px;"></div>
                 </td>
-                <td>
+                <td data-label="Date & Time">
                   <div style="display: flex; flex-direction: column; gap: 6px;">
                     <div class="skeleton-box" style="height: 14px; width: 110px;"></div>
                     <div class="skeleton-box" style="height: 14px; width: 60px;"></div>
                   </div>
                 </td>
-                <td>
+                <td data-label="Reason / Reason for Visit">
                   <div style="display: flex; flex-direction: column; gap: 4px;">
                     <div class="skeleton-box" style="height: 14px; width: 130px;"></div>
                     <div class="skeleton-box" style="height: 12px; width: 90px;"></div>
                   </div>
                 </td>
-                <td>
+                <td data-label="Clinical Note / Report">
                   <div class="skeleton-box" style="height: 20px; width: 120px;"></div>
                 </td>
                 <td>
@@ -204,7 +204,7 @@
         </div>
 
         <div class="table-responsive" *ngIf="getFilteredAppointments().length > 0; else emptyState">
-          <table class="dashboard-table">
+          <table class="dashboard-table table-stacked-mobile">
             <thead>
               <tr>
                 <th>Patient</th>
@@ -216,15 +216,15 @@
             </thead>
             <tbody>
               <tr *ngFor="let app of getPaginatedAppointments()">
-                <td [style.border-left]="'4px solid ' + getStatusColor(app.status)" style="padding-left: 12px;">
+                <td data-label="Patient" [style.border-left]="'4px solid ' + getStatusColor(app.status)" style="padding-left: 12px;">
                   <a href="javascript:void(0)" (click)="openPatientDetailsModal(app)"
                     style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;"
                     title="Click to view patient profile">
                     {{ app.patientName }} ℹ️
                   </a>
                 </td>
-                <td style="color: var(--accent-cyan); font-weight: 600;">{{ app.clinicName || 'Direct' }}</td>
-                <td>
+                <td data-label="Clinic / Location" style="color: var(--accent-cyan); font-weight: 600;">{{ app.clinicName || 'Direct' }}</td>
+                <td data-label="Date & Time">
                   <div style="display: flex; flex-direction: column; gap: 2px;">
                     <span style="font-size: 0.78rem; color: var(--text-secondary);">{{ app.appointmentDate | date:'EEE,
                       MMM d, y' }}</span>
@@ -239,7 +239,7 @@
                       assigned</span>
                   </div>
                 </td>
-                <td>
+                <td data-label="Clinical Note">
                   <div style="margin-bottom: 8px;">
                     <button class="btn btn-sm-outline" (click)="openMedicalHistoryModal(app)"
                       style="border-color: var(--accent-cyan); color: var(--accent-cyan); padding: 4px 10px; font-size: 0.75rem; font-weight: 600; border-radius: 4px;">
@@ -300,6 +300,8 @@
             </div>
           </div>
         </div>
+
+
 
         <ng-template #emptyState>
           <div class="empty-state">

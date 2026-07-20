@@ -5,4 +5,14 @@ import { Component } from '@angular/core';
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.css']
 })
-export class MainLayoutComponent {}
+export class MainLayoutComponent {
+  isMobileMenuOpen = false;
+
+  toggleMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
+
+  closeMenu() {
+    this.isMobileMenuOpen = false;
+  }
+}

@@ -191,3 +191,32 @@
   border-top: 1px solid #e2e8f0;
   background-color: white;
 }
+
+/* -------------------------------------
+ * MOBILE TABLE ADJUSTMENTS
+ * ------------------------------------- */
+@media (max-width: 768px) {
+  .audit-logs-container {
+    padding: 0.5rem;
+  }
+  
+  .custom-table th, 
+  .custom-table td {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+
+  .page-title {
+    font-size: 1.1rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .badge {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+  }
+}

@@ -109,22 +109,22 @@
         </thead>
         <tbody>
           <tr *ngFor="let app of paginatedAppointments" [style.border-left]="'4px solid ' + getStatusColor(app.status)">
-            <td class="bold">
+            <td class="bold" data-label="Doctor">
               <a href="javascript:void(0)" (click)="openDoctorDetailsModal(app.doctorId)"
                  style="color: var(--text-primary); text-decoration: none;"
                  title="Click to view doctor profile">
                  {{ app.doctorName }} <span style="color: var(--accent-cyan); margin-left: 4px;">ℹ️</span>
               </a>
             </td>
-            <td>{{ app.patientName }}</td>
-            <td>
+            <td data-label="Patient">{{ app.patientName }}</td>
+            <td data-label="Queue No">
               <span *ngIf="app.queueNumber"
                 style="display: inline-block; width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); font-weight: 700; font-size: 1rem; border: 1px solid var(--accent-cyan);">
                 {{ app.queueNumber }}
               </span>
               <span *ngIf="!app.queueNumber" class="text-muted">-</span>
             </td>
-            <td>
+            <td data-label="Date & Time">
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 <span style="font-size: 0.78rem; color: var(--text-secondary);"
                   [style.text-decoration]="app.status === 'RescheduleProposed' ? 'line-through' : 'none'">
@@ -154,13 +154,13 @@
               </div>
             </td>
 
-            <td>
+            <td data-label="Status">
               <span class="badge" [style.background]="getStatusColor(app.status)" [style.color]="'#fff'"
                 style="padding: 4px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 600; text-transform: uppercase;">
                 {{ getStatusTitle(app.status) }}
               </span>
             </td>
-            <td style="display: flex; gap: 8px;">
+            <td data-label="History / Records" style="display: flex; gap: 8px;">
               <button class="btn btn-sm-outline" (click)="openPatientHistoryModal(app)"
                 style="border-color: var(--accent-cyan); color: var(--accent-cyan); padding: 6px 12px; font-size: 0.8rem;">
                 📜 Notes
@@ -171,7 +171,7 @@
                 ⏱️ Timeline
               </button>
             </td>
-            <td *ngIf="!historyMode">
+            <td data-label="Actions" *ngIf="!historyMode">
               <button
                 *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed'"
                 class="btn btn-cancel" (click)="openCancelAppointmentConfirm(app.appointmentId)">
@@ -193,6 +193,8 @@
         </tbody>
       </table>
     </div>
+
+
 
     <!-- Empty State -->
     <ng-container *ngIf="!isDashboardLoading && filteredAppointments.length === 0">

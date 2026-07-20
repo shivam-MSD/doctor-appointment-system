@@ -1,4 +1,13 @@
 <header class="navbar">
+  <!-- Mobile Hamburger Menu Button -->
+  <button class="mobile-menu-toggle" (click)="toggleMobileMenu.emit()" style="margin-right: 12px; border: none; background: transparent; cursor: pointer; color: var(--text-primary);">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
   <div class="brand">
     <div class="logo">✙</div>
     <div class="title">HealSync</div>
@@ -6,7 +15,7 @@
 
   <div class="actions">
     <!-- Live Date & Time Clock -->
-    <div class="header-clock" *ngIf="authService.currentUser$ | async">
+    <div class="header-clock hide-on-mobile" *ngIf="authService.currentUser$ | async">
       <span class="clock-date">{{ currentDateTime | date:'EEEE, MMM d, y' }}</span>
       <span class="clock-separator">•</span>
       <span class="clock-time">{{ currentDateTime | date:'h:mm:ss a' }}</span>
@@ -46,11 +55,28 @@
         </div>
       </div>
 
-      <div class="user-info">
-        <span class="email">{{ user.firstName }} {{ user.lastName }}</span>
-        <span class="role-badge">{{ user.role }}</span>
+      <!-- Profile Avatar & Dropdown -->
+      <div class="profile-container" style="position: relative;">
+        <button class="profile-avatar-btn" (click)="toggleProfilePanel()" title="Profile Menu">
+          <div class="avatar-circle">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
+        </button>
+
+        <!-- Dropdown panel -->
+        <div class="profile-panel" *ngIf="showProfilePanel">
+          <div class="profile-header">
+            <div class="avatar-circle large">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
+            <div class="profile-info-content">
+              <h4>{{ user.firstName }} {{ user.lastName }}</h4>
+              <span class="role-badge">{{ user.role }}</span>
+            </div>
+          </div>
+          <div class="profile-menu">
+            <button class="btn profile-menu-item" (click)="logout()" style="color: var(--status-cancelled); width: 100%; text-align: left;">
+              <span style="margin-right: 8px;">🚪</span> Logout
+            </button>
+          </div>
+        </div>
       </div>
-      <button class="btn btn-secondary logout-btn" (click)="logout()">Logout</button>
     </ng-container>
     
     <ng-template #authLinks>

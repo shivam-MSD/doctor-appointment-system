@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { PatientService } from '../../../core/services/patient.service';
 import { AdminService } from '../../../core/services/admin.service';
@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./sidebar.component.css']
 })
 export class SidebarComponent implements OnInit, OnDestroy {
+  @Output() menuItemClicked = new EventEmitter<void>();
   private profileCompletionLoaded = false;
   private profileCompletionValue = 100;
   private signalrSub?: Subscription;

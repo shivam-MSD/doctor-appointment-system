@@ -45,6 +45,28 @@
   color: var(--text-secondary);
 }
 
+@media (max-width: 640px) {
+  .profile-header {
+    padding: 24px 20px;
+  }
+  
+  .profile-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .header-icon {
+    font-size: 1.6rem;
+  }
+
+  .profile-header p {
+    font-size: 0.8rem;
+  }
+  
+  .section-title {
+    font-size: 0.95rem;
+  }
+}
+
 .section-title {
   font-size: 1.15rem;
   color: var(--accent-cyan);

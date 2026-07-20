@@ -1,7 +1,8 @@
-<div class="layout-container">
-  <app-header></app-header>
+<div class="layout-container" [class.mobile-menu-active]="isMobileMenuOpen">
+  <app-header (toggleMobileMenu)="toggleMenu()"></app-header>
   <div class="main-body">
-    <app-sidebar></app-sidebar>
+    <div class="sidebar-overlay" [class.open]="isMobileMenuOpen" (click)="closeMenu()"></div>
+    <app-sidebar [class.sidebar-open]="isMobileMenuOpen" class="sidebar-container" (menuItemClicked)="closeMenu()"></app-sidebar>
     <main class="content-area">
       <router-outlet></router-outlet>
     </main>
