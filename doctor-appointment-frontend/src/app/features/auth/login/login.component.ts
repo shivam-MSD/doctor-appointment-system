@@ -12,6 +12,7 @@ export class LoginComponent implements OnInit {
   email = '';
   password = '';
   errorMessage = '';
+  successMessage = '';
   selectedRole: 'Patient' | 'Doctor' | 'Admin' | 'SuperAdmin' = 'Patient';
   isFixedRole = false;
 
@@ -52,13 +53,18 @@ export class LoginComponent implements OnInit {
       }
     });
 
-    // Comment out queryParams listener for OTP verification redirection
-    // this.route.queryParams.subscribe(params => {
-    //   if (params['verify'] === 'true' && params['email']) {
-    //     this.verificationEmail = params['email'];
-    //     this.showVerificationModal = true;
-    //   }
-    // });
+    // Listen to query params for prefilled email and registration success messages
+    this.route.queryParams.subscribe(params => {
+      if (params['message']) {
+        this.successMessage = params['message'];
+      }
+      if (params['email']) {
+        this.email = params['email'];
+      }
+      if (params['role']) {
+        this.selectedRole = params['role'] as any;
+      }
+    });
   }
 
   getPortalTitle(): string {
@@ -83,12 +89,14 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit(form: any): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+
     if (form.invalid) {
       Object.keys(form.controls).forEach(key => {
         form.controls[key].markAsTouched();
       });
       this.errorMessage = 'Please enter a valid email and password.';
-      this.toastService.showError(this.errorMessage);
       return;
     }
 
@@ -97,7 +105,6 @@ export class LoginComponent implements OnInit {
         if (user.role !== this.selectedRole) {
           this.authService.logout();
           this.errorMessage = `Unauthorized access. Invalid credentials for the ${this.getPortalTitle()}.`;
-          this.toastService.showError(this.errorMessage);
           return;
         }
         this.toastService.showSuccess('Logged in successfully!');
@@ -115,7 +122,6 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage = err?.error?.detail || 'Invalid email or password.';
-        this.toastService.showError(this.errorMessage);
       }
     });
   }
@@ -123,7 +129,6 @@ export class LoginComponent implements OnInit {
   onVerifySubmit(): void {
     if (!this.verificationOtp || this.verificationOtp.length !== 6) {
       this.verificationError = 'Please enter a valid 6-digit OTP code.';
-      this.toastService.showError(this.verificationError);
       return;
     }
 
@@ -151,7 +156,6 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.verificationError = err?.error?.detail || 'Invalid or expired OTP code.';
-        this.toastService.showError(this.verificationError);
       }
     });
   }

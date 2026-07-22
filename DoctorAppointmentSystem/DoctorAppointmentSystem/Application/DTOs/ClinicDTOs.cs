@@ -49,10 +49,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[MaxLength(150)]
 		public string AdminEmail { get; set; }
 
-		[Required]
 		[MinLength(6)]
 		[MaxLength(100)]
-		public string AdminPassword { get; set; }
+		public string? AdminPassword { get; set; }
 
 		[Required]
 		[MaxLength(100)]
@@ -122,10 +121,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[MaxLength(150)]
 		public string AdminEmail { get; set; }
 
-		[Required]
 		[MinLength(6)]
 		[MaxLength(100)]
-		public string AdminPassword { get; set; }
+		public string? AdminPassword { get; set; }
 
 		[Required]
 		[MaxLength(100)]
@@ -237,12 +235,22 @@ namespace DoctorAppointmentSystem.Application.DTOs
 	{
 		public Guid AdminId { get; set; }
 		public Guid UserId { get; set; }
+		/// <summary>Primary clinic ID (first assigned clinic, for backward compat).</summary>
 		public Guid ClinicId { get; set; }
+		/// <summary>Primary clinic name (first assigned clinic, for backward compat).</summary>
 		public string ClinicName { get; set; }
 		public string FirstName { get; set; }
 		public string LastName { get; set; }
 		public string MobileNo { get; set; }
 		public bool IsVerified { get; set; }
+		/// <summary>All clinics this admin manages.</summary>
+		public List<ClinicBasicInfoDto> AssignedClinics { get; set; } = new();
+	}
+
+	public class ClinicBasicInfoDto
+	{
+		public Guid ClinicId { get; set; }
+		public string ClinicName { get; set; }
 	}
 
 	public class BookedSlotDto

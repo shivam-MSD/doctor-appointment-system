@@ -1,6 +1,6 @@
 <div class="doctor-header-wrapper">
   <!-- Greeting Banner -->
-  <div class="glass-card welcome-card" style="margin-bottom: 24px;">
+  <div class="glass-card welcome-card">
     <div class="welcome-text">
       <h2>Welcome Back, Dr. {{ firstName }}!</h2>
       <p>Here is an overview of your medical bookings and scheduled appointments.</p>
@@ -9,27 +9,22 @@
   </div>
 
   <!-- Profile address completeness alert -->
-  <div class="glass-card warning-card clinic-alert" *ngIf="isDoctorAddressIncomplete"
-    style="background: rgba(245, 158, 11, 0.05) !important; border: 1.5px solid rgba(245, 158, 11, 0.25) !important; margin-bottom: 24px;">
+  <div class="glass-card clinic-alert address-alert" *ngIf="isDoctorAddressIncomplete">
     <span class="alert-icon">⚠️</span>
     <div class="alert-info">
       <h4>Complete Your Profile Address</h4>
-      <p>You have not fully filled in your personal profile address details. Please update your address in the profile
-        section to complete your profile.</p>
-      <a routerLink="/doctor/profile" class="btn btn-primary alert-btn" style="text-decoration: none;">Update Profile
-        Address</a>
+      <p>You have not fully filled in your personal profile address details. Please update your address in the profile section to complete your profile.</p>
+      <a routerLink="/doctor/profile" class="btn alert-btn">Update Profile Address</a>
     </div>
   </div>
 
   <!-- Practice setup alert when clinic list is empty -->
-  <div class="glass-card warning-card clinic-alert" *ngIf="!isClinicsLoading && doctorClinics.length === 0"
-    style="margin-bottom: 24px;">
+  <div class="glass-card clinic-alert setup-alert" *ngIf="!isClinicsLoading && doctorClinics.length === 0">
     <span class="alert-icon">🏢</span>
     <div class="alert-info">
       <h4>Complete Your Practice Setup</h4>
-      <p>Patients will only be able to view your details and schedule appointments after you add at least one practice
-        clinic, hospital, or physiotherapy center. Registered centers require verification by the Super Admin.</p>
-      <button class="btn btn-primary alert-btn" (click)="onOpenClinicModal()">Register Clinic Location Now</button>
+      <p>Patients will only be able to view your details and schedule appointments after you add at least one practice clinic, hospital, or physiotherapy center. Registered clinics require verification by the Super Admin.</p>
+      <button class="btn alert-btn" (click)="onOpenClinicModal()">Register Clinic Location Now</button>
     </div>
   </div>
 </div>

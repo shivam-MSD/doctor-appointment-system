@@ -41,6 +41,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) { }
 
+  isAuthPage(): boolean {
+    const url = this.router.url.toLowerCase();
+    return url.includes('login') || url.includes('register') || url.includes('forgot-password');
+  }
+
   ngOnInit(): void {
     // Live clock - update every second
     this.clockSub = interval(1000).subscribe(() => {

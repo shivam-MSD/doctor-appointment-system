@@ -48,7 +48,15 @@
           <tr *ngFor="let admin of clinicAdmins">
             <td class="bold">{{ admin.firstName }} {{ admin.lastName }}</td>
             <td class="text-primary">
-              <span class="truncate-text" [title]="admin.clinicName">{{ admin.clinicName }}</span>
+              <div *ngIf="admin.assignedClinics && admin.assignedClinics.length > 0" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                <span class="badge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25);" *ngFor="let clinic of admin.assignedClinics">
+                  {{ clinic.clinicName }}
+                </span>
+              </div>
+              <span *ngIf="(!admin.assignedClinics || admin.assignedClinics.length === 0) && admin.clinicName" class="truncate-text" [title]="admin.clinicName">
+                {{ admin.clinicName }}
+              </span>
+              <span *ngIf="(!admin.assignedClinics || admin.assignedClinics.length === 0) && !admin.clinicName" class="text-muted">Unassigned</span>
             </td>
             <td>{{ admin.mobileNo }}</td>
             <td>
@@ -86,9 +94,18 @@
 
         <!-- Info Grid -->
         <div style="display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-            <span style="font-size: 1.2rem; flex-shrink: 0;">🏢</span>
-            <span style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; flex: 1;" [title]="admin.clinicName">{{ admin.clinicName }}</span>
+          <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.2rem; flex-shrink: 0;">🏢</span>
+              <span style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600;">Clinics:</span>
+            </div>
+            <div style="margin-left: 28px; display: flex; flex-wrap: wrap; gap: 4px;">
+              <span *ngFor="let clinic of admin.assignedClinics" class="badge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.25); font-size: 0.75rem;">
+                {{ clinic.clinicName }}
+              </span>
+              <span *ngIf="(!admin.assignedClinics || admin.assignedClinics.length === 0) && admin.clinicName" style="color: var(--text-secondary); font-size: 0.85rem;">{{ admin.clinicName }}</span>
+              <span *ngIf="(!admin.assignedClinics || admin.assignedClinics.length === 0) && !admin.clinicName" style="color: var(--text-secondary); font-size: 0.85rem;">Unassigned</span>
+            </div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 1.2rem;">📞</span>

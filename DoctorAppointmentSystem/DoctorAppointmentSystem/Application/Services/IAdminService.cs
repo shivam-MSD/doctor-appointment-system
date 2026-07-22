@@ -13,5 +13,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<IEnumerable<ClinicDto>> GetAllClinicsAsync(string? search, string? state, string? city, bool? isVerified);
 		Task<IEnumerable<ClinicAdminDto>> GetAllAdminsAsync(string? search, bool? isVerified);
 		Task<PagedResult<SystemAuditLogDto>> GetSystemAuditLogsAsync(string? entityType, string? action, DateTime? startDate, DateTime? endDate, int page, int size);
+		Task<IEnumerable<ClinicBasicInfoDto>> AssignAdminToClinicsAsync(Guid adminId, IEnumerable<Guid> clinicIds);
+		Task<IEnumerable<ClinicBasicInfoDto>> GetClinicsForAdminAsync(Guid adminId);
 	}
 }

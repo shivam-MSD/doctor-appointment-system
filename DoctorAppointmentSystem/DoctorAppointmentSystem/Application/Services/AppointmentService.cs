@@ -335,11 +335,13 @@ namespace DoctorAppointmentSystem.Application.Services
 			else
 			{
 				var isAdmin = await _dbContext.Admins
-					.Include(a => a.Clinic)
+					.Include(a => a.AdminClinics)
+						.ThenInclude(ac => ac.Clinic)
 					.FirstOrDefaultAsync(a => a.User.UserId == userId);
 				if (isAdmin != null)
 				{
-					query = query.Where(app => app.Clinic != null && app.Clinic.ClinicId == isAdmin.Clinic.ClinicId);
+					var adminClinicIds = isAdmin.AdminClinics.Select(ac => ac.ClinicId).ToList();
+					query = query.Where(app => app.Clinic != null && adminClinicIds.Contains(app.Clinic.ClinicId));
 				}
 			}
 
@@ -397,7 +399,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			// 1. Identify if Doctor
 			var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
 			// 2. Identify if Clinic Admin
-			var adminObj = await _dbContext.Admins.FirstOrDefaultAsync(a => a.User.UserId == userId);
+			var adminObj = await _dbContext.Admins
+				.Include(a => a.AdminClinics)
+				.FirstOrDefaultAsync(a => a.User.UserId == userId);
 
 			List<Guid> patientIds = new List<Guid>();
 
@@ -414,10 +418,11 @@ namespace DoctorAppointmentSystem.Application.Services
 					.Distinct()
 					.ToListAsync();
 			}
-			else if (adminObj != null && adminObj.Clinic != null)
+			else if (adminObj != null && adminObj.AdminClinics.Any())
 			{
+				var adminClinicIds = adminObj.AdminClinics.Select(ac => ac.ClinicId).ToList();
 				patientIds = await _dbContext.Appointments
-					.Where(a => a.Clinic != null && a.Clinic.ClinicId == adminObj.Clinic.ClinicId)
+					.Where(a => a.Clinic != null && adminClinicIds.Contains(a.Clinic.ClinicId))
 					.Select(a => a.Patient.PatientId)
 					.Distinct()
 					.ToListAsync();
@@ -604,11 +609,27 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync()
 		{
 			const string cacheKey = "available_doctors_list";
-			var cachedData = await _distributedCache.GetStringAsync(cacheKey);
+			string? cachedData = null;
+
+			try
+			{
+				cachedData = await _distributedCache.GetStringAsync(cacheKey);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in GetAvailableDoctorsAsync: {ex.Message}. Falling back to Database query.");
+			}
 
 			if (!string.IsNullOrEmpty(cachedData))
 			{
-				return JsonSerializer.Deserialize<IEnumerable<DoctorDto>>(cachedData) ?? new List<DoctorDto>();
+				try
+				{
+					return JsonSerializer.Deserialize<IEnumerable<DoctorDto>>(cachedData) ?? new List<DoctorDto>();
+				}
+				catch
+				{
+					// Ignore deserialization issues and query db
+				}
 			}
 
 			var doctors = await _dbContext.Doctors
@@ -645,12 +666,18 @@ namespace DoctorAppointmentSystem.Application.Services
 				})
 				.ToListAsync();
 
-			var cacheOptions = new DistributedCacheEntryOptions
+			try
 			{
-				AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) // Cache for 24 hours since we use eviction
-			};
-
-			await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(doctors), cacheOptions);
+				var cacheOptions = new DistributedCacheEntryOptions
+				{
+					AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) // Cache for 24 hours since we use eviction
+				};
+				await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(doctors), cacheOptions);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in GetAvailableDoctorsAsync while saving cache: {ex.Message}.");
+			}
 
 			return doctors;
 		}
@@ -658,21 +685,43 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<IEnumerable<Specialization>> GetSpecializationsAsync()
 		{
 			const string cacheKey = "specializations_list";
-			var cachedData = await _distributedCache.GetStringAsync(cacheKey);
+			string? cachedData = null;
+
+			try
+			{
+				cachedData = await _distributedCache.GetStringAsync(cacheKey);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in GetSpecializationsAsync: {ex.Message}. Falling back to Database query.");
+			}
 
 			if (!string.IsNullOrEmpty(cachedData))
 			{
-				return JsonSerializer.Deserialize<IEnumerable<Specialization>>(cachedData) ?? new List<Specialization>();
+				try
+				{
+					return JsonSerializer.Deserialize<IEnumerable<Specialization>>(cachedData) ?? new List<Specialization>();
+				}
+				catch
+				{
+					// Ignore deserialization issues and query db
+				}
 			}
 
 			var specializations = await _dbContext.Specializations.OrderBy(s => s.SpecializationName).ToListAsync();
 
-			var cacheOptions = new DistributedCacheEntryOptions
+			try
 			{
-				AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) // Cache for 24 hours
-			};
-
-			await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(specializations), cacheOptions);
+				var cacheOptions = new DistributedCacheEntryOptions
+				{
+					AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24) // Cache for 24 hours
+				};
+				await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(specializations), cacheOptions);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in GetSpecializationsAsync while saving cache: {ex.Message}.");
+			}
 
 			return specializations;
 		}
@@ -1461,7 +1510,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				if (!isSuperAdmin)
 				{
 					var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
-					var admin = await _dbContext.Admins.Include(a => a.Clinic).FirstOrDefaultAsync(a => a.User.UserId == userId);
+					var admin = await _dbContext.Admins.Include(a => a.AdminClinics).ThenInclude(ac => ac.Clinic).FirstOrDefaultAsync(a => a.User.UserId == userId);
 
 					if (doctor != null)
 					{
@@ -1473,7 +1522,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					}
 					else if (admin != null)
 					{
-						query = query.Where(l => l.Appointment.Clinic.ClinicId == admin.Clinic.ClinicId);
+						var adminClinicIds = admin.AdminClinics.Select(ac => ac.ClinicId).ToList();
+						query = query.Where(l => adminClinicIds.Contains(l.Appointment.Clinic.ClinicId));
 					}
 					else
 					{

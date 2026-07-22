@@ -79,9 +79,6 @@ namespace DoctorAppointmentSystem.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ClinicId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -109,8 +106,6 @@ namespace DoctorAppointmentSystem.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("AdminId");
-
-                    b.HasIndex("ClinicId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -157,6 +152,31 @@ namespace DoctorAppointmentSystem.Migrations
                     b.HasKey("LogId");
 
                     b.ToTable("AdminAuditLogs");
+                });
+
+            modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.AdminClinic", b =>
+                {
+                    b.Property<Guid>("AdminClinicId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ClinicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("AdminClinicId");
+
+                    b.HasIndex("AdminId");
+
+                    b.HasIndex("ClinicId")
+                        .IsUnique();
+
+                    b.ToTable("AdminClinics", (string)null);
                 });
 
             modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.Appointment", b =>
@@ -745,6 +765,9 @@ namespace DoctorAppointmentSystem.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<bool>("RequiresPasswordChange")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uniqueidentifier");
 
@@ -793,21 +816,32 @@ namespace DoctorAppointmentSystem.Migrations
 
             modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.Admin", b =>
                 {
-                    b.HasOne("DoctorAppointmentSystem.Domain.Entities.Clinic", "Clinic")
-                        .WithMany()
-                        .HasForeignKey("ClinicId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("DoctorAppointmentSystem.Domain.Entities.User", "User")
                         .WithOne()
                         .HasForeignKey("DoctorAppointmentSystem.Domain.Entities.Admin", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Clinic");
-
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.AdminClinic", b =>
+                {
+                    b.HasOne("DoctorAppointmentSystem.Domain.Entities.Admin", "Admin")
+                        .WithMany("AdminClinics")
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DoctorAppointmentSystem.Domain.Entities.Clinic", "Clinic")
+                        .WithMany()
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Admin");
+
+                    b.Navigation("Clinic");
                 });
 
             modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.Appointment", b =>
@@ -944,6 +978,11 @@ namespace DoctorAppointmentSystem.Migrations
                     b.Navigation("Patient");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.Admin", b =>
+                {
+                    b.Navigation("AdminClinics");
                 });
 
             modelBuilder.Entity("DoctorAppointmentSystem.Domain.Entities.Doctor", b =>

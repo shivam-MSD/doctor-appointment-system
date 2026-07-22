@@ -17,12 +17,19 @@ namespace DoctorAppointmentSystem.Application.Services
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly INotificationService _notificationService;
+		private readonly IEmailService _emailService;
 
-		public ClinicService(ApplicationDbContext dbContext, INotificationService notificationService)
+		public ClinicService(
+			ApplicationDbContext dbContext, 
+			INotificationService notificationService,
+			IEmailService emailService)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
+			_emailService = emailService;
 		}
+
+
 
 		private string SerializeClinicState(Clinic clinic)
 		{
@@ -114,13 +121,19 @@ namespace DoctorAppointmentSystem.Application.Services
 				await _dbContext.SaveChangesAsync();
 			}
 
+			var tempPassword = string.IsNullOrEmpty(dto.AdminPassword)
+				? Guid.NewGuid().ToString("N").Substring(0, 12)
+				: dto.AdminPassword;
+
 			// 4. Create User credentials for Clinic Admin
 			var adminUser = new User
 			{
 				UserId = Guid.NewGuid(),
 				Email = dto.AdminEmail,
-				PasswordHash = HashPassword(dto.AdminPassword),
+				PasswordHash = HashPassword(tempPassword),
 				IsActive = true,
+				IsEmailVerified = true,
+				RequiresPasswordChange = true,
 				CreatedDate = DateTime.UtcNow,
 				LastLoginDate = DateTime.UtcNow
 			};
@@ -161,7 +174,6 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				AdminId = Guid.NewGuid(),
 				User = adminUser,
-				Clinic = clinic,
 				FirstName = dto.AdminFirstName,
 				LastName = dto.AdminLastName,
 				MobileNo = dto.AdminMobileNo,
@@ -169,6 +181,15 @@ namespace DoctorAppointmentSystem.Application.Services
 				CreatedDate = DateTime.UtcNow
 			};
 			_dbContext.Admins.Add(adminProfile);
+
+			// Link admin to clinic via join table
+			_dbContext.AdminClinics.Add(new AdminClinic
+			{
+				AdminClinicId = Guid.NewGuid(),
+				AdminId = adminProfile.AdminId,
+				ClinicId = clinic.ClinicId,
+				AssignedDate = DateTime.UtcNow
+			});
 
 			await _dbContext.SaveChangesAsync();
 
@@ -256,6 +277,50 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			await _notificationService.CreateNotificationForRoleAsync("SuperAdmin", $"Dr. {doctor.FirstName} {doctor.LastName} registered a new clinic branch '{dto.ClinicName}' and requires verification.");
 			await _notificationService.SendRefreshSignalAsync("Clinics");
+
+			var emailSubject = $"Clinic Registration Pending Review: {clinic.ClinicName}";
+			var emailBody = $@"
+				<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+					<h2 style='color: #0ea5e9; margin-top: 0;'>Clinic Registration Received</h2>
+					<p>Dear Dr. {doctor.FirstName} {doctor.LastName},</p>
+					<p>Thank you for registering a new clinic branch on HealSync. Your registration request is currently <strong>Pending Review</strong> by our administration team.</p>
+					<hr style='border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;' />
+					<h3 style='color: #333333;'>Clinic Details:</h3>
+					<table style='width: 100%; border-collapse: collapse;'>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; width: 150px; color: #666666;'>Clinic Name:</td>
+							<td style='padding: 8px 0; color: #333333;'>{clinic.ClinicName}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Clinic Type:</td>
+							<td style='padding: 8px 0; color: #333333;'>{clinic.ClinicType}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Operating Days:</td>
+							<td style='padding: 8px 0; color: #333333;'>{clinic.OpenDays}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Working Hours:</td>
+							<td style='padding: 8px 0; color: #333333;'>{clinic.StartTime} - {clinic.EndTime}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Address:</td>
+							<td style='padding: 8px 0; color: #333333;'>{clinicAddress.Addressline1}, {clinicAddress.Addressline2} {clinicAddress.Area}, {clinicAddress.City}, {clinicAddress.State}, {clinicAddress.Country} - {clinicAddress.Pincode}</td>
+						</tr>
+					</table>
+					<hr style='border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;' />
+					<p style='color: #666666; font-size: 0.9em; line-height: 1.5;'>Our team will verify your clinic location details shortly. You will receive an email notification as soon as the review process is complete.</p>
+					<p style='margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+				</div>";
+			
+			try 
+			{
+				await _emailService.SendEmailAsync(doctor.User.Email, emailSubject, emailBody);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error sending clinic registration email: {ex.Message}");
+			}
 		}
 
 		public async Task RegisterAdminForClinicAsync(Guid doctorUserId, RegisterAdminForClinicDto dto)
@@ -286,7 +351,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new BadRequestException("You can only register admins for verified clinic locations.");
 			}
 
-			var existingAdmin = await _dbContext.Admins.AnyAsync(a => a.Clinic.ClinicId == dto.ClinicId);
+			var existingAdmin = await _dbContext.AdminClinics.AnyAsync(ac => ac.ClinicId == dto.ClinicId);
 			if (existingAdmin)
 			{
 				throw new BadRequestException("This clinic already has an admin registered. You cannot register more than one admin per clinic.");
@@ -306,12 +371,18 @@ namespace DoctorAppointmentSystem.Application.Services
 				await _dbContext.SaveChangesAsync();
 			}
 
+			var tempPassword = string.IsNullOrEmpty(dto.AdminPassword)
+				? Guid.NewGuid().ToString("N").Substring(0, 12)
+				: dto.AdminPassword;
+
 			var adminUser = new User
 			{
 				UserId = Guid.NewGuid(),
 				Email = dto.AdminEmail,
-				PasswordHash = HashPassword(dto.AdminPassword),
+				PasswordHash = HashPassword(tempPassword),
 				IsActive = true,
+				IsEmailVerified = true,
+				RequiresPasswordChange = true,
 				CreatedDate = DateTime.UtcNow,
 				LastLoginDate = DateTime.UtcNow
 			};
@@ -322,7 +393,6 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				AdminId = Guid.NewGuid(),
 				User = adminUser,
-				Clinic = clinic,
 				FirstName = dto.AdminFirstName,
 				LastName = dto.AdminLastName,
 				MobileNo = dto.AdminMobileNo,
@@ -330,6 +400,15 @@ namespace DoctorAppointmentSystem.Application.Services
 				CreatedDate = DateTime.UtcNow
 			};
 			_dbContext.Admins.Add(adminProfile);
+
+			// Link admin to clinic via join table
+			_dbContext.AdminClinics.Add(new AdminClinic
+			{
+				AdminClinicId = Guid.NewGuid(),
+				AdminId = adminProfile.AdminId,
+				ClinicId = clinic.ClinicId,
+				AssignedDate = DateTime.UtcNow
+			});
 
 			await _dbContext.SaveChangesAsync();
 
@@ -362,11 +441,11 @@ namespace DoctorAppointmentSystem.Application.Services
 						? "UpdatedPending"
 						: c.VerificationStatus.ToString(),
 					RejectionReason = c.RejectionReason,
-					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == c.ClinicId),
-					AdminName = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault(),
-					AdminEmail = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.User.Email).FirstOrDefault(),
-					AdminMobileNo = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.MobileNo).FirstOrDefault(),
-					AdminIsVerified = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.IsVerified).FirstOrDefault(),
+					HasAdmin = _dbContext.AdminClinics.Any(ac => ac.ClinicId == c.ClinicId),
+					AdminName = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.FirstName + " " + ac.Admin.LastName).FirstOrDefault(),
+					AdminEmail = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.User.Email).FirstOrDefault(),
+					AdminMobileNo = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.MobileNo).FirstOrDefault(),
+					AdminIsVerified = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.IsVerified).FirstOrDefault(),
 					OpenDays = c.OpenDays,
 					StartTime = c.StartTime,
 					EndTime = c.EndTime,
@@ -427,23 +506,34 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicAdminDto>> GetDoctorAdminsAsync(Guid doctorUserId)
 		{
-			return await _dbContext.Admins
+			var admins = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
-				.ThenInclude(c => c.Doctor)
-				.Where(a => a.Clinic.Doctor.User.UserId == doctorUserId)
-				.Select(a => new ClinicAdminDto
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
+						.ThenInclude(c => c.Doctor)
+				.Where(a => a.AdminClinics.Any(ac => ac.Clinic.Doctor.User.UserId == doctorUserId))
+				.ToListAsync();
+
+			return admins.Select(a =>
+			{
+				var firstClinic = a.AdminClinics?.FirstOrDefault()?.Clinic;
+				return new ClinicAdminDto
 				{
 					AdminId = a.AdminId,
 					UserId = a.User.UserId,
-					ClinicId = a.Clinic.ClinicId,
-					ClinicName = a.Clinic.ClinicName,
+					ClinicId = firstClinic?.ClinicId ?? Guid.Empty,
+					ClinicName = firstClinic?.ClinicName ?? string.Empty,
 					FirstName = a.FirstName,
 					LastName = a.LastName,
 					MobileNo = a.MobileNo,
-					IsVerified = a.IsVerified
-				})
-				.ToListAsync();
+					IsVerified = a.IsVerified,
+					AssignedClinics = a.AdminClinics?.Select(ac => new ClinicBasicInfoDto
+					{
+						ClinicId = ac.Clinic.ClinicId,
+						ClinicName = ac.Clinic.ClinicName
+					}).ToList() ?? new List<ClinicBasicInfoDto>()
+				};
+			}).ToList();
 		}
 
 		public async Task<IEnumerable<ClinicDto>> GetPendingClinicsAsync()
@@ -470,7 +560,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					VerificationStatus = c.VerificationStatus.ToString(),
 					RejectionReason = c.RejectionReason,
 					ParentClinicId = c.ParentClinicId,
-					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == c.ClinicId),
+					HasAdmin = _dbContext.AdminClinics.Any(ac => ac.ClinicId == c.ClinicId),
 					OpenDays = c.OpenDays,
 					StartTime = c.StartTime,
 					EndTime = c.EndTime,
@@ -488,22 +578,33 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicAdminDto>> GetPendingAdminsAsync()
 		{
-			return await _dbContext.Admins
+			var admins = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
 				.Where(a => !a.IsVerified)
-				.Select(a => new ClinicAdminDto
+				.ToListAsync();
+
+			return admins.Select(a =>
+			{
+				var firstClinic = a.AdminClinics?.FirstOrDefault()?.Clinic;
+				return new ClinicAdminDto
 				{
 					AdminId = a.AdminId,
 					UserId = a.User.UserId,
-					ClinicId = a.Clinic.ClinicId,
-					ClinicName = a.Clinic.ClinicName,
+					ClinicId = firstClinic?.ClinicId ?? Guid.Empty,
+					ClinicName = firstClinic?.ClinicName ?? string.Empty,
 					FirstName = a.FirstName,
 					LastName = a.LastName,
 					MobileNo = a.MobileNo,
-					IsVerified = a.IsVerified
-				})
-				.ToListAsync();
+					IsVerified = a.IsVerified,
+					AssignedClinics = a.AdminClinics?.Select(ac => new ClinicBasicInfoDto
+					{
+						ClinicId = ac.Clinic.ClinicId,
+						ClinicName = ac.Clinic.ClinicName
+					}).ToList() ?? new List<ClinicBasicInfoDto>()
+				};
+			}).ToList();
 		}
 
 		public async Task<string> VerifyClinicAsync(Guid clinicId)
@@ -608,9 +709,10 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var admin = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
-				.ThenInclude(c => c.Doctor)
-				.ThenInclude(d => d.User)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
+						.ThenInclude(c => c.Doctor)
+							.ThenInclude(d => d.User)
 				.FirstOrDefaultAsync(a => a.AdminId == adminId);
 
 			if (admin == null)
@@ -618,6 +720,12 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException($"Clinic Admin with ID '{adminId}' was not found.");
 			}
 			admin.IsVerified = true;
+
+			// Auto-generate a secure temporary password
+			var generatedPassword = Guid.NewGuid().ToString("N").Substring(0, 10);
+			admin.User.PasswordHash = HashPassword(generatedPassword);
+			admin.User.RequiresPasswordChange = true;
+			admin.User.IsEmailVerified = true; // Auto-verify once superadmin approves
 			
 			var auditLog = new AdminAuditLog
 			{
@@ -632,10 +740,41 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			await _dbContext.SaveChangesAsync();
 
+			var clinicName = admin.AdminClinics?.FirstOrDefault()?.Clinic?.ClinicName ?? "Your Assigned Clinic";
+			var doctorUserId = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.User?.UserId;
+
+			// Send login credentials via email
+			var emailSubject = "HealSync - Clinic Admin Account Approved & Activated";
+			var emailBody = $@"
+				<h3>Welcome {admin.FirstName} {admin.LastName}!</h3>
+				<p>Your Clinic Admin profile has been approved and activated by the Super Admin.</p>
+				<p>Here are your secure temporary credentials to log in to the HealSync Portal:</p>
+				<table border='0' cellpadding='5'>
+					<tr><td><strong>Portal Link:</strong></td><td><a href='http://localhost:4200/admin/login'>HealSync Clinic Admin Portal</a></td></tr>
+					<tr><td><strong>Username:</strong></td><td>{admin.User.Email}</td></tr>
+					<tr><td><strong>Temporary Password:</strong></td><td><code>{generatedPassword}</code></td></tr>
+				</table>
+				<p><em>Note: You will be required to change this temporary password immediately upon your first login.</em></p>
+				<p>Best regards,<br/>HealSync Administration Team</p>";
+
+			try
+			{
+				await _emailService.SendEmailAsync(admin.User.Email, emailSubject, emailBody);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[Email Error]: Failed to send approval email to admin: {ex.Message}");
+			}
+
 			// Notify Admin user they have been approved
-			await _notificationService.CreateNotificationAsync(admin.User.UserId, $"Your Clinic Admin account for '{admin.Clinic.ClinicName}' has been approved and activated.");
+			await _notificationService.CreateNotificationAsync(admin.User.UserId, $"Your Clinic Admin account for '{clinicName}' has been approved and activated.");
+			
 			// Notify Doctor user that their admin has been approved
-			await _notificationService.CreateNotificationAsync(admin.Clinic.Doctor.User.UserId, $"The Clinic Admin {admin.FirstName} {admin.LastName} assigned to '{admin.Clinic.ClinicName}' has been approved.");
+			if (doctorUserId.HasValue)
+			{
+				await _notificationService.CreateNotificationAsync(doctorUserId.Value, $"The Clinic Admin {admin.FirstName} {admin.LastName} assigned to '{clinicName}' has been approved.");
+			}
+
 			await _notificationService.SendRefreshSignalAsync("Admins");
 			return $"{admin.FirstName} {admin.LastName}";
 		}
@@ -644,9 +783,10 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var admin = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
-				.ThenInclude(c => c.Doctor)
-				.ThenInclude(d => d.User)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
+						.ThenInclude(c => c.Doctor)
+							.ThenInclude(d => d.User)
 				.FirstOrDefaultAsync(a => a.AdminId == adminId);
 
 			if (admin == null)
@@ -655,13 +795,35 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			var adminName = $"{admin.FirstName} {admin.LastName}";
-			var clinicName = admin.Clinic.ClinicName;
-			var doctorUserId = admin.Clinic.Doctor.User.UserId;
+			var clinicName = admin.AdminClinics?.FirstOrDefault()?.Clinic?.ClinicName ?? "Clinic";
+			var doctorUserId = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.User?.UserId ?? Guid.Empty;
 			var adminUserId = admin.User.UserId;
 
-			// Remove admin record and deactivate user
+			// Send rejection email notification
+			var emailSubject = "HealSync - Clinic Admin Application Status Update";
+			var emailBody = $@"
+				<h3>Hello {admin.FirstName} {admin.LastName},</h3>
+				<p>Thank you for registering to join the HealSync Medical Network as a Clinic Admin for '{clinicName}'.</p>
+				<p>We regret to inform you that your application has been rejected by the Super Admin at this time.</p>
+				<p>Your profile and registration records have been completely removed from our system, immediately freeing your email address for any future registrations if required.</p>
+				<p>Best regards,<br/>HealSync Administration Team</p>";
+
+			try
+			{
+				await _emailService.SendEmailAsync(admin.User.Email, emailSubject, emailBody);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[Email Error]: Failed to send rejection email to admin: {ex.Message}");
+			}
+
+			// Remove associated Addresses
+			var addresses = _dbContext.Addresses.Where(a => a.User.UserId == admin.User.UserId);
+			_dbContext.Addresses.RemoveRange(addresses);
+
+			// Remove Admin record and User credentials
 			_dbContext.Admins.Remove(admin);
-			admin.User.IsActive = false;
+			_dbContext.Users.Remove(admin.User);
 
 			var auditLog = new AdminAuditLog
 			{
@@ -676,10 +838,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			await _dbContext.SaveChangesAsync();
 
-			// Notify the admin user
-			await _notificationService.CreateNotificationAsync(adminUserId, $"Your Clinic Admin account for '{clinicName}' has been rejected by the Super Admin.");
 			// Notify the doctor
-			await _notificationService.CreateNotificationAsync(doctorUserId, $"The Clinic Admin {adminName} assigned to '{clinicName}' has been rejected by the Super Admin.");
+			if (doctorUserId != Guid.Empty)
+			{
+				await _notificationService.CreateNotificationAsync(doctorUserId, $"The Clinic Admin {adminName} assigned to '{clinicName}' has been rejected by the Super Admin.");
+			}
 			await _notificationService.SendRefreshSignalAsync("Admins");
 			return adminName;
 		}
@@ -939,9 +1102,12 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var admin = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
-				.ThenInclude(c => c.Address)
-				.Include(a => a.Clinic.Doctor)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
+						.ThenInclude(c => c.Address)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
+						.ThenInclude(c => c.Doctor)
 				.FirstOrDefaultAsync(a => a.User.UserId == adminUserId);
 
 			if (admin == null)
@@ -1021,9 +1187,12 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var admin = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
-				.ThenInclude(c => c.Address)
-				.Include(a => a.Clinic.Doctor)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
+						.ThenInclude(c => c.Address)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
+						.ThenInclude(c => c.Doctor)
 				.FirstOrDefaultAsync(a => a.User.UserId == adminUserId);
 
 			if (admin == null)

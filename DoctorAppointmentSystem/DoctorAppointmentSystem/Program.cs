@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+// Explicitly load base and environment‑specific configuration files
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
 // Add services to the container.
 
@@ -59,6 +62,7 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotific
 
 // Register background services
 builder.Services.AddHostedService<DoctorAppointmentSystem.Application.BackgroundServices.AppointmentCleanupService>();
+builder.Services.AddHostedService<DoctorAppointmentSystem.Application.BackgroundServices.NotificationCleanupService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddStackExchangeRedisCache(options =>

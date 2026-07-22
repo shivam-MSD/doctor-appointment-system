@@ -39,6 +39,8 @@ import { MyDoctorsComponent } from './shared/components/my-doctors/my-doctors.co
 import { DoctorHeaderComponent } from './shared/components/doctor-header/doctor-header.component';
 import { AdminHeaderComponent } from './shared/components/admin-header/admin-header.component';
 import { SuperadminHeaderComponent } from './shared/components/superadmin-header/superadmin-header.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -67,7 +69,9 @@ import { SuperadminHeaderComponent } from './shared/components/superadmin-header
     MyDoctorsComponent,
     DoctorHeaderComponent,
     AdminHeaderComponent,
-    SuperadminHeaderComponent
+    SuperadminHeaderComponent,
+    ForgotPasswordComponent,
+    ResetPasswordComponent
   ],
   imports: [
     BrowserModule,

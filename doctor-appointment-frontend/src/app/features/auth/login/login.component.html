@@ -1,6 +1,6 @@
+<app-header></app-header>
 <div class="auth-wrapper">
   <div class="glass-card auth-card">
-    <a routerLink="/dashboard" class="close-btn" title="Close and return to Dashboard">&times;</a>
     <div class="auth-header">
       <span class="logo">✙</span>
       <h2>{{ getPortalTitle() }}</h2>
@@ -16,6 +16,11 @@
     </div>
 
     <form #loginForm="ngForm" (submit)="onSubmit(loginForm); $event.preventDefault()">
+      <!-- Success Message Banner -->
+      <div class="success-banner" *ngIf="successMessage">
+        <span>✓</span> {{ successMessage }}
+      </div>
+
       <!-- Error Message Banner -->
       <div class="error-banner" *ngIf="errorMessage">
         <span>⚠️</span> {{ errorMessage }}
@@ -48,8 +53,9 @@
       <button class="btn btn-primary w-100 submit-btn" type="submit">Log In</button>
     </form>
 
-    <div class="auth-footer" *ngIf="getRegisterLink()">
-      <p>Don't have an account? <a [routerLink]="getRegisterLink()">Create an account</a></p>
+    <div class="auth-footer">
+      <p style="margin-bottom: 8px;"><a routerLink="/forgot-password" style="font-size: 0.85rem; font-weight: 500;">Forgot password?</a></p>
+      <p *ngIf="getRegisterLink()">Don't have an account? <a [routerLink]="getRegisterLink()">Create an account</a></p>
     </div>
   </div>
 

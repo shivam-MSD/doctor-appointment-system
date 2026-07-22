@@ -1,22 +1,24 @@
+<app-header></app-header>
 <div class="auth-wrapper">
   <div class="glass-card auth-card">
-    <a routerLink="/dashboard" class="close-btn" title="Close and return to Dashboard">&times;</a>
     <div class="auth-header">
       <span class="logo">✙</span>
       <h2>Create Account</h2>
       <p>Register to manage bookings with HealSync</p>
     </div>
 
-    <form #registerForm="ngForm" (submit)="onSubmit(registerForm); $event.preventDefault()">
-      <!-- Status Messages -->
-      <div class="error-banner" *ngIf="errorMessage">
-        <span>⚠️</span> {{ errorMessage }}
-      </div>
 
-      <div class="success-banner" *ngIf="successMessage">
-        <span>✓</span> {{ successMessage }}
-      </div>
+    <!-- Status Messages -->
+    <div class="error-banner" *ngIf="errorMessage">
+      <span>⚠️</span> {{ errorMessage }}
+    </div>
 
+    <div class="success-banner" *ngIf="successMessage">
+      <span>✓</span> {{ successMessage }}
+    </div>
+
+    <!-- STEP 1: REGISTER FORM -->
+    <form *ngIf="step === 'register'" #registerForm="ngForm" (submit)="onSubmit(registerForm); $event.preventDefault()">
       <div class="form-row">
         <div class="form-group flex-1">
           <label class="form-label" for="firstName">First Name</label>
@@ -68,6 +70,21 @@
       </div>
 
       <div class="form-group">
+        <label class="form-label" for="confirmPassword">Confirm Password</label>
+        <input 
+          class="form-control" 
+          type="password" 
+          id="confirmPassword" 
+          name="confirmPassword" 
+          [(ngModel)]="confirmPassword" 
+          placeholder="Confirm your password" 
+          required>
+        <div *ngIf="confirmPassword && !passwordsMatch" style="color: #ef4444; font-size: 0.8rem; margin-top: 6px;">
+          ⚠️ Passwords do not match.
+        </div>
+      </div>
+
+      <div class="form-group">
         <label class="form-label" for="mobileNo">Mobile Number</label>
         <input 
           class="form-control" 
@@ -79,11 +96,49 @@
           required>
       </div>
 
-      <button class="btn btn-primary w-100 submit-btn" type="submit">Sign Up</button>
+      <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="registerForm.invalid || !passwordsMatch || isSubmitting">
+        <span *ngIf="!isSubmitting">Sign Up</span>
+        <span *ngIf="isSubmitting">Signing up...</span>
+      </button>
     </form>
 
-    <div class="auth-footer">
-      <p>Already have an account? <a routerLink="/login">Log In</a></p>
+    <!-- STEP 2: OTP VERIFICATION FORM -->
+    <form *ngIf="step === 'otp'" #otpForm="ngForm" (submit)="onVerifyOtp(); $event.preventDefault()">
+      <div *ngIf="!successMessage">
+        <div class="form-group">
+          <label class="form-label" for="regOtp">6-Digit Email Verification Code (OTP) *</label>
+          <input 
+            class="form-control" 
+            style="letter-spacing: 4px; text-align: center; font-size: 1.25rem; font-weight: bold;" 
+            type="text" 
+            id="regOtp" 
+            name="otp" 
+            [(ngModel)]="otp" 
+            required 
+            maxlength="6" 
+            minlength="6" 
+            placeholder="000000">
+        </div>
+
+        <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="otpForm.invalid || isSubmitting">
+          <span *ngIf="!isSubmitting">Verify & Register</span>
+          <span *ngIf="isSubmitting">Verifying...</span>
+        </button>
+
+        <div style="text-align: center; margin-top: 16px; display: flex; justify-content: center; gap: 20px;">
+          <a href="javascript:void(0)" (click)="resendOtp()" [style.pointer-events]="(resendCooldown > 0 || isSubmitting) ? 'none' : 'auto'" [style.color]="(resendCooldown > 0 || isSubmitting) ? '#64748b' : '#0ea5e9'" style="text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+            Resend OTP {{ resendCooldown > 0 ? '(' + resendCooldown + 's)' : '' }}
+          </a>
+          <span style="color: #475569;">|</span>
+          <a href="javascript:void(0)" (click)="step = 'register'; successMessage = ''; errorMessage = '';" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">
+            ← Back
+          </a>
+        </div>
+      </div>
+    </form>
+
+    <div class="auth-footer" *ngIf="step === 'register'">
+      <p>Already have an account? <a routerLink="/patient/login">Log In</a></p>
     </div>
   </div>
 </div>

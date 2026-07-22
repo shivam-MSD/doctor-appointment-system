@@ -20,6 +20,12 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   selectedClinicNameForAdmin = '';
   private signalrSub?: Subscription;
 
+  // Existing admin assignment state
+  showAssignExistingAdminModal = false;
+  existingAdmins: any[] = [];
+  selectedExistingAdminId = '';
+  isAssigningExisting = false;
+
   // Weekday definitions
   weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   selectedDaysRegister: string[] = [];
@@ -112,7 +118,6 @@ export class ClinicsComponent implements OnInit, OnDestroy {
   adminForm = {
     clinicId: '',
     adminEmail: '',
-    adminPassword: '',
     adminFirstName: '',
     adminLastName: '',
     adminMobileNo: ''
@@ -306,11 +311,74 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     this.adminForm = {
       clinicId: '',
       adminEmail: '',
-      adminPassword: '',
       adminFirstName: '',
       adminLastName: '',
       adminMobileNo: ''
     };
+  }
+
+  openAssignExistingAdminModal(clinicId: string, clinicName: string): void {
+    this.selectedClinicIdForAdmin = clinicId;
+    this.selectedClinicNameForAdmin = clinicName;
+    this.selectedExistingAdminId = '';
+    this.showAssignExistingAdminModal = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    
+    // Load existing doctor admins to choose from
+    this.adminService.getDoctorAdmins().subscribe({
+      next: (res) => {
+        this.existingAdmins = res;
+      },
+      error: () => {
+        this.toastService.showError('Failed to load clinic administrators.');
+      }
+    });
+  }
+
+  closeAssignExistingAdminModal(): void {
+    this.showAssignExistingAdminModal = false;
+    this.selectedClinicIdForAdmin = '';
+    this.selectedClinicNameForAdmin = '';
+    this.selectedExistingAdminId = '';
+    this.existingAdmins = [];
+  }
+
+  submitAssignExistingAdmin(): void {
+    if (!this.selectedClinicIdForAdmin || !this.selectedExistingAdminId) {
+      this.toastService.showError('Please select an administrator.');
+      return;
+    }
+    
+    this.isAssigningExisting = true;
+    
+    // First retrieve currently assigned clinics for this admin to update the array
+    this.adminService.getAdminClinics(this.selectedExistingAdminId).subscribe({
+      next: (currentClinics: any[]) => {
+        const clinicIds = currentClinics.map(c => c.clinicId);
+        if (!clinicIds.includes(this.selectedClinicIdForAdmin)) {
+          clinicIds.push(this.selectedClinicIdForAdmin);
+        }
+        
+        // Save the updated clinic assignment list
+        this.adminService.assignAdminToClinics(this.selectedExistingAdminId, clinicIds).subscribe({
+          next: () => {
+            this.toastService.showSuccess('Administrator assigned to clinic successfully!');
+            this.loadDoctorClinics();
+            setTimeout(() => this.closeAssignExistingAdminModal(), 1500);
+            this.isAssigningExisting = false;
+          },
+          error: (err) => {
+            this.toastService.showError(err?.error?.detail || 'Failed to assign administrator.');
+            this.isAssigningExisting = false;
+          }
+        });
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to check existing assignments.');
+        this.isAssigningExisting = false;
+      }
+    });
   }
 
   validateClinicForm(form: any): boolean {
@@ -754,7 +822,9 @@ export class ClinicsComponent implements OnInit, OnDestroy {
     const daysInMonth = lastDay.getDate();
 
     const days: any[] = [];
-    const todayStr = new Date().toISOString().substring(0, 10);
+    
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push({ dayNumber: null });
@@ -764,7 +834,7 @@ export class ClinicsComponent implements OnInit, OnDestroy {
 
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
-      const dateString = d.toISOString().substring(0, 10);
+      const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const dayName = dayNameMap[d.getDay()];
 
       const isOpenDay = selectedDays.includes(dayName) && dateString >= todayStr;

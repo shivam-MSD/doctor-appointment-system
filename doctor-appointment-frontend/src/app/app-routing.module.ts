@@ -2,8 +2,10 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { MainLayoutComponent } from './shared/components/main-layout/main-layout.component';
 import { LoginComponent } from './features/auth/login/login.component';
-import { RegisterComponent } from './features/auth/register/register.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 import { DoctorRegisterComponent } from './features/auth/doctor-register/doctor-register.component';
+import { RegisterComponent } from './features/auth/register/register.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { BookComponent } from './features/appointments/book/book.component';
 import { ProfileComponent } from './features/profile/profile.component';
@@ -33,8 +35,10 @@ const routes: Routes = [
   { path: 'superadmin/login', component: LoginComponent, data: { role: 'SuperAdmin' } },
 
   // Default fallbacks to Patient Portal
-  { path: 'login', redirectTo: 'patient/login', pathMatch: 'full' },
-  { path: 'register', redirectTo: 'patient/register', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
 
   {
     path: '',

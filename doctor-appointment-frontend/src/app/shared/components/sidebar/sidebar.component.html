@@ -15,7 +15,8 @@
           [routerLinkActiveOptions]="{exact: true}" data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
-          <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="patientPendingActionCount > 0">
+          <span class="badge badge-pending" style="background: #ef4444; color: white;"
+            *ngIf="patientPendingActionCount > 0">
             {{ patientPendingActionCount }}
           </span>
         </a>
@@ -35,24 +36,21 @@
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/patient/profile" routerLinkActive="active"
-          data-tooltip="My Profile">
-          <span class="icon">👤</span>
-          <span class="label">My Profile</span>
-        </a>
-      </li>
-      <li>
-        <a class="nav-link" routerLink="/patient/doctors" routerLinkActive="active"
-          data-tooltip="Search Doctors">
+        <a class="nav-link" routerLink="/patient/doctors" routerLinkActive="active" data-tooltip="Search Doctors">
           <span class="icon">🩺</span>
           <span class="label">Search Doctors</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/patient/audit-logs" routerLinkActive="active"
-          data-tooltip="Audit Logs">
+        <a class="nav-link" routerLink="/patient/audit-logs" routerLinkActive="active" data-tooltip="Audit Logs">
           <span class="icon">📜</span>
           <span class="label">Audit Logs</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/patient/profile" routerLinkActive="active" data-tooltip="My Profile">
+          <span class="icon">👤</span>
+          <span class="label">My Profile</span>
         </a>
       </li>
     </ng-container>
@@ -60,15 +58,13 @@
     <!-- Doctor-Specific Links -->
     <ng-container *ngIf="authService.getRole() === 'Doctor'">
       <li>
-        <a class="nav-link" routerLink="/doctor/dashboard" routerLinkActive="active"
-          data-tooltip="Dashboard">
+        <a class="nav-link" routerLink="/doctor/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/appointments" routerLinkActive="active"
-          data-tooltip="Appointments">
+        <a class="nav-link" routerLink="/doctor/appointments" routerLinkActive="active" data-tooltip="Appointments">
           <span class="icon">📅</span>
           <span class="label">Appointments</span>
         </a>
@@ -89,29 +85,25 @@
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/clinics" routerLinkActive="active"
-          data-tooltip="My Clinics">
+        <a class="nav-link" routerLink="/doctor/clinics" routerLinkActive="active" data-tooltip="My Clinics">
           <span class="icon">🏢</span>
           <span class="label">My Clinics</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/admins" routerLinkActive="active"
-          data-tooltip="Clinic Admins">
+        <a class="nav-link" routerLink="/doctor/admins" routerLinkActive="active" data-tooltip="Clinic Admins">
           <span class="icon">👥</span>
           <span class="label">Clinic Admins</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/audit-logs" routerLinkActive="active"
-          data-tooltip="Audit Logs">
+        <a class="nav-link" routerLink="/doctor/audit-logs" routerLinkActive="active" data-tooltip="Audit Logs">
           <span class="icon">📜</span>
           <span class="label">Audit Logs</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/doctor/profile" routerLinkActive="active"
-          data-tooltip="My Profile">
+        <a class="nav-link" routerLink="/doctor/profile" routerLinkActive="active" data-tooltip="My Profile">
           <span class="icon">👤</span>
           <span class="label">My Profile</span>
         </a>
@@ -121,29 +113,25 @@
     <!-- Clinic Admin Links -->
     <ng-container *ngIf="authService.getRole() === 'Admin'">
       <li>
-        <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active"
-          data-tooltip="Dashboard">
+        <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/admin/appointments" routerLinkActive="active"
-          data-tooltip="Appointments">
+        <a class="nav-link" routerLink="/admin/appointments" routerLinkActive="active" data-tooltip="Appointments">
           <span class="icon">📅</span>
           <span class="label">Appointments</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/admin/audit-logs" routerLinkActive="active"
-          data-tooltip="Audit Logs">
+        <a class="nav-link" routerLink="/admin/audit-logs" routerLinkActive="active" data-tooltip="Audit Logs">
           <span class="icon">📜</span>
           <span class="label">Audit Logs</span>
         </a>
       </li>
       <li>
-        <a class="nav-link" routerLink="/admin/profile" routerLinkActive="active"
-          data-tooltip="My Profile">
+        <a class="nav-link" routerLink="/admin/profile" routerLinkActive="active" data-tooltip="My Profile">
           <span class="icon">👤</span>
           <span class="label">My Profile</span>
         </a>
@@ -153,8 +141,7 @@
     <!-- Super Admin Links -->
     <ng-container *ngIf="authService.getRole() === 'SuperAdmin'">
       <li>
-        <a class="nav-link" routerLink="/superadmin/dashboard" routerLinkActive="active"
-          data-tooltip="Dashboard">
+        <a class="nav-link" routerLink="/superadmin/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
           <span class="icon">📊</span>
           <span class="label">Dashboard</span>
         </a>

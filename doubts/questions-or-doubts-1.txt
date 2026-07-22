@@ -122,4 +122,79 @@ most cases admin can have there PC or PC in teh cliininc or ipad to view, and ma
 
 ______________________________________________________________________________________________
 
+Another question is :- we are storing all the audit logs for all - doctor, patient, admin, superadmin in the database then would it become somuch costly.
+because do big companies also storing audit logs of each and every customer data into the database then it would be also costly for them right??
 
+______________________________________________________________________________________________________
+
+It is bad to store the notification for the long time in the database right?
+So, could you please tell me how long it is good to store notification in the database. And please implement the code for that to remove the notification from the database after the specific time interval only if the notification marked as Read.
+
+______________________________________________________________________________________________________
+
+Why are using Event and delegate in this project??
+it is because the user booking experience should be best and he does not have to wait for response  - means saving the data to audit log, etc.
+
+am i right??
+what if there is problem in saving the data into audit log?? users appointment will be booked but when patient check the audit log it will not shown the appointment booking log.
+
+How to sove this issue and how big compaies deals with this type of issue???
+because placing order, payment are the synchronous process or atomic process, if any of them fails whole transaction role back but if thses completes then email is send to the user that "You are has been placed successfully." "Payment done for the order" email. will be asynchronous. means user does not have to wait to receive the email.
+
+______________________________________________________________________________________________________
+
+
+I want to implement the following way :-
+
+1. Registration - 
+Approach 1 :- user enter OTP then the password is autogenrated and send useremail and user can change the passeord later [here we dont have to add 'Password' and 'Confirm Password' field]
+and on successful registration - user get message that you can change the password later.
+
+Approach 2 :- user provides 'Password' and 'Confirm Password' field in the registration page - 
+then after entering correct OTP user will successfully register.
+
+OR we can use both the approach for differet user.
+
+Approach 2 can be used when patient register.
+
+Approach 1 can be used when doctor, admin register - because when superadmin accept the doctor or admin request, email should be send to them 'your request accepted... or some message and password is send to email" then doctor use that password to login and then he can update the password.
+
+2. UPdate password :-
+current password, new passwrdo, confirm new password - 
+check if current paswrod is correct?? 
+if yes then 
+then user should receive otp to email id to change the password and 
+else
+he wont be able to update the password even if the current passswrod is correct.
+
+3. Forgot password :- 
+User need to enter otp and then he shoul allow to create the new password.
+
+Question :- 
+1. in case of admin, what we can do?? doctor have to create multiple emailid for different admin?? because here we cannot use personal email id for the admin and doctor.
+
+How in teh real world we can do this??
+
+-> if there can be any other problem then please tell me what other problems can user face.
+
+
+____________________________________________________________________________________________________
+
+
+1. Email template styling – do you want the current HTML templates or a simpler plain‑text version?
+html template is better and looks good.
+
+2. Password length & complexity – currently 12‑character alphanumeric. Adjust if required.
+Whether to store the generated temporary password in logs – for audit purposes.
+-> could you please provide me what approach is better
+
+3. Should the temporary password be sent only on first approval (i.e., when VerificationStatus changes to Verified) or also on re‑approval after a rejection?
+i think it should be sent again after reapproaval.
+
+4. Do we need to enforce a password‑change prompt on first login (e.g., flag ForcePasswordChange)?
+yes, it is better, but it is upto user, that he wants to change the passwrod or not. we cannot force the user. just provide option to change the passswrod.
+
+I have some real world problem and questions :-
+1. What if doctor register via presonal email and he want to register as a patient??
+2. what if patient wants to change the emaild ? OR if that patient has deleted the email account then??
+3.  what if patient forgot login email.????

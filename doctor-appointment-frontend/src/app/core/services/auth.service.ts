@@ -81,4 +81,24 @@ export class AuthService {
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
+
+  checkEmail(email: string): Observable<any> {
+    return this.http.post<any>('/api/auth/check-email', { email });
+  }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<any>('/api/auth/forgot-password', { email });
+  }
+
+  resetPassword(email: string, otp: string, newPassword: string): Observable<any> {
+    return this.http.post<any>('/api/auth/reset-password', { email, otp, newPassword });
+  }
+
+  initiatePasswordUpdate(currentPassword: string): Observable<any> {
+    return this.http.post<any>('/api/auth/initiate-password-update', { currentPassword });
+  }
+
+  updatePassword(otp: string, newPassword: string): Observable<any> {
+    return this.http.post<any>('/api/auth/update-password', { otp, newPassword });
+  }
 }

@@ -200,7 +200,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   adminForm = {
     clinicId: '',
     adminEmail: '',
-    adminPassword: '',
     adminFirstName: '',
     adminLastName: '',
     adminMobileNo: ''
@@ -595,7 +594,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.adminForm = {
       clinicId: clinicId,
       adminEmail: '',
-      adminPassword: '',
       adminFirstName: '',
       adminLastName: '',
       adminMobileNo: ''

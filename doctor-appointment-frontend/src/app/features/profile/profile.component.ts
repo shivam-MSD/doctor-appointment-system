@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PatientService } from '../../core/services/patient.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -9,7 +9,7 @@ import { AppointmentService } from '../../core/services/appointment.service';
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   profileId = '';
   role = '';
   
@@ -53,12 +53,46 @@ export class ProfileComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  // Password Update Fields
+  showChangePassword = false;
+  changePasswordStep: 'init' | 'otp' = 'init';
+  currentPassword = '';
+  changeOtp = '';
+  changeNewPassword = '';
+  changeConfirmPassword = '';
+  isChangingPassword = false;
+  showChangePasswordToggle = false;
+  showChangeConfirmPasswordToggle = false;
+
+  resendCooldown = 0;
+  cooldownInterval: any;
+
   constructor(
     private patientService: PatientService,
     private authService: AuthService,
     private toastService: ToastService,
     private appointmentService: AppointmentService
   ) {}
+
+  ngOnDestroy(): void {
+    if (this.cooldownInterval) {
+      clearInterval(this.cooldownInterval);
+    }
+  }
+
+  startCooldown(): void {
+    this.resendCooldown = 30;
+    if (this.cooldownInterval) {
+      clearInterval(this.cooldownInterval);
+    }
+    this.cooldownInterval = setInterval(() => {
+      if (this.resendCooldown > 0) {
+        this.resendCooldown--;
+      } else {
+        clearInterval(this.cooldownInterval);
+      }
+    }, 1000);
+  }
 
   ngOnInit(): void {
     this.profileId = sessionStorage.getItem('profileId') || '';
@@ -291,5 +325,79 @@ export class ProfileComponent implements OnInit {
     }
 
     return { percentage: Math.min(completed, 100), left };
+  }
+
+  toggleChangePasswordSection(): void {
+    this.showChangePassword = !this.showChangePassword;
+    this.changePasswordStep = 'init';
+    this.currentPassword = '';
+    this.changeOtp = '';
+    this.changeNewPassword = '';
+    this.changeConfirmPassword = '';
+  }
+
+  onInitiatePasswordUpdate(): void {
+    if (!this.currentPassword) {
+      this.toastService.showError('Please enter your current password.');
+      return;
+    }
+    if (!this.changeNewPassword || this.changeNewPassword.length < 6) {
+      this.toastService.showError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (this.changeNewPassword !== this.changeConfirmPassword) {
+      this.toastService.showError('Passwords do not match.');
+      return;
+    }
+
+    this.isChangingPassword = true;
+    this.authService.initiatePasswordUpdate(this.currentPassword).subscribe({
+      next: (res) => {
+        this.toastService.showSuccess(res.message || 'Verification OTP sent to your email.');
+        this.changePasswordStep = 'otp';
+        this.isChangingPassword = false;
+        this.startCooldown();
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Current password verification failed.');
+        this.isChangingPassword = false;
+      }
+    });
+  }
+
+  onConfirmPasswordUpdate(): void {
+    if (!this.changeOtp || this.changeOtp.length !== 6) {
+      this.toastService.showError('Please enter a valid 6-digit OTP code.');
+      return;
+    }
+
+    this.isChangingPassword = true;
+    this.authService.updatePassword(this.changeOtp, this.changeNewPassword).subscribe({
+      next: (res) => {
+        this.toastService.showSuccess(res.message || 'Password changed successfully!');
+        this.toggleChangePasswordSection();
+        this.isChangingPassword = false;
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to update password. Please check your OTP.');
+        this.isChangingPassword = false;
+      }
+    });
+  }
+
+  resendChangePasswordOtp(): void {
+    if (this.resendCooldown > 0) return;
+    this.isChangingPassword = true;
+    this.authService.initiatePasswordUpdate(this.currentPassword).subscribe({
+      next: (res) => {
+        this.toastService.showSuccess('A new OTP has been sent successfully!');
+        this.isChangingPassword = false;
+        this.startCooldown();
+      },
+      error: (err) => {
+        this.toastService.showError(err?.error?.detail || 'Failed to resend OTP. Please try again.');
+        this.isChangingPassword = false;
+      }
+    });
   }
 }

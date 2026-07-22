@@ -1,22 +1,23 @@
+<app-header></app-header>
 <div class="auth-wrapper">
   <div class="glass-card auth-card">
-    <a routerLink="/dashboard" class="close-btn" title="Close and return to Dashboard">&times;</a>
     <div class="auth-header">
       <span class="logo">✙</span>
       <h2>Doctor Onboarding</h2>
       <p>Register your profile to start accepting appointments</p>
     </div>
 
-    <form #docRegisterForm="ngForm" (submit)="onSubmit(docRegisterForm); $event.preventDefault()">
-      <!-- Status Messages -->
-      <div class="error-banner" *ngIf="errorMessage">
-        <span>⚠️</span> {{ errorMessage }}
-      </div>
+    <!-- Status Messages -->
+    <div class="error-banner" *ngIf="errorMessage">
+      <span>⚠️</span> {{ errorMessage }}
+    </div>
 
-      <div class="success-banner" *ngIf="successMessage">
-        <span>✓</span> {{ successMessage }}
-      </div>
+    <div class="success-banner" *ngIf="successMessage">
+      <span>✓</span> {{ successMessage }}
+    </div>
 
+    <!-- STEP 1: REGISTRATION FORM -->
+    <form *ngIf="step === 'register'" #docRegisterForm="ngForm" (submit)="onSubmit(docRegisterForm); $event.preventDefault()">
       <!-- Account Info Section -->
       <h3 class="section-title">1. Account Details</h3>
       <div class="form-row">
@@ -38,17 +39,10 @@
           placeholder="doctor@hospital.com" required>
       </div>
 
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="password">Password *</label>
-          <input class="form-control" type="password" id="password" name="password" [(ngModel)]="password"
-            placeholder="••••••••" required>
-        </div>
-        <div class="form-group flex-1">
-          <label class="form-label" for="mobileNo">Mobile Number *</label>
-          <input class="form-control" type="tel" id="mobileNo" name="mobileNo" [(ngModel)]="mobileNo"
-            placeholder="+1 555-0188" required>
-        </div>
+      <div class="form-group">
+        <label class="form-label" for="mobileNo">Mobile Number *</label>
+        <input class="form-control" type="tel" id="mobileNo" name="mobileNo" [(ngModel)]="mobileNo"
+          placeholder="+1 555-0188" required>
       </div>
 
       <div class="form-row">
@@ -101,11 +95,10 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="licenceNumber">Medical License Number *</label>
+        <label class="form-label" for="licenceNumber">Medical Licence Number *</label>
         <input class="form-control" type="text" id="licenceNumber" name="licenceNumber" [(ngModel)]="licenceNumber"
-          placeholder="LIC-9831-29" required>
+          placeholder="e.g. LIC1234567" required>
       </div>
-
 
       <div class="form-row">
         <div class="form-group flex-1">
@@ -120,11 +113,49 @@
         </div>
       </div>
 
-      <button class="btn btn-primary w-100 submit-btn" type="submit">Submit Onboarding Application</button>
+      <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="docRegisterForm.invalid || isSubmitting">
+        <span *ngIf="!isSubmitting">Submit Onboarding Application</span>
+        <span *ngIf="isSubmitting">Submitting...</span>
+      </button>
     </form>
 
-    <div class="auth-footer">
-      <p>Already have a doctor account? <a routerLink="/login">Log In</a></p>
+    <!-- STEP 2: OTP VERIFICATION FORM -->
+    <form *ngIf="step === 'otp'" #otpForm="ngForm" (submit)="onVerifyOtp(); $event.preventDefault()">
+      <div *ngIf="!successMessage">
+        <div class="form-group">
+          <label class="form-label" for="regOtp">6-Digit Email Verification Code (OTP) *</label>
+          <input 
+            class="form-control" 
+            style="letter-spacing: 4px; text-align: center; font-size: 1.25rem; font-weight: bold;" 
+            type="text" 
+            id="regOtp" 
+            name="otp" 
+            [(ngModel)]="otp" 
+            required 
+            maxlength="6" 
+            minlength="6" 
+            placeholder="000000">
+        </div>
+
+        <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="otpForm.invalid || isSubmitting">
+          <span *ngIf="!isSubmitting">Verify Email & Submit</span>
+          <span *ngIf="isSubmitting">Verifying...</span>
+        </button>
+
+        <div style="text-align: center; margin-top: 16px; display: flex; justify-content: center; gap: 20px;">
+          <a href="javascript:void(0)" (click)="resendOtp()" [style.pointer-events]="(resendCooldown > 0 || isSubmitting) ? 'none' : 'auto'" [style.color]="(resendCooldown > 0 || isSubmitting) ? '#64748b' : '#0ea5e9'" style="text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+            Resend OTP {{ resendCooldown > 0 ? '(' + resendCooldown + 's)' : '' }}
+          </a>
+          <span style="color: #475569;">|</span>
+          <a href="javascript:void(0)" (click)="step = 'register'; successMessage = ''; errorMessage = '';" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">
+            ← Back
+          </a>
+        </div>
+      </div>
+    </form>
+
+    <div class="auth-footer" *ngIf="step === 'register'">
+      <p>Already have a doctor account? <a routerLink="/doctor/login">Log In</a></p>
     </div>
   </div>
 </div>

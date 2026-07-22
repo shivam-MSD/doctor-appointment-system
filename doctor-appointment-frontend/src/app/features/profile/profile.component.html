@@ -4,23 +4,18 @@
       <!-- Dynamic SVG Progress Circle around User Icon -->
       <div class="profile-progress-circle" *ngIf="role === 'Patient' && completionStats.percentage < 100">
         <svg viewBox="0 0 36 36" class="circular-chart">
-          <path class="circle-bg"
-            d="M18 2.0845
+          <path class="circle-bg" d="M18 2.0845
               a 15.9155 15.9155 0 0 1 0 31.831
-              a 15.9155 15.9155 0 0 1 0 -31.831"
-          />
-          <path class="circle"
-            [attr.stroke-dasharray]="completionStats.percentage + ', 100'"
-            d="M18 2.0845
+              a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path class="circle" [attr.stroke-dasharray]="completionStats.percentage + ', 100'" d="M18 2.0845
               a 15.9155 15.9155 0 0 1 0 31.831
-              a 15.9155 15.9155 0 0 1 0 -31.831"
-          />
+              a 15.9155 15.9155 0 0 1 0 -31.831" />
         </svg>
         <span class="circle-icon">👤</span>
       </div>
       <span class="header-icon" *ngIf="role !== 'Patient' || completionStats.percentage === 100">👤</span>
-      
-      <h2>My Health Profile</h2>
+
+      <h2 *ngIf="role !== 'Patient'">My Health Profile</h2>
       <p>Manage your account settings, contact details, and vital medical cards.</p>
     </div>
 
@@ -50,127 +45,135 @@
 
       <div class="glass-card form-section-card">
         <h3 class="section-title">1. Personal Information</h3>
-      
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="firstName">First Name *</label>
-          <input class="form-control" type="text" id="firstName" name="firstName" [(ngModel)]="firstName" required
-                 [class.is-invalid]="backendErrors['FirstName'] || backendErrors['firstName']"
-                 [attr.title]="backendErrors['FirstName'] || backendErrors['firstName'] || null">
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="firstName">First Name *</label>
+            <input class="form-control" type="text" id="firstName" name="firstName" [(ngModel)]="firstName" required
+              [class.is-invalid]="backendErrors['FirstName'] || backendErrors['firstName']"
+              [attr.title]="backendErrors['FirstName'] || backendErrors['firstName'] || null">
+          </div>
+
+          <div class="form-group flex-1">
+            <label class="form-label" for="lastName">Last Name *</label>
+            <input class="form-control" type="text" id="lastName" name="lastName" [(ngModel)]="lastName" required
+              [class.is-invalid]="backendErrors['LastName'] || backendErrors['lastName']"
+              [attr.title]="backendErrors['LastName'] || backendErrors['lastName'] || null">
+          </div>
         </div>
 
-        <div class="form-group flex-1">
-          <label class="form-label" for="lastName">Last Name *</label>
-          <input class="form-control" type="text" id="lastName" name="lastName" [(ngModel)]="lastName" required
-                 [class.is-invalid]="backendErrors['LastName'] || backendErrors['lastName']"
-                 [attr.title]="backendErrors['LastName'] || backendErrors['lastName'] || null">
-        </div>
-      </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="gender">Gender *</label>
+            <select class="form-control" id="gender" name="gender" [(ngModel)]="gender" required
+              [class.is-invalid]="backendErrors['Gender'] || backendErrors['gender']"
+              [attr.title]="backendErrors['Gender'] || backendErrors['gender'] || null">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="gender">Gender *</label>
-          <select class="form-control" id="gender" name="gender" [(ngModel)]="gender" required
-                  [class.is-invalid]="backendErrors['Gender'] || backendErrors['gender']"
-                  [attr.title]="backendErrors['Gender'] || backendErrors['gender'] || null">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <div class="form-group flex-1">
-          <label class="form-label" for="dob">Date of Birth *</label>
-          <input class="form-control" type="date" id="dob" name="dob" [(ngModel)]="dob" required
-                 [class.is-invalid]="backendErrors['dob'] || backendErrors['DOB']"
-                 [attr.title]="backendErrors['dob'] || backendErrors['DOB'] || null">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="mobileNo">Mobile Number *</label>
-          <input class="form-control" type="tel" id="mobileNo" name="mobileNo" [(ngModel)]="mobileNo" required
-                 [class.is-invalid]="backendErrors['MobileNo'] || backendErrors['mobileNo']"
-                 [attr.title]="backendErrors['MobileNo'] || backendErrors['mobileNo'] || null">
+          <div class="form-group flex-1">
+            <label class="form-label" for="dob">Date of Birth *</label>
+            <input class="form-control" type="date" id="dob" name="dob" [(ngModel)]="dob" required
+              [class.is-invalid]="backendErrors['dob'] || backendErrors['DOB']"
+              [attr.title]="backendErrors['dob'] || backendErrors['DOB'] || null">
+          </div>
         </div>
 
-        <div class="form-group flex-1">
-          <label class="form-label" for="bloodGroup">Blood Group *</label>
-          <select class="form-control" id="bloodGroup" name="bloodGroup" [(ngModel)]="bloodGroup" required
-                  [class.is-invalid]="backendErrors['BloodGroup'] || backendErrors['bloodGroup']"
-                  [attr.title]="backendErrors['BloodGroup'] || backendErrors['bloodGroup'] || null">
-            <option value="APositive">A+</option>
-            <option value="ANegative">A-</option>
-            <option value="BPositive">B+</option>
-            <option value="BNegative">B-</option>
-            <option value="ABPositive">AB+</option>
-            <option value="ABNegative">AB-</option>
-            <option value="OPositive">O+</option>
-            <option value="ONegative">O-</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="mobileNo">Mobile Number *</label>
+            <input class="form-control" type="tel" id="mobileNo" name="mobileNo" [(ngModel)]="mobileNo" required
+              [class.is-invalid]="backendErrors['MobileNo'] || backendErrors['mobileNo']"
+              [attr.title]="backendErrors['MobileNo'] || backendErrors['mobileNo'] || null">
+          </div>
+
+          <div class="form-group flex-1">
+            <label class="form-label" for="bloodGroup">Blood Group *</label>
+            <select class="form-control" id="bloodGroup" name="bloodGroup" [(ngModel)]="bloodGroup" required
+              [class.is-invalid]="backendErrors['BloodGroup'] || backendErrors['bloodGroup']"
+              [attr.title]="backendErrors['BloodGroup'] || backendErrors['bloodGroup'] || null">
+              <option value="APositive">A+</option>
+              <option value="ANegative">A-</option>
+              <option value="BPositive">B+</option>
+              <option value="BNegative">B-</option>
+              <option value="ABPositive">AB+</option>
+              <option value="ABNegative">AB-</option>
+              <option value="OPositive">O+</option>
+              <option value="ONegative">O-</option>
+            </select>
+          </div>
         </div>
-      </div>
 
       </div>
 
       <!-- Emergency Contact Section -->
       <div class="glass-card form-section-card">
         <h3 class="section-title">2. Emergency Contact</h3>
-      
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="contactName">Contact Name</label>
-          <input class="form-control" type="text" id="contactName" name="emergencyContactName" [(ngModel)]="emergencyContactName" placeholder="e.g. Spouse / Parent">
-        </div>
 
-        <div class="form-group flex-1">
-          <label class="form-label" for="contactNumber">Contact Number</label>
-          <input class="form-control" type="tel" id="contactNumber" name="emergencyContactNumber" [(ngModel)]="emergencyContactNumber" placeholder="e.g. +1 555-0199">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="contactName">Contact Name</label>
+            <input class="form-control" type="text" id="contactName" name="emergencyContactName"
+              [(ngModel)]="emergencyContactName" placeholder="e.g. Spouse / Parent">
+          </div>
+
+          <div class="form-group flex-1">
+            <label class="form-label" for="contactNumber">Contact Number</label>
+            <input class="form-control" type="tel" id="contactNumber" name="emergencyContactNumber"
+              [(ngModel)]="emergencyContactNumber" placeholder="e.g. +1 555-0199">
+          </div>
         </div>
-      </div>
 
       </div>
 
       <!-- Address Details Section -->
       <div class="glass-card form-section-card">
         <h3 class="section-title">3. Address Details</h3>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label">Country *</label>
-          <input class="form-control" type="text" name="country" [(ngModel)]="country" required>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label">Country *</label>
+            <input class="form-control" type="text" name="country" [(ngModel)]="country" required>
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">State *</label>
+            <input class="form-control" type="text" name="state" [(ngModel)]="state" required
+              placeholder="e.g. Maharashtra">
+          </div>
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">State *</label>
-          <input class="form-control" type="text" name="state" [(ngModel)]="state" required placeholder="e.g. Maharashtra">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label">City *</label>
+            <input class="form-control" type="text" name="city" [(ngModel)]="city" required placeholder="e.g. Mumbai">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">Area *</label>
+            <input class="form-control" type="text" name="area" [(ngModel)]="area" required
+              placeholder="e.g. Bandra West">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">Pincode *</label>
+            <input class="form-control" type="text" name="pincode" [(ngModel)]="pincode" required
+              placeholder="e.g. 400050">
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label">City *</label>
-          <input class="form-control" type="text" name="city" [(ngModel)]="city" required placeholder="e.g. Mumbai">
+        <div class="form-group">
+          <label class="form-label">Address Line 1 *</label>
+          <input class="form-control" type="text" name="addressline1" [(ngModel)]="addressline1" required
+            placeholder="e.g. 102 Park Avenue">
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">Area *</label>
-          <input class="form-control" type="text" name="area" [(ngModel)]="area" required placeholder="e.g. Bandra West">
+        <div class="form-group">
+          <label class="form-label">Address Line 2 (Optional)</label>
+          <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2"
+            placeholder="e.g. Near Metro Station">
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">Pincode *</label>
-          <input class="form-control" type="text" name="pincode" [(ngModel)]="pincode" required placeholder="e.g. 400050">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Address Line 1 *</label>
-        <input class="form-control" type="text" name="addressline1" [(ngModel)]="addressline1" required placeholder="e.g. 102 Park Avenue">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Address Line 2 (Optional)</label>
-        <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2" placeholder="e.g. Near Metro Station">
-      </div>
       </div>
 
       <div class="form-actions">
-        <button class="btn btn-cancel flex-1" type="button" [disabled]="!profileForm.dirty" (click)="loadProfile(profileForm)">Discard Changes</button>
+        <button class="btn btn-cancel flex-1" type="button" [disabled]="!profileForm.dirty"
+          (click)="loadProfile(profileForm)">Discard Changes</button>
         <button class="btn btn-primary flex-1" type="submit" [disabled]="!profileForm.dirty">Save Changes</button>
       </div>
     </form>
@@ -179,154 +182,160 @@
     <form #doctorForm="ngForm" (submit)="onSubmit(doctorForm); $event.preventDefault()" *ngIf="role === 'Doctor'">
       <div class="glass-card form-section-card">
         <h3 class="section-title">🩺 Professional Doctor Profile</h3>
-      
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="docFirstName">First Name *</label>
-          <input class="form-control" type="text" id="docFirstName" name="firstName" [(ngModel)]="firstName" required
-                 [class.is-invalid]="backendErrors['FirstName'] || backendErrors['firstName']"
-                 [attr.title]="backendErrors['FirstName'] || backendErrors['firstName'] || null">
-        </div>
-        <div class="form-group flex-1">
-          <label class="form-label" for="docLastName">Last Name *</label>
-          <input class="form-control" type="text" id="docLastName" name="lastName" [(ngModel)]="lastName" required
-                 [class.is-invalid]="backendErrors['LastName'] || backendErrors['lastName']"
-                 [attr.title]="backendErrors['LastName'] || backendErrors['lastName'] || null">
-        </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="docMobileNo">Mobile Number *</label>
-          <input class="form-control" type="tel" id="docMobileNo" name="mobileNo" [(ngModel)]="mobileNo" required
-                 [class.is-invalid]="backendErrors['MobileNo'] || backendErrors['mobileNo']"
-                 [attr.title]="backendErrors['MobileNo'] || backendErrors['mobileNo'] || null">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="docFirstName">First Name *</label>
+            <input class="form-control" type="text" id="docFirstName" name="firstName" [(ngModel)]="firstName" required
+              [class.is-invalid]="backendErrors['FirstName'] || backendErrors['firstName']"
+              [attr.title]="backendErrors['FirstName'] || backendErrors['firstName'] || null">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label" for="docLastName">Last Name *</label>
+            <input class="form-control" type="text" id="docLastName" name="lastName" [(ngModel)]="lastName" required
+              [class.is-invalid]="backendErrors['LastName'] || backendErrors['lastName']"
+              [attr.title]="backendErrors['LastName'] || backendErrors['lastName'] || null">
+          </div>
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label" for="docLicence">Medical Licence Number *</label>
-          <input class="form-control" type="text" id="docLicence" name="licenceNumber" [(ngModel)]="licenceNumber" required
-                 [class.is-invalid]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber']"
-                 [attr.title]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber'] || null">
-        </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="docQualification">Qualification *</label>
-          <select class="form-control" id="docQualification" name="qualification" [(ngModel)]="qualification" required
-                  [class.is-invalid]="backendErrors['Qualification'] || backendErrors['qualification']"
-                  [attr.title]="backendErrors['Qualification'] || backendErrors['qualification'] || null">
-            <option value="" disabled>-- Select Qualification --</option>
-            <option value="MBBS">MBBS (Bachelor of Medicine, Bachelor of Surgery)</option>
-            <option value="MD">MD (Doctor of Medicine)</option>
-            <option value="MS">MS (Master of Surgery)</option>
-            <option value="BDS">BDS (Bachelor of Dental Surgery)</option>
-            <option value="MDS">MDS (Master of Dental Surgery)</option>
-            <option value="DM">DM (Doctorate of Medicine)</option>
-            <option value="MCh">MCh (Master of Chirurgiae)</option>
-            <option value="DNB">DNB (Diplomate of National Board)</option>
-            <option value="BAMS">BAMS (Bachelor of Ayurvedic Medicine & Surgery)</option>
-            <option value="BHMS">BHMS (Bachelor of Homeopathic Medicine & Surgery)</option>
-            <option value="BPT">BPT (Bachelor of Physiotherapy)</option>
-            <option value="MPT">MPT (Master of Physiotherapy)</option>
-            <option value="DO">DO (Doctor of Osteopathic Medicine)</option>
-            <option value="PhD">PhD (Doctor of Philosophy in Medicine)</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="docMobileNo">Mobile Number *</label>
+            <input class="form-control" type="tel" id="docMobileNo" name="mobileNo" [(ngModel)]="mobileNo" required
+              [class.is-invalid]="backendErrors['MobileNo'] || backendErrors['mobileNo']"
+              [attr.title]="backendErrors['MobileNo'] || backendErrors['mobileNo'] || null">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label" for="docLicence">Medical Licence Number *</label>
+            <input class="form-control" type="text" id="docLicence" name="licenceNumber" [(ngModel)]="licenceNumber"
+              required [class.is-invalid]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber']"
+              [attr.title]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber'] || null">
+          </div>
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label" for="docSpecialization">Specialization *</label>
-          <select class="form-control" id="docSpecialization" name="specializationId" [(ngModel)]="specializationId" required
-                  [class.is-invalid]="backendErrors['SpecializationId'] || backendErrors['specializationId']"
-                  [attr.title]="backendErrors['SpecializationId'] || backendErrors['specializationId'] || null">
-            <option value="" disabled>-- Select Specialization --</option>
-            <option *ngFor="let spec of specializations" [value]="spec.specializationId">{{ spec.specializationName }}</option>
-          </select>
-        </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="docExp">Years of Experience *</label>
-          <input class="form-control" type="number" id="docExp" name="yearsOfExperience" [(ngModel)]="yearsOfExperience" required min="0"
-                 [class.is-invalid]="backendErrors['YearsOfExperience'] || backendErrors['yearsOfExperience']"
-                 [attr.title]="backendErrors['YearsOfExperience'] || backendErrors['yearsOfExperience'] || null">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="docQualification">Qualification *</label>
+            <select class="form-control" id="docQualification" name="qualification" [(ngModel)]="qualification" required
+              [class.is-invalid]="backendErrors['Qualification'] || backendErrors['qualification']"
+              [attr.title]="backendErrors['Qualification'] || backendErrors['qualification'] || null">
+              <option value="" disabled>-- Select Qualification --</option>
+              <option value="MBBS">MBBS (Bachelor of Medicine, Bachelor of Surgery)</option>
+              <option value="MD">MD (Doctor of Medicine)</option>
+              <option value="MS">MS (Master of Surgery)</option>
+              <option value="BDS">BDS (Bachelor of Dental Surgery)</option>
+              <option value="MDS">MDS (Master of Dental Surgery)</option>
+              <option value="DM">DM (Doctorate of Medicine)</option>
+              <option value="MCh">MCh (Master of Chirurgiae)</option>
+              <option value="DNB">DNB (Diplomate of National Board)</option>
+              <option value="BAMS">BAMS (Bachelor of Ayurvedic Medicine & Surgery)</option>
+              <option value="BHMS">BHMS (Bachelor of Homeopathic Medicine & Surgery)</option>
+              <option value="BPT">BPT (Bachelor of Physiotherapy)</option>
+              <option value="MPT">MPT (Master of Physiotherapy)</option>
+              <option value="DO">DO (Doctor of Osteopathic Medicine)</option>
+              <option value="PhD">PhD (Doctor of Philosophy in Medicine)</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label" for="docSpecialization">Specialization *</label>
+            <select class="form-control" id="docSpecialization" name="specializationId" [(ngModel)]="specializationId"
+              required [class.is-invalid]="backendErrors['SpecializationId'] || backendErrors['specializationId']"
+              [attr.title]="backendErrors['SpecializationId'] || backendErrors['specializationId'] || null">
+              <option value="" disabled>-- Select Specialization --</option>
+              <option *ngFor="let spec of specializations" [value]="spec.specializationId">{{ spec.specializationName }}
+              </option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="docFee">Consultation Fee (INR) *</label>
-          <input class="form-control" type="number" id="docFee" name="consultationFee" [(ngModel)]="consultationFee" required min="0"
-                 [class.is-invalid]="backendErrors['ConsultationFee'] || backendErrors['consultationFee']"
-                 [attr.title]="backendErrors['ConsultationFee'] || backendErrors['consultationFee'] || null">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="docExp">Years of Experience *</label>
+            <input class="form-control" type="number" id="docExp" name="yearsOfExperience"
+              [(ngModel)]="yearsOfExperience" required min="0"
+              [class.is-invalid]="backendErrors['YearsOfExperience'] || backendErrors['yearsOfExperience']"
+              [attr.title]="backendErrors['YearsOfExperience'] || backendErrors['yearsOfExperience'] || null">
+          </div>
         </div>
-        <div class="form-group flex-1">
-          <!-- Symmetrical Spacer -->
-        </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label" for="docAbout">About / Biography</label>
-        <textarea class="form-control" id="docAbout" name="about" [(ngModel)]="about" rows="4" placeholder="Briefly describe your medical specialties..."
-                  [class.is-invalid]="backendErrors['AboutDoctor'] || backendErrors['aboutDoctor']"
-                  [attr.title]="backendErrors['AboutDoctor'] || backendErrors['aboutDoctor'] || null"></textarea>
-      </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="docFee">Consultation Fee (INR) *</label>
+            <input class="form-control" type="number" id="docFee" name="consultationFee" [(ngModel)]="consultationFee"
+              required min="0" [class.is-invalid]="backendErrors['ConsultationFee'] || backendErrors['consultationFee']"
+              [attr.title]="backendErrors['ConsultationFee'] || backendErrors['consultationFee'] || null">
+          </div>
+          <div class="form-group flex-1">
+            <!-- Symmetrical Spacer -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="docAbout">About / Biography</label>
+          <textarea class="form-control" id="docAbout" name="about" [(ngModel)]="about" rows="4"
+            placeholder="Briefly describe your medical specialties..."
+            [class.is-invalid]="backendErrors['AboutDoctor'] || backendErrors['aboutDoctor']"
+            [attr.title]="backendErrors['AboutDoctor'] || backendErrors['aboutDoctor'] || null"></textarea>
+        </div>
 
       </div>
 
       <!-- Address Details Section -->
       <div class="glass-card form-section-card">
         <h3 class="section-title">Address Details</h3>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label">Country *</label>
-          <input class="form-control" type="text" name="country" [(ngModel)]="country" required
-                 [class.is-invalid]="backendErrors['Country'] || backendErrors['country']"
-                 [attr.title]="backendErrors['Country'] || backendErrors['country'] || null">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label">Country *</label>
+            <input class="form-control" type="text" name="country" [(ngModel)]="country" required
+              [class.is-invalid]="backendErrors['Country'] || backendErrors['country']"
+              [attr.title]="backendErrors['Country'] || backendErrors['country'] || null">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">State *</label>
+            <input class="form-control" type="text" name="state" [(ngModel)]="state" required
+              placeholder="e.g. Maharashtra" [class.is-invalid]="backendErrors['State'] || backendErrors['state']"
+              [attr.title]="backendErrors['State'] || backendErrors['state'] || null">
+          </div>
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">State *</label>
-          <input class="form-control" type="text" name="state" [(ngModel)]="state" required placeholder="e.g. Maharashtra"
-                 [class.is-invalid]="backendErrors['State'] || backendErrors['state']"
-                 [attr.title]="backendErrors['State'] || backendErrors['state'] || null">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label">City *</label>
+            <input class="form-control" type="text" name="city" [(ngModel)]="city" required placeholder="e.g. Mumbai"
+              [class.is-invalid]="backendErrors['City'] || backendErrors['city']"
+              [attr.title]="backendErrors['City'] || backendErrors['city'] || null">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">Area *</label>
+            <input class="form-control" type="text" name="area" [(ngModel)]="area" required
+              placeholder="e.g. Bandra West" [class.is-invalid]="backendErrors['Area'] || backendErrors['area']"
+              [attr.title]="backendErrors['Area'] || backendErrors['area'] || null">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">Pincode *</label>
+            <input class="form-control" type="text" name="pincode" [(ngModel)]="pincode" required
+              placeholder="e.g. 400050" [class.is-invalid]="backendErrors['Pincode'] || backendErrors['pincode']"
+              [attr.title]="backendErrors['Pincode'] || backendErrors['pincode'] || null">
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label">City *</label>
-          <input class="form-control" type="text" name="city" [(ngModel)]="city" required placeholder="e.g. Mumbai"
-                 [class.is-invalid]="backendErrors['City'] || backendErrors['city']"
-                 [attr.title]="backendErrors['City'] || backendErrors['city'] || null">
+        <div class="form-group">
+          <label class="form-label">Address Line 1 *</label>
+          <input class="form-control" type="text" name="addressline1" [(ngModel)]="addressline1" required
+            placeholder="e.g. 102 Park Avenue"
+            [class.is-invalid]="backendErrors['Addressline1'] || backendErrors['addressline1']"
+            [attr.title]="backendErrors['Addressline1'] || backendErrors['addressline1'] || null">
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">Area *</label>
-          <input class="form-control" type="text" name="area" [(ngModel)]="area" required placeholder="e.g. Bandra West"
-                 [class.is-invalid]="backendErrors['Area'] || backendErrors['area']"
-                 [attr.title]="backendErrors['Area'] || backendErrors['area'] || null">
+        <div class="form-group">
+          <label class="form-label">Address Line 2 (Optional)</label>
+          <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2"
+            placeholder="e.g. Near Metro Station"
+            [class.is-invalid]="backendErrors['Addressline2'] || backendErrors['addressline2']"
+            [attr.title]="backendErrors['Addressline2'] || backendErrors['addressline2'] || null">
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">Pincode *</label>
-          <input class="form-control" type="text" name="pincode" [(ngModel)]="pincode" required placeholder="e.g. 400050"
-                 [class.is-invalid]="backendErrors['Pincode'] || backendErrors['pincode']"
-                 [attr.title]="backendErrors['Pincode'] || backendErrors['pincode'] || null">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Address Line 1 *</label>
-        <input class="form-control" type="text" name="addressline1" [(ngModel)]="addressline1" required placeholder="e.g. 102 Park Avenue"
-               [class.is-invalid]="backendErrors['Addressline1'] || backendErrors['addressline1']"
-               [attr.title]="backendErrors['Addressline1'] || backendErrors['addressline1'] || null">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Address Line 2 (Optional)</label>
-        <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2" placeholder="e.g. Near Metro Station"
-               [class.is-invalid]="backendErrors['Addressline2'] || backendErrors['addressline2']"
-               [attr.title]="backendErrors['Addressline2'] || backendErrors['addressline2'] || null">
-      </div>
       </div>
 
       <div class="form-actions">
-        <button class="btn btn-cancel flex-1" type="button" [disabled]="!doctorForm.dirty" (click)="loadProfile(doctorForm)">Discard Changes</button>
+        <button class="btn btn-cancel flex-1" type="button" [disabled]="!doctorForm.dirty"
+          (click)="loadProfile(doctorForm)">Discard Changes</button>
         <button class="btn btn-primary flex-1" type="submit" [disabled]="!doctorForm.dirty">Save Changes</button>
       </div>
     </form>
@@ -335,71 +344,169 @@
     <form #adminForm="ngForm" (submit)="onSubmit(adminForm); $event.preventDefault()" *ngIf="role === 'Admin'">
       <div class="glass-card form-section-card">
         <h3 class="section-title">🏢 Clinic Admin Profile</h3>
-      
-      <div class="form-group">
-        <label class="form-label">Assigned Work Center</label>
-        <input class="form-control text-muted" type="text" [value]="clinicName" disabled>
-      </div>
 
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label" for="adminFirstName">First Name *</label>
-          <input class="form-control" type="text" id="adminFirstName" name="firstName" [(ngModel)]="firstName" required>
+        <div class="form-group">
+          <label class="form-label">Assigned Work Center</label>
+          <input class="form-control text-muted" type="text" [value]="clinicName" disabled>
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label" for="adminLastName">Last Name *</label>
-          <input class="form-control" type="text" id="adminLastName" name="lastName" [(ngModel)]="lastName" required>
-        </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label" for="adminMobile">Contact Mobile Number *</label>
-        <input class="form-control" type="tel" id="adminMobile" name="mobileNo" [(ngModel)]="mobileNo" required>
-      </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="adminFirstName">First Name *</label>
+            <input class="form-control" type="text" id="adminFirstName" name="firstName" [(ngModel)]="firstName"
+              required>
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label" for="adminLastName">Last Name *</label>
+            <input class="form-control" type="text" id="adminLastName" name="lastName" [(ngModel)]="lastName" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="adminMobile">Contact Mobile Number *</label>
+          <input class="form-control" type="tel" id="adminMobile" name="mobileNo" [(ngModel)]="mobileNo" required>
+        </div>
 
       </div>
 
       <!-- Address Details Section -->
       <div class="glass-card form-section-card">
         <h3 class="section-title">Address Details</h3>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label">Country *</label>
-          <input class="form-control" type="text" name="country" [(ngModel)]="country" required>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label">Country *</label>
+            <input class="form-control" type="text" name="country" [(ngModel)]="country" required>
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">State *</label>
+            <input class="form-control" type="text" name="state" [(ngModel)]="state" required
+              placeholder="e.g. Maharashtra">
+          </div>
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">State *</label>
-          <input class="form-control" type="text" name="state" [(ngModel)]="state" required placeholder="e.g. Maharashtra">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label">City *</label>
+            <input class="form-control" type="text" name="city" [(ngModel)]="city" required placeholder="e.g. Mumbai">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">Area *</label>
+            <input class="form-control" type="text" name="area" [(ngModel)]="area" required
+              placeholder="e.g. Bandra West">
+          </div>
+          <div class="form-group flex-1">
+            <label class="form-label">Pincode *</label>
+            <input class="form-control" type="text" name="pincode" [(ngModel)]="pincode" required
+              placeholder="e.g. 400050">
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group flex-1">
-          <label class="form-label">City *</label>
-          <input class="form-control" type="text" name="city" [(ngModel)]="city" required placeholder="e.g. Mumbai">
+        <div class="form-group">
+          <label class="form-label">Address Line 1 *</label>
+          <input class="form-control" type="text" name="addressline1" [(ngModel)]="addressline1" required
+            placeholder="e.g. 102 Park Avenue">
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">Area *</label>
-          <input class="form-control" type="text" name="area" [(ngModel)]="area" required placeholder="e.g. Bandra West">
+        <div class="form-group">
+          <label class="form-label">Address Line 2 (Optional)</label>
+          <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2"
+            placeholder="e.g. Near Metro Station">
         </div>
-        <div class="form-group flex-1">
-          <label class="form-label">Pincode *</label>
-          <input class="form-control" type="text" name="pincode" [(ngModel)]="pincode" required placeholder="e.g. 400050">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Address Line 1 *</label>
-        <input class="form-control" type="text" name="addressline1" [(ngModel)]="addressline1" required placeholder="e.g. 102 Park Avenue">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Address Line 2 (Optional)</label>
-        <input class="form-control" type="text" name="addressline2" [(ngModel)]="addressline2" placeholder="e.g. Near Metro Station">
-      </div>
       </div>
 
       <div class="form-actions">
-        <button class="btn btn-cancel flex-1" type="button" [disabled]="!adminForm.dirty" (click)="loadProfile(adminForm)">Discard Changes</button>
+        <button class="btn btn-cancel flex-1" type="button" [disabled]="!adminForm.dirty"
+          (click)="loadProfile(adminForm)">Discard Changes</button>
         <button class="btn btn-primary flex-1" type="submit" [disabled]="!adminForm.dirty">Save Changes</button>
       </div>
     </form>
+
+    <!-- CHANGE PASSWORD SECTION (Universal for all roles) -->
+    <div class="glass-card form-section-card" style="margin-top: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
+        (click)="toggleChangePasswordSection()">
+        <h3 class="section-title" style="margin-bottom: 0;">🔒 Security Settings</h3>
+        <button type="button" class="btn btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;">
+          {{ showChangePassword ? 'Close Settings' : 'Change Password' }}
+        </button>
+      </div>
+
+      <div *ngIf="showChangePassword" style="margin-top: 20px;">
+        <!-- Step 1: Initiate Password Change -->
+        <div *ngIf="changePasswordStep === 'init'">
+          <form #initPassForm="ngForm" (submit)="onInitiatePasswordUpdate(); $event.preventDefault()">
+            <div class="form-group">
+              <label class="form-label" for="currentPass">Current Password *</label>
+              <input class="form-control" type="password" id="currentPass" name="currentPassword"
+                [(ngModel)]="currentPassword" required placeholder="Enter current password">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="changeNewPass">New Password *</label>
+              <div class="password-wrapper" style="position: relative; display: flex; align-items: center;">
+                <input class="form-control" [type]="showChangePasswordToggle ? 'text' : 'password'" id="changeNewPass"
+                  name="changeNewPassword" [(ngModel)]="changeNewPassword" required minlength="6"
+                  placeholder="Min. 6 characters" style="padding-right: 40px; width: 100%;">
+                <button type="button" (click)="showChangePasswordToggle = !showChangePasswordToggle"
+                  style="position: absolute; right: 12px; background: transparent; border: none; cursor: pointer; color: var(--text-secondary);">
+                  {{ showChangePasswordToggle ? '🙈' : '👁️' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="changeConfirmPass">Confirm New Password *</label>
+              <div class="password-wrapper" style="position: relative; display: flex; align-items: center;">
+                <input class="form-control" [type]="showChangeConfirmPasswordToggle ? 'text' : 'password'"
+                  id="changeConfirmPass" name="changeConfirmPassword" [(ngModel)]="changeConfirmPassword" required
+                  minlength="6" placeholder="Re-enter new password" style="padding-right: 40px; width: 100%;"
+                  [class.is-invalid]="changeConfirmPassword && changeNewPassword !== changeConfirmPassword">
+                <button type="button" (click)="showChangeConfirmPasswordToggle = !showChangeConfirmPasswordToggle"
+                  style="position: absolute; right: 12px; background: transparent; border: none; cursor: pointer; color: var(--text-secondary);">
+                  {{ showChangeConfirmPasswordToggle ? '🙈' : '👁️' }}
+                </button>
+              </div>
+              <div *ngIf="changeConfirmPassword && changeNewPassword !== changeConfirmPassword"
+                style="color: var(--status-cancelled); font-size: 0.75rem; margin-top: 4px;">
+                ⚠ Passwords do not match.
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 submit-btn"
+              [disabled]="initPassForm.invalid || changeNewPassword !== changeConfirmPassword || isChangingPassword">
+              {{ isChangingPassword ? 'Sending OTP...' : 'Request OTP Code' }}
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Verification and Reset -->
+        <div *ngIf="changePasswordStep === 'otp'">
+          <form #confirmPassForm="ngForm" (submit)="onConfirmPasswordUpdate(); $event.preventDefault()">
+            <div class="form-group">
+              <label class="form-label" for="changeOtp">OTP Code *</label>
+              <input class="form-control" type="text" id="changeOtp" name="changeOtp" [(ngModel)]="changeOtp" required
+                maxlength="6" minlength="6" placeholder="Enter 6-digit OTP"
+                style="text-align: center; font-size: 1.2rem; letter-spacing: 4px;">
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+              <button type="button" class="btn btn-secondary flex-1" (click)="changePasswordStep = 'init'"
+                style="margin-bottom: 0;">Back</button>
+              <button type="submit" class="btn btn-primary flex-2 submit-btn"
+                [disabled]="confirmPassForm.invalid || isChangingPassword" style="margin-top: 0; margin-bottom: 0;">
+                {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
+              </button>
+            </div>
+
+            <div style="text-align: center;">
+              <a href="javascript:void(0)" (click)="resendChangePasswordOtp()"
+                [style.pointer-events]="(resendCooldown > 0 || isChangingPassword) ? 'none' : 'auto'"
+                [style.color]="(resendCooldown > 0 || isChangingPassword) ? '#64748b' : '#0ea5e9'"
+                style="text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+                Resend OTP {{ resendCooldown > 0 ? '(' + resendCooldown + 's)' : '' }}
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

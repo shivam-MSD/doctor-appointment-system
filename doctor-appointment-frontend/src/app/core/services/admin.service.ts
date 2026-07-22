@@ -121,4 +121,12 @@ export class AdminService {
     const headers = new HttpHeaders().set('X-User-Id', userId);
     return this.http.put<any>('/api/clinics/admin-update', dto, { headers });
   }
+
+  assignAdminToClinics(adminId: string, clinicIds: string[]): Observable<any[]> {
+    return this.http.post<any[]>(`/api/admin/${adminId}/clinics`, clinicIds);
+  }
+
+  getAdminClinics(adminId: string): Observable<any[]> {
+    return this.http.get<any[]>(`/api/admin/${adminId}/clinics`);
+  }
 }

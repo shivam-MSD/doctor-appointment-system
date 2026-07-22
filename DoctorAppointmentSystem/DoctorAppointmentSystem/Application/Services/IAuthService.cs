@@ -8,5 +8,12 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<AuthResponseDto> RegisterDoctorAsync(DoctorSignUpDto doctorSignUpDto);
 		Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
 		Task<AuthResponseDto> VerifyEmailAsync(VerifyEmailDto dto);
+
+		// Password Management
+		Task<string?> CheckEmailRoleAsync(string email);
+		Task ForgotPasswordAsync(ForgotPasswordDto dto);
+		Task ResetPasswordAsync(ResetPasswordDto dto);
+		Task InitiatePasswordUpdateAsync(Guid userId, InitiatePasswordUpdateDto dto);
+		Task UpdatePasswordAsync(Guid userId, UpdatePasswordDto dto);
 	}
 }

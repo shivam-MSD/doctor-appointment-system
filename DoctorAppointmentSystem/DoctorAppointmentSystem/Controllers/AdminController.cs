@@ -86,5 +86,19 @@ namespace DoctorAppointmentSystem.Controllers
 			var result = await _adminService.GetSystemAuditLogsAsync(entityType, action, startDate, endDate, page, size);
 			return Ok(result);
 		}
+
+		[HttpPost("{adminId:guid}/clinics")]
+		public async Task<IActionResult> SetClinics(Guid adminId, [FromBody] IEnumerable<Guid> clinicIds)
+		{
+			var clinics = await _adminService.AssignAdminToClinicsAsync(adminId, clinicIds);
+			return Ok(clinics);
+		}
+
+		[HttpGet("{adminId:guid}/clinics")]
+		public async Task<IActionResult> GetAdminClinics(Guid adminId)
+		{
+			var clinics = await _adminService.GetClinicsForAdminAsync(adminId);
+			return Ok(clinics);
+		}
 	}
 }

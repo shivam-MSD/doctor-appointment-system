@@ -27,6 +27,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 		public DbSet<AppointmentAuditLog> AppointmentAuditLogs { get; set; }
 		public DbSet<DoctorAuditLog> DoctorAuditLogs { get; set; }
 		public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
+		public DbSet<AdminClinic> AdminClinics { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -247,10 +248,28 @@ namespace DoctorAppointmentSystem.Persistent.Context
 					.HasForeignKey<Admin>("UserId")
 					.OnDelete(DeleteBehavior.Cascade);
 
-				// Clinic to Admin (Many to 1)
-				entity.HasOne(a => a.Clinic)
+				// Admin now links to clinics via AdminClinic join table (no direct ClinicId FK)
+				entity.Ignore(a => a.Clinic);
+				entity.Ignore(a => a.Clinics);
+			});
+
+			// 13. AdminClinic (Join Table) Configuration
+			modelBuilder.Entity<AdminClinic>(entity =>
+			{
+				entity.ToTable("AdminClinics");
+				entity.HasKey(ac => ac.AdminClinicId);
+
+				// Unique index: each clinic can have at most one admin
+				entity.HasIndex(ac => ac.ClinicId).IsUnique();
+
+				entity.HasOne(ac => ac.Admin)
+					.WithMany(a => a.AdminClinics)
+					.HasForeignKey(ac => ac.AdminId)
+					.OnDelete(DeleteBehavior.Cascade);
+
+				entity.HasOne(ac => ac.Clinic)
 					.WithMany()
-					.HasForeignKey("ClinicId")
+					.HasForeignKey(ac => ac.ClinicId)
 					.OnDelete(DeleteBehavior.Restrict);
 			});
 		}

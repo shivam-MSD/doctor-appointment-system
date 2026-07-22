@@ -154,7 +154,8 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var adminObj = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
 				.FirstOrDefaultAsync(a => a.User.UserId == userId);
 			if (adminObj == null)
 			{
@@ -183,7 +184,8 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			var adminObj = await _dbContext.Admins
 				.Include(a => a.User)
-				.Include(a => a.Clinic)
+				.Include(a => a.AdminClinics)
+					.ThenInclude(ac => ac.Clinic)
 				.FirstOrDefaultAsync(a => a.User.UserId == userId);
 			if (adminObj == null)
 			{

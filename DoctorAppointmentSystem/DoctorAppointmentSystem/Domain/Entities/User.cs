@@ -20,7 +20,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 
 		[Required]
 		public bool IsActive { get; set; } = true;
-
+		public bool RequiresPasswordChange { get; set; } = false;
 		[Required]
 		public bool IsEmailVerified { get; set; } = false;
 

@@ -166,13 +166,20 @@
             </td>
             <td>
               <!-- If Verified/UpdatedPending and Has No Admin: Show Add Admin action button -->
-              <button
-                *ngIf="(clinic.verificationStatus === 'Verified' || clinic.verificationStatus === 'UpdatedPending') && !clinic.hasAdmin"
-                class="btn btn-confirm"
-                style="font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; white-space: nowrap;"
-                (click)="openAdminModal(clinic.clinicId, clinic.clinicName)">
-                + Add Admin
-              </button>
+              <div *ngIf="(clinic.verificationStatus === 'Verified' || clinic.verificationStatus === 'UpdatedPending') && !clinic.hasAdmin" style="display: flex; gap: 4px; flex-direction: column;">
+                <button
+                  class="btn btn-confirm"
+                  style="font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; white-space: nowrap;"
+                  (click)="openAdminModal(clinic.clinicId, clinic.clinicName)">
+                  + Add Admin
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  style="font-size: 0.72rem; padding: 4px 8px; border-radius: 6px; white-space: nowrap;"
+                  (click)="openAssignExistingAdminModal(clinic.clinicId, clinic.clinicName)">
+                  🔗 Link Admin
+                </button>
+              </div>
 
               <!-- If Pending/Rejected and Has No Admin: Show No Admin Assigned badge -->
               <span
@@ -279,10 +286,15 @@
         <!-- Actions -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
           <!-- Admin Action -->
-          <button
-            *ngIf="(clinic.verificationStatus === 'Verified' || clinic.verificationStatus === 'UpdatedPending') && !clinic.hasAdmin"
-            class="btn btn-confirm" style="font-size: 0.75rem; padding: 8px;"
-            (click)="openAdminModal(clinic.clinicId, clinic.clinicName)">+ Add Admin</button>
+          <!-- Admin Action -->
+          <div *ngIf="(clinic.verificationStatus === 'Verified' || clinic.verificationStatus === 'UpdatedPending') && !clinic.hasAdmin" style="display: flex; flex-direction: column; gap: 4px;">
+            <button
+              class="btn btn-confirm" style="font-size: 0.75rem; padding: 8px; width: 100%;"
+              (click)="openAdminModal(clinic.clinicId, clinic.clinicName)">+ Add Admin</button>
+            <button
+              class="btn btn-secondary" style="font-size: 0.75rem; padding: 8px; width: 100%;"
+              (click)="openAssignExistingAdminModal(clinic.clinicId, clinic.clinicName)">🔗 Link Admin</button>
+          </div>
           <span
             *ngIf="(clinic.verificationStatus === 'Pending' || clinic.verificationStatus === 'Rejected') && !clinic.hasAdmin"
             class="badge"
@@ -448,11 +460,7 @@
             placeholder="e.g. admin@clinic.com">
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Admin Password *</label>
-          <input type="password" class="form-control" [(ngModel)]="adminForm.adminPassword" name="adminPassword"
-            required placeholder="Min 6 characters">
-        </div>
+
 
         <div *ngIf="errorMessage" class="error-banner">{{ errorMessage }}</div>
         <div *ngIf="successMessage" class="success-banner">{{ successMessage }}</div>
@@ -1029,6 +1037,44 @@
     </div>
     <div class="modal-footer" style="display: flex; justify-content: flex-end;">
       <button class="btn btn-secondary" (click)="closeClinicDetailsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- LINK EXISTING CLINIC ADMIN MODAL -->
+<div class="modal-backdrop" *ngIf="showAssignExistingAdminModal">
+  <div class="modal-container" style="max-width: 450px;">
+    <div class="modal-header">
+      <h3>🔗 Link Existing Administrator</h3>
+      <button class="close-modal" (click)="closeAssignExistingAdminModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background: rgba(6, 182, 212, 0.05); border: 1.5px solid rgba(6, 182, 212, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-cyan); font-weight: 700; display: block; margin-bottom: 6px;">Target Branch Clinic</span>
+        <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">{{ selectedClinicNameForAdmin }}</h4>
+      </div>
+      
+      <form #assignExistingForm="ngForm" (submit)="submitAssignExistingAdmin(); $event.preventDefault()">
+        <div class="form-group">
+          <label class="form-label" for="existingAdminSelect">Select Staff Administrator *</label>
+          <select class="form-control" id="existingAdminSelect" name="selectedAdminId" [(ngModel)]="selectedExistingAdminId" required>
+            <option value="" disabled>-- Select Admin --</option>
+            <option *ngFor="let admin of existingAdmins" [value]="admin.adminId">
+              {{ admin.firstName }} {{ admin.lastName }} ({{ admin.mobileNo || admin.email || 'No Mobile' }})
+            </option>
+          </select>
+          <span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; display: block;">
+            Note: The admin will gain access to manage this clinic branch. A clinic branch can only have one admin assigned.
+          </span>
+        </div>
+        
+        <div class="modal-footer" style="padding: 15px 0 0 0; display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-secondary" (click)="closeAssignExistingAdminModal()">Cancel</button>
+          <button type="submit" class="btn btn-confirm" [disabled]="assignExistingForm.invalid || isAssigningExisting">
+            {{ isAssigningExisting ? 'Linking...' : 'Link Admin' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

@@ -1072,3 +1072,9 @@ body.light-theme .skeleton-box::after {
     display: none !important;
   }
 }
+
+/* Enforce flat, clean aesthetic by removing all box-shadows and text-shadows globally */
+*, *::before, *::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
