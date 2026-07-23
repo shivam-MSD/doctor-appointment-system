@@ -74,7 +74,6 @@ namespace DoctorAppointmentSystem.Controllers
 		[HttpGet("doctor/{doctorId:guid}")]
 		public async Task<IActionResult> GetClinicsByDoctorId(Guid doctorId)
 		{
-			System.Diagnostics.Debugger.Launch();
 			var result = await _clinicService.GetClinicsByDoctorIdAsync(doctorId);
 			return Ok(result);
 		}
