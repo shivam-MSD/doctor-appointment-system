@@ -83,6 +83,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		Completed,
 		Rejected,
 		Expired,
-		RescheduleProposed
+		RescheduleProposed,
+		FollowUpProposed
 	}
 }

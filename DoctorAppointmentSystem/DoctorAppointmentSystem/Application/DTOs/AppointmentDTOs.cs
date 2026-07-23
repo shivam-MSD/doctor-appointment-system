@@ -94,6 +94,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 	{
 		public string? Comment { get; set; }
 		public string? Report { get; set; }
+		public CreateFollowUpDto? FollowUp { get; set; }
 	}
 
 	public class MovePendingAppointmentDto
@@ -149,5 +150,19 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string? ActorName { get; set; }
 		public string? ActorRole { get; set; }
 		public string? Notes { get; set; }
+	}
+
+	public class CreateFollowUpDto
+	{
+		[Required]
+		public Guid ClinicId { get; set; }
+		[Required]
+		public DateTime AppointmentDate { get; set; }
+		[Required]
+		public string StartTime { get; set; }
+		[Required]
+		public string EndTime { get; set; }
+		[Required]
+		public string ConsultationType { get; set; } // "InPerson" or "VideoConsultation"
 	}
 }

@@ -100,8 +100,16 @@ export class AppointmentService {
     return this.http.post<any>(`/api/appointments/reject/${id}`, { reason });
   }
 
-  completeAppointment(id: string, comment?: string, report?: string): Observable<any> {
-    return this.http.post<any>(`/api/appointments/complete/${id}`, { comment, report });
+  completeAppointment(id: string, comment?: string, report?: string, followUp?: any): Observable<any> {
+    return this.http.post<any>(`/api/appointments/complete/${id}`, { comment, report, followUp });
+  }
+
+  acceptFollowUp(id: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/accept-followup/${id}`, {});
+  }
+
+  declineFollowUp(id: string): Observable<any> {
+    return this.http.post<any>(`/api/appointments/decline-followup/${id}`, {});
   }
 
   movePendingAppointment(id: string, comment?: string): Observable<any> {

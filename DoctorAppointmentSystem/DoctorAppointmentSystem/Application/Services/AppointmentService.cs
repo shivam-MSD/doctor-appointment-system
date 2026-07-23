@@ -1146,7 +1146,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
 
-		public async Task CompleteAppointmentAsync(Guid userId, Guid appointmentId, string? comment, string? report)
+		public async Task CompleteAppointmentAsync(Guid userId, Guid appointmentId, string? comment, string? report, CreateFollowUpDto? followUp)
 		{
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
@@ -1169,15 +1169,128 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			await _dbContext.SaveChangesAsync();
-			TriggerAppointmentActionLog(appointment.AppointmentId, "Completed", userId, null, "Completed consultation.");
+			TriggerAppointmentActionLog(appointment.AppointmentId, "Completed", userId, "Doctor", "Completed consultation.");
 
-			// Refresh SignalR hubs
-			var userPatient = await _dbContext.UserPatients
-				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
-			if (userPatient != null)
+			// If followUp details are provided, create the follow-up appointment request
+			if (followUp != null)
 			{
-				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Completed.");
+				var clinic = await _dbContext.Clinics.FindAsync(followUp.ClinicId);
+				if (clinic == null)
+				{
+					throw new NotFoundException($"Clinic with ID '{followUp.ClinicId}' was not found.");
+				}
+
+				if (!Enum.TryParse<EConsultationType>(followUp.ConsultationType, true, out var consultationType))
+				{
+					throw new BadRequestException($"ConsultationType '{followUp.ConsultationType}' is invalid.");
+				}
+
+				// Assign queue number for follow-up date
+				int queueNumber = 1;
+				var maxQueue = await _dbContext.Appointments
+					.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
+					.Where(app => app.AppointmentDate == followUp.AppointmentDate.Date)
+					.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed || app.EAppointmentStatus == EAppointmentStatus.FollowUpProposed)
+					.MaxAsync(app => (int?)app.QueueNumber) ?? 0;
+				queueNumber = maxQueue + 1;
+
+				var followUpAppointment = new Appointment
+				{
+					AppointmentId = Guid.NewGuid(),
+					AppointmentDate = followUp.AppointmentDate.Date,
+					QueueNumber = queueNumber,
+					Reason = "Follow-up consultation proposed by Doctor.",
+					EConsultationType = consultationType,
+					EAppointmentStatus = EAppointmentStatus.FollowUpProposed,
+					CreatedDate = DateTime.UtcNow,
+					Clinic = clinic
+				};
+
+				if (DateTime.TryParse($"{followUp.AppointmentDate:yyyy-MM-dd} {followUp.StartTime}", out var parsedTime))
+				{
+					followUpAppointment.DoctorAssignedTime = parsedTime;
+				}
+
+				_dbContext.Appointments.Add(followUpAppointment);
+				_dbContext.Entry(followUpAppointment).Property("PatientId").CurrentValue = appointment.Patient.PatientId;
+				_dbContext.Entry(followUpAppointment).Property("DoctorId").CurrentValue = appointment.Doctor.DoctorId;
+
+				await _dbContext.SaveChangesAsync();
+				TriggerAppointmentActionLog(followUpAppointment.AppointmentId, "FollowUpProposed", userId, "Doctor", $"Proposed follow-up appointment for {followUp.AppointmentDate:yyyy-MM-dd} at {followUp.StartTime}.");
+				
+				var userPatient = await _dbContext.UserPatients
+					.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+				if (userPatient != null)
+				{
+					await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has proposed a follow-up appointment for you on {followUp.AppointmentDate:yyyy-MM-dd} at {followUp.StartTime}. Please confirm.");
+				}
 			}
+			else
+			{
+				var userPatient = await _dbContext.UserPatients
+					.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+				if (userPatient != null)
+				{
+					await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Completed.");
+				}
+			}
+
+			await _notificationService.SendRefreshSignalAsync("Appointments");
+		}
+
+		public async Task AcceptFollowUpAsync(Guid userId, Guid appointmentId)
+		{
+			var appointment = await _dbContext.Appointments
+				.Include(a => a.Patient)
+				.Include(a => a.Doctor)
+				.ThenInclude(d => d.User)
+				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+
+			if (appointment == null)
+			{
+				throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
+			}
+
+			if (appointment.EAppointmentStatus != EAppointmentStatus.FollowUpProposed)
+			{
+				throw new BadRequestException("This appointment is not a proposed follow-up request.");
+			}
+
+			appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
+			await _dbContext.SaveChangesAsync();
+
+			TriggerAppointmentActionLog(appointment.AppointmentId, "Confirmed", userId, "Patient", "Patient accepted follow-up appointment.");
+
+			// Notify doctor
+			await _notificationService.CreateNotificationAsync(appointment.Doctor.User.UserId, $"Patient {appointment.Patient.FirstName} {appointment.Patient.LastName} accepted the follow-up appointment scheduled for {appointment.AppointmentDate:yyyy-MM-dd}.");
+			await _notificationService.SendRefreshSignalAsync("Appointments");
+		}
+
+		public async Task DeclineFollowUpAsync(Guid userId, Guid appointmentId)
+		{
+			var appointment = await _dbContext.Appointments
+				.Include(a => a.Patient)
+				.Include(a => a.Doctor)
+				.ThenInclude(d => d.User)
+				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+
+			if (appointment == null)
+			{
+				throw new NotFoundException($"Appointment with ID '{appointmentId}' not found.");
+			}
+
+			if (appointment.EAppointmentStatus != EAppointmentStatus.FollowUpProposed)
+			{
+				throw new BadRequestException("This appointment is not a proposed follow-up request.");
+			}
+
+			appointment.EAppointmentStatus = EAppointmentStatus.Cancelled;
+			await _dbContext.SaveChangesAsync();
+
+			TriggerAppointmentActionLog(appointment.AppointmentId, "Cancelled", userId, "Patient", "Patient declined follow-up appointment.");
+
+			// Notify doctor
+			await _notificationService.CreateNotificationAsync(appointment.Doctor.User.UserId, $"Patient {appointment.Patient.FirstName} {appointment.Patient.LastName} declined the follow-up appointment scheduled for {appointment.AppointmentDate:yyyy-MM-dd}.");
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
 

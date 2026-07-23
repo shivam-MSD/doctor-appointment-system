@@ -12,6 +12,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string SpecializationName { get; set; }
 		public string FirstName { get; set; }
 		public string LastName { get; set; }
+		public string Gender { get; set; }
 		public string MobileNo { get; set; }
 		public string Qualification { get; set; }
 		public int YearsOfExperience { get; set; }

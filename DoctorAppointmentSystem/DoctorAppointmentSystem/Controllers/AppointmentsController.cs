@@ -189,8 +189,22 @@ namespace DoctorAppointmentSystem.Controllers
 		[HttpPost("complete/{id:guid}")]
 		public async Task<IActionResult> CompleteAppointment([FromHeader(Name = "X-User-Id")] Guid userId, Guid id, [FromBody] CompleteAppointmentDto dto)
 		{
-			await _appointmentService.CompleteAppointmentAsync(userId, id, dto.Comment, dto.Report);
+			await _appointmentService.CompleteAppointmentAsync(userId, id, dto.Comment, dto.Report, dto.FollowUp);
 			return Ok(new { Message = "Appointment marked as completed successfully." });
+		}
+
+		[HttpPost("accept-followup/{id:guid}")]
+		public async Task<IActionResult> AcceptFollowUp([FromHeader(Name = "X-User-Id")] Guid userId, Guid id)
+		{
+			await _appointmentService.AcceptFollowUpAsync(userId, id);
+			return Ok(new { Message = "Follow-up appointment accepted successfully." });
+		}
+
+		[HttpPost("decline-followup/{id:guid}")]
+		public async Task<IActionResult> DeclineFollowUp([FromHeader(Name = "X-User-Id")] Guid userId, Guid id)
+		{
+			await _appointmentService.DeclineFollowUpAsync(userId, id);
+			return Ok(new { Message = "Follow-up appointment declined successfully." });
 		}
 
 		[HttpPost("move-pending/{id:guid}")]

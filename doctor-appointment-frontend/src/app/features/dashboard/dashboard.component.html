@@ -173,7 +173,7 @@
             </td>
             <td data-label="Actions" *ngIf="!historyMode">
               <button
-                *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed'"
+                *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed' && app.status !== 'FollowUpProposed'"
                 class="btn btn-cancel" (click)="openCancelAppointmentConfirm(app.appointmentId)">
                 Cancel
               </button>
@@ -186,6 +186,17 @@
                 <button class="btn btn-cancel" (click)="rejectReschedule(app.appointmentId)"
                   style="background: #ef4444; border-color: #ef4444; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
                   ✕ Reject
+                </button>
+              </div>
+
+              <div *ngIf="app.status === 'FollowUpProposed'" style="display: flex; gap: 5px;">
+                <button class="btn btn-confirm" (click)="acceptFollowUp(app.appointmentId)"
+                  style="background: #10b981; border-color: #10b981; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  ✓ Accept
+                </button>
+                <button class="btn btn-cancel" (click)="rejectFollowUp(app.appointmentId)"
+                  style="background: #ef4444; border-color: #ef4444; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  ✕ Decline
                 </button>
               </div>
             </td>
@@ -505,6 +516,51 @@
             placeholder="Add report or prescription details..."
             style="font-size: 0.88rem; padding: 10px; width: 100%;"></textarea>
         </div>
+
+        <!-- Schedule Follow-up Checkbox Toggle -->
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+          <label style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); cursor: pointer;">
+            <input type="checkbox" [(ngModel)]="isFollowUpChecked" style="cursor: pointer; width: 16px; height: 16px;">
+            📅 Schedule Follow-up Appointment?
+          </label>
+        </div>
+
+        <!-- Follow-up appointment scheduling form details -->
+        <div *ngIf="isFollowUpChecked" style="margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+          <div class="form-group">
+            <label class="form-label" style="font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Clinic Branch</label>
+            <select class="form-control" [(ngModel)]="followUpClinicId" style="font-size: 0.85rem; padding: 6px 10px;">
+              <option *ngFor="let clinic of doctorClinics" [value]="clinic.clinicId">{{ clinic.clinicName }}</option>
+            </select>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Follow-up Date</label>
+              <input type="date" class="form-control" [(ngModel)]="followUpDate" style="font-size: 0.85rem; padding: 6px 10px;">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Consultation Mode</label>
+              <select class="form-control" [(ngModel)]="followUpConsultationType" style="font-size: 0.85rem; padding: 6px 10px;">
+                <option value="InPerson">In-Person Visit</option>
+                <option value="VideoConsultation">Video Consultation</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">Start Time</label>
+              <input type="text" class="form-control" [(ngModel)]="followUpStartTime" placeholder="e.g. 10:30 AM" style="font-size: 0.85rem; padding: 6px 10px;">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem; font-weight: 600; margin-bottom: 4px;">End Time</label>
+              <input type="text" class="form-control" [(ngModel)]="followUpEndTime" placeholder="e.g. 10:45 AM" style="font-size: 0.85rem; padding: 6px 10px;">
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn btn-secondary" (click)="closeCompleteConfirm()">Cancel</button>
@@ -674,12 +730,12 @@
 
   <!-- DOCTOR DASHBOARD: PATIENT VISIT HISTORY TIMELINE MODAL -->
   <div class="modal-backdrop" *ngIf="showHistoryModal">
-    <div class="modal-container" style="max-width: 750px;">
+    <div class="modal-container" style="max-width: 750px; min-height: 520px; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3>📜 Medical History: {{ selectedPatientName }}</h3>
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
       </div>
-      <div class="modal-body scrollable-body" style="max-height: 480px; overflow-y: auto;">
+      <div class="modal-body scrollable-body" style="flex: 1; min-height: 380px; max-height: 480px; overflow-y: auto;">
         <div *ngIf="isHistoryLoading" style="padding: 20px 0;">
           <table class="dashboard-table" style="width: 100%;">
             <thead>
@@ -717,7 +773,36 @@
         </div>
 
         <div *ngIf="!isHistoryLoading">
-          <div class="table-responsive" *ngIf="patientHistory.length > 0; else noHistory">
+          <!-- Filter Controls -->
+          <div *ngIf="patientHistory.length > 0" style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Filter Status:</span>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [checked]="isAllHistoryFiltersSelected()" (change)="toggleAllHistoryFilters($any($event.target).checked)" style="width: 15px; height: 15px; cursor: pointer;">
+              <strong>All ({{ patientHistory.length }})</strong>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Completed" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Completed ({{ getHistoryStatusCount('Completed') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Confirmed" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Confirmed ({{ getHistoryStatusCount('Confirmed') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Pending" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Pending / Proposed ({{ getHistoryStatusCount('Pending') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Cancelled" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Cancelled ({{ getHistoryStatusCount('Cancelled') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Rejected" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Rejected ({{ getHistoryStatusCount('Rejected') }})</span>
+            </label>
+          </div>
+
+          <div class="table-responsive" *ngIf="getFilteredHistory().length > 0; else noHistory">
             <table class="dashboard-table" style="width: 100%;">
               <thead>
                 <tr>
@@ -729,7 +814,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let h of patientHistory">
+                <tr *ngFor="let h of getFilteredHistory()">
                   <td style="font-weight: 600;">{{ h.clinicName || 'Direct' }}</td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 2px;">
@@ -1831,11 +1916,11 @@
           </tr>
           <tr>
             <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Experience</td>
-            <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedDoctorDetails.experienceYears }} Years</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedDoctorDetails.yearsOfExperience }} Years</td>
           </tr>
           <tr>
             <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Qualifications</td>
-            <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedDoctorDetails.qualifications }}</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedDoctorDetails.qualification }}</td>
           </tr>
           <tr>
             <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Consultation Fee</td>
@@ -1843,12 +1928,12 @@
           </tr>
           <tr>
             <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">License Number</td>
-            <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedDoctorDetails.licenseNumber || 'N/A' }}</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">{{ selectedDoctorDetails.licenceNumber || 'N/A' }}</td>
           </tr>
           <tr>
             <td style="font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border-color);">Biography</td>
             <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-secondary);">
-              {{ selectedDoctorDetails.bio || 'No biography available.' }}
+              {{ selectedDoctorDetails.aboutDoctor || 'No biography available.' }}
             </td>
           </tr>
         </table>

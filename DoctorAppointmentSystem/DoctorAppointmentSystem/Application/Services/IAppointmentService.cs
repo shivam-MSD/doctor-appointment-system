@@ -20,7 +20,9 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<BookingDetailsDto> GetBookingDetailsAsync(Guid doctorId, Guid clinicId);
 		Task ApproveAppointmentAsync(Guid userId, Guid appointmentId, string? comment, DateTime? assignedTime = null);
 		Task RejectAppointmentAsync(Guid userId, Guid appointmentId, string reason);
-		Task CompleteAppointmentAsync(Guid userId, Guid appointmentId, string? comment, string? report);
+		Task CompleteAppointmentAsync(Guid userId, Guid appointmentId, string? comment, string? report, CreateFollowUpDto? followUp);
+		Task AcceptFollowUpAsync(Guid userId, Guid appointmentId);
+		Task DeclineFollowUpAsync(Guid userId, Guid appointmentId);
 		Task MovePendingAppointmentAsync(Guid userId, Guid appointmentId, string? comment);
 		Task<PatientDto> GetPatientDetailsAsync(Guid userId, Guid patientId);
 

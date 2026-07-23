@@ -59,6 +59,7 @@ const routes: Routes = [
       // Doctor Routes
       { path: 'doctor/dashboard', component: DashboardComponent },
       { path: 'doctor/appointments', component: DoctorAppointmentsComponent },
+      { path: 'doctor/completed-appointments', component: DoctorAppointmentsComponent, data: { completedOnly: true } },
       { path: 'doctor/requests', component: DoctorRequestsComponent },
       { path: 'doctor/patients', component: PatientsComponent },
       { path: 'doctor/clinics', component: ClinicsComponent },
@@ -69,6 +70,7 @@ const routes: Routes = [
       // Clinic Admin Routes
       { path: 'admin/dashboard', component: DashboardComponent },
       { path: 'admin/appointments', component: DoctorAppointmentsComponent },
+      { path: 'admin/completed-appointments', component: DoctorAppointmentsComponent, data: { completedOnly: true } },
       { path: 'admin/profile', component: ProfileComponent },
       { path: 'admin/audit-logs', loadComponent: () => import('./features/doctor/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent) },
 

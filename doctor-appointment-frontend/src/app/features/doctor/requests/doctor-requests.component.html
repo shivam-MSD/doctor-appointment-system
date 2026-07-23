@@ -275,12 +275,12 @@
 
   <!-- PATIENT HISTORY LOOKUP MODAL -->
   <div class="modal-backdrop" *ngIf="showHistoryModal">
-    <div class="modal-container" style="max-width: 750px;">
+    <div class="modal-container" style="max-width: 750px; min-height: 520px; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3>📜 Medical History: {{ selectedPatientName }}</h3>
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
       </div>
-      <div class="modal-body scrollable-body" style="max-height: 480px; overflow-y: auto;">
+      <div class="modal-body scrollable-body" style="flex: 1; min-height: 380px; max-height: 480px; overflow-y: auto;">
         <div *ngIf="isHistoryLoading" style="padding: 20px 0;">
           <table class="dashboard-table" style="width: 100%;">
             <thead>
@@ -314,7 +314,36 @@
         </div>
 
         <div *ngIf="!isHistoryLoading">
-          <div class="table-responsive" *ngIf="patientHistory.length > 0; else noHistory">
+          <!-- Filter Controls -->
+          <div *ngIf="patientHistory.length > 0" style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Filter Status:</span>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [checked]="isAllHistoryFiltersSelected()" (change)="toggleAllHistoryFilters($any($event.target).checked)" style="width: 15px; height: 15px; cursor: pointer;">
+              <strong>All ({{ patientHistory.length }})</strong>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Completed" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Completed ({{ getHistoryStatusCount('Completed') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Confirmed" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Confirmed ({{ getHistoryStatusCount('Confirmed') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Pending" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Pending / Proposed ({{ getHistoryStatusCount('Pending') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Cancelled" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Cancelled ({{ getHistoryStatusCount('Cancelled') }})</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Rejected" style="width: 15px; height: 15px; cursor: pointer;">
+              <span>Rejected ({{ getHistoryStatusCount('Rejected') }})</span>
+            </label>
+          </div>
+
+          <div class="table-responsive" *ngIf="getFilteredHistory().length > 0; else noHistory">
             <table class="dashboard-table" style="width: 100%;">
               <thead>
                 <tr>
@@ -325,7 +354,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let h of patientHistory">
+                <tr *ngFor="let h of getFilteredHistory()">
                   <td style="font-weight: 600;">{{ h.clinicName || 'Direct' }}</td>
                   <td>
                     <div style="display: flex; flex-direction: column; gap: 2px;">

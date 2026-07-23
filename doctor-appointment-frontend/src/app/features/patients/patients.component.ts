@@ -28,6 +28,13 @@ export class PatientsComponent implements OnInit {
   selectedPatientName = '';
   patientHistory: Appointment[] = [];
   isHistoryLoading = false;
+  historyFilters = {
+    Completed: true,
+    Cancelled: true,
+    Rejected: true,
+    Confirmed: true,
+    Pending: true
+  };
 
   constructor(
     private appointmentService: AppointmentService,
@@ -138,6 +145,52 @@ export class PatientsComponent implements OnInit {
     this.showHistoryModal = false;
     this.selectedPatientName = '';
     this.patientHistory = [];
+    this.historyFilters = {
+      Completed: true,
+      Cancelled: true,
+      Rejected: true,
+      Confirmed: true,
+      Pending: true
+    };
+  }
+
+  getFilteredHistory(): Appointment[] {
+    return this.patientHistory.filter(h => {
+      const status = h.status;
+      if (status === 'Completed') return this.historyFilters.Completed;
+      if (status === 'Cancelled') return this.historyFilters.Cancelled;
+      if (status === 'Rejected') return this.historyFilters.Rejected;
+      if (status === 'Confirmed') return this.historyFilters.Confirmed;
+      if (status === 'Pending') return this.historyFilters.Pending;
+      if (status === 'RescheduleProposed') return this.historyFilters.Pending;
+      if (status === 'FollowUpProposed') return this.historyFilters.Pending;
+      return true;
+    });
+  }
+
+  toggleAllHistoryFilters(checked: boolean): void {
+    this.historyFilters.Completed = checked;
+    this.historyFilters.Confirmed = checked;
+    this.historyFilters.Pending = checked;
+    this.historyFilters.Cancelled = checked;
+    this.historyFilters.Rejected = checked;
+  }
+
+  isAllHistoryFiltersSelected(): boolean {
+    return this.historyFilters.Completed &&
+           this.historyFilters.Confirmed &&
+           this.historyFilters.Pending &&
+           this.historyFilters.Cancelled &&
+           this.historyFilters.Rejected;
+  }
+
+  getHistoryStatusCount(status: string): number {
+    return this.patientHistory.filter(h => {
+      if (status === 'Pending') {
+        return h.status === 'Pending' || h.status === 'RescheduleProposed' || h.status === 'FollowUpProposed';
+      }
+      return h.status === status;
+    }).length;
   }
 
   getStatusClass(status: string): string {

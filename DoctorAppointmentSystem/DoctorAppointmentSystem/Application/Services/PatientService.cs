@@ -231,9 +231,12 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<DoctorDto> GetDoctorDetailsForPatientAsync(Guid doctorId)
 		{
+			System.Diagnostics.Debugger.Launch();
 			var doctor = await _dbContext.Doctors
 				.Include(d => d.User)
 				.Include(d => d.Specialization)
+				.Include(d => d.Clinics)
+					.ThenInclude(c => c.Address)
 				.FirstOrDefaultAsync(d => d.DoctorId == doctorId);
 
 			if (doctor == null)
@@ -261,6 +264,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				CreatedDate = doctor.CreatedDate,
 				UpdatedDate = doctor.UpdatedDate,
 				Age = CalculateAge(doctor.DOB),
+				Gender = doctor.Gender.ToString(),
 				Clinics = doctor.Clinics.Select(c => new ClinicBasicDto
 				{
 					ClinicId = c.ClinicId,

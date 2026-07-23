@@ -50,6 +50,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   reportInputs: { [key: string]: string } = {};
   expandedNoteRows: { [key: string]: boolean } = {};
 
+  isFollowUpChecked = false;
+  followUpClinicId = '';
+  followUpDate = '';
+  followUpStartTime = '';
+  followUpEndTime = '';
+  followUpConsultationType = 'InPerson';
+
   // Warning Confirmation Modals
   showCompleteConfirm = false;
   selectedAppIdForComplete = '';
@@ -106,6 +113,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedPatientName = '';
   patientHistory: Appointment[] = [];
   isHistoryLoading = false;
+  historyFilters = {
+    Completed: true,
+    Cancelled: true,
+    Rejected: true,
+    Confirmed: true,
+    Pending: true
+  };
 
   // Main Loading Flags
   isDashboardLoading = true;
@@ -1035,6 +1049,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   openCompleteConfirm(appId: string): void {
     this.selectedAppIdForComplete = appId;
     this.showCompleteConfirm = true;
+    
+    // Reset follow-up form state
+    this.isFollowUpChecked = false;
+    this.followUpDate = '';
+    this.followUpStartTime = '';
+    this.followUpEndTime = '';
+    this.followUpConsultationType = 'InPerson';
+    
+    // Populate default values from selected appointment
+    const app = this.appointments.find(a => a.appointmentId === appId);
+    if (app) {
+      this.followUpClinicId = app.clinicId || '';
+      this.followUpConsultationType = app.consultationType || 'InPerson';
+    }
   }
 
   closeCompleteConfirm(): void {
@@ -1047,9 +1075,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const comment = this.commentInputs[this.selectedAppIdForComplete] || '';
     const report = this.reportInputs[this.selectedAppIdForComplete] || '';
 
-    this.appointmentService.completeAppointment(this.selectedAppIdForComplete, comment, report).subscribe({
+    let followUpPayload: any = null;
+    if (this.isFollowUpChecked) {
+      if (!this.followUpClinicId || !this.followUpDate || !this.followUpStartTime || !this.followUpEndTime) {
+        this.toastService.showError('Please configure all follow-up appointment details (Date, Start Time, and End Time).');
+        return;
+      }
+      followUpPayload = {
+        clinicId: this.followUpClinicId,
+        appointmentDate: this.followUpDate,
+        startTime: this.followUpStartTime,
+        endTime: this.followUpEndTime,
+        consultationType: this.followUpConsultationType
+      };
+    }
+
+    this.appointmentService.completeAppointment(this.selectedAppIdForComplete, comment, report, followUpPayload).subscribe({
       next: () => {
-        this.toastService.showSuccess('Appointment has been marked as completed.');
+        this.toastService.showSuccess(this.isFollowUpChecked ? 'Appointment marked as completed & follow-up proposed.' : 'Appointment marked as completed.');
         this.closeCompleteConfirm();
         this.loadDashboardData();
       },
@@ -1197,6 +1240,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  acceptFollowUp(appId: string): void {
+    this.appointmentService.acceptFollowUp(appId).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Follow-up appointment scheduled and confirmed!');
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to accept follow-up.');
+      }
+    });
+  }
+
+  rejectFollowUp(appId: string): void {
+    this.appointmentService.declineFollowUp(appId).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Follow-up appointment declined.');
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to decline follow-up.');
+      }
+    });
+  }
+
   openPatientDetailsModal(patientId: string): void {
     this.selectedPatientDetails = null;
     this.showPatientDetailsModal = true;
@@ -1268,6 +1335,52 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.showHistoryModal = false;
     this.selectedPatientName = '';
     this.patientHistory = [];
+    this.historyFilters = {
+      Completed: true,
+      Cancelled: true,
+      Rejected: true,
+      Confirmed: true,
+      Pending: true
+    };
+  }
+
+  getFilteredHistory(): Appointment[] {
+    return this.patientHistory.filter(h => {
+      const status = h.status;
+      if (status === 'Completed') return this.historyFilters.Completed;
+      if (status === 'Cancelled') return this.historyFilters.Cancelled;
+      if (status === 'Rejected') return this.historyFilters.Rejected;
+      if (status === 'Confirmed') return this.historyFilters.Confirmed;
+      if (status === 'Pending') return this.historyFilters.Pending;
+      if (status === 'RescheduleProposed') return this.historyFilters.Pending;
+      if (status === 'FollowUpProposed') return this.historyFilters.Pending;
+      return true;
+    });
+  }
+
+  toggleAllHistoryFilters(checked: boolean): void {
+    this.historyFilters.Completed = checked;
+    this.historyFilters.Confirmed = checked;
+    this.historyFilters.Pending = checked;
+    this.historyFilters.Cancelled = checked;
+    this.historyFilters.Rejected = checked;
+  }
+
+  isAllHistoryFiltersSelected(): boolean {
+    return this.historyFilters.Completed &&
+           this.historyFilters.Confirmed &&
+           this.historyFilters.Pending &&
+           this.historyFilters.Cancelled &&
+           this.historyFilters.Rejected;
+  }
+
+  getHistoryStatusCount(status: string): number {
+    return this.patientHistory.filter(h => {
+      if (status === 'Pending') {
+        return h.status === 'Pending' || h.status === 'RescheduleProposed' || h.status === 'FollowUpProposed';
+      }
+      return h.status === status;
+    }).length;
   }
 
   openPatientHistoryModal(app: Appointment): void {
@@ -1298,6 +1411,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case 'Rejected': return '#dc2626';
       case 'Completed': return '#8b5cf6';
       case 'RescheduleProposed': return '#ec4899';
+      case 'FollowUpProposed': return '#06b6d4';
       default: return '#6b7280';
     }
   }
@@ -1310,6 +1424,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case 'Rejected': return 'Rejected';
       case 'Completed': return 'Completed';
       case 'RescheduleProposed': return 'Reschedule Proposed';
+      case 'FollowUpProposed': return 'Follow-up Proposed';
       default: return status;
     }
   }

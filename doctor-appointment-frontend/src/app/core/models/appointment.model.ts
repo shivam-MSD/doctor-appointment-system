@@ -10,7 +10,7 @@ export interface Appointment {
   appointmentDate: string;
   startTime: string;
   endTime: string;
-  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed' | 'Rejected' | 'RescheduleProposed';
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed' | 'Rejected' | 'RescheduleProposed' | 'FollowUpProposed';
   reason: string;
   consultationType: EConsultationType | string;
   clinicId?: string;

@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -20,7 +21,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   searchQuery = '';
   statusFilter = '';
   consultationFilter = '';
-  dateFilter = '';
+  startDateFilter = '';
+  endDateFilter = '';
   
   // Tabs: 'upcoming', 'past', 'cancelled', 'all'
   activeTab: 'upcoming' | 'past' | 'cancelled' | 'all' = 'upcoming';
@@ -41,6 +43,13 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   isDetailsLoading = false;
   patientHistory: any[] = [];
   isHistoryLoading = false;
+  historyFilters = {
+    Completed: true,
+    Cancelled: true,
+    Rejected: true,
+    Confirmed: true,
+    Pending: true
+  };
 
   // Reschedule Propose Modal State
   showRescheduleModal = false;
@@ -62,7 +71,10 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   cancelAppId = '';
   cancelReason = '';
 
+  completedOnlyMode = false;
+
   constructor(
+    private route: ActivatedRoute,
     private appointmentService: AppointmentService,
     private authService: AuthService,
     private toastService: ToastService,
@@ -71,6 +83,15 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.role = this.authService.getRole() || '';
+    
+    // Check if we are in completedOnly mode
+    this.route.data.subscribe(data => {
+      if (data && data['completedOnly']) {
+        this.completedOnlyMode = true;
+        this.activeTab = 'past';
+      }
+    });
+
     if (this.role === 'Doctor') {
       this.loadDoctorClinics();
     }
@@ -102,6 +123,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     const filters: any = {};
     if (this.statusFilter) filters.status = this.statusFilter;
     if (this.searchQuery) filters.search = this.searchQuery;
+    if (this.startDateFilter) filters.startDate = this.startDateFilter;
+    if (this.endDateFilter) filters.endDate = this.endDateFilter;
 
     this.appointmentService.getAdminDoctorDashboard(filters, 1, 1000).subscribe({
       next: (res) => {
@@ -117,6 +140,9 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
   getFilteredAppointments(): Appointment[] {
     let list = this.appointments || [];
+    if (this.completedOnlyMode) {
+      list = list.filter(app => app.status === 'Completed');
+    }
     if (this.selectedClinicId) {
       list = list.filter(app => app.clinicId === this.selectedClinicId);
     }
@@ -126,8 +152,17 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     if (this.consultationFilter) {
       list = list.filter(app => app.consultationType === this.consultationFilter);
     }
-    if (this.dateFilter) {
-      list = list.filter(app => app.appointmentDate.startsWith(this.dateFilter));
+    if (this.startDateFilter) {
+      list = list.filter(app => {
+        const appDate = app.appointmentDate.substring(0, 10);
+        return appDate >= this.startDateFilter;
+      });
+    }
+    if (this.endDateFilter) {
+      list = list.filter(app => {
+        const appDate = app.appointmentDate.substring(0, 10);
+        return appDate <= this.endDateFilter;
+      });
     }
 
     // Apply Tab Filtering
@@ -203,7 +238,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.searchQuery = '';
     this.statusFilter = '';
     this.consultationFilter = '';
-    this.dateFilter = '';
+    this.startDateFilter = '';
+    this.endDateFilter = '';
     this.activeTab = 'all';
     this.selectedClinicId = '';
     this.page = 1;
@@ -419,6 +455,52 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   closeMedicalHistoryModal(): void {
     this.showMedicalHistoryModal = false;
     this.patientHistory = [];
+    this.historyFilters = {
+      Completed: true,
+      Cancelled: true,
+      Rejected: true,
+      Confirmed: true,
+      Pending: true
+    };
+  }
+
+  getFilteredHistory(): any[] {
+    return this.patientHistory.filter((h: any) => {
+      const status = h.status;
+      if (status === 'Completed') return this.historyFilters.Completed;
+      if (status === 'Cancelled') return this.historyFilters.Cancelled;
+      if (status === 'Rejected') return this.historyFilters.Rejected;
+      if (status === 'Confirmed') return this.historyFilters.Confirmed;
+      if (status === 'Pending') return this.historyFilters.Pending;
+      if (status === 'RescheduleProposed') return this.historyFilters.Pending;
+      if (status === 'FollowUpProposed') return this.historyFilters.Pending;
+      return true;
+    });
+  }
+
+  toggleAllHistoryFilters(checked: boolean): void {
+    this.historyFilters.Completed = checked;
+    this.historyFilters.Confirmed = checked;
+    this.historyFilters.Pending = checked;
+    this.historyFilters.Cancelled = checked;
+    this.historyFilters.Rejected = checked;
+  }
+
+  isAllHistoryFiltersSelected(): boolean {
+    return this.historyFilters.Completed &&
+           this.historyFilters.Confirmed &&
+           this.historyFilters.Pending &&
+           this.historyFilters.Cancelled &&
+           this.historyFilters.Rejected;
+  }
+
+  getHistoryStatusCount(status: string): number {
+    return this.patientHistory.filter(h => {
+      if (status === 'Pending') {
+        return h.status === 'Pending' || h.status === 'RescheduleProposed' || h.status === 'FollowUpProposed';
+      }
+      return h.status === status;
+    }).length;
   }
 
   closePatientDetailsModal(): void {
