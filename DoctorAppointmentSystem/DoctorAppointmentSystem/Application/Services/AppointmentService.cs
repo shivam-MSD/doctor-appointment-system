@@ -160,12 +160,13 @@ namespace DoctorAppointmentSystem.Application.Services
 				// Notify Clinic Admin
 				if (clinic != null)
 				{
-					var admin = await _dbContext.Admins
-						.Include(a => a.User)
-						.FirstOrDefaultAsync(a => a.Clinic.ClinicId == clinic.ClinicId);
-					if (admin != null)
+					var adminUserIdObj = await _dbContext.AdminClinics
+						.Where(ac => ac.ClinicId == clinic.ClinicId)
+						.Select(ac => (Guid?)ac.Admin.User.UserId)
+						.FirstOrDefaultAsync();
+					if (adminUserIdObj.HasValue)
 					{
-						await _notificationService.CreateNotificationAsync(admin.User.UserId, msg);
+						await _notificationService.CreateNotificationAsync(adminUserIdObj.Value, msg);
 					}
 				}
 				await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -224,10 +225,13 @@ namespace DoctorAppointmentSystem.Application.Services
 					// Notify Clinic Admin
 					if (appointment.Clinic != null)
 					{
-						var admin = await _dbContext.Admins.Include(a => a.User).FirstOrDefaultAsync(a => a.Clinic.ClinicId == appointment.Clinic.ClinicId);
-						if (admin != null)
+						var adminUserIdObj = await _dbContext.AdminClinics
+							.Where(ac => ac.ClinicId == appointment.Clinic.ClinicId)
+							.Select(ac => (Guid?)ac.Admin.User.UserId)
+							.FirstOrDefaultAsync();
+						if (adminUserIdObj.HasValue)
 						{
-							await _notificationService.CreateNotificationAsync(admin.User.UserId, msg);
+							await _notificationService.CreateNotificationAsync(adminUserIdObj.Value, msg);
 						}
 					}
 					await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -290,7 +294,7 @@ namespace DoctorAppointmentSystem.Application.Services
         var isAdmin = false;
         if (appointment.Clinic != null)
         {
-            isAdmin = await _dbContext.Admins.AnyAsync(a => a.Clinic.ClinicId == appointment.Clinic.ClinicId && a.User.UserId == userId);
+            isAdmin = await _dbContext.AdminClinics.AnyAsync(ac => ac.ClinicId == appointment.Clinic.ClinicId && ac.Admin.User.UserId == userId);
         }
         if (!isDoctor && !isAdmin)
         {
@@ -816,7 +820,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				Status = app.EAppointmentStatus.ToString(),
 				Reason = app.Reason,
 				ConsultationType = app.EConsultationType.ToString(),
-				CreatedDate = app.CreatedDate,
+				CreatedDate = DateTime.SpecifyKind(app.CreatedDate, DateTimeKind.Utc),
 				Comment = app.Comment,
 				Report = app.Report,
 				RejectionReason = app.RejectionReason,
@@ -825,54 +829,69 @@ namespace DoctorAppointmentSystem.Application.Services
 				RescheduleProposedDate = app.RescheduleProposedDate,
 				RescheduleProposedTime = app.RescheduleProposedTime,
 				RescheduleReason = app.RescheduleReason,
-				ConfirmedDate = app.ConfirmedDate,
-				RescheduleProposedAt = app.RescheduleProposedAt,
-				CancelledDate = app.CancelledDate,
+				ConfirmedDate = app.ConfirmedDate.HasValue ? DateTime.SpecifyKind(app.ConfirmedDate.Value, DateTimeKind.Utc) : null,
+				RescheduleProposedAt = app.RescheduleProposedAt.HasValue ? DateTime.SpecifyKind(app.RescheduleProposedAt.Value, DateTimeKind.Utc) : null,
+				CancelledDate = app.CancelledDate.HasValue ? DateTime.SpecifyKind(app.CancelledDate.Value, DateTimeKind.Utc) : null,
 				CancelledBy = app.CancelledBy
 			};
 		}
 
 		public async Task<IEnumerable<ClinicDto>> GetClinicsByDoctorIdAsync(Guid doctorId)
 		{
-			return await _dbContext.Clinics
+			var list = await _dbContext.Clinics
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
 				.Where(c => c.Doctor.DoctorId == doctorId && c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null)
-				.Select(c => new ClinicDto
+				.Select(c => new
 				{
-					ClinicId = c.ClinicId,
-					ClinicName = c.ClinicName,
-					ClinicType = c.ClinicType,
-					DoctorId = c.Doctor.DoctorId,
-					DoctorName = $"Dr. {c.Doctor.FirstName} {c.Doctor.LastName}",
-					State = c.Address.State,
-					City = c.Address.City,
-					Pincode = c.Address.Pincode,
-					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
-					VerificationStatus = c.VerificationStatus.ToString(),
-					RejectionReason = c.RejectionReason,
-					Addressline1 = c.Address.Addressline1,
-					Addressline2 = c.Address.Addressline2,
-					Area = c.Address.Area,
-					ContactNumber = c.ContactNumber,
-					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == c.ClinicId),
-					AdminName = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault(),
-					AdminEmail = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.User.Email).FirstOrDefault(),
-					AdminMobileNo = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.MobileNo).FirstOrDefault(),
-					AdminIsVerified = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.IsVerified).FirstOrDefault(),
-					OpenDays = c.OpenDays,
-					StartTime = c.StartTime,
-					EndTime = c.EndTime,
-					IsAvailable = c.IsAvailable,
-					UnavailabilityReason = c.UnavailabilityReason,
-					IsDoctorAvailable = c.IsDoctorAvailable,
-					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
-					BookingWindowEndDate = c.BookingWindowEndDate,
-					BookingWindowStartDate = c.BookingWindowStartDate,
-					SupportedModes = c.SupportedModes,
-					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay
+					Clinic = c,
+					AdminInfo = _dbContext.AdminClinics
+						.Where(ac => ac.ClinicId == c.ClinicId)
+						.Select(ac => new
+						{
+							AdminName = ac.Admin.FirstName + " " + ac.Admin.LastName,
+							AdminEmail = ac.Admin.User.Email,
+							AdminMobileNo = ac.Admin.MobileNo,
+							AdminIsVerified = ac.Admin.IsVerified
+						})
+						.FirstOrDefault()
 				})
 				.ToListAsync();
+
+			return list.Select(x => new ClinicDto
+			{
+				ClinicId = x.Clinic.ClinicId,
+				ClinicName = x.Clinic.ClinicName,
+				ClinicType = x.Clinic.ClinicType,
+				DoctorId = x.Clinic.Doctor.DoctorId,
+				DoctorName = $"Dr. {x.Clinic.Doctor.FirstName} {x.Clinic.Doctor.LastName}",
+				State = x.Clinic.Address.State,
+				City = x.Clinic.Address.City,
+				Pincode = x.Clinic.Address.Pincode,
+				IsVerified = x.Clinic.VerificationStatus == EVerificationStatus.Verified,
+				VerificationStatus = x.Clinic.VerificationStatus.ToString(),
+				RejectionReason = x.Clinic.RejectionReason,
+				Addressline1 = x.Clinic.Address.Addressline1,
+				Addressline2 = x.Clinic.Address.Addressline2,
+				Area = x.Clinic.Address.Area,
+				ContactNumber = x.Clinic.ContactNumber,
+				HasAdmin = x.AdminInfo != null,
+				AdminName = x.AdminInfo != null ? x.AdminInfo.AdminName : null,
+				AdminEmail = x.AdminInfo != null ? x.AdminInfo.AdminEmail : null,
+				AdminMobileNo = x.AdminInfo != null ? x.AdminInfo.AdminMobileNo : null,
+				AdminIsVerified = x.AdminInfo != null && x.AdminInfo.AdminIsVerified,
+				OpenDays = x.Clinic.OpenDays,
+				StartTime = x.Clinic.StartTime,
+				EndTime = x.Clinic.EndTime,
+				IsAvailable = x.Clinic.IsAvailable,
+				UnavailabilityReason = x.Clinic.UnavailabilityReason,
+				IsDoctorAvailable = x.Clinic.IsDoctorAvailable,
+				DoctorUnavailabilityReason = x.Clinic.DoctorUnavailabilityReason,
+				BookingWindowEndDate = x.Clinic.BookingWindowEndDate,
+				BookingWindowStartDate = x.Clinic.BookingWindowStartDate,
+				SupportedModes = x.Clinic.SupportedModes,
+				MaxAppointmentsPerDay = x.Clinic.MaxAppointmentsPerDay
+			});
 		}
 
 		public async Task<DayAvailabilityDto> GetDayAvailabilityAsync(Guid clinicId, DateTime date)
@@ -916,7 +935,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			var isDoctor = await _dbContext.Doctors.AnyAsync(d => d.DoctorId == appointment.Doctor.DoctorId && d.User.UserId == userId);
 			var isAdmin = false;
 			if (appointment.Clinic != null)
-				isAdmin = await _dbContext.Admins.AnyAsync(a => a.Clinic.ClinicId == appointment.Clinic.ClinicId && a.User.UserId == userId);
+				isAdmin = await _dbContext.AdminClinics.AnyAsync(ac => ac.ClinicId == appointment.Clinic.ClinicId && ac.Admin.User.UserId == userId);
 
 			if (!isDoctor && !isAdmin)
 				throw new ForbiddenException("Only the treating doctor or clinic admin can assign appointment times.");

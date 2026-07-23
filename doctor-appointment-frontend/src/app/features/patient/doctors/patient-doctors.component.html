@@ -329,6 +329,13 @@
                   clinic.area }}, {{ clinic.city }}, {{ clinic.state }} - <code>{{ clinic.pincode }}</code></span>
               </div>
 
+              <!-- Contact Details -->
+              <div
+                style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-top: 4px; line-height: 1.5;">
+                <span style="color: var(--accent-cyan); font-size: 1rem; flex-shrink: 0;">📞</span>
+                <span>Contact Number: <strong style="color: var(--text-primary);">{{ clinic.contactNumber || 'N/A' }}</strong></span>
+              </div>
+
               <!-- Available Booking Dates Window -->
               <div
                 style="font-size: 0.82rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-top: 2px; line-height: 1.5;">
@@ -442,6 +449,9 @@
           <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
             📍 {{ clinic.addressline1 }}{{ clinic.addressline2 ? ', ' + clinic.addressline2 : '' }}, {{ clinic.area }},
             {{ clinic.city }}, {{ clinic.state }}
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">
+              📞 Contact: <strong style="color: var(--text-primary);">{{ clinic.contactNumber || 'N/A' }}</strong>
+            </div>
           </div>
 
           <div style="display: flex; justify-content: flex-end; margin-top: 6px;">

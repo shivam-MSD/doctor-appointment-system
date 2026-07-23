@@ -316,12 +316,15 @@ namespace DoctorAppointmentSystem.Application.Services
 					ClinicType = c.ClinicType,
 					DoctorId = c.Doctor.DoctorId,
 					DoctorName = $"Dr. {c.Doctor.FirstName} {c.Doctor.LastName}",
+					DoctorEmail = c.Doctor.User.Email,
+					DoctorMobileNo = c.Doctor.MobileNo,
 					State = c.Address.State,
 					City = c.Address.City,
 					Pincode = c.Address.Pincode,
 					Area = c.Address.Area,
 					Addressline1 = c.Address.Addressline1,
 					Addressline2 = c.Address.Addressline2,
+					ContactNumber = c.ContactNumber,
 					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
 					VerificationStatus = c.VerificationStatus.ToString(),
 					RejectionReason = c.RejectionReason,
@@ -469,6 +472,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				.Skip((page - 1) * size)
 				.Take(size)
 				.ToListAsync();
+
+			foreach (var item in items)
+			{
+				item.Timestamp = DateTime.SpecifyKind(item.Timestamp, DateTimeKind.Utc);
+			}
 
 			return new PagedResult<SystemAuditLogDto>(items, totalCount, page, size);
 		}

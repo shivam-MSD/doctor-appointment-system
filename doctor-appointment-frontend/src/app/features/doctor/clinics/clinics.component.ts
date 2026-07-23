@@ -674,6 +674,7 @@ export class ClinicsComponent implements OnInit, OnDestroy {
       pincode: existing.pincode || '',
       addressline1: existing.addressline1 || '',
       addressline2: existing.addressline2 || '',
+      contactNumber: existing.contactNumber || '',
       openDays: this.clinicTimingsForm.openDays,
       startTime: this.clinicTimingsForm.startTime,
       endTime: this.clinicTimingsForm.endTime,

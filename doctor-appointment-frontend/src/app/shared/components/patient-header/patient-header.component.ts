@@ -17,6 +17,7 @@ export class PatientHeaderComponent implements OnInit {
   patientTotalUpcoming = 0;
   patientTotalPending = 0;
   patientTotalRescheduled = 0;
+  patientTotalToday = 0;
 
   constructor(
     private authService: AuthService,
@@ -36,7 +37,12 @@ export class PatientHeaderComponent implements OnInit {
   }
 
   loadPatientStats(): void {
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Generate local YYYY-MM-DD string to avoid UTC shifting
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${y}-${m}-${d}`;
     
     this.isPatientStatsLoading = true;
     forkJoin({
@@ -50,6 +56,13 @@ export class PatientHeaderComponent implements OnInit {
         this.patientTotalPending = allApps.filter(a => a.status === 'Pending').length;
         this.patientTotalRescheduled = allApps.filter(a => a.status === 'RescheduleProposed').length;
         
+        // Today: confirmed count for today's date
+        this.patientTotalToday = allApps.filter(a => {
+          if (!a.appointmentDate) return false;
+          return a.appointmentDate.startsWith(todayStr) && a.status === 'Confirmed';
+        }).length;
+
+        // Upcoming: active/pending appointments specifically AFTER today
         this.patientTotalUpcoming = allApps.filter(a => {
           if (!a.appointmentDate) return false;
           const isToday = a.appointmentDate.startsWith(todayStr);

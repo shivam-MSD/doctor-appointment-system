@@ -47,34 +47,44 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const savedState = localStorage.getItem('sidebar_collapsed');
     this.isCollapsed = savedState === 'true';
 
-    const role = this.authService.getRole();
+    // 1. Subscribe to dynamic authentication user changes to trigger initial counts
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.loadCountsForRole(user.role);
+      } else {
+        this.resetCounts();
+      }
+    });
+
+    // 2. Subscribe to SignalR refresh signals to update counters in real-time
+    this.signalrSub = this.notificationService.refreshData$.subscribe({
+      next: () => {
+        const role = this.authService.getRole();
+        if (role) {
+          this.loadCountsForRole(role);
+        }
+      }
+    });
+  }
+
+  private loadCountsForRole(role: string): void {
     if (role === 'Patient') {
       this.loadPatientCompletion();
       this.loadPatientCounts();
-
-      this.signalrSub = this.notificationService.refreshData$.subscribe({
-        next: () => {
-          this.loadPatientCounts();
-        }
-      });
     } else if (role === 'SuperAdmin') {
       this.loadSuperAdminCounts();
-      
-      // Auto-refresh counts in real-time
-      this.signalrSub = this.notificationService.refreshData$.subscribe({
-        next: () => {
-          this.loadSuperAdminCounts();
-        }
-      });
     } else if (role === 'Doctor') {
       this.loadDoctorCounts();
-      
-      this.signalrSub = this.notificationService.refreshData$.subscribe({
-        next: () => {
-          this.loadDoctorCounts();
-        }
-      });
     }
+  }
+
+  private resetCounts(): void {
+    this.pendingDoctorsCount = 0;
+    this.pendingClinicsCount = 0;
+    this.pendingAdminsCount = 0;
+    this.patientPendingActionCount = 0;
+    this.pendingRequestsCount = 0;
+    this.profileCompletionLoaded = false;
   }
 
   private loadSuperAdminCounts(): void {

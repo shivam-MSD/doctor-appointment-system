@@ -32,7 +32,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					NotificationId = n.NotificationId,
 					Message = n.Message,
 					IsRead = n.IsRead,
-					CreatedDate = n.CreatedDate
+					CreatedDate = DateTime.SpecifyKind(n.CreatedDate, DateTimeKind.Utc)
 				})
 				.ToListAsync();
 		}
@@ -57,7 +57,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				NotificationId = notification.NotificationId,
 				Message = notification.Message,
 				IsRead = notification.IsRead,
-				CreatedDate = notification.CreatedDate
+				CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
 			};
 			await _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", dto);
 		}
@@ -95,7 +95,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					NotificationId = notification.NotificationId,
 					Message = notification.Message,
 					IsRead = notification.IsRead,
-					CreatedDate = notification.CreatedDate
+					CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
 				};
 				notificationsToPush.Add((user.UserId, dto));
 			}

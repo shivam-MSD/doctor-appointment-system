@@ -312,7 +312,7 @@
                         MMM d, y' }}</span>
                       <span
                         style="font-family: monospace; font-weight: 700; color: var(--accent-cyan); font-size: 0.8rem;">{{
-                        h.startTime | date:'shortTime' }}</span>
+                        (h.doctorAssignedTime || h.startTime) | date:'shortTime' }}</span>
                     </div>
                   </td>
                   <td>

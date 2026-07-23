@@ -246,6 +246,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				ClinicId = Guid.NewGuid(),
 				ClinicName = dto.ClinicName,
 				ClinicType = dto.ClinicType,
+				ContactNumber = dto.ContactNumber,
 				Doctor = doctor,
 				Address = clinicAddress,
 				VerificationStatus = EVerificationStatus.Pending,
@@ -414,94 +415,165 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			await _notificationService.CreateNotificationForRoleAsync("SuperAdmin", $"Dr. {doctor.FirstName} {doctor.LastName} registered a new clinic admin {dto.AdminFirstName} {dto.AdminLastName} for '{clinic.ClinicName}' requiring verification.");
 			await _notificationService.SendRefreshSignalAsync("Admins");
+
+			var adminEmailSubject = $"Clinic Admin Registration Pending Review: {adminProfile.FirstName} {adminProfile.LastName}";
+			var adminEmailBody = $@"
+				<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+					<h2 style='color: #0ea5e9; margin-top: 0;'>Clinic Admin Registration Received</h2>
+					<p>Dear Dr. {doctor.FirstName} {doctor.LastName},</p>
+					<p>You have registered a new Clinic Admin on HealSync. The registration request is currently <strong>Pending Review</strong> by our administration team.</p>
+					<hr style='border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;' />
+					<h3 style='color: #333333;'>Clinic Admin Details:</h3>
+					<table style='width: 100%; border-collapse: collapse;'>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; width: 150px; color: #666666;'>Admin Name:</td>
+							<td style='padding: 8px 0; color: #333333;'>{adminProfile.FirstName} {adminProfile.LastName}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Email Address:</td>
+							<td style='padding: 8px 0; color: #333333;'>{dto.AdminEmail}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Contact Number:</td>
+							<td style='padding: 8px 0; color: #333333;'>{adminProfile.MobileNo}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Assigned Clinic:</td>
+							<td style='padding: 8px 0; color: #333333;'>{clinic.ClinicName}</td>
+						</tr>
+					</table>
+					<hr style='border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;' />
+					<p style='color: #666666; font-size: 0.9em; line-height: 1.5;'>Our team will verify the details of the clinic admin shortly. Once approved, the admin account will be activated, and login credentials will be sent to the administrator's email.</p>
+					<p style='margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+				</div>";
+
+			try
+			{
+				await _emailService.SendEmailAsync(doctor.User.Email, adminEmailSubject, adminEmailBody);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error sending admin registration email: {ex.Message}");
+			}
 		}
 
 		public async Task<IEnumerable<ClinicDto>> GetDoctorClinicsAsync(Guid doctorUserId)
 		{
-			return await _dbContext.Clinics
+			var list = await _dbContext.Clinics
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
 				.Where(c => c.Doctor.User.UserId == doctorUserId && c.ParentClinicId == null)
-				.Select(c => new ClinicDto
+				.Select(c => new
 				{
-					ClinicId = c.ClinicId,
-					ClinicName = c.ClinicName,
-					ClinicType = c.ClinicType,
-					DoctorId = c.Doctor.DoctorId,
-					DoctorName = $"Dr. {c.Doctor.FirstName} {c.Doctor.LastName}",
-					State = c.Address.State,
-					City = c.Address.City,
-					Pincode = c.Address.Pincode,
-					Area = c.Address.Area,
-					Addressline1 = c.Address.Addressline1,
-					Addressline2 = c.Address.Addressline2,
-					ContactNumber = c.ContactNumber,
-					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
-					VerificationStatus = _dbContext.Clinics.Any(clone => clone.ParentClinicId == c.ClinicId && clone.VerificationStatus == EVerificationStatus.UpdatedPending)
-						? "UpdatedPending"
-						: c.VerificationStatus.ToString(),
-					RejectionReason = c.RejectionReason,
-					HasAdmin = _dbContext.AdminClinics.Any(ac => ac.ClinicId == c.ClinicId),
-					AdminName = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.FirstName + " " + ac.Admin.LastName).FirstOrDefault(),
-					AdminEmail = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.User.Email).FirstOrDefault(),
-					AdminMobileNo = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.MobileNo).FirstOrDefault(),
-					AdminIsVerified = _dbContext.AdminClinics.Where(ac => ac.ClinicId == c.ClinicId).Select(ac => ac.Admin.IsVerified).FirstOrDefault(),
-					OpenDays = c.OpenDays,
-					StartTime = c.StartTime,
-					EndTime = c.EndTime,
-					IsAvailable = c.IsAvailable,
-					UnavailabilityReason = c.UnavailabilityReason,
-					IsDoctorAvailable = c.IsDoctorAvailable,
-					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
-					BookingWindowEndDate = c.BookingWindowEndDate,
-					BookingWindowStartDate = c.BookingWindowStartDate,
-					SupportedModes = c.SupportedModes,
-					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay
+					Clinic = c,
+					AdminInfo = _dbContext.AdminClinics
+						.Where(ac => ac.ClinicId == c.ClinicId)
+						.Select(ac => new
+						{
+							AdminName = ac.Admin.FirstName + " " + ac.Admin.LastName,
+							AdminEmail = ac.Admin.User.Email,
+							AdminMobileNo = ac.Admin.MobileNo,
+							AdminIsVerified = ac.Admin.IsVerified
+						})
+						.FirstOrDefault(),
+					HasPendingEdit = _dbContext.Clinics.Any(clone => clone.ParentClinicId == c.ClinicId && clone.VerificationStatus == EVerificationStatus.UpdatedPending)
 				})
 				.ToListAsync();
+
+			return list.Select(x => new ClinicDto
+			{
+				ClinicId = x.Clinic.ClinicId,
+				ClinicName = x.Clinic.ClinicName,
+				ClinicType = x.Clinic.ClinicType,
+				DoctorId = x.Clinic.Doctor.DoctorId,
+				DoctorName = $"Dr. {x.Clinic.Doctor.FirstName} {x.Clinic.Doctor.LastName}",
+				State = x.Clinic.Address.State,
+				City = x.Clinic.Address.City,
+				Pincode = x.Clinic.Address.Pincode,
+				Area = x.Clinic.Address.Area,
+				Addressline1 = x.Clinic.Address.Addressline1,
+				Addressline2 = x.Clinic.Address.Addressline2,
+				ContactNumber = x.Clinic.ContactNumber,
+				IsVerified = x.Clinic.VerificationStatus == EVerificationStatus.Verified,
+				VerificationStatus = x.HasPendingEdit
+					? "UpdatedPending"
+					: x.Clinic.VerificationStatus.ToString(),
+				RejectionReason = x.Clinic.RejectionReason,
+				HasAdmin = x.AdminInfo != null,
+				AdminName = x.AdminInfo != null ? x.AdminInfo.AdminName : null,
+				AdminEmail = x.AdminInfo != null ? x.AdminInfo.AdminEmail : null,
+				AdminMobileNo = x.AdminInfo != null ? x.AdminInfo.AdminMobileNo : null,
+				AdminIsVerified = x.AdminInfo != null && x.AdminInfo.AdminIsVerified,
+				OpenDays = x.Clinic.OpenDays,
+				StartTime = x.Clinic.StartTime,
+				EndTime = x.Clinic.EndTime,
+				IsAvailable = x.Clinic.IsAvailable,
+				UnavailabilityReason = x.Clinic.UnavailabilityReason,
+				IsDoctorAvailable = x.Clinic.IsDoctorAvailable,
+				DoctorUnavailabilityReason = x.Clinic.DoctorUnavailabilityReason,
+				BookingWindowEndDate = x.Clinic.BookingWindowEndDate,
+				BookingWindowStartDate = x.Clinic.BookingWindowStartDate,
+				SupportedModes = x.Clinic.SupportedModes,
+				MaxAppointmentsPerDay = x.Clinic.MaxAppointmentsPerDay
+			});
 		}
 
 		public async Task<IEnumerable<ClinicDto>> GetClinicsByDoctorIdAsync(Guid doctorId)
 		{
-			return await _dbContext.Clinics
+			var list = await _dbContext.Clinics
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
 				.Where(c => c.Doctor.DoctorId == doctorId && c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null)
-				.Select(c => new ClinicDto
+				.Select(c => new
 				{
-					ClinicId = c.ClinicId,
-					ClinicName = c.ClinicName,
-					ClinicType = c.ClinicType,
-					DoctorId = c.Doctor.DoctorId,
-					DoctorName = $"Dr. {c.Doctor.FirstName} {c.Doctor.LastName}",
-					State = c.Address.State,
-					City = c.Address.City,
-					Pincode = c.Address.Pincode,
-					Area = c.Address.Area,
-					Addressline1 = c.Address.Addressline1,
-					Addressline2 = c.Address.Addressline2,
-					ContactNumber = c.ContactNumber,
-					IsVerified = c.VerificationStatus == EVerificationStatus.Verified,
-					VerificationStatus = c.VerificationStatus.ToString(),
-					RejectionReason = c.RejectionReason,
-					HasAdmin = _dbContext.Admins.Any(a => a.Clinic.ClinicId == c.ClinicId),
-					AdminName = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.FirstName + " " + a.LastName).FirstOrDefault(),
-					AdminEmail = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.User.Email).FirstOrDefault(),
-					AdminMobileNo = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.MobileNo).FirstOrDefault(),
-					AdminIsVerified = _dbContext.Admins.Where(a => a.Clinic.ClinicId == c.ClinicId).Select(a => a.IsVerified).FirstOrDefault(),
-					OpenDays = c.OpenDays,
-					StartTime = c.StartTime,
-					EndTime = c.EndTime,
-					IsAvailable = c.IsAvailable,
-					UnavailabilityReason = c.UnavailabilityReason,
-					IsDoctorAvailable = c.IsDoctorAvailable,
-					DoctorUnavailabilityReason = c.DoctorUnavailabilityReason,
-					BookingWindowEndDate = c.BookingWindowEndDate,
-					BookingWindowStartDate = c.BookingWindowStartDate,
-					SupportedModes = c.SupportedModes,
-					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay
+					Clinic = c,
+					AdminInfo = _dbContext.AdminClinics
+						.Where(ac => ac.ClinicId == c.ClinicId)
+						.Select(ac => new
+						{
+							AdminName = ac.Admin.FirstName + " " + ac.Admin.LastName,
+							AdminEmail = ac.Admin.User.Email,
+							AdminMobileNo = ac.Admin.MobileNo,
+							AdminIsVerified = ac.Admin.IsVerified
+						})
+						.FirstOrDefault()
 				})
 				.ToListAsync();
+
+			return list.Select(x => new ClinicDto
+			{
+				ClinicId = x.Clinic.ClinicId,
+				ClinicName = x.Clinic.ClinicName,
+				ClinicType = x.Clinic.ClinicType,
+				DoctorId = x.Clinic.Doctor.DoctorId,
+				DoctorName = $"Dr. {x.Clinic.Doctor.FirstName} {x.Clinic.Doctor.LastName}",
+				State = x.Clinic.Address.State,
+				City = x.Clinic.Address.City,
+				Pincode = x.Clinic.Address.Pincode,
+				Area = x.Clinic.Address.Area,
+				Addressline1 = x.Clinic.Address.Addressline1,
+				Addressline2 = x.Clinic.Address.Addressline2,
+				ContactNumber = x.Clinic.ContactNumber,
+				IsVerified = x.Clinic.VerificationStatus == EVerificationStatus.Verified,
+				VerificationStatus = x.Clinic.VerificationStatus.ToString(),
+				RejectionReason = x.Clinic.RejectionReason,
+				HasAdmin = x.AdminInfo != null,
+				AdminName = x.AdminInfo != null ? x.AdminInfo.AdminName : null,
+				AdminEmail = x.AdminInfo != null ? x.AdminInfo.AdminEmail : null,
+				AdminMobileNo = x.AdminInfo != null ? x.AdminInfo.AdminMobileNo : null,
+				AdminIsVerified = x.AdminInfo != null && x.AdminInfo.AdminIsVerified,
+				OpenDays = x.Clinic.OpenDays,
+				StartTime = x.Clinic.StartTime,
+				EndTime = x.Clinic.EndTime,
+				IsAvailable = x.Clinic.IsAvailable,
+				UnavailabilityReason = x.Clinic.UnavailabilityReason,
+				IsDoctorAvailable = x.Clinic.IsDoctorAvailable,
+				DoctorUnavailabilityReason = x.Clinic.DoctorUnavailabilityReason,
+				BookingWindowEndDate = x.Clinic.BookingWindowEndDate,
+				BookingWindowStartDate = x.Clinic.BookingWindowStartDate,
+				SupportedModes = x.Clinic.SupportedModes,
+				MaxAppointmentsPerDay = x.Clinic.MaxAppointmentsPerDay
+			});
 		}
 
 		public async Task<IEnumerable<ClinicAdminDto>> GetDoctorAdminsAsync(Guid doctorUserId)
@@ -549,6 +621,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					ClinicType = c.ClinicType,
 					DoctorId = c.Doctor.DoctorId,
 					DoctorName = $"Dr. {c.Doctor.FirstName} {c.Doctor.LastName}",
+					DoctorEmail = c.Doctor.User.Email,
+					DoctorMobileNo = c.Doctor.MobileNo,
 					State = c.Address.State,
 					City = c.Address.City,
 					Pincode = c.Address.Pincode,
@@ -675,6 +749,22 @@ namespace DoctorAppointmentSystem.Application.Services
 					await _dbContext.SaveChangesAsync();
 
 					await _notificationService.CreateNotificationAsync(parent.Doctor.User.UserId, $"Your proposed edits for clinic branch '{parent.ClinicName}' have been approved and applied.");
+
+					var editEmailSubject = $"Clinic Branch Edits Approved: {parent.ClinicName}";
+					var editEmailBody = $@"
+						<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+							<h2 style='color: #10b981; margin-top: 0;'>Clinic Edits Approved</h2>
+							<p>Dear Dr. {parent.Doctor.FirstName} {parent.Doctor.LastName},</p>
+							<p>Your proposed edits for clinic branch <strong>{parent.ClinicName}</strong> have been approved and applied successfully.</p>
+							<hr style='border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;' />
+							<p style='color: #666666; font-size: 0.9em; line-height: 1.5;'>The changes are now active. Patients booking appointments will see the updated clinic branch information.</p>
+							<p style='margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+						</div>";
+					try
+					{
+						await _emailService.SendEmailAsync(parent.Doctor.User.Email, editEmailSubject, editEmailBody);
+					}
+					catch {}
 				}
 			}
 			else
@@ -699,6 +789,32 @@ namespace DoctorAppointmentSystem.Application.Services
 				await _dbContext.SaveChangesAsync();
 
 				await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your clinic branch '{clinic.ClinicName}' has been verified and approved by the Super Admin.");
+
+				var emailSubject = $"Clinic Branch Approved: {clinic.ClinicName}";
+				var emailBody = $@"
+					<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+						<h2 style='color: #10b981; margin-top: 0;'>Clinic Branch Approved</h2>
+						<p>Dear Dr. {clinic.Doctor.FirstName} {clinic.Doctor.LastName},</p>
+						<p>We are pleased to inform you that your clinic branch <strong>{clinic.ClinicName}</strong> has been verified and approved by the Super Admin. It is now active and available for booking appointments.</p>
+						<hr style='border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;' />
+						<h3 style='color: #333333;'>Clinic Details:</h3>
+						<table style='width: 100%; border-collapse: collapse;'>
+							<tr>
+								<td style='padding: 8px 0; font-weight: bold; width: 150px; color: #666666;'>Clinic Name:</td>
+								<td style='padding: 8px 0; color: #333333;'>{clinic.ClinicName}</td>
+							</tr>
+							<tr>
+								<td style='padding: 8px 0; font-weight: bold; color: #666666;'>Address:</td>
+								<td style='padding: 8px 0; color: #333333;'>{clinic.Address.Addressline1}, {clinic.Address.City}</td>
+							</tr>
+						</table>
+						<p style='margin-top: 20px; margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+					</div>";
+				try
+				{
+					await _emailService.SendEmailAsync(clinic.Doctor.User.Email, emailSubject, emailBody);
+				}
+				catch {}
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Clinics");
@@ -773,6 +889,27 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (doctorUserId.HasValue)
 			{
 				await _notificationService.CreateNotificationAsync(doctorUserId.Value, $"The Clinic Admin {admin.FirstName} {admin.LastName} assigned to '{clinicName}' has been approved.");
+
+				var doctorUserObj = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.User;
+				var doctorFirstName = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.FirstName;
+				var doctorLastName = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.LastName;
+				if (doctorUserObj != null && !string.IsNullOrEmpty(doctorUserObj.Email))
+				{
+					var docEmailSubject = $"Clinic Admin Approved: {admin.FirstName} {admin.LastName}";
+					var docEmailBody = $@"
+						<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+							<h2 style='color: #10b981; margin-top: 0;'>Clinic Admin Approved</h2>
+							<p>Dear Dr. {doctorFirstName} {doctorLastName},</p>
+							<p>The Clinic Admin <strong>{admin.FirstName} {admin.LastName}</strong> assigned to your clinic <strong>{clinicName}</strong> has been approved and activated by the Super Admin.</p>
+							<p>They can now log in to the Clinic Admin Portal to manage appointments, schedules, and other settings for your clinic branch.</p>
+							<p style='margin-top: 20px; margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+						</div>";
+					try
+					{
+						await _emailService.SendEmailAsync(doctorUserObj.Email, docEmailSubject, docEmailBody);
+					}
+					catch {}
+				}
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Admins");
@@ -815,6 +952,27 @@ namespace DoctorAppointmentSystem.Application.Services
 			catch (Exception ex)
 			{
 				Console.WriteLine($"[Email Error]: Failed to send rejection email to admin: {ex.Message}");
+			}
+
+			var doctorUserObj = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.User;
+			var doctorFirstName = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.FirstName;
+			var doctorLastName = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.LastName;
+
+			if (doctorUserObj != null && !string.IsNullOrEmpty(doctorUserObj.Email))
+			{
+				var docEmailSubject = $"Clinic Admin Application Rejected: {adminName}";
+				var docEmailBody = $@"
+					<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+						<h2 style='color: #ef4444; margin-top: 0;'>Clinic Admin Application Rejected</h2>
+						<p>Dear Dr. {doctorFirstName} {doctorLastName},</p>
+						<p>We regret to inform you that the registration request for Clinic Admin <strong>{adminName}</strong> assigned to <strong>{clinicName}</strong> has been rejected by the Super Admin.</p>
+						<p style='margin-top: 20px; margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+					</div>";
+				try
+				{
+					await _emailService.SendEmailAsync(doctorUserObj.Email, docEmailSubject, docEmailBody);
+				}
+				catch {}
 			}
 
 			// Remove associated Addresses
@@ -883,6 +1041,21 @@ namespace DoctorAppointmentSystem.Application.Services
 				await _dbContext.SaveChangesAsync();
 
 				await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your proposed edits for clinic branch '{clinic.ClinicName}' were rejected by the Super Admin.<br><b>Reason: {rejectionReason}</b>");
+
+				var editRejectionSubject = $"Clinic Branch Edits Rejected: {clinic.ClinicName}";
+				var editRejectionBody = $@"
+					<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+						<h2 style='color: #ef4444; margin-top: 0;'>Clinic Edits Rejected</h2>
+						<p>Dear Dr. {clinic.Doctor.FirstName} {clinic.Doctor.LastName},</p>
+						<p>Your proposed edits for clinic branch <strong>{clinic.ClinicName}</strong> were reviewed and rejected by the Super Admin.</p>
+						<p><strong>Reason for rejection:</strong> {rejectionReason}</p>
+						<p style='margin-top: 20px; margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+					</div>";
+				try
+				{
+					await _emailService.SendEmailAsync(clinic.Doctor.User.Email, editRejectionSubject, editRejectionBody);
+				}
+				catch {}
 			}
 			else
 			{
@@ -907,6 +1080,21 @@ namespace DoctorAppointmentSystem.Application.Services
 				await _dbContext.SaveChangesAsync();
 
 				await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your clinic branch '{clinic.ClinicName}' registration has been rejected.<br><b>Reason: {rejectionReason}</b>");
+
+				var emailSubject = $"Clinic Registration Rejected: {clinic.ClinicName}";
+				var emailBody = $@"
+					<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+						<h2 style='color: #ef4444; margin-top: 0;'>Clinic Registration Rejected</h2>
+						<p>Dear Dr. {clinic.Doctor.FirstName} {clinic.Doctor.LastName},</p>
+						<p>We regret to inform you that your registration request for the clinic branch <strong>{clinic.ClinicName}</strong> has been rejected by the Super Admin.</p>
+						<p><strong>Reason for rejection:</strong> {rejectionReason}</p>
+						<p style='margin-top: 20px; margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
+					</div>";
+				try
+				{
+					await _emailService.SendEmailAsync(clinic.Doctor.User.Email, emailSubject, emailBody);
+				}
+				catch {}
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Clinics");
@@ -957,15 +1145,15 @@ namespace DoctorAppointmentSystem.Application.Services
 				await ValidateNoClinicClashAsync(clinic.Doctor.DoctorId, clinicId, dto.OpenDays, dto.StartTime, dto.EndTime, dto.IsAvailable, dto.IsDoctorAvailable);
 			}
 
-			bool detailsChanged = clinic.ClinicName != dto.ClinicName ||
-			                      clinic.ClinicType != dto.ClinicType ||
-			                      clinic.Address.State != dto.State ||
-			                      clinic.Address.City != dto.City ||
-			                      clinic.Address.Area != dto.Area ||
-			                      clinic.Address.Pincode != dto.Pincode ||
-			                      clinic.Address.Addressline1 != dto.Addressline1 ||
-			                      clinic.Address.Addressline2 != (dto.Addressline2 ?? string.Empty) ||
-			                      clinic.ContactNumber != dto.ContactNumber;
+			bool detailsChanged = (clinic.ClinicName ?? string.Empty) != (dto.ClinicName ?? string.Empty) ||
+			                      (clinic.ClinicType ?? string.Empty) != (dto.ClinicType ?? string.Empty) ||
+			                      (clinic.Address.State ?? string.Empty) != (dto.State ?? string.Empty) ||
+			                      (clinic.Address.City ?? string.Empty) != (dto.City ?? string.Empty) ||
+			                      (clinic.Address.Area ?? string.Empty) != (dto.Area ?? string.Empty) ||
+			                      (clinic.Address.Pincode ?? string.Empty) != (dto.Pincode ?? string.Empty) ||
+			                      (clinic.Address.Addressline1 ?? string.Empty) != (dto.Addressline1 ?? string.Empty) ||
+			                      (clinic.Address.Addressline2 ?? string.Empty) != (dto.Addressline2 ?? string.Empty) ||
+			                      (clinic.ContactNumber ?? string.Empty) != (dto.ContactNumber ?? string.Empty);
 
 			if (detailsChanged)
 			{

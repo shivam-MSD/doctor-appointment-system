@@ -57,10 +57,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       // 1. Initial load
       this.loadNotifications();
 
-      // 2. Start SignalR real-time websocket channel
-      this.notificationService.startConnection(userId);
-
-      // 3. Listen to incoming push events
+      // 2. Listen to incoming push events
       this.signalrSub = this.notificationService.notificationReceived$.subscribe({
         next: (notification: NotificationDto) => {
           this.notifications = [notification, ...this.notifications];
@@ -76,7 +73,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.clockSub) {
       this.clockSub.unsubscribe();
     }
-    this.notificationService.stopConnection();
   }
 
   loadNotifications(): void {

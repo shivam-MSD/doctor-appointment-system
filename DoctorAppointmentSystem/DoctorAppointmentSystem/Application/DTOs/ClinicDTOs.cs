@@ -104,6 +104,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[MaxLength(250)]
 		public string? Addressline2 { get; set; }
 
+		[MaxLength(20)]
+		public string? ContactNumber { get; set; }
+
 		public string? OpenDays { get; set; }
 		public string? StartTime { get; set; }
 		public string? EndTime { get; set; }
@@ -147,6 +150,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string? ContactNumber { get; set; }
 		public Guid DoctorId { get; set; }
 		public string DoctorName { get; set; }
+		public string? DoctorEmail { get; set; }
+		public string? DoctorMobileNo { get; set; }
 		public string State { get; set; }
 		public string City { get; set; }
 		public string Pincode { get; set; } = string.Empty;

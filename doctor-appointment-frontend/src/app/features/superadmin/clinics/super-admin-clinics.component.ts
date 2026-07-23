@@ -39,7 +39,7 @@ export class SuperAdminClinicsComponent implements OnInit, OnDestroy {
     private adminService: AdminService,
     private toastService: ToastService,
     private notificationService: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadClinics();

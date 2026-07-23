@@ -196,6 +196,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
 
   // --- Clinic Details Modal ---
   openClinicDetails(clinic: any): void {
+    console.log('Selected Clinic Details (Dashboard):', clinic);
     this.selectedClinicDetails = clinic;
     this.isClinicVerified = false;
     this.showClinicDetailsModal = true;

@@ -336,7 +336,13 @@
           </tr>
           <tr>
             <td>Registered By</td>
-            <td style="color: var(--accent-cyan) !important;">{{ selectedClinicForDetails.doctorName }}</td>
+            <td style="color: var(--accent-cyan) !important;">
+              {{ selectedClinicForDetails.doctorName }}
+              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
+                <span>📧 {{ selectedClinicForDetails.doctorEmail || 'N/A' }}</span>
+                <span>📞 {{ selectedClinicForDetails.doctorMobileNo || 'N/A' }}</span>
+              </div>
+            </td>
           </tr>
           <tr>
             <td>Verification Status</td>
@@ -369,9 +375,9 @@
             <td>Address Line 2</td>
             <td>{{ selectedClinicForDetails.addressline2 || 'N/A' }}</td>
           </tr>
-          <tr *ngIf="selectedClinicForDetails.contactNumber">
+          <tr>
             <td>Contact Number</td>
-            <td>📞 {{ selectedClinicForDetails.contactNumber }}</td>
+            <td>📞 {{ selectedClinicForDetails.contactNumber || 'N/A' }}</td>
           </tr>
           <tr>
             <td>Area / Locality</td>
