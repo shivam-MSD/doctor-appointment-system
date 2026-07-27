@@ -30,6 +30,12 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		[Required]
 		public bool IsVerified { get; set; } = false;
 
+		[Required]
+		public EGender Gender { get; set; } = EGender.Male;
+
+		[Required]
+		public DateTime DOB { get; set; } = DateTime.MinValue;
+
 		/// <summary>One admin can manage multiple clinics via the AdminClinics join table.</summary>
 		public ICollection<AdminClinic> AdminClinics { get; set; } = new List<AdminClinic>();
 

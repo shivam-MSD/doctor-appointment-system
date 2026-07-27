@@ -14,6 +14,7 @@ export class MyDoctorsComponent implements OnInit {
   consultedDoctors: any[] = [];
   selectedDoctorForInfo: any = null;
   selectedDoctorForHistory: any = null;
+  selectedDoctorForBooking: any = null;
 
   constructor(private appointmentService: AppointmentService, private router: Router) {}
 
@@ -44,8 +45,16 @@ export class MyDoctorsComponent implements OnInit {
   }
 
   onBookClinic(doctorId: string, clinicId: string): void {
-    this.closeDoctorInfo();
+    this.closeBookAppointmentModal();
     this.router.navigate(['/patient/book-appointment'], { queryParams: { doctorId, clinicId } });
+    setTimeout(() => {
+      const contentArea = document.querySelector('.content-area');
+      if (contentArea) {
+        contentArea.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 150);
   }
 
   openDoctorInfo(doc: any): void {
@@ -65,6 +74,16 @@ export class MyDoctorsComponent implements OnInit {
 
   closeAppointmentHistory(): void {
     this.selectedDoctorForHistory = null;
+    document.body.style.overflow = '';
+  }
+
+  openBookAppointmentModal(doc: any): void {
+    this.selectedDoctorForBooking = doc;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeBookAppointmentModal(): void {
+    this.selectedDoctorForBooking = null;
     document.body.style.overflow = '';
   }
 }

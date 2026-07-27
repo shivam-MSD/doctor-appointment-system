@@ -16,6 +16,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly INotificationService _notificationService;
 		private readonly IDistributedCache _distributedCache;
 		private readonly IServiceProvider _serviceProvider;
+		private readonly IEmailService _emailService;
 		private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
 		public delegate void AppointmentActionLoggedEventHandler(object sender, AppointmentActionEventArgs e);
@@ -31,12 +32,14 @@ namespace DoctorAppointmentSystem.Application.Services
 			ApplicationDbContext dbContext,
 			INotificationService notificationService,
 			IDistributedCache distributedCache,
-			IServiceProvider serviceProvider)
+			IServiceProvider serviceProvider,
+			IEmailService emailService)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
 			_distributedCache = distributedCache;
 			_serviceProvider = serviceProvider;
+			_emailService = emailService;
 
 			this.OnAppointmentActionLogged += HandleAppointmentActionLogged;
 		}
@@ -86,7 +89,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			Clinic? clinic = null;
 			if (dto.ClinicId.HasValue && dto.ClinicId.Value != Guid.Empty)
 			{
-				clinic = await _dbContext.Clinics.FindAsync(dto.ClinicId.Value);
+				clinic = await _dbContext.Clinics
+					.Include(c => c.Address)
+					.FirstOrDefaultAsync(c => c.ClinicId == dto.ClinicId.Value);
 			}
 
 			if (clinic != null && clinic.BookingWindowEndDate.HasValue && dto.AppointmentDate.Date > clinic.BookingWindowEndDate.Value.Date)
@@ -170,6 +175,31 @@ namespace DoctorAppointmentSystem.Application.Services
 					}
 				}
 				await _notificationService.SendRefreshSignalAsync("Appointments");
+
+				// Send Email to Patient
+				var patientUser = await _dbContext.UserPatients
+					.Include(up => up.User)
+					.FirstOrDefaultAsync(up => up.PatientId == dto.PatientId && up.IsVerified);
+				if (patientUser?.User != null)
+				{
+					var emailSubject = "HealSync - Appointment Booked Successfully";
+					var emailTitle = "Appointment Booking Requested";
+					var emailMsg = $"Dear {patient.FirstName}, your appointment booking request has been received. Your queue position is #{appointment.QueueNumber}. The clinic will assign your appointment time shortly.";
+					var docName = $"{doctor.FirstName} {doctor.LastName}";
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							patientUser.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							$"Queue #{appointment.QueueNumber} (Pending Time)",
+							clinic
+						);
+					});
+				}
 
 				return MapToDto(appointment, patient, doctor);
 			}
@@ -273,7 +303,6 @@ namespace DoctorAppointmentSystem.Application.Services
         }
     }
 
-    // Doctor or clinic admin cancels a confirmed appointment with a reason
     public async Task DoctorCancelAppointmentAsync(Guid userId, Guid appointmentId, string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))
@@ -284,6 +313,7 @@ namespace DoctorAppointmentSystem.Application.Services
             .Include(a => a.Doctor)
             .Include(a => a.Patient)
             .Include(a => a.Clinic)
+                .ThenInclude(c => c.Address)
             .FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
         if (appointment == null)
         {
@@ -308,11 +338,35 @@ namespace DoctorAppointmentSystem.Application.Services
         await _dbContext.SaveChangesAsync();
         TriggerAppointmentActionLog(appointment.AppointmentId, "Cancelled", userId, isDoctor ? "Doctor" : "Admin", string.IsNullOrWhiteSpace(reason) ? "Cancelled by clinic." : reason);
         var msg = $"Your appointment on {appointment.AppointmentDate:yyyy-MM-dd} with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been cancelled. Reason: {reason}";
-        var patientUser = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
-                if (patientUser != null)
-                {
-                    await _notificationService.CreateNotificationAsync(patientUser.UserId, msg);
-                }
+        var patientUser = await _dbContext.UserPatients
+            .Include(up => up.User)
+            .FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+        if (patientUser != null)
+        {
+            await _notificationService.CreateNotificationAsync(patientUser.UserId, msg);
+
+            if (patientUser.User != null)
+            {
+                var emailSubject = "HealSync - Appointment Cancelled";
+                var emailTitle = "Appointment Cancelled";
+                var emailMsg = $"Dear {appointment.Patient.FirstName}, your appointment has been cancelled by the clinic/doctor. Reason: {reason}";
+                var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+                var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
+                
+                _ = Task.Run(async () => {
+                    await SendAppointmentEmailAsync(
+                        patientUser.User.Email,
+                        emailSubject,
+                        emailTitle,
+                        emailMsg,
+                        docName,
+                        appointment.AppointmentDate.ToString("dd MMM yyyy"),
+                        timeStr,
+                        appointment.Clinic
+                    );
+                });
+            }
+        }
         await _notificationService.SendRefreshSignalAsync("Appointments");
     }
 
@@ -567,6 +621,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			// Fetch all appointments for these patients
 			var appointments = await _dbContext.Appointments
 				.Include(app => app.Patient)
+				.Include(app => app.Clinic)
 				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
 				.Include(app => app.Doctor).ThenInclude(d => d.Clinics).ThenInclude(c => c.Address)
 				.Where(app => linkedPatientIds.Contains(app.Patient.PatientId))
@@ -926,6 +981,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				.Include(a => a.Patient)
 				.Include(a => a.Doctor)
 				.Include(a => a.Clinic)
+					.ThenInclude(c => c.Address)
 				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
 
 			if (appointment == null)
@@ -940,6 +996,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (!isDoctor && !isAdmin)
 				throw new ForbiddenException("Only the treating doctor or clinic admin can assign appointment times.");
 
+			var previousTime = appointment.DoctorAssignedTime;
+			var isTimeChange = previousTime.HasValue && previousTime.Value != dto.DoctorAssignedTime;
+
 			appointment.DoctorAssignedTime = dto.DoctorAssignedTime;
 			appointment.EAppointmentStatus = EAppointmentStatus.Confirmed;
 			appointment.ConfirmedDate = DateTime.UtcNow;
@@ -951,6 +1010,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			// Notify patient
 			var userPatient = await _dbContext.UserPatients
+				.Include(up => up.User)
 				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
 			if (userPatient != null)
 			{
@@ -959,6 +1019,30 @@ namespace DoctorAppointmentSystem.Application.Services
 					userPatient.UserId,
 					$"Your appointment #{appointment.QueueNumber} on {appointment.AppointmentDate:dd MMM yyyy} has been assigned at {timeStr}."
 				);
+
+				// Send Email to Patient
+				if (userPatient.User != null)
+				{
+					var emailSubject = isTimeChange ? "HealSync - Appointment Time Changed" : "HealSync - Appointment Confirmed";
+					var emailTitle = isTimeChange ? "Appointment Time Changed" : "Appointment Confirmed & Scheduled";
+					var emailMsg = isTimeChange 
+						? $"Dear {appointment.Patient.FirstName}, Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has adjusted the timing for your appointment." 
+						: $"Dear {appointment.Patient.FirstName}, your appointment has been confirmed by the clinic.";
+					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							userPatient.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							timeStr,
+							appointment.Clinic
+						);
+					});
+				}
 			}
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
@@ -1123,6 +1207,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
 				.Include(a => a.Doctor)
+				.Include(a => a.Clinic)
+					.ThenInclude(c => c.Address)
 				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
 
 			if (appointment == null)
@@ -1138,10 +1224,32 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			// Refresh SignalR hubs
 			var userPatient = await _dbContext.UserPatients
+				.Include(up => up.User)
 				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
 			if (userPatient != null)
 			{
 				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} was rejected. Reason: {reason}");
+
+				if (userPatient.User != null)
+				{
+					var emailSubject = "HealSync - Appointment Rejected";
+					var emailTitle = "Appointment Request Declined";
+					var emailMsg = $"Dear {appointment.Patient.FirstName}, we regret to inform you that your appointment booking request has been declined by the clinic. Reason: {reason}";
+					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							userPatient.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							"Rejected / Declined",
+							appointment.Clinic
+						);
+					});
+				}
 			}
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
@@ -1382,9 +1490,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new UnauthorizedAccessException("Only doctors and clinic admins can propose a reschedule.");
 
 			var appointment = await _dbContext.Appointments
+				.Include(a => a.Patient)
 				.Include(a => a.Doctor)
 					.ThenInclude(d => d.User)
 				.Include(a => a.Clinic)
+					.ThenInclude(c => c.Address)
 				.FirstOrDefaultAsync(a => a.AppointmentId == dto.AppointmentId);
 
 			if (appointment == null)
@@ -1443,11 +1553,36 @@ namespace DoctorAppointmentSystem.Application.Services
 			TriggerAppointmentActionLog(appointment.AppointmentId, "RescheduleProposed", userId, isDoctor ? "Doctor" : "Admin", $"Proposed reschedule to {dto.ProposedDate:yyyy-MM-dd} at {dto.ProposedTime:h:mm tt}. Reason: {dto.Reason}");
 
 			var patientId = _dbContext.Entry(appointment).Property<Guid>("PatientId").CurrentValue;
-			var userPatients = await _dbContext.UserPatients.Where(up => up.PatientId == patientId).ToListAsync();
+			var userPatients = await _dbContext.UserPatients
+				.Include(up => up.User)
+				.Where(up => up.PatientId == patientId && up.IsVerified)
+				.ToListAsync();
 			
 			foreach (var up in userPatients)
 			{
 				await _notificationService.CreateNotificationAsync(up.UserId, $"A new reschedule time has been proposed for your appointment on {appointment.AppointmentDate:MMM dd, yyyy}. Please review it.");
+				
+				if (up.User != null)
+				{
+					var emailSubject = "HealSync - Reschedule Proposed";
+					var emailTitle = "Reschedule Time Proposed";
+					var emailMsg = $"Dear {appointment.Patient.FirstName}, a new reschedule date/time has been proposed for your appointment by the clinic/doctor. Reason: {dto.Reason}";
+					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+					var timeStr = dto.ProposedTime.Value.ToString("hh:mm tt");
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							up.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							dto.ProposedDate.ToString("dd MMM yyyy"),
+							timeStr,
+							appointment.Clinic
+						);
+					});
+				}
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -1463,17 +1598,27 @@ namespace DoctorAppointmentSystem.Application.Services
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
 				.Include(a => a.Clinic)
+					.ThenInclude(c => c.Address)
 				.FirstOrDefaultAsync(a => a.AppointmentId == dto.AppointmentId);
 
 			if (appointment == null)
 				throw new NotFoundException("Appointment not found.");
 
-			var userPatient = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.UserId == userId && up.PatientId == appointment.Patient.PatientId);
+			var userPatient = await _dbContext.UserPatients
+				.Include(up => up.User)
+				.FirstOrDefaultAsync(up => up.UserId == userId && up.PatientId == appointment.Patient.PatientId);
 			if (userPatient == null)
 				throw new UnauthorizedAccessException("You can only respond to your own appointments.");
 
 			if (appointment.EAppointmentStatus != EAppointmentStatus.RescheduleProposed)
 				throw new BadRequestException("This appointment does not have a pending reschedule proposal.");
+
+			Doctor? doctor = null;
+			var doctorIdObj = _dbContext.Entry(appointment).Property("DoctorId").CurrentValue;
+			if (doctorIdObj != null)
+			{
+				doctor = await _dbContext.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.DoctorId == (Guid)doctorIdObj);
+			}
 
 			if (dto.Accept)
 			{
@@ -1508,14 +1653,32 @@ namespace DoctorAppointmentSystem.Application.Services
 				}
 				
 				// Notify the Doctor
-				var doctorIdObj = _dbContext.Entry(appointment).Property("DoctorId").CurrentValue;
-				if (doctorIdObj != null)
+				if (doctor != null)
 				{
-					var doctor = await _dbContext.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.DoctorId == (Guid)doctorIdObj);
-					if (doctor != null)
-					{
-						await _notificationService.CreateNotificationAsync(doctor.User.UserId, $"Patient {appointment.Patient.FirstName} {appointment.Patient.LastName} accepted the rescheduled time for {appointment.AppointmentDate:MMM dd, yyyy}.");
-					}
+					await _notificationService.CreateNotificationAsync(doctor.User.UserId, $"Patient {appointment.Patient.FirstName} {appointment.Patient.LastName} accepted the rescheduled time for {appointment.AppointmentDate:MMM dd, yyyy}.");
+				}
+
+				// Email Confirmation
+				if (userPatient?.User != null)
+				{
+					var emailSubject = "HealSync - Reschedule Accepted";
+					var emailTitle = "Appointment Rescheduled & Confirmed";
+					var emailMsg = $"Dear {appointment.Patient.FirstName}, you have accepted the proposed reschedule time. Your appointment details have been updated.";
+					var docName = doctor != null ? $"{doctor.FirstName} {doctor.LastName}" : "Treating Doctor";
+					var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							userPatient.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							timeStr,
+							appointment.Clinic
+						);
+					});
 				}
 			}
 			else
@@ -1528,18 +1691,105 @@ namespace DoctorAppointmentSystem.Application.Services
 				TriggerAppointmentActionLog(appointment.AppointmentId, "Cancelled", userId, "Patient", "Patient declined the proposed reschedule date.");
 				
 				// Notify the Doctor
-				var doctorIdObj = _dbContext.Entry(appointment).Property("DoctorId").CurrentValue;
-				if (doctorIdObj != null)
+				if (doctor != null)
 				{
-					var doctor = await _dbContext.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.DoctorId == (Guid)doctorIdObj);
-					if (doctor != null)
-					{
-						await _notificationService.CreateNotificationAsync(doctor.User.UserId, $"Patient {appointment.Patient.FirstName} {appointment.Patient.LastName} declined the rescheduled time and the appointment was cancelled.");
-					}
+					await _notificationService.CreateNotificationAsync(doctor.User.UserId, $"Patient {appointment.Patient.FirstName} {appointment.Patient.LastName} declined the rescheduled time and the appointment was cancelled.");
+				}
+
+				// Email Cancellation
+				if (userPatient?.User != null)
+				{
+					var emailSubject = "HealSync - Appointment Cancelled";
+					var emailTitle = "Appointment Cancelled";
+					var emailMsg = $"Dear {appointment.Patient.FirstName}, your appointment has been cancelled because the proposed reschedule time was declined.";
+					var docName = doctor != null ? $"{doctor.FirstName} {doctor.LastName}" : "Treating Doctor";
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							userPatient.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							"Cancelled",
+							appointment.Clinic
+						);
+					});
 				}
 			}
+		}
 
-			await _notificationService.SendRefreshSignalAsync("Appointments");
+		private async Task SendAppointmentEmailAsync(
+			string toEmail,
+			string subject,
+			string title,
+			string message,
+			string doctorName,
+			string dateStr,
+			string timeOrStatus,
+			Clinic? clinic)
+		{
+			if (string.IsNullOrWhiteSpace(toEmail)) return;
+
+			string clinicName = clinic?.ClinicName ?? "N/A";
+			string clinicAddress = "N/A";
+			if (clinic != null)
+			{
+				var parts = new List<string>();
+				if (!string.IsNullOrWhiteSpace(clinic.Address?.Addressline1)) parts.Add(clinic.Address.Addressline1);
+				if (!string.IsNullOrWhiteSpace(clinic.Address?.Addressline2)) parts.Add(clinic.Address.Addressline2);
+				if (!string.IsNullOrWhiteSpace(clinic.Address?.Area)) parts.Add(clinic.Address.Area);
+				if (!string.IsNullOrWhiteSpace(clinic.Address?.City)) parts.Add(clinic.Address.City);
+				if (!string.IsNullOrWhiteSpace(clinic.Address?.State)) parts.Add(clinic.Address.State);
+				if (!string.IsNullOrWhiteSpace(clinic.Address?.Pincode)) parts.Add(clinic.Address.Pincode);
+				clinicAddress = string.Join(", ", parts);
+			}
+
+			string htmlBody = $@"
+<div style=""font-family: 'Segoe UI', Arial, sans-serif; background-color: #f3f4f6; padding: 40px 10px; margin: 0;"">
+  <div style=""max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb;"">
+    <div style=""background: linear-gradient(135deg, #0e7490, #0891b2); padding: 30px 20px; text-align: center;"">
+      <h1 style=""color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;"">HealSync Appointments</h1>
+    </div>
+    <div style=""padding: 40px 30px; color: #1f2937;"">
+      <h2 style=""color: #0e7490; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 600;"">{title}</h2>
+      <p style=""font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 24px;"">{message}</p>
+      
+      <div style=""background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;"">
+        <table style=""width: 100%; border-collapse: collapse; font-size: 15px;"">
+          <tr>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; width: 35%;"">Doctor:</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">Dr. {doctorName}</td>
+          </tr>
+          <tr>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500;"">Date:</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">{dateStr}</td>
+          </tr>
+          <tr>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500;"">Time / Status:</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">{timeOrStatus}</td>
+          </tr>
+          <tr>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; vertical-align: top;"">Clinic Branch:</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600; line-height: 1.4;"">{clinicName}<br/><span style=""font-weight: 400; color: #475569; font-size: 14px;"">📍 {clinicAddress}</span></td>
+          </tr>
+        </table>
+      </div>
+      
+      <p style=""font-size: 14px; line-height: 1.5; color: #94a3b8; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px;"">This is an automated notification from HealSync. Please do not reply directly to this email.</p>
+    </div>
+  </div>
+</div>";
+
+			try
+			{
+				await _emailService.SendEmailAsync(toEmail, subject, htmlBody);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[Email System Error]: Failed to send email to {toEmail}: {ex.Message}");
+			}
 		}
 
 		public class AppointmentActionEventArgs : EventArgs

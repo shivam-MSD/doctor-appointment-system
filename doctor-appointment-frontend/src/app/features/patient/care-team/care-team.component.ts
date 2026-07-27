@@ -13,11 +13,12 @@ export class CareTeamComponent implements OnInit {
 
   selectedDoctorForInfo: any = null;
   selectedDoctorForHistory: any = null;
+  selectedDoctorForBooking: any = null;
 
   constructor(
     private appointmentService: AppointmentService,
     public authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     if (this.authService.getRole() === 'Patient') {
@@ -58,5 +59,23 @@ export class CareTeamComponent implements OnInit {
 
   closeAppointmentHistory(): void {
     this.selectedDoctorForHistory = null;
+  }
+
+  openBookAppointmentModal(doc: any): void {
+    this.selectedDoctorForBooking = doc;
+  }
+
+  closeBookAppointmentModal(): void {
+    this.selectedDoctorForBooking = null;
+  }
+
+  getLastClinicId(doc: any): string | null {
+    if (!doc.appointments || doc.appointments.length === 0) {
+      return null;
+    }
+    const sorted = [...doc.appointments].sort((a: any, b: any) => {
+      return new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime();
+    });
+    return sorted[0]?.clinicId || null;
   }
 }

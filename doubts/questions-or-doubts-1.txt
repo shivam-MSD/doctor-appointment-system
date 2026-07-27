@@ -198,3 +198,147 @@ I have some real world problem and questions :-
 1. What if doctor register via presonal email and he want to register as a patient??
 2. what if patient wants to change the emaild ? OR if that patient has deleted the email account then??
 3.  what if patient forgot login email.????
+
+
+
+____________________________________________________________________________________________________
+
+Date = todays date
+reshcendule also - todays date
+it is showing pine colour bar but circle indication is not added for the rescheduled.
+
+______________________________________________________________________________________________
+
+1. Is it okay to store the OTP in the User table?
+Yes, for smaller systems.
+
+Large systems usually don't.
+
+Instead they create a separate table.
+Large systems usually don't.
+
+Instead they create a separate table.
+
+| Aspect                        | Your Implementation | Real World       |
+| ----------------------------- | ------------------- | ---------------- |
+| Generate OTP                  | ✅ Good              | ✅ Good           |
+| Store OTP                     | ✅ Acceptable        | ✅ Yes (or Redis) |
+| Expiry Time                   | ✅ Good              | ✅ Good           |
+| Verify OTP                    | ✅ Good              | ✅ Good           |
+| Clear OTP after use           | ✅ Good              | ✅ Good           |
+| Hash Password                 | ✅ Good              | ✅ Good           |
+| OTP Attempts Limit            | ❌ Missing           | ✅ Required       |
+| Rate Limiting                 | ❌ Missing           | ✅ Required       |
+| Hash OTP                      | ❌ Missing           | ✅ Recommended    |
+| Separate Password Reset Table | ❌ Missing           | ✅ Common         |
+
+Why?
+
+Because users can have many security-related operations.
+
+Examples:
+
+Email verification
+Forgot password
+Change email
+Two-factor authentication
+Phone verification
+
+Putting all of these into the Users table becomes messy.
+
+Is storing OTP as plain text good?
+it is not good to store the OTP in the text format.
+
+Implementation :-
+1. it is good to store the password in user table but we can use redis or separate table for that. So, please use and implement.
+2. otp should not be store in the text format, so please implement it to store in Hash.
+My Recommendation :-
+Create a separate class and method inside to generate the OTP, it which is common and we can replace every where to generate the OTP
+3. I have create event for sending the email, so please use that event to send the email every where.
+public delegate void EmailSendEventHandler(object o,  EmailSendEventArgs e);
+public event EmailSendEventHandler? EmailSendEvent;
+In AuthService File.
+
+public void OnEmailSendHandle(object o, EmailSendEventArgs emailSendEvent)
+{
+	try
+	{
+		Task.Run(async () => 
+		_emailService.SendEmailAsync(emailSendEvent.Email, emailSendEvent.Subject, emailSendEvent.Body)
+		);
+	}
+	catch (Exception ex)
+	{
+		throw;
+	}
+}
+
+So, please create separate class and method to send email which can call every time from where it is used to send email.
+
+
+2. pending or confirmed appointments are currently gets - cancelled and completed, but enhance this to :-
+There is date option in the dashboard, Doctor can set the Date of reschdule, so on auto clean - all the pending and confirmed appoitment are rescheduled automatically after the completion of the day.
+What is the best approach ?? if there are pending or confirmed apppoitments in todays date.
+
+3. Add send email functinality to the user on each action, means when booking is done, cancelled, completed, rescheduled
+
+4. CancelAppointmentAsync - update exception message - throw new BaseException("Appointment patient link configuration error.", System.Net.HttpStatusCode.InternalServerError, "Internal Server Error");
+The email and notification which doctor is receiving from the patient for appointment booking, cancel, reschedule accepted, reject etc. should also be send to the clinic admin.
+
+5. Patient should get the notification and email for the auto expiration of the apppoitments.
+
+6. Super admin  -refere image 1 in "doubts" folder.
+there should be email id displayed in the admin detail popup.
+
+7. Super admin  -refere image 2 in "doubts" folder.
+when super admin clincs on "Reject" then api tooks some time but the view detail popup ets closed.
+super admin again open the view detail popup - he again rejected the admin request.
+
+But as the 1st request completed - suucess response of rejection
+2nd request rejected - there is error message - unexpected error please try again.
+So please make sure that, you have to disable whole page until the response is not receive on the client side.
+Got it?? so that no user can accidently click button unlimited times untile there is no response.
+Please add this behavior in whole application.
+
+8. There should be popup for the doctor, admin, clinic to add rejection to reason.
+and also they should also receive mail - rejection reason
+
+If super admin rejects :-
+- admin :- mail should be send to both admin and doctor email
+- clinic :- mail should be send to Doctor
+
+8.2 If super admin rejects any clinic, or doctor, oe admin then audit log should show the proper history of all.
+currently teh admin history is not shown properly.
+Where can we store the record of the users which are rejected?? because in teh audit log there should be histroy of the clinic, admin or doctor details
+along with the superadmin added rejection.
+
+8.3 If any request comes to super admin then the count is shown only on the particular tab, but the could shoud also be shown on the dashboard tab.
+(Optional OR Enhancement)
+
+8.4 when admin is added to the clinic until the request is accepted or approved by superadmin then the 
+clinic pages in the doctors dashbiard should show somewhere that admin request pending or something else....
+and 
+
+9. if user enter other user login page url and he enter other user roles credentials then according to current behavior :-
+he is not allowed to login but the login page redirect to teh URL :- /login. Below is the explaination
+
+Eg. 
+if patient hits url :- /doctor/login
+then if he enters doctor correct crential then he will loggedin successfully
+but if he enters patients credential in doctor/login for then that user is rediect to the /login page and there are different login option shown to user.
+
+According to me - this is not good to show /login page.
+And it is very strict to not redirect to the /login page.
+
+Also what is in the real world scenerio?? 
+Does patient, doctor application is different OR in same application having different endpoints for whole applicaitons??
+
+10. All the notification should be send using event because they are independent of the actual task.
+am i right or wrong?
+if notification takes time then user have to wait for it.
+
+11. Optimization, whereeve there is readonly data it is good to use - asnotracking() because we will not change the data
+it helps up where there are lakhs of data
+
+
+____________________________________________________________________________________________________

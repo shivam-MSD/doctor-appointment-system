@@ -5,7 +5,7 @@
       <h2>🩺 Find a Medical Specialist</h2>
       <p>Search and browse all verified clinical doctors registered on HealSync.</p>
     </div>
-    <div class="role-badge">Patient Directory</div>
+    <div class="role-badge">Doctor Directory</div>
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">
@@ -244,8 +244,10 @@
           </h4>
 
           <div *ngIf="modalClinicsLoading" style="display: flex; flex-direction: column; gap: 12px;">
-            <div *ngFor="let i of [1,2]" class="glass-card" style="padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+            <div *ngFor="let i of [1,2]" class="glass-card"
+              style="padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
+              <div
+                style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                   <div class="skeleton-box" style="height: 18px; width: 140px;"></div>
                   <div class="skeleton-box" style="height: 14px; width: 80px;"></div>
@@ -281,8 +283,10 @@
                       [style.border]="isClinicCurrentlyOpen(clinic) ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)'"
                       style="font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block;">
                       <span *ngIf="isClinicCurrentlyOpen(clinic)">🟢 Open</span>
-                      <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed (Temporarily Closed)</span>
-                      <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside Working Hours)</span>
+                      <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed
+                        (Temporarily Closed)</span>
+                      <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside
+                        Working Hours)</span>
                     </span>
                   </h5>
                   <span class="type-indicator text-uppercase"
@@ -333,7 +337,8 @@
               <div
                 style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-top: 4px; line-height: 1.5;">
                 <span style="color: var(--accent-cyan); font-size: 1rem; flex-shrink: 0;">📞</span>
-                <span>Contact Number: <strong style="color: var(--text-primary);">{{ clinic.contactNumber || 'N/A' }}</strong></span>
+                <span>Contact Number: <strong style="color: var(--text-primary);">{{ clinic.contactNumber || 'N/A'
+                    }}</strong></span>
               </div>
 
               <!-- Available Booking Dates Window -->
@@ -370,16 +375,14 @@
                 </div>
 
                 <!-- Not bookable: show disabled button with specific reason -->
-                <button *ngIf="!isClinicBookable(clinic)"
-                  class="btn btn-primary" disabled
+                <button *ngIf="!isClinicBookable(clinic)" class="btn btn-primary" disabled
                   [title]="getClinicNotBookableReason(clinic)"
                   style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; height: auto; margin-top: 4px; opacity: 0.45; cursor: not-allowed;">
                   🔴 Not Available
                 </button>
 
                 <!-- Bookable: normal navigation link -->
-                <a *ngIf="isClinicBookable(clinic)"
-                  [routerLink]="['/patient/book-appointment']"
+                <a *ngIf="isClinicBookable(clinic)" [routerLink]="['/patient/book-appointment']"
                   [queryParams]="{ doctorId: selectedDoctorForModal.doctorId, clinicId: clinic.clinicId }"
                   class="btn btn-primary" (click)="closeDoctorModal()"
                   style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; height: auto; margin-top: 4px;">
@@ -412,7 +415,8 @@
       </p>
 
       <div *ngIf="bookingClinicsLoading" style="display: flex; flex-direction: column; gap: 12px;">
-        <div *ngFor="let i of [1,2,3]" class="glass-card" style="padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+        <div *ngFor="let i of [1,2,3]" class="glass-card"
+          style="padding: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
             <div style="display: flex; flex-direction: column; gap: 4px;">
               <div class="skeleton-box" style="height: 18px; width: 140px;"></div>

@@ -153,6 +153,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.firstName = data.firstName;
           this.lastName = data.lastName;
           this.mobileNo = data.mobileNo;
+          this.gender = data.gender || 'Male';
+          this.dob = data.dob ? data.dob.split('T')[0] : '';
           this.qualification = data.qualification || '';
           this.licenceNumber = data.licenceNumber || '';
           this.yearsOfExperience = data.yearsOfExperience || 0;
@@ -184,6 +186,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.firstName = data.firstName;
           this.lastName = data.lastName;
           this.mobileNo = data.mobileNo;
+          this.gender = data.gender || 'Male';
+          this.dob = data.dob ? data.dob.split('T')[0] : '';
           this.clinicName = data.clinicName || 'N/A';
 
           // Address
@@ -243,6 +247,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
         firstName: this.firstName,
         lastName: this.lastName,
         mobileNo: this.mobileNo,
+        gender: this.gender,
+        dob: this.dob,
         qualification: this.qualification,
         licenceNumber: this.licenceNumber,
         yearsOfExperience: this.yearsOfExperience,
@@ -263,6 +269,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
         firstName: this.firstName,
         lastName: this.lastName,
         mobileNo: this.mobileNo,
+        gender: this.gender,
+        dob: this.dob,
         country: this.country,
         state: this.state,
         city: this.city,

@@ -206,10 +206,14 @@
               [attr.title]="backendErrors['MobileNo'] || backendErrors['mobileNo'] || null">
           </div>
           <div class="form-group flex-1">
-            <label class="form-label" for="docLicence">Medical Licence Number *</label>
-            <input class="form-control" type="text" id="docLicence" name="licenceNumber" [(ngModel)]="licenceNumber"
-              required [class.is-invalid]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber']"
-              [attr.title]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber'] || null">
+            <label class="form-label" for="gender">Gender *</label>
+            <select class="form-control" id="gender" name="gender" [(ngModel)]="gender" required
+              [class.is-invalid]="backendErrors['Gender'] || backendErrors['gender']"
+              [attr.title]="backendErrors['Gender'] || backendErrors['gender'] || null">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
         </div>
 
@@ -249,6 +253,12 @@
         </div>
 
         <div class="form-row">
+          <div class="form-group flex-1">
+            <label class="form-label" for="docLicence">Medical Licence Number *</label>
+            <input class="form-control" type="text" id="docLicence" name="licenceNumber" [(ngModel)]="licenceNumber"
+              required [class.is-invalid]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber']"
+              [attr.title]="backendErrors['LicenceNumber'] || backendErrors['licenceNumber'] || null">
+          </div>
           <div class="form-group flex-1">
             <label class="form-label" for="docExp">Years of Experience *</label>
             <input class="form-control" type="number" id="docExp" name="yearsOfExperience"

@@ -137,6 +137,9 @@
           <span style="display: flex; align-items: center; gap: 6px;"><span
               style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></span>
             Completed</span>
+          <span style="display: flex; align-items: center; gap: 6px;"><span
+              style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ec4899;"></span>
+            Reschedule Proposed</span>
         </div>
 
         <div class="table-responsive" *ngIf="getFilteredRequests().length > 0; else emptyRequests">
@@ -315,30 +318,44 @@
 
         <div *ngIf="!isHistoryLoading">
           <!-- Filter Controls -->
-          <div *ngIf="patientHistory.length > 0" style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+          <div *ngIf="patientHistory.length > 0"
+            style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
             <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Filter Status:</span>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [checked]="isAllHistoryFiltersSelected()" (change)="toggleAllHistoryFilters($any($event.target).checked)" style="width: 15px; height: 15px; cursor: pointer;">
+            <label
+              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [checked]="isAllHistoryFiltersSelected()"
+                (change)="toggleAllHistoryFilters($any($event.target).checked)"
+                style="width: 15px; height: 15px; cursor: pointer;">
               <strong>All ({{ patientHistory.length }})</strong>
             </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Completed" style="width: 15px; height: 15px; cursor: pointer;">
+            <label
+              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Completed"
+                style="width: 15px; height: 15px; cursor: pointer;">
               <span>Completed ({{ getHistoryStatusCount('Completed') }})</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Confirmed" style="width: 15px; height: 15px; cursor: pointer;">
+            <label
+              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Confirmed"
+                style="width: 15px; height: 15px; cursor: pointer;">
               <span>Confirmed ({{ getHistoryStatusCount('Confirmed') }})</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Pending" style="width: 15px; height: 15px; cursor: pointer;">
+            <label
+              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Pending"
+                style="width: 15px; height: 15px; cursor: pointer;">
               <span>Pending / Proposed ({{ getHistoryStatusCount('Pending') }})</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Cancelled" style="width: 15px; height: 15px; cursor: pointer;">
+            <label
+              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Cancelled"
+                style="width: 15px; height: 15px; cursor: pointer;">
               <span>Cancelled ({{ getHistoryStatusCount('Cancelled') }})</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Rejected" style="width: 15px; height: 15px; cursor: pointer;">
+            <label
+              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
+              <input type="checkbox" [(ngModel)]="historyFilters.Rejected"
+                style="width: 15px; height: 15px; cursor: pointer;">
               <span>Rejected ({{ getHistoryStatusCount('Rejected') }})</span>
             </label>
           </div>

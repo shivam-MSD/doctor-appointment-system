@@ -113,30 +113,9 @@ export class BookComponent implements OnInit {
         this.route.queryParams.subscribe(params => {
           const qDoctorId = params['doctorId'];
           const qClinicId = params['clinicId'];
-          this.isClinicLocked = !!qClinicId;
+          this.isClinicLocked = false;
 
-          if (qDoctorId && qClinicId) {
-            this.appointmentService.getBookingDetails(qDoctorId, qClinicId).subscribe({
-              next: (details) => {
-                this.selectedDoctor = details.doctor;
-                this.doctors = [details.doctor];
-                this.doctorId = qDoctorId;
-
-                this.selectedClinic = details.clinic;
-                this.clinics = [details.clinic];
-                this.clinicId = qClinicId;
-
-                this.onClinicChange();
-                this.consultationType = 'InPerson';
-                this.isInitializing = false;
-              },
-              error: (err) => {
-                this.toastService.showError(err, 'Failed to load booking details.');
-                this.router.navigate(['/patient/dashboard']);
-                this.isInitializing = false;
-              }
-            });
-          } else if (qDoctorId) {
+          if (qDoctorId) {
             this.appointmentService.getAvailableDoctors().subscribe({
               next: (allDoctors) => {
                 const foundDoctor = allDoctors.find(d => d.doctorId === qDoctorId);
@@ -148,11 +127,22 @@ export class BookComponent implements OnInit {
                   this.appointmentService.getClinicsForDoctor(qDoctorId).subscribe({
                     next: (clinicList) => {
                       this.clinics = clinicList;
-                      if (clinicList.length > 0) {
-                        this.clinicId = clinicList[0].clinicId;
-                        this.selectedClinic = clinicList[0];
-                        this.onClinicChange();
+                      if (qClinicId) {
+                        const matchedClinic = clinicList.find(c => c.clinicId === qClinicId);
+                        if (matchedClinic) {
+                          this.clinicId = qClinicId;
+                          this.selectedClinic = matchedClinic;
+                        } else if (clinicList.length > 0) {
+                          this.clinicId = clinicList[0].clinicId;
+                          this.selectedClinic = clinicList[0];
+                        }
+                      } else {
+                        if (clinicList.length > 0) {
+                          this.clinicId = clinicList[0].clinicId;
+                          this.selectedClinic = clinicList[0];
+                        }
                       }
+                      this.onClinicChange();
                       this.consultationType = 'InPerson';
                       this.isInitializing = false;
                     },

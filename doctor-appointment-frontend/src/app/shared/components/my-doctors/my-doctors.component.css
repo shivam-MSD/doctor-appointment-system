@@ -77,3 +77,27 @@
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.prescription-scroll {
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.prescription-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prescription-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.prescription-scroll::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.2);
+  border-radius: 4px;
+}
+
+.prescription-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.4);
+}

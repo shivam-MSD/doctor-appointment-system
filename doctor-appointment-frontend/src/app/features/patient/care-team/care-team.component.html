@@ -47,9 +47,9 @@
 
       <!-- Actions -->
       <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
-        <a [routerLink]="['/patient/book-appointment']" [queryParams]="{ doctorId: doc.doctorId }" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: 600; text-decoration: none;">
-          📅 Book Again
-        </a>
+        <button (click)="openBookAppointmentModal(doc)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: 600;">
+          📅 Book Appointment
+        </button>
         <div style="display: flex; gap: 10px;">
           <button (click)="openDoctorInfo(doc)" class="btn btn-secondary" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem; padding: 10px;">
             ℹ️ Doctor Info
@@ -117,21 +117,6 @@
           </div>
         </div>
 
-        <div *ngIf="selectedDoctorForInfo.clinics && selectedDoctorForInfo.clinics.length > 0" style="padding-top: 15px; border-top: 1px solid var(--border-color);">
-          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: block;">Available at Clinics</label>
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div *ngFor="let clinic of selectedDoctorForInfo.clinics" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-                <div>
-                  <div style="font-size: 0.95rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px;">{{ clinic.clinicName }} <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">({{ clinic.clinicType }})</span></div>
-                  <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">📍 {{ clinic.area ? clinic.area + ', ' : '' }}{{ clinic.city }}, {{ clinic.state }}</div>
-                  <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">📞 {{ clinic.contactNumber || 'Not available' }}</div>
-                </div>
-                <a [routerLink]="['/patient/book-appointment']" [queryParams]="{ doctorId: selectedDoctorForInfo.doctorId, clinicId: clinic.clinicId }" (click)="closeDoctorInfo()" class="btn btn-primary" style="font-size: 0.75rem; padding: 6px 12px; text-decoration: none; white-space: nowrap;">Book Here</a>
-              </div>
-            </div>
-          </div>
-        </div>
         <div class="info-group" *ngIf="selectedDoctorForInfo.aboutDoctor && selectedDoctorForInfo.aboutDoctor.trim() !== ''" style="padding-top: 10px;">
           <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">About Doctor</label>
           <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500; line-height: 1.5; white-space: pre-wrap;">{{ selectedDoctorForInfo.aboutDoctor }}</div>
@@ -179,6 +164,42 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- Clinic Selection Modal for Booking -->
+<div class="modal-overlay" *ngIf="selectedDoctorForBooking" (click)="closeBookAppointmentModal()">
+  <div class="modal-content glass-card" (click)="$event.stopPropagation()" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+        🏢 Select a Clinic for Dr. {{ selectedDoctorForBooking.doctorName }}
+      </h3>
+      <button class="close-btn" (click)="closeBookAppointmentModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding-top: 20px; max-height: 60vh; overflow-y: auto;">
+      <div *ngIf="!selectedDoctorForBooking.clinics || selectedDoctorForBooking.clinics.length === 0" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+        No clinics available for this doctor.
+      </div>
+      <div *ngIf="selectedDoctorForBooking.clinics && selectedDoctorForBooking.clinics.length > 0" style="display: flex; flex-direction: column; gap: 12px;">
+        <div *ngFor="let clinic of selectedDoctorForBooking.clinics" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+          <div style="flex: 1;">
+            <div style="font-size: 1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px;">
+              {{ clinic.clinicName }} <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">({{ clinic.clinicType }})</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
+              📍 {{ clinic.area ? clinic.area + ', ' : '' }}{{ clinic.city }}, {{ clinic.state }}
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">
+              📞 {{ clinic.contactNumber || 'Not available' }}
+            </div>
+          </div>
+          <a [routerLink]="['/patient/book-appointment']" [queryParams]="{ doctorId: selectedDoctorForBooking.doctorId, clinicId: clinic.clinicId }" (click)="closeBookAppointmentModal()" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px; text-decoration: none; white-space: nowrap;">Book Here</a>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: flex-end;">
+      <button class="btn btn-secondary" (click)="closeBookAppointmentModal()">Cancel</button>
     </div>
   </div>
 </div>

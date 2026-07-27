@@ -71,6 +71,8 @@ namespace DoctorAppointmentSystem.Application.Services
 				FirstName = doctor.FirstName,
 				LastName = doctor.LastName,
 				MobileNo = doctor.MobileNo,
+				Gender = doctor.Gender.ToString(),
+				DOB = doctor.DOB,
 				Qualification = doctor.Qualification,
 				LicenceNumber = doctor.LicenceNumber,
 				YearsOfExperience = doctor.YearsOfExperience,
@@ -110,6 +112,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			doctor.FirstName = dto.FirstName;
 			doctor.LastName = dto.LastName;
 			doctor.MobileNo = dto.MobileNo;
+			doctor.Gender = Enum.TryParse<Domain.Entities.EGender>(dto.Gender, true, out var dGender) ? dGender : Domain.Entities.EGender.Male;
+			doctor.DOB = dto.DOB;
 			doctor.Qualification = dto.Qualification;
 			doctor.LicenceNumber = dto.LicenceNumber;
 			doctor.YearsOfExperience = dto.YearsOfExperience;
@@ -169,6 +173,8 @@ namespace DoctorAppointmentSystem.Application.Services
 				FirstName = adminObj.FirstName,
 				LastName = adminObj.LastName,
 				MobileNo = adminObj.MobileNo,
+				Gender = adminObj.Gender.ToString(),
+				DOB = adminObj.DOB,
 				ClinicName = adminObj.Clinic != null ? adminObj.Clinic.ClinicName : "N/A",
 				Country = address?.Country ?? "India",
 				State = address?.State ?? string.Empty,
@@ -195,6 +201,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			adminObj.FirstName = dto.FirstName;
 			adminObj.LastName = dto.LastName;
 			adminObj.MobileNo = dto.MobileNo;
+			adminObj.Gender = Enum.TryParse<Domain.Entities.EGender>(dto.Gender, true, out var aGender) ? aGender : Domain.Entities.EGender.Male;
+			adminObj.DOB = dto.DOB;
 			adminObj.CreatedDate = DateTime.UtcNow; // Touch update
 
 			var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.User.UserId == userId);

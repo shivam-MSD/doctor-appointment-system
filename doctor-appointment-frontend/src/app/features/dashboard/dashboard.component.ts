@@ -53,9 +53,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isFollowUpChecked = false;
   followUpClinicId = '';
   followUpDate = '';
-  followUpStartTime = '';
-  followUpEndTime = '';
+  followUpTime = '';
   followUpConsultationType = 'InPerson';
+  followUpDateError = '';
+  isLoadingFollowUpAvailability = false;
+
+  // Custom Calendar properties
+  followUpCurrentMonth: Date = new Date();
+  followUpCalendarDays: any[] = [];
+  weekDaysList: string[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Warning Confirmation Modals
   showCompleteConfirm = false;
@@ -77,15 +83,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Doctor metrics
   get todaysTotal() {
-    return this.appointments.length;
+    return this.appointments.filter(a => !['Cancelled', 'Rejected', 'RescheduleProposed'].includes(a.status)).length;
   }
-  
+
   get todaysCompleted() {
     return this.appointments.filter(a => a.status === 'Completed').length;
   }
-  
+
   get todaysRemaining() {
-    return this.appointments.filter(a => !['Completed', 'Cancelled', 'Rejected'].includes(a.status)).length;
+    return this.appointments.filter(a => !['Completed', 'Cancelled', 'Rejected', 'RescheduleProposed'].includes(a.status)).length;
   }
 
   // Patient metrics
@@ -329,7 +335,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadPatientStats(): void {
     const todayStr = new Date().toISOString().split('T')[0];
-    
+
     // Fetch upcoming and history simultaneously
     this.isPatientStatsLoading = true;
     forkJoin({
@@ -338,13 +344,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: ({ upcomingRes, historyRes }) => {
         const allApps = [...upcomingRes.items, ...historyRes.items];
-        
+
         // Completed: Any appointment marked as completed, whether today or in the past
         this.patientTotalCompleted = allApps.filter(a => a.status === 'Completed').length;
-        
+
         // Pending: Any appointment waiting for confirmation
         this.patientTotalPending = allApps.filter(a => a.status === 'Pending').length;
-        
+
         // Upcoming: Any active/pending appointment that is specifically AFTER today
         this.patientTotalUpcoming = allApps.filter(a => {
           if (!a.appointmentDate) return false;
@@ -353,7 +359,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const appDate = new Date(a.appointmentDate);
           const todayDate = new Date();
           todayDate.setHours(0, 0, 0, 0);
-          
+
           return !isToday && isActive && appDate > todayDate;
         }).length;
         this.isPatientStatsLoading = false;
@@ -378,7 +384,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get filteredAppointments(): Appointment[] {
     let list = this.appointments;
-    
+
     // Clinic filtering for doctors
     if (this.role === 'Doctor' && this.selectedClinicIds.length > 0) {
       list = list.filter(app => app.clinicId && this.selectedClinicIds.includes(app.clinicId));
@@ -388,7 +394,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.dateFilter) {
       list = list.filter(app => app.appointmentDate.startsWith(this.dateFilter));
     }
-    
+
     // Consultation filtering
     if (this.consultationFilter) {
       list = list.filter(app => app.consultationType === this.consultationFilter);
@@ -442,7 +448,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.doctorClinics = res;
         this.isClinicsLoading = false;
       },
-      error: () => { 
+      error: () => {
         this.isClinicsLoading = false;
       }
     });
@@ -516,7 +522,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   validateRescheduleDate(): void {
     if (!this.rescheduleDate || !this.selectedRescheduleAppId) return;
-    
+
     const app = this.appointments.find(a => a.appointmentId === this.selectedRescheduleAppId);
     if (!app) return;
 
@@ -526,7 +532,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     } else if (this.role === 'Admin') {
       clinic = this.adminClinic;
     }
-    
+
     if (!clinic || !clinic.openDays) return;
 
     const selectedDate = new Date(this.rescheduleDate);
@@ -1049,20 +1055,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
   openCompleteConfirm(appId: string): void {
     this.selectedAppIdForComplete = appId;
     this.showCompleteConfirm = true;
-    
+
     // Reset follow-up form state
     this.isFollowUpChecked = false;
     this.followUpDate = '';
-    this.followUpStartTime = '';
-    this.followUpEndTime = '';
+    this.followUpTime = '';
     this.followUpConsultationType = 'InPerson';
-    
+    this.followUpDateError = '';
+    this.isLoadingFollowUpAvailability = false;
+
     // Populate default values from selected appointment
     const app = this.appointments.find(a => a.appointmentId === appId);
     if (app) {
       this.followUpClinicId = app.clinicId || '';
       this.followUpConsultationType = app.consultationType || 'InPerson';
     }
+
+    // Initialize calendar
+    this.followUpCurrentMonth = new Date();
+    this.generateFollowUpCalendar();
   }
 
   closeCompleteConfirm(): void {
@@ -1077,15 +1088,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     let followUpPayload: any = null;
     if (this.isFollowUpChecked) {
-      if (!this.followUpClinicId || !this.followUpDate || !this.followUpStartTime || !this.followUpEndTime) {
-        this.toastService.showError('Please configure all follow-up appointment details (Date, Start Time, and End Time).');
+      if (this.followUpDateError) {
+        this.toastService.showError(this.followUpDateError);
+        return;
+      }
+      if (!this.followUpClinicId || !this.followUpDate || !this.followUpTime) {
+        this.toastService.showError('Please configure all follow-up appointment details (Date and Time).');
         return;
       }
       followUpPayload = {
         clinicId: this.followUpClinicId,
         appointmentDate: this.followUpDate,
-        startTime: this.followUpStartTime,
-        endTime: this.followUpEndTime,
+        startTime: this.followUpTime,
+        endTime: this.followUpTime,
         consultationType: this.followUpConsultationType
       };
     }
@@ -1100,6 +1115,140 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.toastService.showError(err, 'Failed to complete appointment.');
       }
     });
+  }
+
+  getTodayDateString(): string {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  validateFollowUpDate(): void {
+    if (!this.followUpDate) {
+      this.followUpDateError = '';
+      return;
+    }
+
+    const todayStr = this.getTodayDateString();
+    if (this.followUpDate < todayStr) {
+      this.followUpDateError = 'Follow-up date cannot be in the past.';
+      this.followUpDate = '';
+      this.toastService.showError(this.followUpDateError);
+      return;
+    }
+
+    const dateObj = new Date(this.followUpDate + 'T00:00:00');
+    const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = weekDays[dateObj.getDay()];
+
+    const clinic = this.doctorClinics.find(c => c.clinicId === this.followUpClinicId);
+    if (clinic) {
+      const openDaysArray = clinic.openDays ? clinic.openDays.split(',').map((d: string) => d.trim()) : [];
+      if (openDaysArray.length > 0 && !openDaysArray.includes(dayName)) {
+        this.followUpDateError = `Clinic is closed on ${dayName}. Open days: ${clinic.openDays}`;
+        this.followUpDate = '';
+        this.toastService.showError(this.followUpDateError);
+        return;
+      }
+    }
+
+    this.followUpDateError = '';
+    this.isLoadingFollowUpAvailability = true;
+    this.appointmentService.getDayAvailability(this.followUpClinicId, this.followUpDate).subscribe({
+      next: (avail) => {
+        this.isLoadingFollowUpAvailability = false;
+        if (avail.isFull) {
+          this.followUpDateError = `This date is fully booked (${avail.bookedCount}/${avail.maxCapacity} appointments). Please choose another date.`;
+          this.followUpDate = '';
+          this.toastService.showError(this.followUpDateError);
+        }
+      },
+      error: () => {
+        this.isLoadingFollowUpAvailability = false;
+      }
+    });
+  }
+
+  onFollowUpClinicChange(): void {
+    this.followUpDate = '';
+    this.followUpDateError = '';
+    this.generateFollowUpCalendar();
+  }
+
+  generateFollowUpCalendar(): void {
+    const year = this.followUpCurrentMonth.getFullYear();
+    const month = this.followUpCurrentMonth.getMonth();
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const days: any[] = [];
+
+    // Add empty padding days for week start alignment
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push({ dayNumber: null, dateString: '', isAvailable: false });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const clinic = this.doctorClinics.find(c => c.clinicId === this.followUpClinicId);
+    const openDaysArray = clinic?.openDays
+      ? clinic.openDays.split(',').map((d: string) => d.trim())
+      : [];
+
+    for (let day = 1; day <= totalDays; day++) {
+      const dateObj = new Date(year, month, day);
+      dateObj.setHours(0, 0, 0, 0);
+
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const dateString = `${yyyy}-${mm}-${dd}`;
+
+      const dayName = this.weekDaysList[dateObj.getDay()];
+
+      const isPast = dateObj < today;
+      const isClosedDay = openDaysArray.length > 0 && !openDaysArray.includes(dayName);
+
+      const isAvailable = !isPast && !isClosedDay;
+      const isToday = dateObj.getTime() === today.getTime();
+
+      days.push({
+        dayNumber: day,
+        dateString,
+        isAvailable,
+        isToday,
+        isPast,
+        isClosedDay
+      });
+    }
+
+    this.followUpCalendarDays = days;
+  }
+
+  prevFollowUpMonth(): void {
+    const m = this.followUpCurrentMonth.getMonth();
+    this.followUpCurrentMonth = new Date(this.followUpCurrentMonth.getFullYear(), m - 1, 1);
+    this.generateFollowUpCalendar();
+  }
+
+  nextFollowUpMonth(): void {
+    const m = this.followUpCurrentMonth.getMonth();
+    this.followUpCurrentMonth = new Date(this.followUpCurrentMonth.getFullYear(), m + 1, 1);
+    this.generateFollowUpCalendar();
+  }
+
+  getFollowUpMonthName(): string {
+    return this.followUpCurrentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  selectFollowUpCalendarDate(day: any): void {
+    if (!day.isAvailable) return;
+    this.followUpDate = day.dateString;
+    this.validateFollowUpDate();
   }
 
   openNoShowConfirm(appId: string): void {
@@ -1181,7 +1330,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     const comment = this.commentInputs[this.selectedAppIdForAssignTime] || '';
-    
+
     // Combine the date and time strings without converting to UTC
     let formattedTime = `${this.selectedAppDateForAssignTime}T${this.assignedTimeInput}`;
     if (this.assignedTimeInput.length === 5) { // HH:mm
@@ -1368,10 +1517,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   isAllHistoryFiltersSelected(): boolean {
     return this.historyFilters.Completed &&
-           this.historyFilters.Confirmed &&
-           this.historyFilters.Pending &&
-           this.historyFilters.Cancelled &&
-           this.historyFilters.Rejected;
+      this.historyFilters.Confirmed &&
+      this.historyFilters.Pending &&
+      this.historyFilters.Cancelled &&
+      this.historyFilters.Rejected;
   }
 
   getHistoryStatusCount(status: string): number {
@@ -1501,7 +1650,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (!starts[i] || !ends[i]) continue;
       const startMin = parseTimeToMinutes(starts[i]);
       const endMin = parseTimeToMinutes(ends[i]);
-      
+
       if (startMin <= endMin) {
         if (currentMinutes >= startMin && currentMinutes <= endMin) {
           return true;
@@ -1524,7 +1673,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.showTimelineModal = true;
     this.isTimelineLoading = true;
     this.timelineLogs = [];
-    
+
     this.appointmentService.getAuditLogs(1, 100, undefined, appointmentId).subscribe({
       next: (res) => {
         this.timelineLogs = res.items || [];

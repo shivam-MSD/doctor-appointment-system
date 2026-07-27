@@ -1,15 +1,16 @@
-using System.Security.Cryptography;
-using System.Text;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Domain.Entities;
 using DoctorAppointmentSystem.Domain.Exceptions;
 using DoctorAppointmentSystem.Persistent.Context;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace DoctorAppointmentSystem.Application.Services
 {
@@ -21,6 +22,16 @@ namespace DoctorAppointmentSystem.Application.Services
 		public string RegistrationJson { get; set; } // Serialized RegisterDto or DoctorRegisterDto
 	}
 
+	public class EmailSendEventArgs :EventArgs
+	{
+		public Guid? userId {  get; set; }
+		public string Email { get; set; }
+		public string FirstName { get; set;  }
+		public string LastName {  get; set; }
+		public string Body { get; set; }
+		public string Subject { get; set; }
+	}
+
 	public class AuthService : IAuthService
 	{
 		private readonly ApplicationDbContext _dbContext;
@@ -28,7 +39,8 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly INotificationService _notificationService;
 		private readonly IConfiguration _configuration;
 		private readonly IDistributedCache _distributedCache;
-
+		public delegate void EmailSendEventHandler(object o,  EmailSendEventArgs e);
+		public event EmailSendEventHandler? EmailSendEvent;
 		public AuthService(
 			ApplicationDbContext dbContext,
 			IEmailService emailService,
@@ -41,6 +53,35 @@ namespace DoctorAppointmentSystem.Application.Services
 			_notificationService = notificationService;
 			_configuration = configuration;
 			_distributedCache = distributedCache;
+			this.EmailSendEvent += OnEmailSendHandle;
+		}
+
+		public void OnEmailSendHandle(object o, EmailSendEventArgs emailSendEvent)
+		{
+			try
+			{
+				Task.Run(async () => 
+				_emailService.SendEmailAsync(emailSendEvent.Email, emailSendEvent.Subject, emailSendEvent.Body)
+				);
+			}
+			catch (Exception ex)
+			{
+				throw;
+			}
+		}
+
+		public void TriggerOnEmailSendHandle(Guid? userId,string FirstName, string LastName, string Email, string subject, string emailBody)
+		{
+			var args = new EmailSendEventArgs()
+			{
+				userId = userId,
+				FirstName = FirstName,
+				LastName = LastName,
+				Body = emailBody,
+				Email = Email,
+				Subject = subject
+			};
+			this.EmailSendEvent?.Invoke(this, args);
 		}
 
 		public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
@@ -501,7 +542,8 @@ namespace DoctorAppointmentSystem.Application.Services
 
 					try
 					{
-						await _emailService.SendEmailAsync(user.Email, emailSubject, emailBody);
+						//await _emailService.SendEmailAsync(user.Email, emailSubject, emailBody);
+						this.TriggerOnEmailSendHandle(profileId, firstName, lastName, user.Email, emailSubject, emailBody);
 					}
 					catch (Exception ex)
 					{
