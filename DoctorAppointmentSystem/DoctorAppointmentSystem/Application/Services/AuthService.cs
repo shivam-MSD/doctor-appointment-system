@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 using static System.Net.WebRequestMethods;
 
 namespace DoctorAppointmentSystem.Application.Services
@@ -22,15 +23,15 @@ namespace DoctorAppointmentSystem.Application.Services
 		public string RegistrationJson { get; set; } // Serialized RegisterDto or DoctorRegisterDto
 	}
 
-	public class EmailSendEventArgs :EventArgs
-	{
-		public Guid? userId {  get; set; }
-		public string Email { get; set; }
-		public string FirstName { get; set;  }
-		public string LastName {  get; set; }
-		public string Body { get; set; }
-		public string Subject { get; set; }
-	}
+	//public class EmailSendEventArgs :EventArgs
+	//{
+	//	public Guid? UserId {  get; set; }
+	//	public string Email { get; set; }
+	//	public string FirstName { get; set;  }
+	//	public string LastName {  get; set; }
+	//	public string Body { get; set; }
+	//	public string Subject { get; set; }
+	//}
 
 	public class AuthService : IAuthService
 	{
@@ -39,49 +40,28 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly INotificationService _notificationService;
 		private readonly IConfiguration _configuration;
 		private readonly IDistributedCache _distributedCache;
-		public delegate void EmailSendEventHandler(object o,  EmailSendEventArgs e);
-		public event EmailSendEventHandler? EmailSendEvent;
+		private readonly IOtpService _otpService;
+		private readonly IPasswordHasher<object> _passwordHasher;
+		private readonly IPasswordSecurityService _passwordSecurityService;
+
 		public AuthService(
 			ApplicationDbContext dbContext,
 			IEmailService emailService,
 			INotificationService notificationService,
 			IConfiguration configuration,
-			IDistributedCache distributedCache)
+			IDistributedCache distributedCache,
+			IOtpService otpService,
+			IPasswordHasher<object> passwordHasher,
+			IPasswordSecurityService passwordSecurityService)
 		{
 			_dbContext = dbContext;
 			_emailService = emailService;
 			_notificationService = notificationService;
 			_configuration = configuration;
 			_distributedCache = distributedCache;
-			this.EmailSendEvent += OnEmailSendHandle;
-		}
-
-		public void OnEmailSendHandle(object o, EmailSendEventArgs emailSendEvent)
-		{
-			try
-			{
-				Task.Run(async () => 
-				_emailService.SendEmailAsync(emailSendEvent.Email, emailSendEvent.Subject, emailSendEvent.Body)
-				);
-			}
-			catch (Exception ex)
-			{
-				throw;
-			}
-		}
-
-		public void TriggerOnEmailSendHandle(Guid? userId,string FirstName, string LastName, string Email, string subject, string emailBody)
-		{
-			var args = new EmailSendEventArgs()
-			{
-				userId = userId,
-				FirstName = FirstName,
-				LastName = LastName,
-				Body = emailBody,
-				Email = Email,
-				Subject = subject
-			};
-			this.EmailSendEvent?.Invoke(this, args);
+			_otpService = otpService;
+			_passwordHasher = passwordHasher;
+			_passwordSecurityService = passwordSecurityService;
 		}
 
 		public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
@@ -100,14 +80,14 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			// 3. Generate verification OTP
-			var otp = new Random().Next(100000, 999999).ToString();
+			var otp = _otpService.GenerateOtp();
 
 			// 4. Save registration payload to Distributed Cache
 			var cacheKey = $"pending_reg:{registerDto.Email.ToLower().Trim()}";
 			var cacheItem = new PendingRegistrationCacheItem
 			{
 				Email = registerDto.Email.ToLower().Trim(),
-				Otp = otp,
+				Otp = _otpService.HashOtp(otp),
 				Role = parsedRole.ToString(),
 				RegistrationJson = JsonSerializer.Serialize(registerDto)
 			};
@@ -118,25 +98,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			};
 			await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(cacheItem), cacheOptions);
 
-			// 5. Send OTP Email
-			var subject = "HealSync Email Verification Code";
-			var body = $@"
-				<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;'>
-					<h2 style='color: #06b6d4; text-align: center;'>HealSync Verification</h2>
-					<hr style='border: none; border-top: 1px solid #eeeeee;' />
-					<p>Hello,</p>
-					<p>Thank you for signing up with HealSync. Please use the following 6-digit one-time passcode (OTP) to verify your email address and activate your profile:</p>
-					<div style='text-align: center; margin: 32px 0;'>
-						<span style='font-size: 2.2rem; font-weight: bold; letter-spacing: 6px; padding: 12px 24px; background-color: #f3f4f6; border-radius: 8px; color: #111827; border: 1px solid #e5e7eb;'>{otp}</span>
-					</div>
-					<p style='color: #6b7280; font-size: 0.85rem;'>This OTP is valid for 15 minutes. Please do not share this code with anyone.</p>
-					<hr style='border: none; border-top: 1px solid #eeeeee;' />
-					<p style='font-size: 0.8rem; color: #9ca3af; text-align: center;'>HealSync Medical Network App</p>
-				</div>";
-
 			try
 			{
-				await _emailService.SendEmailAsync(registerDto.Email, subject, body);
+				await _emailService.SendOtpVerificationEmailAsync(registerDto.Email, registerDto.FirstName, registerDto.LastName, otp);
 				Console.WriteLine($"[EMAIL SENDER] Sent real email OTP {otp} to {registerDto.Email}");
 			}
 			catch (Exception ex)
@@ -170,7 +134,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new UnauthorizedException("Unauthorized access. Invalid credentials for this portal.");
 			}
 
-			if (!VerifyPassword(loginDto.Password, user.PasswordHash))
+			if (!await VerifyPasswordAsync(user, loginDto.Password))
 			{
 				throw new BadRequestException("Incorrect password. Please verify and try again.");
 			}
@@ -273,14 +237,14 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			// 2. Generate verification OTP
-			var otp = new Random().Next(100000, 999999).ToString();
+			var otp = _otpService.GenerateOtp();
 
 			// 3. Save doctor registration payload to Distributed Cache
 			var cacheKey = $"pending_reg:{dto.Email.ToLower().Trim()}";
 			var cacheItem = new PendingRegistrationCacheItem
 			{
 				Email = dto.Email.ToLower().Trim(),
-				Otp = otp,
+				Otp = _otpService.HashOtp(otp),
 				Role = ERole.Doctor.ToString(),
 				RegistrationJson = JsonSerializer.Serialize(dto)
 			};
@@ -291,25 +255,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			};
 			await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(cacheItem), cacheOptions);
 
-			// 4. Send OTP Email
-			var subject = "HealSync Email Verification Code";
-			var body = $@"
-				<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;'>
-					<h2 style='color: #06b6d4; text-align: center;'>HealSync Verification</h2>
-					<hr style='border: none; border-top: 1px solid #eeeeee;' />
-					<p>Hello,</p>
-					<p>Thank you for signing up with HealSync. Please use the following 6-digit one-time passcode (OTP) to verify your email address and activate your profile:</p>
-					<div style='text-align: center; margin: 32px 0;'>
-						<span style='font-size: 2.2rem; font-weight: bold; letter-spacing: 6px; padding: 12px 24px; background-color: #f3f4f6; border-radius: 8px; color: #111827; border: 1px solid #e5e7eb;'>{otp}</span>
-					</div>
-					<p style='color: #6b7280; font-size: 0.85rem;'>This OTP is valid for 15 minutes. Please do not share this code with anyone.</p>
-					<hr style='border: none; border-top: 1px solid #eeeeee;' />
-					<p style='font-size: 0.8rem; color: #9ca3af; text-align: center;'>HealSync Medical Network App</p>
-				</div>";
-
 			try
 			{
-				await _emailService.SendEmailAsync(dto.Email, subject, body);
+				await _emailService.SendOtpVerificationEmailAsync(dto.Email, dto.FirstName, dto.LastName, otp);
 				Console.WriteLine($"[EMAIL SENDER] Sent real email OTP {otp} to {dto.Email}");
 			}
 			catch (Exception ex)
@@ -322,16 +270,47 @@ namespace DoctorAppointmentSystem.Application.Services
 		}
 
 		#region Helper Hashing Methods
-		private string HashPassword(string password)
+		private async Task<bool> VerifyPasswordAsync(User user, string plainPassword)
 		{
-			using var sha256 = SHA256.Create();
-			var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-			return Convert.ToBase64String(hashedBytes);
+			if (user == null) throw new ArgumentNullException(nameof(user));
+			if (string.IsNullOrWhiteSpace(plainPassword)) return false;
+
+			var isCorrect = await _passwordSecurityService.VerifyPasswordAsync(user.UserId, plainPassword, _passwordHasher);
+			if (isCorrect) return true;
+
+			// Fallback/Legacy verification for upgraded hashes
+			var storedHash = await _passwordSecurityService.GetPasswordAsync(user.UserId);
+			if (storedHash != null && VerifyLegacyPassword(plainPassword, storedHash))
+			{
+				var newHash = _passwordHasher.HashPassword(null, plainPassword);
+				await _passwordSecurityService.StorePasswordAsync(user.UserId, newHash);
+				return true;
+			}
+
+			return false;
 		}
 
-		private bool VerifyPassword(string password, string passwordHash)
+		private bool VerifyLegacyPassword(string password, string passwordHash)
 		{
-			return HashPassword(password) == passwordHash;
+			if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(passwordHash))
+			{
+				return false;
+			}
+
+			using var sha256 = SHA256.Create();
+			var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+			var computedHash = Convert.ToBase64String(hashedBytes);
+			return string.Equals(computedHash, passwordHash, StringComparison.Ordinal);
+		}
+
+		private string HashUserPassword(string password)
+		{
+			if (string.IsNullOrWhiteSpace(password))
+			{
+				throw new ArgumentException("Password cannot be null or empty", nameof(password));
+			}
+
+			return _passwordHasher.HashPassword(null, password);
 		}
 
 		private string GenerateJwtToken(User user, string role)
@@ -359,30 +338,15 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		private async Task GenerateAndSendOtpAsync(User user)
 		{
-			var otp = new Random().Next(100000, 999999).ToString();
-			user.EmailVerificationOtp = otp;
+			var otp = _otpService.GenerateOtp();
+			user.EmailVerificationOtp = _otpService.HashOtp(otp);
 			user.EmailVerificationOtpExpiry = DateTime.UtcNow.AddMinutes(15);
 			user.IsEmailVerified = false;
 			await _dbContext.SaveChangesAsync();
 
 			try
 			{
-				var subject = "HealSync Email Verification Code";
-				var body = $@"
-					<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;'>
-						<h2 style='color: #06b6d4; text-align: center;'>HealSync Verification</h2>
-						<hr style='border: none; border-top: 1px solid #eeeeee;' />
-						<p>Hello,</p>
-						<p>Thank you for signing up with HealSync. Please use the following 6-digit one-time passcode (OTP) to verify your email address and activate your profile:</p>
-						<div style='text-align: center; margin: 32px 0;'>
-							<span style='font-size: 2.2rem; font-weight: bold; letter-spacing: 6px; padding: 12px 24px; background-color: #f3f4f6; border-radius: 8px; color: #111827; border: 1px solid #e5e7eb;'>{otp}</span>
-						</div>
-						<p style='color: #6b7280; font-size: 0.85rem;'>This OTP is valid for 15 minutes. Please do not share this code with anyone.</p>
-						<hr style='border: none; border-top: 1px solid #eeeeee;' />
-						<p style='font-size: 0.8rem; color: #9ca3af; text-align: center;'>HealSync Medical Network App</p>
-					</div>";
-
-				await _emailService.SendEmailAsync(user.Email, subject, body);
+				await _emailService.SendOtpVerificationEmailAsync(user.Email, "", "", otp);
 				Console.WriteLine($"[EMAIL SENDER] Sent real email OTP {otp} to {user.Email}");
 			}
 			catch (Exception ex)
@@ -402,7 +366,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (cachedData != null)
 			{
 				var cacheItem = JsonSerializer.Deserialize<PendingRegistrationCacheItem>(cachedData);
-				if (cacheItem == null || cacheItem.Otp != dto.Otp)
+				if (cacheItem == null || !_otpService.VerifyOtp(dto.Otp, cacheItem.Otp))
 				{
 					throw new BadRequestException("Invalid or expired OTP code.");
 				}
@@ -419,6 +383,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				string firstName = "";
 				string lastName = "";
 				string roleName = cacheItem.Role;
+				string passwordHash = "";
 
 				if (cacheItem.Role == ERole.Patient.ToString())
 				{
@@ -436,7 +401,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					{
 						UserId = Guid.NewGuid(),
 						Email = regDto.Email,
-						PasswordHash = HashPassword(regDto.Password),
 						IsActive = true,
 						IsEmailVerified = true,
 						CreatedDate = DateTime.UtcNow,
@@ -444,6 +408,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					};
 					_dbContext.Users.Add(user);
 					_dbContext.Entry(user).Property("RoleId").CurrentValue = role.RoleId;
+
+					passwordHash = _passwordHasher.HashPassword(null, regDto.Password);
 
 					var patient = new Patient
 					{
@@ -490,7 +456,6 @@ namespace DoctorAppointmentSystem.Application.Services
 					{
 						UserId = Guid.NewGuid(),
 						Email = docDto.Email,
-						PasswordHash = HashPassword(tempPassword),
 						IsActive = true,
 						IsEmailVerified = true,
 						CreatedDate = DateTime.UtcNow,
@@ -498,6 +463,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					};
 					_dbContext.Users.Add(user);
 					_dbContext.Entry(user).Property("RoleId").CurrentValue = role.RoleId;
+
+					passwordHash = _passwordHasher.HashPassword(null, tempPassword);
 
 					var specialization = await _dbContext.Specializations.FindAsync(docDto.SpecializationId);
 					if (specialization == null)
@@ -531,19 +498,9 @@ namespace DoctorAppointmentSystem.Application.Services
 					firstName = docDto.FirstName;
 					lastName = docDto.LastName;
 
-					// Send Application Received email on email verification success
-					var emailSubject = "HealSync - Doctor Onboarding Application Received";
-					var emailBody = $@"
-						<h3>Hello Dr. {doctor.FirstName} {doctor.LastName},</h3>
-						<p>Thank you for verifying your email address.</p>
-						<p>We have successfully received your medical onboarding application. Our administration team is currently verifying your credentials and medical licensing details.</p>
-						<p>Once approved, your secure temporary password will be sent to this email address within 24-48 hours. You will then be able to log in and update your password.</p>
-						<p>Best regards,<br/>HealSync Administration Team</p>";
-
 					try
 					{
-						//await _emailService.SendEmailAsync(user.Email, emailSubject, emailBody);
-						this.TriggerOnEmailSendHandle(profileId, firstName, lastName, user.Email, emailSubject, emailBody);
+						await _emailService.SendDoctorOnboardingReceivedEmailAsync(user.Email, firstName, lastName);
 					}
 					catch (Exception ex)
 					{
@@ -552,6 +509,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				}
 
 				await _dbContext.SaveChangesAsync();
+				await _passwordSecurityService.StorePasswordAsync(user.UserId, passwordHash);
 
 				// Evict cache item
 				await _distributedCache.RemoveAsync(cacheKey);
@@ -583,7 +541,8 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new BadRequestException("Verification session has expired or is invalid. Please sign up again.");
 			}
 
-			if (dbUser.EmailVerificationOtp != dto.Otp || dbUser.EmailVerificationOtpExpiry < DateTime.UtcNow)
+			if (dbUser.EmailVerificationOtpExpiry == null || dbUser.EmailVerificationOtpExpiry < DateTime.UtcNow ||
+				!(_otpService.VerifyOtp(dto.Otp, dbUser.EmailVerificationOtp) || string.Equals(dbUser.EmailVerificationOtp, dto.Otp, StringComparison.Ordinal)))
 			{
 				throw new BadRequestException("Invalid or expired OTP code.");
 			}
@@ -724,29 +683,14 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			// Generate OTP and send to email
-			var otp = new Random().Next(100000, 999999).ToString();
-			user.EmailVerificationOtp = otp;
+			var otp = _otpService.GenerateOtp();
+			user.EmailVerificationOtp = _otpService.HashOtp(otp);
 			user.EmailVerificationOtpExpiry = DateTime.UtcNow.AddMinutes(15);
 			await _dbContext.SaveChangesAsync();
 
 			try
 			{
-				var subject = "HealSync Password Reset Code";
-				var body = $@"
-					<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;'>
-						<h2 style='color: #ef4444; text-align: center;'>Password Reset Request</h2>
-						<hr style='border: none; border-top: 1px solid #eeeeee;' />
-						<p>Hello,</p>
-						<p>We received a request to reset your password. Use the following 6-digit OTP to set a new password:</p>
-						<div style='text-align: center; margin: 32px 0;'>
-							<span style='font-size: 2.2rem; font-weight: bold; letter-spacing: 6px; padding: 12px 24px; background-color: #fef2f2; border-radius: 8px; color: #dc2626; border: 1px solid #fecaca;'>{otp}</span>
-						</div>
-						<p style='color: #6b7280; font-size: 0.85rem;'>This OTP is valid for 15 minutes. If you did not request this, please ignore this email.</p>
-						<hr style='border: none; border-top: 1px solid #eeeeee;' />
-						<p style='font-size: 0.8rem; color: #9ca3af; text-align: center;'>HealSync Medical Network App</p>
-					</div>";
-
-				await _emailService.SendEmailAsync(user.Email, subject, body);
+				await _emailService.SendPasswordResetEmailAsync(user.Email, "", "", otp);
 				Console.WriteLine($"[EMAIL SENDER] Sent password reset OTP {otp} to {user.Email}");
 			}
 			catch (Exception ex)
@@ -764,12 +708,14 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException("No account found with this email address.");
 			}
 
-			if (user.EmailVerificationOtp != dto.Otp || user.EmailVerificationOtpExpiry < DateTime.UtcNow)
+			if (user.EmailVerificationOtpExpiry == null || user.EmailVerificationOtpExpiry < DateTime.UtcNow ||
+				!(_otpService.VerifyOtp(dto.Otp, user.EmailVerificationOtp) || string.Equals(user.EmailVerificationOtp, dto.Otp, StringComparison.Ordinal)))
 			{
 				throw new BadRequestException("Invalid or expired OTP code.");
 			}
 
-			user.PasswordHash = HashPassword(dto.NewPassword);
+			var newHash = _passwordHasher.HashPassword(null, dto.NewPassword);
+			await _passwordSecurityService.StorePasswordAsync(user.UserId, newHash);
 			user.EmailVerificationOtp = null;
 			user.EmailVerificationOtpExpiry = null;
 			user.IsEmailVerified = true; // Also verify email if not yet verified
@@ -784,35 +730,20 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException("User not found.");
 			}
 
-			if (!VerifyPassword(dto.CurrentPassword, user.PasswordHash))
+			if (!await VerifyPasswordAsync(user, dto.CurrentPassword))
 			{
 				throw new BadRequestException("Current password is incorrect.");
 			}
 
 			// Current password is correct. Generate OTP for extra security.
-			var otp = new Random().Next(100000, 999999).ToString();
-			user.EmailVerificationOtp = otp;
+			var otp = _otpService.GenerateOtp();
+			user.EmailVerificationOtp = _otpService.HashOtp(otp);
 			user.EmailVerificationOtpExpiry = DateTime.UtcNow.AddMinutes(15);
 			await _dbContext.SaveChangesAsync();
 
 			try
 			{
-				var subject = "HealSync Password Update Verification";
-				var body = $@"
-					<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;'>
-						<h2 style='color: #f59e0b; text-align: center;'>Password Update Verification</h2>
-						<hr style='border: none; border-top: 1px solid #eeeeee;' />
-						<p>Hello,</p>
-						<p>You are updating your password. Please confirm by entering this 6-digit code:</p>
-						<div style='text-align: center; margin: 32px 0;'>
-							<span style='font-size: 2.2rem; font-weight: bold; letter-spacing: 6px; padding: 12px 24px; background-color: #fffbeb; border-radius: 8px; color: #d97706; border: 1px solid #fde68a;'>{otp}</span>
-						</div>
-						<p style='color: #6b7280; font-size: 0.85rem;'>This OTP is valid for 15 minutes. If you did not initiate this, please secure your account immediately.</p>
-						<hr style='border: none; border-top: 1px solid #eeeeee;' />
-						<p style='font-size: 0.8rem; color: #9ca3af; text-align: center;'>HealSync Medical Network App</p>
-					</div>";
-
-				await _emailService.SendEmailAsync(user.Email, subject, body);
+				await _emailService.SendOtpVerificationEmailAsync(user.Email, "", "", otp);
 				Console.WriteLine($"[EMAIL SENDER] Sent password update OTP {otp} to {user.Email}");
 			}
 			catch (Exception ex)
@@ -830,12 +761,14 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException("User not found.");
 			}
 
-			if (user.EmailVerificationOtp != dto.Otp || user.EmailVerificationOtpExpiry < DateTime.UtcNow)
+			if (user.EmailVerificationOtpExpiry == null || user.EmailVerificationOtpExpiry < DateTime.UtcNow ||
+				!(_otpService.VerifyOtp(dto.Otp, user.EmailVerificationOtp) || string.Equals(user.EmailVerificationOtp, dto.Otp, StringComparison.Ordinal)))
 			{
 				throw new BadRequestException("Invalid or expired OTP code.");
 			}
 
-			user.PasswordHash = HashPassword(dto.NewPassword);
+			var newHash = _passwordHasher.HashPassword(null, dto.NewPassword);
+			await _passwordSecurityService.StorePasswordAsync(user.UserId, newHash);
 			user.EmailVerificationOtp = null;
 			user.EmailVerificationOtpExpiry = null;
 			await _dbContext.SaveChangesAsync();

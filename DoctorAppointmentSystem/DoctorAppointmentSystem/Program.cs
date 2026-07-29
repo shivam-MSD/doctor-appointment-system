@@ -58,6 +58,9 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAdminSe
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAppointmentService, DoctorAppointmentSystem.Application.Services.AppointmentService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IClinicService, DoctorAppointmentSystem.Application.Services.ClinicService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IEmailService, DoctorAppointmentSystem.Application.Services.EmailService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IOtpService, DoctorAppointmentSystem.Application.Services.OtpService>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<object>, Microsoft.AspNetCore.Identity.PasswordHasher<object>>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IPasswordSecurityService, DoctorAppointmentSystem.Application.Services.PasswordSecurityService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
 
 // Register background services

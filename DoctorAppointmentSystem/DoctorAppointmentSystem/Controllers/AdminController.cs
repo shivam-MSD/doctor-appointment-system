@@ -17,14 +17,14 @@ namespace DoctorAppointmentSystem.Controllers
 		}
 
 		[HttpPost("verify-doctor/{doctorId:guid}")]
-		public async Task<IActionResult> VerifyDoctor(Guid doctorId, [FromQuery] string status)
+		public async Task<IActionResult> VerifyDoctor(Guid doctorId, [FromQuery] string status, [FromQuery] string? rejectionReason = null)
 		{
 			if (string.IsNullOrEmpty(status))
 			{
 				return BadRequest("Missing status query parameter. Values: Verified, Pending, Rejected.");
 			}
 
-			var name = await _adminService.VerifyDoctorAsync(doctorId, status);
+			var name = await _adminService.VerifyDoctorAsync(doctorId, status, rejectionReason);
 			if (status.Equals("Verified", StringComparison.OrdinalIgnoreCase))
 			{
 				return Ok(new { Message = $"Doctor '{name}' approved successfully." });

@@ -28,6 +28,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 		public DbSet<DoctorAuditLog> DoctorAuditLogs { get; set; }
 		public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 		public DbSet<AdminClinic> AdminClinics { get; set; }
+		public DbSet<UserPassword> UserPasswords { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -50,7 +51,6 @@ namespace DoctorAppointmentSystem.Persistent.Context
 				entity.ToTable("Users");
 				entity.HasKey(u => u.UserId);
 				entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
-				entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(500);
 				entity.Property(u => u.IsActive).HasDefaultValue(true);
 
 				// Shadow property RoleId (from ER Diagram) to map Users to Roles (1 Role has Many Users)
@@ -59,6 +59,18 @@ namespace DoctorAppointmentSystem.Persistent.Context
 					.WithMany()
 					.HasForeignKey("RoleId")
 					.OnDelete(DeleteBehavior.Restrict);
+			});
+
+			// 2b. UserPassword Entity Configuration (separate credentials table)
+			modelBuilder.Entity<UserPassword>(entity =>
+			{
+				entity.ToTable("UserPasswords");
+				entity.HasKey(up => up.UserId);
+				entity.Property(up => up.PasswordHash).IsRequired().HasMaxLength(500);
+				entity.HasOne(up => up.User)
+					.WithOne()
+					.HasForeignKey<UserPassword>(up => up.UserId)
+					.OnDelete(DeleteBehavior.Cascade);
 			});
 
 			// 3. Address Entity Configuration

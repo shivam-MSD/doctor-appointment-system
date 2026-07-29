@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Domain.Entities;
@@ -12,11 +13,15 @@ namespace DoctorAppointmentSystem.Application.Services
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly INotificationService _notificationService;
+		private readonly IPasswordHasher<object> _passwordHasher;
+		private readonly IPasswordSecurityService _passwordSecurityService;
 
-		public UserService(ApplicationDbContext dbContext, INotificationService notificationService)
+		public UserService(ApplicationDbContext dbContext, INotificationService notificationService, IPasswordHasher<object> passwordHasher, IPasswordSecurityService passwordSecurityService)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
+			_passwordHasher = passwordHasher;
+			_passwordSecurityService = passwordSecurityService;
 		}
 
 		public async Task<UserDto> GetUserProfileAsync(Guid userId)
@@ -43,14 +48,19 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException($"User with ID '{userId}' was not found.");
 			}
 
-			var currentHashed = HashPassword(dto.CurrentPassword);
-			if (user.PasswordHash != currentHashed)
+			var isCorrect = await _passwordSecurityService.VerifyPasswordAsync(userId, dto.CurrentPassword, _passwordHasher);
+			if (!isCorrect)
 			{
-				throw new BadRequestException("The current password entered is incorrect.");
+				// Fallback for legacy SHA256 check
+				var storedHash = await _passwordSecurityService.GetPasswordAsync(userId);
+				if (storedHash == null || storedHash != HashPassword(dto.CurrentPassword))
+				{
+					throw new BadRequestException("The current password entered is incorrect.");
+				}
 			}
 
-			user.PasswordHash = HashPassword(dto.NewPassword);
-			await _dbContext.SaveChangesAsync();
+			var newHashed = _passwordHasher.HashPassword(null, dto.NewPassword);
+			await _passwordSecurityService.StorePasswordAsync(userId, newHashed);
 		}
 
 		public async Task<DoctorProfileDto> GetDoctorProfileAsync(Guid userId)
@@ -79,6 +89,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				ConsultationFee = doctor.ConsultationFee,
 				AboutDoctor = doctor.AboutDoctor ?? string.Empty,
 				SpecializationId = doctor.Specialization?.SpecializationId,
+				AutoRescheduleDate = doctor.AutoRescheduleDate,
 				Country = address?.Country ?? "India",
 				State = address?.State ?? string.Empty,
 				City = address?.City ?? string.Empty,
@@ -119,6 +130,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			doctor.YearsOfExperience = dto.YearsOfExperience;
 			doctor.ConsultationFee = dto.ConsultationFee;
 			doctor.AboutDoctor = dto.AboutDoctor;
+			doctor.AutoRescheduleDate = dto.AutoRescheduleDate;
 			doctor.UpdatedDate = DateTime.UtcNow;
 
 			var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.User.UserId == userId);

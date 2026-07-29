@@ -164,9 +164,9 @@ namespace DoctorAppointmentSystem.Controllers
 		}
 
 		[HttpPost("reject-admin/{adminId}")]
-		public async Task<IActionResult> RejectAdmin(Guid adminId)
+		public async Task<IActionResult> RejectAdmin(Guid adminId, [FromBody] RejectAdminDto dto)
 		{
-			var name = await _clinicService.RejectAdminAsync(adminId);
+			var name = await _clinicService.RejectAdminAsync(adminId, dto.RejectionReason);
 			return Ok(new { Message = $"Clinic Admin '{name}' has been rejected successfully." });
 		}
 

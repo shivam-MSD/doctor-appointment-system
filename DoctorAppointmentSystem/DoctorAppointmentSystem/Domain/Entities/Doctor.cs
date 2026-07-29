@@ -61,6 +61,8 @@ namespace DoctorAppointmentSystem.Domain.Entities
 
 		public DateTime UpdatedDate { get; set; }
 
+		public DateTime? AutoRescheduleDate { get; set; }
+
 		public ICollection<Clinic> Clinics { get; set; }
 	}
 

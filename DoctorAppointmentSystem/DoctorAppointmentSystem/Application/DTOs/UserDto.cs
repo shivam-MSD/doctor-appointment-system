@@ -20,6 +20,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public double ConsultationFee { get; set; }
 		public string AboutDoctor { get; set; }
 		public Guid? SpecializationId { get; set; }
+		public DateTime? AutoRescheduleDate { get; set; }
 
 		// Address fields
 		public string Country { get; set; } = string.Empty;

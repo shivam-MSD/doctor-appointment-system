@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Appointment System - ER Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .footer {
+            text-align: center;
+            color: #999;
+            margin-top: 30px;
+            font-size: 0.9em;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .legend {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+        }
+        .legend h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .legend-item {
+            margin: 8px 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Doctor Appointment System - ER Diagram</h1>
+        <div class="description">
+            <p>Complete database schema showing all entities, fields, and relationships</p>
+            <p><strong>Generated:</strong> July 28, 2026</p>
+        </div>
+
+        <div class="legend">
+            <h3>📋 Relationship Legend</h3>
+            <div class="legend-item"><strong>||--o{</strong> One-to-Many: One entity has many related records</div>
+            <div class="legend-item"><strong>||--|</strong> One-to-One: One entity paired with exactly one record</div>
+            <div class="legend-item"><strong>PK</strong> Primary Key: Unique identifier for each record</div>
+            <div class="legend-item"><strong>FK</strong> Foreign Key: Link to another table (not shown in diagram)</div>
+        </div>
+
+        <div class="mermaid">
+erDiagram
+    ROLES {
+        Guid RoleId PK
+        string Role
+    }
+    USERS {
+        Guid UserId PK
+        string Email
+        string PasswordHash
+        bool IsActive
+        bool RequiresPasswordChange
+        bool IsEmailVerified
+        string EmailVerificationOtp
+        datetime EmailVerificationOtpExpiry
+        datetime CreatedDate
+        datetime LastLoginDate
+    }
+    ADDRESSES {
+        Guid AddressId PK
+        string Country
+        string State
+        string City
+        string Area
+        string Pincode
+        string Addressline1
+        string Addressline2
+    }
+    DOCTORS {
+        Guid DoctorId PK
+        string FirstName
+        string LastName
+        string MobileNo
+        string Gender
+        datetime DOB
+        string Qualification
+        int YearsOfExperience
+        string LicenceNumber
+        double ConsultationFee
+        string VerificationStatus
+        byte[] ProfileImage
+        string AboutDoctor
+        datetime CreatedDate
+        datetime UpdatedDate
+    }
+    ADMINS {
+        Guid AdminId PK
+        string FirstName
+        string LastName
+        string MobileNo
+        bool IsVerified
+        string Gender
+        datetime DOB
+        datetime CreatedDate
+    }
+    PATIENTS {
+        Guid PatientId PK
+        string FirstName
+        string LastName
+        string MobileNo
+        string Gender
+        datetime DOB
+        string BloodGroup
+        string EmergencyConactName
+        string EmergencyConactNumber
+        datetime CreatedDate
+        datetime UpdatedDate
+    }
+    SPECIALIZATIONS {
+        Guid SpecializationId PK
+        string SpecializationName
+    }
+    CLINICS {
+        Guid ClinicId PK
+        string ClinicName
+        string ClinicType
+        string ContactNumber
+        string VerificationStatus
+        string RejectionReason
+        string OpenDays
+        string StartTime
+        string EndTime
+        bool IsAvailable
+        string UnavailabilityReason
+        bool IsDoctorAvailable
+        string DoctorUnavailabilityReason
+        datetime BookingWindowEndDate
+        datetime BookingWindowStartDate
+        string SupportedModes
+        Guid ParentClinicId
+        int MaxAppointmentsPerDay
+        datetime CreatedDate
+    }
+    APPOINTMENTS {
+        Guid AppointmentId PK
+        datetime AppointmentDate
+        datetime StartTime
+        datetime EndTime
+        int QueueNumber
+        datetime DoctorAssignedTime
+        string EAppointmentStatus
+        string Reason
+        datetime CreatedDate
+        string EConsultationType
+        string Comment
+        string Report
+        string RejectionReason
+        datetime RescheduleProposedDate
+        datetime RescheduleProposedTime
+        string RescheduleReason
+        datetime ConfirmedDate
+        datetime RescheduleProposedAt
+        datetime CancelledDate
+        string CancelledBy
+    }
+    DOCTORSCHEDULES {
+        Guid ScheduleId PK
+        TimeSpan StartTime
+        TimeSpan EndTime
+        bool IsAvailable
+        int DaysOfWeek
+    }
+    DOCTORDOCUMENTS {
+        Guid DocumentId PK
+        string DocumentType
+        datetime UploadedDate
+        string Status
+        string Path
+    }
+    NOTIFICATIONS {
+        Guid NotificationId PK
+        string Message
+        bool IsRead
+        datetime CreatedDate
+    }
+    USERPATIENTS {
+        Guid UserId PK
+        Guid PatientId PK
+        string RelationshipType
+        bool IsVerified
+        datetime CreatedDate
+    }
+    ADMINCLINICS {
+        Guid AdminClinicId PK
+        datetime AssignedDate
+    }
+
+    ROLES ||--o{ USERS : "assigned to"
+    USERS ||--o{ ADDRESSES : "owns"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    USERS ||--o{ USERPATIENTS : "links"
+    PATIENTS ||--o{ USERPATIENTS : "linked to"
+    USERS ||--|| DOCTORS : "doctor login"
+    USERS ||--|| ADMINS : "admin login"
+    DOCTORS ||--o{ CLINICS : "operates"
+    DOCTORS ||--o{ APPOINTMENTS : "treats"
+    PATIENTS ||--o{ APPOINTMENTS : "books"
+    CLINICS ||--o{ APPOINTMENTS : "hosts"
+    DOCTORS ||--o{ DOCTORSCHEDULES : "uses"
+    DOCTORS ||--o{ DOCTORDOCUMENTS : "submits"
+    ADMINS ||--o{ ADMINCLINICS : "manages"
+    CLINICS ||--o{ ADMINCLINICS : "is managed by"
+    CLINICS ||--|| ADDRESSES : "located at"
+        </div>
+
+        <div class="footer">
+            <p>💡 Right-click on the diagram → "Save image as..." to download as PNG</p>
+            <p>Or use browser's print function (Ctrl+P) → Save as PDF</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        mermaid.contentLoaded();
+    </script>
+</body>
+</html>

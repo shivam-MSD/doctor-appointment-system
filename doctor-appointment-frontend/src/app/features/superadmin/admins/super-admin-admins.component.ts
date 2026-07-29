@@ -86,10 +86,37 @@ export class SuperAdminAdminsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Rejection modal states
+  showRejectModal = false;
+  selectedAdminIdForRejection = '';
+  rejectionReason = '';
+
   rejectAdmin(adminId: string): void {
-    this.adminService.rejectAdmin(adminId).subscribe({
+    this.openRejectModal(adminId);
+  }
+
+  openRejectModal(adminId: string): void {
+    this.selectedAdminIdForRejection = adminId;
+    this.rejectionReason = '';
+    this.showRejectModal = true;
+  }
+
+  closeRejectModal(): void {
+    this.showRejectModal = false;
+    this.selectedAdminIdForRejection = '';
+    this.rejectionReason = '';
+  }
+
+  submitAdminRejection(): void {
+    if (!this.selectedAdminIdForRejection || !this.rejectionReason.trim()) {
+      this.toastService.showError('Please enter a rejection reason.');
+      return;
+    }
+
+    this.adminService.rejectAdmin(this.selectedAdminIdForRejection, this.rejectionReason).subscribe({
       next: (res) => {
         this.toastService.showSuccess(res.message || 'Clinic Admin rejected successfully.');
+        this.closeRejectModal();
         this.loadAdmins();
       },
       error: (err) => {

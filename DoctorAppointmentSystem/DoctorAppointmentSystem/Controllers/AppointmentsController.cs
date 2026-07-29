@@ -193,6 +193,13 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(new { Message = "Appointment marked as completed successfully." });
 		}
 
+		[HttpPost("doctor/set-reschedule-date")]
+		public async Task<IActionResult> SetRescheduleDate([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] SetRescheduleDateDto dto)
+		{
+			await _appointmentService.SetDoctorAutoRescheduleDateAsync(userId, dto.RescheduleDate);
+			return Ok(new { Message = "Auto reschedule date updated successfully." });
+		}
+
 		[HttpPost("accept-followup/{id:guid}")]
 		public async Task<IActionResult> AcceptFollowUp([FromHeader(Name = "X-User-Id")] Guid userId, Guid id)
 		{

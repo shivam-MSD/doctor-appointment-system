@@ -21,17 +21,20 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly INotificationService _notificationService;
 		private readonly IDistributedCache _distributedCache;
 		private readonly IEmailService _emailService;
+		private readonly IPasswordSecurityService _passwordSecurityService;
 
 		public AdminService(
 			ApplicationDbContext dbContext,
 			INotificationService notificationService,
 			IDistributedCache distributedCache,
-			IEmailService emailService)
+			IEmailService emailService,
+			IPasswordSecurityService passwordSecurityService)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
 			_distributedCache = distributedCache;
 			_emailService = emailService;
+			_passwordSecurityService = passwordSecurityService;
 		}
 
 		private string HashPassword(string password)
@@ -41,7 +44,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			return Convert.ToBase64String(hashedBytes);
 		}
 
-		public async Task<string> VerifyDoctorAsync(Guid doctorId, string status)
+		public async Task<string> VerifyDoctorAsync(Guid doctorId, string status, string? rejectionReason = null)
 		{
 			var doctor = await _dbContext.Doctors
 				.Include(d => d.User)
@@ -64,6 +67,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					<h3>Hello Dr. {doctor.FirstName} {doctor.LastName},</h3>
 					<p>Thank you for your interest in joining the HealSync Medical Network.</p>
 					<p>After reviewing your onboarding credentials and medical license details, we regret to inform you that your application has been rejected at this time.</p>
+					{(string.IsNullOrEmpty(rejectionReason) ? "" : $"<p><strong>Reason for rejection:</strong> {rejectionReason}</p>")}
 					<p>Your profile and account registrations have been completely removed from our system. If you believe this was an error or wish to apply again with updated credentials, you are free to register a new profile using your email address.</p>
 					<p>Best regards,<br/>HealSync Administration Team</p>";
 
@@ -75,6 +79,31 @@ namespace DoctorAppointmentSystem.Application.Services
 				{
 					Console.WriteLine($"[Email Error]: Failed to send rejection email to doctor: {ex.Message}");
 				}
+
+				// Log audit log for rejection prior to deletion
+				var doctorDetails = new
+				{
+					doctor.DoctorId,
+					doctor.FirstName,
+					doctor.LastName,
+					doctor.MobileNo,
+					Email = doctor.User.Email,
+					doctor.LicenceNumber,
+					doctor.Qualification,
+					doctor.YearsOfExperience
+				};
+				var oldDataJson = JsonSerializer.Serialize(doctorDetails);
+
+				var auditLogObj = new DoctorAuditLog
+				{
+					DoctorId = doctor.DoctorId,
+					Action = "Rejected",
+					Timestamp = DateTime.UtcNow,
+					OldDataJson = oldDataJson,
+					NewDataJson = "{}",
+					Notes = $"Doctor onboarding request rejected. Reason: {rejectionReason}"
+				};
+				_dbContext.DoctorAuditLogs.Add(auditLogObj);
 
 				// Remove associated Addresses
 				var addresses = _dbContext.Addresses.Where(a => a.User.UserId == doctor.User.UserId);
@@ -102,7 +131,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				// Auto-generate a secure temporary password (e.g. 10 characters)
 				generatedPassword = Guid.NewGuid().ToString("N").Substring(0, 10);
-				doctor.User.PasswordHash = HashPassword(generatedPassword);
+				var passwordHash = HashPassword(generatedPassword);
+				await _passwordSecurityService.StorePasswordAsync(doctor.User.UserId, passwordHash);
 				doctor.User.RequiresPasswordChange = true;
 				doctor.User.IsEmailVerified = true; // Auto-verify email once superadmin approves
 			}

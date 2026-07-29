@@ -18,15 +18,18 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly ApplicationDbContext _dbContext;
 		private readonly INotificationService _notificationService;
 		private readonly IEmailService _emailService;
+		private readonly IPasswordSecurityService _passwordSecurityService;
 
 		public ClinicService(
 			ApplicationDbContext dbContext, 
 			INotificationService notificationService,
-			IEmailService emailService)
+			IEmailService emailService,
+			IPasswordSecurityService passwordSecurityService)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
 			_emailService = emailService;
+			_passwordSecurityService = passwordSecurityService;
 		}
 
 
@@ -130,7 +133,6 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				UserId = Guid.NewGuid(),
 				Email = dto.AdminEmail,
-				PasswordHash = HashPassword(tempPassword),
 				IsActive = true,
 				IsEmailVerified = true,
 				RequiresPasswordChange = true,
@@ -139,6 +141,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			};
 			_dbContext.Users.Add(adminUser);
 			_dbContext.Entry(adminUser).Property("RoleId").CurrentValue = adminRole.RoleId;
+
+			var passwordHash = HashPassword(tempPassword);
+			await _passwordSecurityService.StorePasswordAsync(adminUser.UserId, passwordHash);
 
 			// 5. Create Address for the Clinic
 			var clinicAddress = new Address
@@ -380,7 +385,6 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				UserId = Guid.NewGuid(),
 				Email = dto.AdminEmail,
-				PasswordHash = HashPassword(tempPassword),
 				IsActive = true,
 				IsEmailVerified = true,
 				RequiresPasswordChange = true,
@@ -389,6 +393,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			};
 			_dbContext.Users.Add(adminUser);
 			_dbContext.Entry(adminUser).Property("RoleId").CurrentValue = adminRole.RoleId;
+
+			var passwordHash = HashPassword(tempPassword);
+			await _passwordSecurityService.StorePasswordAsync(adminUser.UserId, passwordHash);
 
 			var adminProfile = new Admin
 			{
@@ -839,7 +846,8 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			// Auto-generate a secure temporary password
 			var generatedPassword = Guid.NewGuid().ToString("N").Substring(0, 10);
-			admin.User.PasswordHash = HashPassword(generatedPassword);
+			var passwordHash = HashPassword(generatedPassword);
+			await _passwordSecurityService.StorePasswordAsync(admin.User.UserId, passwordHash);
 			admin.User.RequiresPasswordChange = true;
 			admin.User.IsEmailVerified = true; // Auto-verify once superadmin approves
 			
@@ -916,7 +924,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			return $"{admin.FirstName} {admin.LastName}";
 		}
 
-		public async Task<string> RejectAdminAsync(Guid adminId)
+		public async Task<string> RejectAdminAsync(Guid adminId, string rejectionReason)
 		{
 			var admin = await _dbContext.Admins
 				.Include(a => a.User)
@@ -942,6 +950,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				<h3>Hello {admin.FirstName} {admin.LastName},</h3>
 				<p>Thank you for registering to join the HealSync Medical Network as a Clinic Admin for '{clinicName}'.</p>
 				<p>We regret to inform you that your application has been rejected by the Super Admin at this time.</p>
+				<p><strong>Reason for rejection:</strong> {rejectionReason}</p>
 				<p>Your profile and registration records have been completely removed from our system, immediately freeing your email address for any future registrations if required.</p>
 				<p>Best regards,<br/>HealSync Administration Team</p>";
 
@@ -966,6 +975,7 @@ namespace DoctorAppointmentSystem.Application.Services
 						<h2 style='color: #ef4444; margin-top: 0;'>Clinic Admin Application Rejected</h2>
 						<p>Dear Dr. {doctorFirstName} {doctorLastName},</p>
 						<p>We regret to inform you that the registration request for Clinic Admin <strong>{adminName}</strong> assigned to <strong>{clinicName}</strong> has been rejected by the Super Admin.</p>
+						<p><strong>Reason for rejection:</strong> {rejectionReason}</p>
 						<p style='margin-top: 20px; margin-bottom: 0;'>Best regards,<br /><strong>HealSync Administration Team</strong></p>
 					</div>";
 				try
@@ -974,6 +984,17 @@ namespace DoctorAppointmentSystem.Application.Services
 				}
 				catch {}
 			}
+
+			var adminDetails = new
+			{
+				admin.AdminId,
+				admin.FirstName,
+				admin.LastName,
+				admin.MobileNo,
+				Email = admin.User.Email,
+				Clinics = admin.AdminClinics?.Select(ac => new { ac.ClinicId, ac.Clinic.ClinicName }).ToList()
+			};
+			var oldDataJson = JsonSerializer.Serialize(adminDetails);
 
 			// Remove associated Addresses
 			var addresses = _dbContext.Addresses.Where(a => a.User.UserId == admin.User.UserId);
@@ -988,9 +1009,9 @@ namespace DoctorAppointmentSystem.Application.Services
 				AdminId = admin.AdminId,
 				Action = "Rejected",
 				Timestamp = DateTime.UtcNow,
-				OldDataJson = JsonSerializer.Serialize(new { IsVerified = false }),
-				NewDataJson = JsonSerializer.Serialize(new { IsVerified = false }),
-				Notes = "Admin registration rejected by Super Admin"
+				OldDataJson = oldDataJson,
+				NewDataJson = "{}",
+				Notes = $"Admin registration rejected by Super Admin. Reason: {rejectionReason}"
 			};
 			_dbContext.AdminAuditLogs.Add(auditLog);
 

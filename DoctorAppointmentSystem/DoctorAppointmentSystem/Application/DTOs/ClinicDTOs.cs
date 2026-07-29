@@ -263,4 +263,18 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string StartTime { get; set; } = string.Empty;
 		public string EndTime { get; set; } = string.Empty;
 	}
+
+	public class RejectAdminDto
+	{
+		[Required]
+		[MaxLength(500)]
+		public string RejectionReason { get; set; }
+	}
+
+	public class RejectDoctorDto
+	{
+		[Required]
+		[MaxLength(500)]
+		public string RejectionReason { get; set; }
+	}
 }

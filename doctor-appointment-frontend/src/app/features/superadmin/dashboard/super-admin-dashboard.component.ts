@@ -19,10 +19,11 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   isSuperAdminLoading = true;
   private signalrSub?: Subscription;
 
-  // Reject clinic states
+  // Reject states
   showRejectModal = false;
-  selectedClinicIdForRejection = '';
+  selectedIdForRejection = '';
   rejectionReason = '';
+  rejectType: 'clinic' | 'doctor' | 'admin' = 'clinic';
 
   // Detail Modal States
   showDoctorDetailsModal = false;
@@ -128,58 +129,72 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   rejectDoctor(doctorUserId: string): void {
-    this.adminService.rejectDoctor(doctorUserId).subscribe({
-      next: (res) => {
-        this.toastService.showSuccess(res.message || 'Doctor rejected successfully.');
-        this.loadPendingRequests();
-      },
-      error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'Failed to reject doctor.');
-      }
-    });
+    this.openRejectModal(doctorUserId, 'doctor');
   }
 
   rejectAdmin(adminId: string): void {
-    this.adminService.rejectAdmin(adminId).subscribe({
-      next: (res) => {
-        this.toastService.showSuccess(res.message || 'Clinic Admin rejected successfully.');
-        this.loadPendingRequests();
-      },
-      error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'Failed to reject admin.');
-      }
-    });
+    this.openRejectModal(adminId, 'admin');
   }
 
-  // Reject clinic methods
+  // Reject methods
   openRejectClinicModal(clinicId: string): void {
-    this.selectedClinicIdForRejection = clinicId;
+    this.openRejectModal(clinicId, 'clinic');
+  }
+
+  openRejectModal(id: string, type: 'clinic' | 'doctor' | 'admin'): void {
+    this.selectedIdForRejection = id;
+    this.rejectType = type;
     this.rejectionReason = '';
     this.showRejectModal = true;
   }
 
   closeRejectModal(): void {
     this.showRejectModal = false;
-    this.selectedClinicIdForRejection = '';
+    this.selectedIdForRejection = '';
+    this.rejectType = 'clinic';
     this.rejectionReason = '';
   }
 
   submitClinicRejection(): void {
-    if (!this.selectedClinicIdForRejection || !this.rejectionReason.trim()) {
+    if (!this.selectedIdForRejection || !this.rejectionReason.trim()) {
       this.toastService.showError('Please enter a rejection reason.');
       return;
     }
 
-    this.adminService.rejectClinic(this.selectedClinicIdForRejection, this.rejectionReason).subscribe({
-      next: () => {
-        this.toastService.showSuccess('Clinic registration rejected successfully.');
-        this.closeRejectModal();
-        this.loadPendingRequests();
-      },
-      error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'Failed to reject clinic.');
-      }
-    });
+    if (this.rejectType === 'clinic') {
+      this.adminService.rejectClinic(this.selectedIdForRejection, this.rejectionReason).subscribe({
+        next: () => {
+          this.toastService.showSuccess('Clinic registration rejected successfully.');
+          this.closeRejectModal();
+          this.loadPendingRequests();
+        },
+        error: (err) => {
+          this.toastService.showError(err?.error?.detail || 'Failed to reject clinic.');
+        }
+      });
+    } else if (this.rejectType === 'doctor') {
+      this.adminService.rejectDoctor(this.selectedIdForRejection, this.rejectionReason).subscribe({
+        next: (res) => {
+          this.toastService.showSuccess(res.message || 'Doctor rejected successfully.');
+          this.closeRejectModal();
+          this.loadPendingRequests();
+        },
+        error: (err) => {
+          this.toastService.showError(err?.error?.detail || 'Failed to reject doctor.');
+        }
+      });
+    } else if (this.rejectType === 'admin') {
+      this.adminService.rejectAdmin(this.selectedIdForRejection, this.rejectionReason).subscribe({
+        next: (res) => {
+          this.toastService.showSuccess(res.message || 'Clinic Admin rejected successfully.');
+          this.closeRejectModal();
+          this.loadPendingRequests();
+        },
+        error: (err) => {
+          this.toastService.showError(err?.error?.detail || 'Failed to reject admin.');
+        }
+      });
+    }
   }
 
   // --- Doctor Details Modal ---

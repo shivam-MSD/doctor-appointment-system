@@ -15,10 +15,6 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public string Email { get; set; }
 
 		[Required]
-		[MaxLength(500)]
-		public string PasswordHash { get; set; }
-
-		[Required]
 		public bool IsActive { get; set; } = true;
 		public bool RequiresPasswordChange { get; set; } = false;
 		[Required]

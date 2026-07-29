@@ -287,10 +287,10 @@ The email and notification which doctor is receiving from the patient for appoin
 
 5. Patient should get the notification and email for the auto expiration of the apppoitments.
 
-6. Super admin  -refere image 1 in "doubts" folder.
+6. Super admin  -refer image 1 in "doubts" folder.
 there should be email id displayed in the admin detail popup.
 
-7. Super admin  -refere image 2 in "doubts" folder.
+7. Super admin  -refer image 2 in "doubts" folder.
 when super admin clincs on "Reject" then api tooks some time but the view detail popup ets closed.
 super admin again open the view detail popup - he again rejected the admin request.
 
@@ -342,3 +342,13 @@ it helps up where there are lakhs of data
 
 
 ____________________________________________________________________________________________________
+
+⚠️ CRITICAL ISSUES TO FIX (13 items)
+🔴 OTP Security — Plain text storage (needs hashing + rate limiting)
+🔴 Queue Race Condition — Multiple users can get same queue number
+🔴 Missing Payment System — No billing/invoice tracking
+🟠 Missing Medical Records — No prescription/diagnosis storage
+🟠 Missing Doctor Leave — Can't block vacation dates
+🟠 Verification Audit Trail — No log of admin/clinic rejections
+🟡 Address Design — Not normalized for all address types
+And 6 more with code examples...

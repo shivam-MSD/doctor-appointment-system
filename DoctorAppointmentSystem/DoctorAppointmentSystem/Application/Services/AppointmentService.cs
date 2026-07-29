@@ -1259,6 +1259,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			var appointment = await _dbContext.Appointments
 				.Include(a => a.Patient)
 				.Include(a => a.Doctor)
+				.Include(a => a.Clinic)
+					.ThenInclude(c => c.Address)
 				.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
 
 			if (appointment == null)
@@ -1279,67 +1281,112 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _dbContext.SaveChangesAsync();
 			TriggerAppointmentActionLog(appointment.AppointmentId, "Completed", userId, "Doctor", "Completed consultation.");
 
-			// If followUp details are provided, create the follow-up appointment request
-			if (followUp != null)
+			// Get patient user details for notifications/emails
+			var userPatient = await _dbContext.UserPatients
+				.Include(up => up.User)
+				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
+
+			if (userPatient != null)
 			{
-				var clinic = await _dbContext.Clinics.FindAsync(followUp.ClinicId);
-				if (clinic == null)
+				// 1. Send Completion Notification & Email
+				var completeMsg = $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Completed.";
+				await _notificationService.CreateNotificationAsync(userPatient.UserId, completeMsg);
+
+				if (userPatient.User != null)
 				{
-					throw new NotFoundException($"Clinic with ID '{followUp.ClinicId}' was not found.");
+					var emailSubject = "HealSync - Appointment Completed";
+					var emailTitle = "Appointment Completed";
+					var emailMsg = $"Dear {appointment.Patient.FirstName}, your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as completed. Thank you for choosing HealSync.";
+					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+					var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
+
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							userPatient.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							timeStr,
+							appointment.Clinic
+						);
+					});
 				}
 
-				if (!Enum.TryParse<EConsultationType>(followUp.ConsultationType, true, out var consultationType))
+				// 2. If follow-up details are provided, create the follow-up appointment request and send notifications/emails
+				if (followUp != null)
 				{
-					throw new BadRequestException($"ConsultationType '{followUp.ConsultationType}' is invalid.");
-				}
+					var clinic = await _dbContext.Clinics.Include(c => c.Address).FirstOrDefaultAsync(c => c.ClinicId == followUp.ClinicId);
+					if (clinic == null)
+					{
+						throw new NotFoundException($"Clinic with ID '{followUp.ClinicId}' was not found.");
+					}
 
-				// Assign queue number for follow-up date
-				int queueNumber = 1;
-				var maxQueue = await _dbContext.Appointments
-					.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
-					.Where(app => app.AppointmentDate == followUp.AppointmentDate.Date)
-					.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed || app.EAppointmentStatus == EAppointmentStatus.FollowUpProposed)
-					.MaxAsync(app => (int?)app.QueueNumber) ?? 0;
-				queueNumber = maxQueue + 1;
+					if (!Enum.TryParse<EConsultationType>(followUp.ConsultationType, true, out var consultationType))
+					{
+						throw new BadRequestException($"ConsultationType '{followUp.ConsultationType}' is invalid.");
+					}
 
-				var followUpAppointment = new Appointment
-				{
-					AppointmentId = Guid.NewGuid(),
-					AppointmentDate = followUp.AppointmentDate.Date,
-					QueueNumber = queueNumber,
-					Reason = "Follow-up consultation proposed by Doctor.",
-					EConsultationType = consultationType,
-					EAppointmentStatus = EAppointmentStatus.FollowUpProposed,
-					CreatedDate = DateTime.UtcNow,
-					Clinic = clinic
-				};
+					// Assign queue number for follow-up date
+					int queueNumber = 1;
+					var maxQueue = await _dbContext.Appointments
+						.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinic.ClinicId)
+						.Where(app => app.AppointmentDate == followUp.AppointmentDate.Date)
+						.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed || app.EAppointmentStatus == EAppointmentStatus.FollowUpProposed)
+						.MaxAsync(app => (int?)app.QueueNumber) ?? 0;
+					queueNumber = maxQueue + 1;
 
-				if (DateTime.TryParse($"{followUp.AppointmentDate:yyyy-MM-dd} {followUp.StartTime}", out var parsedTime))
-				{
-					followUpAppointment.DoctorAssignedTime = parsedTime;
-				}
+					var followUpAppointment = new Appointment
+					{
+						AppointmentId = Guid.NewGuid(),
+						AppointmentDate = followUp.AppointmentDate.Date,
+						QueueNumber = queueNumber,
+						Reason = "Follow-up consultation proposed by Doctor.",
+						EConsultationType = consultationType,
+						EAppointmentStatus = EAppointmentStatus.FollowUpProposed,
+						CreatedDate = DateTime.UtcNow,
+						Clinic = clinic
+					};
 
-				_dbContext.Appointments.Add(followUpAppointment);
-				_dbContext.Entry(followUpAppointment).Property("PatientId").CurrentValue = appointment.Patient.PatientId;
-				_dbContext.Entry(followUpAppointment).Property("DoctorId").CurrentValue = appointment.Doctor.DoctorId;
+					if (DateTime.TryParse($"{followUp.AppointmentDate:yyyy-MM-dd} {followUp.StartTime}", out var parsedTime))
+					{
+						followUpAppointment.DoctorAssignedTime = parsedTime;
+					}
 
-				await _dbContext.SaveChangesAsync();
-				TriggerAppointmentActionLog(followUpAppointment.AppointmentId, "FollowUpProposed", userId, "Doctor", $"Proposed follow-up appointment for {followUp.AppointmentDate:yyyy-MM-dd} at {followUp.StartTime}.");
-				
-				var userPatient = await _dbContext.UserPatients
-					.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
-				if (userPatient != null)
-				{
-					await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has proposed a follow-up appointment for you on {followUp.AppointmentDate:yyyy-MM-dd} at {followUp.StartTime}. Please confirm.");
-				}
-			}
-			else
-			{
-				var userPatient = await _dbContext.UserPatients
-					.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
-				if (userPatient != null)
-				{
-					await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Completed.");
+					_dbContext.Appointments.Add(followUpAppointment);
+					_dbContext.Entry(followUpAppointment).Property("PatientId").CurrentValue = appointment.Patient.PatientId;
+					_dbContext.Entry(followUpAppointment).Property("DoctorId").CurrentValue = appointment.Doctor.DoctorId;
+
+					await _dbContext.SaveChangesAsync();
+					TriggerAppointmentActionLog(followUpAppointment.AppointmentId, "FollowUpProposed", userId, "Doctor", $"Proposed follow-up appointment for {followUp.AppointmentDate:yyyy-MM-dd} at {followUp.StartTime}.");
+
+					// Send proposed follow-up notification and email
+					var followUpMsg = $"Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has proposed a follow-up appointment for you on {followUp.AppointmentDate:yyyy-MM-dd} at {followUp.StartTime}. Please confirm.";
+					await _notificationService.CreateNotificationAsync(userPatient.UserId, followUpMsg);
+
+					if (userPatient.User != null)
+					{
+						var followUpEmailSubject = "HealSync - Follow-up Appointment Proposed";
+						var followUpEmailTitle = "Follow-up Appointment Proposed";
+						var followUpEmailMsg = $"Dear {appointment.Patient.FirstName}, Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has proposed a follow-up appointment for you.";
+						var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+						var dateStr = followUp.AppointmentDate.ToString("dd MMM yyyy");
+						var timeStr = followUp.StartTime;
+
+						_ = Task.Run(async () => {
+							await SendAppointmentEmailAsync(
+								userPatient.User.Email,
+								followUpEmailSubject,
+								followUpEmailTitle,
+								followUpEmailMsg,
+								docName,
+								dateStr,
+								timeStr,
+								clinic
+							);
+						});
+					}
 				}
 			}
 
@@ -1948,6 +1995,35 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			return new PagedResult<AppointmentAuditLogDto>(items, totalCount, page, size);
 		}
+
+		public async Task SetDoctorAutoRescheduleDateAsync(Guid userId, DateTime? rescheduleDate)
+		{
+			var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
+			if (doctor == null)
+			{
+				throw new NotFoundException("Doctor profile was not found.");
+			}
+
+			if (rescheduleDate.HasValue && rescheduleDate.Value.Date < DateTime.Today)
+			{
+				throw new BadRequestException("Reschedule date cannot be in the past.");
+			}
+
+			doctor.AutoRescheduleDate = rescheduleDate.HasValue ? rescheduleDate.Value.Date : null;
+			await _dbContext.SaveChangesAsync();
+		}
+
+		private async Task<List<(Guid UserId, string Email)>> GetClinicAdminsAsync(Guid? clinicId)
+		{
+			if (!clinicId.HasValue) return new List<(Guid UserId, string Email)>();
+
+			return await _dbContext.AdminClinics
+				.Where(ac => ac.ClinicId == clinicId.Value)
+				.Select(ac => new { ac.Admin.User.UserId, ac.Admin.User.Email })
+				.ToListAsync()
+				.ContinueWith(t => t.Result.Select(x => (x.UserId, x.Email)).ToList());
+		}
+
 		private static int CalculateAge(DateTime dob)
 		{
 			var today = DateTime.Today;

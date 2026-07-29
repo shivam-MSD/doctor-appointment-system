@@ -43,7 +43,6 @@ namespace DoctorAppointmentSystem.Persistent
 					{
 						UserId = Guid.NewGuid(),
 						Email = "superadmin@doctorapp.com",
-						PasswordHash = passwordHash,
 						IsActive = true,
 						CreatedDate = DateTime.UtcNow,
 						LastLoginDate = DateTime.UtcNow
@@ -51,6 +50,14 @@ namespace DoctorAppointmentSystem.Persistent
 
 					db.Users.Add(superAdminUser);
 					db.Entry(superAdminUser).Property("RoleId").CurrentValue = superAdminRole.RoleId;
+
+					var userPassword = new UserPassword
+					{
+						UserId = superAdminUser.UserId,
+						User = superAdminUser,
+						PasswordHash = passwordHash
+					};
+					db.UserPasswords.Add(userPassword);
 					await db.SaveChangesAsync();
 				}
 			}

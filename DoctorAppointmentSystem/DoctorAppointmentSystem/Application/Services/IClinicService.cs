@@ -16,7 +16,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<IEnumerable<ClinicAdminDto>> GetPendingAdminsAsync();
 		Task<string> VerifyClinicAsync(Guid clinicId);
 		Task<string> VerifyAdminAsync(Guid adminId);
-		Task<string> RejectAdminAsync(Guid adminId);
+		Task<string> RejectAdminAsync(Guid adminId, string rejectionReason);
 		Task<string> RejectClinicAsync(Guid clinicId, string rejectionReason);
 		Task UpdateClinicAsync(Guid clinicId, Guid doctorUserId, UpdateClinicDto dto);
 		Task<IEnumerable<ClinicDto>> GetClinicsByDoctorIdAsync(Guid doctorId);

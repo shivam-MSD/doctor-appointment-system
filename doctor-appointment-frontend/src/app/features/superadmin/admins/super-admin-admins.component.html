@@ -196,4 +196,34 @@
       </div>
     </div>
   </div>
+
+  <!-- REJECTION REASON MODAL -->
+  <div class="modal-backdrop" *ngIf="showRejectModal">
+    <div class="glass-card modal-container" style="max-width: 500px; padding: 20px; border-radius: 12px; background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); color: white;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0; font-size: 1.25rem;">Reject Clinic Admin Verification</h3>
+        <button class="close-modal" (click)="closeRejectModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      <form (submit)="submitAdminRejection(); $event.preventDefault()">
+        <div class="modal-body" style="margin-bottom: 20px;">
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="form-label" for="rejectionReason" style="font-weight: 500; font-size: 0.9rem; color: #cbd5e1;">Reason for Rejection *</label>
+            <textarea id="rejectionReason" name="rejectionReason" class="form-control" rows="4"
+              [(ngModel)]="rejectionReason" required
+              placeholder="Provide specific feedback to the clinic admin so they can correct it."
+              style="width: 100%; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 10px; box-sizing: border-box; font-family: inherit;">
+            </textarea>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-secondary" (click)="closeRejectModal()"
+            style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
+          <button type="submit" class="btn btn-danger"
+            style="background: #ef4444; border: none; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            Reject Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

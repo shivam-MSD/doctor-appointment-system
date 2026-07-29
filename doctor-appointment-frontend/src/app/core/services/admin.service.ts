@@ -12,8 +12,11 @@ export class AdminService {
     return this.http.get<any[]>('/api/admin/pending-doctors');
   }
 
-  verifyDoctor(doctorId: string, status: string): Observable<any> {
-    return this.http.post<any>(`/api/admin/verify-doctor/${doctorId}?status=${status}`, {});
+  verifyDoctor(doctorId: string, status: string, reason?: string): Observable<any> {
+    const url = reason
+      ? `/api/admin/verify-doctor/${doctorId}?status=${status}&rejectionReason=${encodeURIComponent(reason)}`
+      : `/api/admin/verify-doctor/${doctorId}?status=${status}`;
+    return this.http.post<any>(url, {});
   }
 
   getPendingClinics(): Observable<any[]> {
@@ -92,16 +95,16 @@ export class AdminService {
     return this.verifyDoctor(doctorUserId, 'Verified');
   }
 
-  rejectDoctor(doctorUserId: string): Observable<any> {
-    return this.verifyDoctor(doctorUserId, 'Rejected');
+  rejectDoctor(doctorUserId: string, reason: string): Observable<any> {
+    return this.verifyDoctor(doctorUserId, 'Rejected', reason);
   }
 
   rejectClinic(clinicId: string, reason: string): Observable<any> {
     return this.http.post<any>(`/api/clinics/verify-clinic/${clinicId}/reject`, { rejectionReason: reason });
   }
 
-  rejectAdmin(adminId: string): Observable<any> {
-    return this.http.post<any>(`/api/clinics/reject-admin/${adminId}`, {});
+  rejectAdmin(adminId: string, reason: string): Observable<any> {
+    return this.http.post<any>(`/api/clinics/reject-admin/${adminId}`, { rejectionReason: reason });
   }
 
   updateClinic(clinicId: string, dto: any): Observable<any> {

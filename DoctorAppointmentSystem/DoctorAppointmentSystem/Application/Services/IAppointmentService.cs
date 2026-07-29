@@ -40,5 +40,8 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		/// <summary>Gets audit logs for appointments.</summary>
 		Task<PagedResult<AppointmentAuditLogDto>> GetAppointmentAuditLogsAsync(Guid userId, Guid? clinicId, Guid? appointmentId, int page, int size);
+
+		/// <summary>Sets doctor's auto reschedule date preference.</summary>
+		Task SetDoctorAutoRescheduleDateAsync(Guid userId, DateTime? rescheduleDate);
 	}
 }
