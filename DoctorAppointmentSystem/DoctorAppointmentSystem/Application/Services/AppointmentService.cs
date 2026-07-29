@@ -249,21 +249,30 @@ namespace DoctorAppointmentSystem.Application.Services
 					var patientName = await _dbContext.Patients.Where(p => p.PatientId == patientId).Select(p => p.FirstName + " " + p.LastName).FirstOrDefaultAsync() ?? "Patient";
 					var msg = $"Appointment with Patient {patientName} on {appointment.AppointmentDate.ToString("yyyy-MM-dd")} has been cancelled.";
 					
-					// Notify Doctor
-					await _notificationService.CreateNotificationAsync(doctor.User.UserId, msg);
-
-					// Notify Clinic Admin
-					if (appointment.Clinic != null)
+					// Email Patient Confirmation
+					var userPatient = await _dbContext.UserPatients.Include(up => up.User).FirstOrDefaultAsync(up => up.PatientId == patientId);
+					if (userPatient?.User != null)
 					{
-						var adminUserIdObj = await _dbContext.AdminClinics
-							.Where(ac => ac.ClinicId == appointment.Clinic.ClinicId)
-							.Select(ac => (Guid?)ac.Admin.User.UserId)
-							.FirstOrDefaultAsync();
-						if (adminUserIdObj.HasValue)
-						{
-							await _notificationService.CreateNotificationAsync(adminUserIdObj.Value, msg);
-						}
+						var emailSubject = "HealSync - Appointment Cancelled";
+						var emailTitle = "Appointment Cancelled";
+						var emailMsg = $"Dear {patientName}, your appointment has been successfully cancelled.";
+						var docName = doctor != null ? $"{doctor.FirstName} {doctor.LastName}" : "Treating Doctor";
+						var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
+						
+						_ = Task.Run(async () => {
+							await SendAppointmentEmailAsync(
+								userPatient.User.Email,
+								emailSubject,
+								emailTitle,
+								emailMsg,
+								docName,
+								appointment.AppointmentDate.ToString("dd MMM yyyy"),
+								timeStr,
+								appointment.Clinic
+							);
+						});
 					}
+
 					await _notificationService.SendRefreshSignalAsync("Appointments");
 				}
 			}
@@ -373,7 +382,7 @@ namespace DoctorAppointmentSystem.Application.Services
     
 		public async Task<PagedResult<AppointmentDto>> GetAdminDoctorDashboardAppointmentsAsync(Guid userId, string? status, DateTime? startDate, DateTime? endDate, string? search, Guid? patientId, int page, int size)
 		{
-			var query = _dbContext.Appointments
+			var query = _dbContext.Appointments.AsNoTracking()
 				.Include(app => app.Patient)
 				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
 				.Include(app => app.Clinic)
@@ -385,14 +394,14 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			// Resolve User Role dashboard scope
-			var isDoctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
+			var isDoctor = await _dbContext.Doctors.AsNoTracking().FirstOrDefaultAsync(d => d.User.UserId == userId);
 			if (isDoctor != null)
 			{
 				query = query.Where(app => app.Doctor.DoctorId == isDoctor.DoctorId);
 			}
 			else
 			{
-				var isAdmin = await _dbContext.Admins
+				var isAdmin = await _dbContext.Admins.AsNoTracking()
 					.Include(a => a.AdminClinics)
 						.ThenInclude(ac => ac.Clinic)
 					.FirstOrDefaultAsync(a => a.User.UserId == userId);
@@ -455,9 +464,9 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<PagedResult<PatientDto>> GetDashboardPatientsAsync(Guid userId, string? search, int page, int size)
 		{
 			// 1. Identify if Doctor
-			var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
+			var doctor = await _dbContext.Doctors.AsNoTracking().FirstOrDefaultAsync(d => d.User.UserId == userId);
 			// 2. Identify if Clinic Admin
-			var adminObj = await _dbContext.Admins
+			var adminObj = await _dbContext.Admins.AsNoTracking()
 				.Include(a => a.AdminClinics)
 				.FirstOrDefaultAsync(a => a.User.UserId == userId);
 
@@ -465,12 +474,12 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			if (doctor != null)
 			{
-				var clinicIds = await _dbContext.Clinics
+				var clinicIds = await _dbContext.Clinics.AsNoTracking()
 					.Where(c => c.Doctor.DoctorId == doctor.DoctorId && c.ParentClinicId == null)
 					.Select(c => c.ClinicId)
 					.ToListAsync();
 
-				patientIds = await _dbContext.Appointments
+				patientIds = await _dbContext.Appointments.AsNoTracking()
 					.Where(a => a.Clinic != null && clinicIds.Contains(a.Clinic.ClinicId))
 					.Select(a => a.Patient.PatientId)
 					.Distinct()
@@ -479,7 +488,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			else if (adminObj != null && adminObj.AdminClinics.Any())
 			{
 				var adminClinicIds = adminObj.AdminClinics.Select(ac => ac.ClinicId).ToList();
-				patientIds = await _dbContext.Appointments
+				patientIds = await _dbContext.Appointments.AsNoTracking()
 					.Where(a => a.Clinic != null && adminClinicIds.Contains(a.Clinic.ClinicId))
 					.Select(a => a.Patient.PatientId)
 					.Distinct()
@@ -491,7 +500,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				return new PagedResult<PatientDto>(new List<PatientDto>(), 0, page, size);
 			}
 
-			var query = _dbContext.Patients
+			var query = _dbContext.Patients.AsNoTracking()
 				.Where(p => patientIds.Contains(p.PatientId));
 
 			if (!string.IsNullOrEmpty(search))
@@ -512,12 +521,12 @@ namespace DoctorAppointmentSystem.Application.Services
 				.ToListAsync();
 
 			var patientIdsList = items.Select(p => p.PatientId).ToList();
-			var userPatients = await _dbContext.UserPatients
+			var userPatients = await _dbContext.UserPatients.AsNoTracking()
 				.Where(up => patientIdsList.Contains(up.PatientId))
 				.ToListAsync();
 
 			var userIds = userPatients.Select(up => up.UserId).ToList();
-			var addresses = await _dbContext.Addresses
+			var addresses = await _dbContext.Addresses.AsNoTracking()
 				.Where(a => a.User != null && userIds.Contains(a.User.UserId))
 				.Include(a => a.User)
 				.ToListAsync();
@@ -554,12 +563,12 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<PagedResult<AppointmentDto>> GetPatientDashboardAppointmentsAsync(Guid userId, string? status, bool isHistory, int page, int size)
 		{
 			// Get all patient IDs linked to this User
-			var linkedPatientIds = await _dbContext.UserPatients
+			var linkedPatientIds = await _dbContext.UserPatients.AsNoTracking()
 				.Where(up => up.UserId == userId && up.IsVerified)
 				.Select(up => up.PatientId)
 				.ToListAsync();
 
-			var query = _dbContext.Appointments
+			var query = _dbContext.Appointments.AsNoTracking()
 				.Include(app => app.Patient)
 				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
 				.Include(app => app.Clinic)
@@ -613,13 +622,13 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<IEnumerable<ConsultedDoctorDto>> GetConsultedDoctorsAsync(Guid userId)
 		{
 			// Get all patient IDs linked to this User
-			var linkedPatientIds = await _dbContext.UserPatients
+			var linkedPatientIds = await _dbContext.UserPatients.AsNoTracking()
 				.Where(up => up.UserId == userId && up.IsVerified)
 				.Select(up => up.PatientId)
 				.ToListAsync();
 
 			// Fetch all appointments for these patients
-			var appointments = await _dbContext.Appointments
+			var appointments = await _dbContext.Appointments.AsNoTracking()
 				.Include(app => app.Patient)
 				.Include(app => app.Clinic)
 				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
@@ -691,7 +700,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				}
 			}
 
-			var doctors = await _dbContext.Doctors
+			var doctors = await _dbContext.Doctors.AsNoTracking()
 				.Include(d => d.Specialization)
 				.Include(d => d.User)
 				.Where(d => d.VerificationStatus == EVerificationStatus.Verified)
@@ -712,16 +721,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					VerificationStatus = d.VerificationStatus.ToString(),
 					AboutDoctor = d.AboutDoctor,
 					Age = DateTime.UtcNow.Year - d.DOB.Year,
-					Clinics = d.Clinics.Select(c => new ClinicBasicDto
-					{
-						ClinicId = c.ClinicId,
-						ClinicName = c.ClinicName,
-						ClinicType = c.ClinicType,
-						State = c.Address.State,
-						City = c.Address.City,
-						Area = c.Address.Area,
-						ContactNumber = c.ContactNumber
-					}).ToList()
+					Clinics = new List<ClinicBasicDto>()
 				})
 				.ToListAsync();
 
@@ -788,16 +788,16 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<IEnumerable<DoctorDto>> SearchDoctorsAsync(string? state, string? city, Guid? specializationId, string? nameSearch)
 		{
 			// 1. Start with base query of verified doctors who have at least one verified clinic
-			var query = _dbContext.Doctors
+			var query = _dbContext.Doctors.AsNoTracking()
 				.Include(d => d.Specialization)
 				.Include(d => d.User)
 				.Where(d => d.VerificationStatus == EVerificationStatus.Verified)
-				.Where(d => _dbContext.Clinics.Any(c => c.Doctor.DoctorId == d.DoctorId && c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null));
+				.Where(d => _dbContext.Clinics.AsNoTracking().Any(c => c.Doctor.DoctorId == d.DoctorId && c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null));
 
 			// 2. Filter by location (State & City) if provided
 			if (!string.IsNullOrWhiteSpace(state) && !string.IsNullOrWhiteSpace(city))
 			{
-				var doctorIdsAtLocation = await _dbContext.Clinics
+				var doctorIdsAtLocation = await _dbContext.Clinics.AsNoTracking()
 					.Include(c => c.Address)
 					.Include(c => c.Doctor)
 					.Where(c => c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null && c.Address.State.ToLower() == state.ToLower() && c.Address.City.ToLower() == city.ToLower())
@@ -839,16 +839,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					VerificationStatus = d.VerificationStatus.ToString(),
 					AboutDoctor = d.AboutDoctor,
 					Age = DateTime.UtcNow.Year - d.DOB.Year,
-					Clinics = d.Clinics.Select(c => new ClinicBasicDto
-					{
-						ClinicId = c.ClinicId,
-						ClinicName = c.ClinicName,
-						ClinicType = c.ClinicType,
-						State = c.Address.State,
-						City = c.Address.City,
-						Area = c.Address.Area,
-						ContactNumber = c.ContactNumber
-					}).ToList()
+					Clinics = new List<ClinicBasicDto>()
 				})
 				.ToListAsync();
 
@@ -893,14 +884,14 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicDto>> GetClinicsByDoctorIdAsync(Guid doctorId)
 		{
-			var list = await _dbContext.Clinics
+			var list = await _dbContext.Clinics.AsNoTracking()
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
 				.Where(c => c.Doctor.DoctorId == doctorId && c.VerificationStatus == EVerificationStatus.Verified && c.ParentClinicId == null)
 				.Select(c => new
 				{
 					Clinic = c,
-					AdminInfo = _dbContext.AdminClinics
+					AdminInfo = _dbContext.AdminClinics.AsNoTracking()
 						.Where(ac => ac.ClinicId == c.ClinicId)
 						.Select(ac => new
 						{
@@ -952,9 +943,9 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<DayAvailabilityDto> GetDayAvailabilityAsync(Guid clinicId, DateTime date)
 		{
 			var targetDate = date.Date;
-			var clinic = await _dbContext.Clinics.FindAsync(clinicId);
+			var clinic = await _dbContext.Clinics.AsNoTracking().FirstOrDefaultAsync(c => c.ClinicId == clinicId);
 
-			var bookedCount = await _dbContext.Appointments
+			var bookedCount = await _dbContext.Appointments.AsNoTracking()
 				.Where(app => app.Clinic != null && app.Clinic.ClinicId == clinicId)
 				.Where(app => app.AppointmentDate == targetDate)
 				.Where(app => app.EAppointmentStatus == EAppointmentStatus.Pending || app.EAppointmentStatus == EAppointmentStatus.Confirmed)
@@ -1050,7 +1041,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		public async Task<BookingDetailsDto> GetBookingDetailsAsync(Guid doctorId, Guid clinicId)
 		{
 			// 1. Fetch Doctor
-			var doctor = await _dbContext.Doctors
+			var doctor = await _dbContext.Doctors.AsNoTracking()
 				.Include(d => d.Specialization)
 				.Include(d => d.User)
 				.FirstOrDefaultAsync(d => d.DoctorId == doctorId);
@@ -1066,7 +1057,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			// 2. Fetch Clinic
-			var clinic = await _dbContext.Clinics
+			var clinic = await _dbContext.Clinics.AsNoTracking()
 				.Include(c => c.Address)
 				.Include(c => c.Doctor)
 				.FirstOrDefaultAsync(c => c.ClinicId == clinicId);
@@ -1189,10 +1180,34 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			// Refresh SignalR hubs
 			var userPatient = await _dbContext.UserPatients
+				.Include(up => up.User)
 				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
 			if (userPatient != null)
 			{
 				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been approved.");
+				
+				// Send Email to Patient
+				if (userPatient.User != null)
+				{
+					var emailSubject = "HealSync - Appointment Approved & Confirmed";
+					var emailTitle = "Appointment Approved";
+					var emailMsg = $"Dear {appointment.Patient.FirstName}, your appointment booking request has been approved and confirmed by the clinic.";
+					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+					var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							userPatient.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							timeStr,
+							appointment.Clinic
+						);
+					});
+				}
 			}
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
@@ -1472,10 +1487,33 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			// Refresh SignalR hubs
 			var userPatient = await _dbContext.UserPatients
+				.Include(up => up.User)
 				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
 			if (userPatient != null)
 			{
 				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Pending.");
+				
+				if (userPatient.User != null)
+				{
+					var emailSubject = "HealSync - Appointment Status Updated";
+					var emailTitle = "Appointment Marked as Pending";
+					var emailMsg = $"Dear {appointment.Patient.FirstName}, your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Pending (no-show/late arrival). Please contact the clinic for reschedule options.";
+					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
+					var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
+					
+					_ = Task.Run(async () => {
+						await SendAppointmentEmailAsync(
+							userPatient.User.Email,
+							emailSubject,
+							emailTitle,
+							emailMsg,
+							docName,
+							appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							timeStr,
+							appointment.Clinic
+						);
+					});
+				}
 			}
 			await _notificationService.SendRefreshSignalAsync("Appointments");
 		}
@@ -1916,7 +1954,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<PagedResult<AppointmentAuditLogDto>> GetAppointmentAuditLogsAsync(Guid userId, Guid? clinicId, Guid? appointmentId, int page, int size)
 		{
-			var query = _dbContext.AppointmentAuditLogs
+			var query = _dbContext.AppointmentAuditLogs.AsNoTracking()
 				.Include(l => l.Appointment)
 				.ThenInclude(a => a.Patient)
 				.AsQueryable();
@@ -1938,8 +1976,8 @@ namespace DoctorAppointmentSystem.Application.Services
 				
 				if (!isSuperAdmin)
 				{
-					var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userId);
-					var admin = await _dbContext.Admins.Include(a => a.AdminClinics).ThenInclude(ac => ac.Clinic).FirstOrDefaultAsync(a => a.User.UserId == userId);
+					var doctor = await _dbContext.Doctors.AsNoTracking().FirstOrDefaultAsync(d => d.User.UserId == userId);
+					var admin = await _dbContext.Admins.AsNoTracking().Include(a => a.AdminClinics).ThenInclude(ac => ac.Clinic).FirstOrDefaultAsync(a => a.User.UserId == userId);
 
 					if (doctor != null)
 					{
@@ -1957,7 +1995,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					else
 					{
 						// Patients or Unassigned can only see logs for appointments where they are the patient.
-						var linkedPatientIds = await _dbContext.UserPatients
+						var linkedPatientIds = await _dbContext.UserPatients.AsNoTracking()
 							.Where(up => up.UserId == userId)
 							.Select(up => up.PatientId)
 							.ToListAsync();

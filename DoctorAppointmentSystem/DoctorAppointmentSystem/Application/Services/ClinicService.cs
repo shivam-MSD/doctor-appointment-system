@@ -466,14 +466,14 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicDto>> GetDoctorClinicsAsync(Guid doctorUserId)
 		{
-			var list = await _dbContext.Clinics
+			var list = await _dbContext.Clinics.AsNoTracking()
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
 				.Where(c => c.Doctor.User.UserId == doctorUserId && c.ParentClinicId == null)
 				.Select(c => new
 				{
 					Clinic = c,
-					AdminInfo = _dbContext.AdminClinics
+					AdminInfo = _dbContext.AdminClinics.AsNoTracking()
 						.Where(ac => ac.ClinicId == c.ClinicId)
 						.Select(ac => new
 						{
@@ -483,7 +483,7 @@ namespace DoctorAppointmentSystem.Application.Services
 							AdminIsVerified = ac.Admin.IsVerified
 						})
 						.FirstOrDefault(),
-					HasPendingEdit = _dbContext.Clinics.Any(clone => clone.ParentClinicId == c.ClinicId && clone.VerificationStatus == EVerificationStatus.UpdatedPending)
+					HasPendingEdit = _dbContext.Clinics.AsNoTracking().Any(clone => clone.ParentClinicId == c.ClinicId && clone.VerificationStatus == EVerificationStatus.UpdatedPending)
 				})
 				.ToListAsync();
 
@@ -585,7 +585,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicAdminDto>> GetDoctorAdminsAsync(Guid doctorUserId)
 		{
-			var admins = await _dbContext.Admins
+			var admins = await _dbContext.Admins.AsNoTracking()
 				.Include(a => a.User)
 				.Include(a => a.AdminClinics)
 					.ThenInclude(ac => ac.Clinic)
@@ -617,7 +617,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicDto>> GetPendingClinicsAsync()
 		{
-			return await _dbContext.Clinics
+			return await _dbContext.Clinics.AsNoTracking()
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
 				.Where(c => c.VerificationStatus == EVerificationStatus.Pending || c.VerificationStatus == EVerificationStatus.UpdatedPending)
@@ -659,7 +659,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicAdminDto>> GetPendingAdminsAsync()
 		{
-			var admins = await _dbContext.Admins
+			var admins = await _dbContext.Admins.AsNoTracking()
 				.Include(a => a.User)
 				.Include(a => a.AdminClinics)
 					.ThenInclude(ac => ac.Clinic)
@@ -1394,7 +1394,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<ClinicDto> GetAdminClinicAsync(Guid adminUserId)
 		{
-			var admin = await _dbContext.Admins
+			var admin = await _dbContext.Admins.AsNoTracking()
 				.Include(a => a.User)
 				.Include(a => a.AdminClinics)
 					.ThenInclude(ac => ac.Clinic)

@@ -53,6 +53,10 @@ namespace DoctorAppointmentSystem.Controllers
 			{
 				return NotFound(new { detail = "No account found with this email address." });
 			}
+			if (!string.IsNullOrEmpty(dto.Role) && !string.Equals(role, dto.Role, StringComparison.OrdinalIgnoreCase))
+			{
+				return BadRequest(new { detail = $"This email is registered under the role '{role}', not '{dto.Role}'." });
+			}
 			return Ok(new { exists = true, role });
 		}
 

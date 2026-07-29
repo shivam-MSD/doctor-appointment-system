@@ -186,7 +186,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<DoctorDto>> GetPendingDoctorsAsync()
 		{
-			return await _dbContext.Doctors
+			return await _dbContext.Doctors.AsNoTracking()
 				.Include(d => d.Specialization)
 				.Include(d => d.User)
 				.Where(d => d.VerificationStatus == EVerificationStatus.Pending)
@@ -227,7 +227,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<DoctorDto>> GetAllDoctorsAsync(string? search, string? status, DateTime? registerDate, DateTime? approveDate)
 		{
-			var query = _dbContext.Doctors
+			var query = _dbContext.Doctors.AsNoTracking()
 				.Include(d => d.Specialization)
 				.Include(d => d.User)
 				.AsQueryable();
@@ -302,7 +302,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicDto>> GetAllClinicsAsync(string? search, string? state, string? city, bool? isVerified)
 		{
-			var query = _dbContext.Clinics
+			var query = _dbContext.Clinics.AsNoTracking()
 				.Include(c => c.Doctor)
 				.Include(c => c.Address)
 				.Where(c => c.ParentClinicId == null || c.VerificationStatus == EVerificationStatus.UpdatedPending)
@@ -380,7 +380,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicAdminDto>> GetAllAdminsAsync(string? search, bool? isVerified)
 		{
-			var query = _dbContext.Admins
+			var query = _dbContext.Admins.AsNoTracking()
 				.Include(a => a.User)
 				.Include(a => a.AdminClinics)
 					.ThenInclude(ac => ac.Clinic)
@@ -563,7 +563,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<IEnumerable<ClinicBasicInfoDto>> GetClinicsForAdminAsync(Guid adminId)
 		{
-			return await _dbContext.AdminClinics
+			return await _dbContext.AdminClinics.AsNoTracking()
 				.Where(ac => ac.AdminId == adminId)
 				.Select(ac => new ClinicBasicInfoDto
 				{

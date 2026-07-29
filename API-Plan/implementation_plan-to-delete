@@ -1,0 +1,73 @@
+# Implementation Plan - Login Redirection, Event-Driven Emails, and ReadOnly Optimization
+
+This plan addresses:
+1. Preventing generic `/login` redirects on authentication endpoint errors (keeping users on their role-specific login pages).
+2. Implementing a fully event-driven, async email/notification pipeline by subscribing to the static `EmailSender.EmailSendEvent` in `Program.cs` and invoking the existing `IEmailService` in the background.
+3. Adding `.AsNoTracking()` optimizations to all readonly queries in the backend services.
+
+---
+
+## User Review Required
+
+### Security of `/doctor/*`, `/admin/*`, and `/superadmin/*` Routes
+As requested, we want to ensure that a Patient/Normal user cannot access any restricted routes (like `/doctor/*` or `/admin/*`). 
+- **Current Security Design**: The application already implements a secure [AuthGuard](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/guards/auth.guard.ts) on the main layout wrapper.
+- **How it behaves**: 
+  - If an unauthenticated user tries to go to `/doctor/dashboard`, they are redirected to `/doctor/login`.
+  - If a logged-in Patient tries to go to `/doctor/dashboard`, the `AuthGuard` detects the role mismatch and automatically redirects them back to `/patient/dashboard`.
+  - If a logged-in Patient manually types `/doctor/login` in the address bar, the `LoginComponent` detects they are already logged in and redirects them to `/patient/dashboard`.
+- **The Redirection Bug being fixed**: Currently, if a user is on `/doctor/login` and enters invalid or mismatched credentials (e.g. Patient credentials), the backend returns a `401 Unauthorized`. The global interceptor incorrectly redirects them to the generic `/login` page instead of keeping them on the `/doctor/login` page to see the error message. We are fixing the interceptor to check the URL and prevent this redirection on login/auth requests.
+
+---
+
+## Proposed Changes
+
+### Frontend (Angular)
+
+#### [MODIFY] [auth.interceptor.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/interceptors/auth.interceptor.ts)
+- Modify the global error handler interceptor so that HTTP `401 Unauthorized` responses from any login/auth/registration endpoint (e.g., containing `/api/auth/`) do NOT redirect the user to the generic `/login` page. This ensures users remain on their role-specific login page (e.g., `/doctor/login` or `/admin/login`) and see the appropriate validation error.
+
+---
+
+### Backend
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+- Subscribe to the static `EmailSender.EmailSendEvent` directly in `Program.cs` after building the app:
+  ```csharp
+  EmailSender.EmailSendEvent += (sender, e) => {
+      Task.Run(async () => {
+          using var scope = app.Services.CreateScope();
+          var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+          await emailService.SendEmailAsync(e.Email, e.Subject, e.Body);
+      });
+  };
+  ```
+- This completely avoids creating a new background service class and directly uses the existing `EmailService` scoped registration to handle background emails safely and asynchronously.
+
+#### [MODIFY] Service Email Migration
+- Replace all direct dependencies and calls on `IEmailService` in the following services with calls to the static `EmailSender.SendEmail(...)` helper. Where templated HTML emails are built, build the HTML body and call `EmailSender.SendEmail(...)`:
+  - [AuthService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AuthService.cs)
+  - [ClinicService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/ClinicService.cs)
+  - [AppointmentService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AppointmentService.cs)
+  - [AdminService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AdminService.cs)
+
+#### [MODIFY] ReadOnly Query Optimization (`AsNoTracking`)
+- Go through readonly query locations in the backend services and add `.AsNoTracking()` to improve EF Core query performance and memory footprints for operations that don't need tracking:
+  - [AuthService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AuthService.cs)
+  - [ClinicService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/ClinicService.cs)
+  - [AppointmentService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AppointmentService.cs)
+  - [AdminService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AdminService.cs)
+  - [UserService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/UserService.cs)
+  - [PatientService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/PatientService.cs)
+  - [FamilyService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/FamilyService.cs)
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run `dotnet build` to ensure the project builds correctly.
+
+### Manual Verification
+- Attempt logging into the `/doctor/login` portal using a patient's email and password. Verify that you remain on the `/doctor/login` screen with the error message "Unauthorized access. Invalid credentials for the Doctor Portal." and are NOT redirected to the generic `/login` page.
+- Perform registration or trigger another email-sending event, verifying that the email is dispatched asynchronously without blocking the client.

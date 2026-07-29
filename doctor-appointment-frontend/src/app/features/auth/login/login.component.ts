@@ -53,10 +53,13 @@ export class LoginComponent implements OnInit {
       }
     });
 
-    // Listen to query params for prefilled email and registration success messages
+    // Listen to query params for prefilled email, success, and error messages
     this.route.queryParams.subscribe(params => {
       if (params['message']) {
         this.successMessage = params['message'];
+      }
+      if (params['error']) {
+        this.errorMessage = params['error'];
       }
       if (params['email']) {
         this.email = params['email'];

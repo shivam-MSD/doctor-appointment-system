@@ -70,7 +70,12 @@ builder.Services.AddHostedService<DoctorAppointmentSystem.Application.Background
 builder.Services.AddSignalR();
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-	options.Configuration = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
+	var connStr = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
+	var configOptions = StackExchange.Redis.ConfigurationOptions.Parse(connStr);
+	configOptions.ConnectTimeout = 250; // Fail fast if Redis is down
+	configOptions.SyncTimeout = 250;
+	configOptions.AbortOnConnectFail = false;
+	options.ConfigurationOptions = configOptions;
 	options.InstanceName = "HealSync_";
 });
 
@@ -104,5 +109,23 @@ using (var scope = app.Services.CreateScope())
 	db.Database.Migrate();
 	await DoctorAppointmentSystem.Persistent.DbInitializer.SeedAsync(db);
 }
+
+// Subscribe static EmailSender event to resolved IEmailService in background tasks
+DoctorAppointmentSystem.Application.Services.EmailSender.EmailSendEvent += (sender, e) =>
+{
+	Task.Run(async () =>
+	{
+		try
+		{
+			using var scope = app.Services.CreateScope();
+			var emailService = scope.ServiceProvider.GetRequiredService<DoctorAppointmentSystem.Application.Services.IEmailService>();
+			await emailService.SendEmailAsync(e.Email, e.Subject, e.Body);
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error sending background email via EmailSender event: {ex.Message}");
+		}
+	});
+};
 
 app.Run();

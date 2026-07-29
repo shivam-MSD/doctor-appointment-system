@@ -63,16 +63,13 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
       return;
     }
     this.isLoading = true;
-    this.authService.checkEmail(this.email).subscribe({
+    this.authService.checkEmail(this.email, this.role).subscribe({
       next: (res) => {
-        if (res && res.role) {
-          this.role = res.role;
-        }
         this.step = 'password';
         this.isLoading = false;
       },
       error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'No account found with this email address.');
+        this.toastService.showError(err?.error?.detail || `No account found with this email address under the '${this.role}' role.`);
         this.isLoading = false;
       }
     });
@@ -88,7 +85,7 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
       return;
     }
     this.isLoading = true;
-    this.authService.forgotPassword(this.email).subscribe({
+    this.authService.forgotPassword(this.email, this.role).subscribe({
       next: (res) => {
         this.toastService.showSuccess(res.message || 'OTP sent to your email!');
         this.step = 'otp';
@@ -108,7 +105,7 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
       return;
     }
     this.isLoading = true;
-    this.authService.resetPassword(this.email, this.otp, this.newPassword).subscribe({
+    this.authService.resetPassword(this.email, this.otp, this.newPassword, this.role).subscribe({
       next: (res) => {
         this.toastService.showSuccess(res.message || 'Password reset successfully!');
         this.step = 'success';
@@ -124,7 +121,7 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
   resendOtp(): void {
     if (this.resendCooldown > 0 || this.isLoading) return;
     this.isLoading = true;
-    this.authService.forgotPassword(this.email).subscribe({
+    this.authService.forgotPassword(this.email, this.role).subscribe({
       next: (res) => {
         this.toastService.showSuccess('A new OTP has been sent successfully!');
         this.isLoading = false;

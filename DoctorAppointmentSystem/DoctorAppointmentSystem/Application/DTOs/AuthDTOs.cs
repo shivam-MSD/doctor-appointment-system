@@ -88,6 +88,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[Required]
 		[EmailAddress]
 		public string Email { get; set; }
+
+		public string? Role { get; set; }
 	}
 
 	// --- Password Management DTOs ---
@@ -97,6 +99,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[Required]
 		[EmailAddress]
 		public string Email { get; set; }
+
+		[Required]
+		public string Role { get; set; }
 	}
 
 	public class ResetPasswordDto
@@ -113,6 +118,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[Required]
 		[MinLength(6, ErrorMessage = "Password must be at least 6 characters long.")]
 		public string NewPassword { get; set; }
+
+		[Required]
+		public string Role { get; set; }
 	}
 
 	public class InitiatePasswordUpdateDto

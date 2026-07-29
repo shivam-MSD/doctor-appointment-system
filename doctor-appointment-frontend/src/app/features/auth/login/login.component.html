@@ -54,7 +54,7 @@
     </form>
 
     <div class="auth-footer">
-      <p style="margin-bottom: 8px;"><a routerLink="/forgot-password" style="font-size: 0.85rem; font-weight: 500;">Forgot password?</a></p>
+      <p style="margin-bottom: 8px;"><a [routerLink]="['/forgot-password']" [queryParams]="{ role: selectedRole }" style="font-size: 0.85rem; font-weight: 500;">Forgot password?</a></p>
       <p *ngIf="getRegisterLink()">Don't have an account? <a [routerLink]="getRegisterLink()">Create an account</a></p>
     </div>
   </div>

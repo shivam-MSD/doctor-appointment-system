@@ -38,6 +38,15 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string City { get; set; }
 		public string Area { get; set; }
 		public string? ContactNumber { get; set; }
+		public bool IsAvailable { get; set; } = true;
+		public string? UnavailabilityReason { get; set; }
+		public bool IsDoctorAvailable { get; set; } = true;
+		public string? DoctorUnavailabilityReason { get; set; }
+		public string? OpenDays { get; set; }
+		public string? StartTime { get; set; }
+		public string? EndTime { get; set; }
+		public DateTime? BookingWindowStartDate { get; set; }
+		public DateTime? BookingWindowEndDate { get; set; }
 	}
 
 	public class DoctorRegisterDto

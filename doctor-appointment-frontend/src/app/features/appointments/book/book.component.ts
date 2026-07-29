@@ -155,15 +155,7 @@ export class BookComponent implements OnInit {
               error: () => this.isInitializing = false
             });
           } else {
-            this.appointmentService.getAvailableDoctors().subscribe({
-              next: (allDoctors) => {
-                this.doctors = allDoctors;
-                this.isInitializing = false;
-              },
-              error: () => {
-                this.isInitializing = false;
-              }
-            });
+            this.isInitializing = false;
           }
         });
       },

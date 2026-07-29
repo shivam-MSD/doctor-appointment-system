@@ -32,8 +32,8 @@ namespace DoctorAppointmentSystem.Persistent
 			var superAdminRole = await db.Roles.FirstOrDefaultAsync(r => r.Role == ERole.SuperAdmin);
 			if (superAdminRole != null)
 			{
-				var adminExists = await db.Users.AnyAsync(u => u.Email == "superadmin@doctorapp.com");
-				if (!adminExists)
+				var adminUser = await db.Users.FirstOrDefaultAsync(u => u.Email == "superadmin@doctorapp.com");
+				if (adminUser == null)
 				{
 					using var sha256 = SHA256.Create();
 					var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes("SuperAdmin@123"));
@@ -44,6 +44,7 @@ namespace DoctorAppointmentSystem.Persistent
 						UserId = Guid.NewGuid(),
 						Email = "superadmin@doctorapp.com",
 						IsActive = true,
+						IsEmailVerified = true,
 						CreatedDate = DateTime.UtcNow,
 						LastLoginDate = DateTime.UtcNow
 					};
@@ -59,6 +60,25 @@ namespace DoctorAppointmentSystem.Persistent
 					};
 					db.UserPasswords.Add(userPassword);
 					await db.SaveChangesAsync();
+				}
+				else
+				{
+					var passwordExists = await db.UserPasswords.AnyAsync(up => up.UserId == adminUser.UserId);
+					if (!passwordExists)
+					{
+						using var sha256 = SHA256.Create();
+						var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes("SuperAdmin@123"));
+						var passwordHash = Convert.ToBase64String(hashedBytes);
+
+						var userPassword = new UserPassword
+						{
+							UserId = adminUser.UserId,
+							User = adminUser,
+							PasswordHash = passwordHash
+						};
+						db.UserPasswords.Add(userPassword);
+						await db.SaveChangesAsync();
+					}
 				}
 			}
 
@@ -128,6 +148,18 @@ namespace DoctorAppointmentSystem.Persistent
 
 			// Default legacy clinics to true availability
 			await db.Database.ExecuteSqlRawAsync("UPDATE Clinics SET IsAvailable = 1 WHERE IsAvailable = 0 AND UnavailabilityReason IS NULL");
+
+			// // Copy existing legacy user password hashes into UserPasswords table if they don't already exist
+			// await db.Database.ExecuteSqlRawAsync(@"
+			// 	INSERT INTO UserPasswords (UserId, PasswordHash)
+			// 	SELECT u.UserId, u.PasswordHash
+			// 	FROM Users u
+			// 	WHERE u.PasswordHash IS NOT NULL 
+			// 	  AND u.PasswordHash <> ''
+			// 	  AND NOT EXISTS (
+			// 		  SELECT 1 FROM UserPasswords up WHERE up.UserId = u.UserId
+			// 	  )
+			// ");
 		}
 	}
 }

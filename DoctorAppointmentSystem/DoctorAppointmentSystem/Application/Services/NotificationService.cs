@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Domain.Entities;
 using DoctorAppointmentSystem.Persistent.Context;
@@ -15,11 +16,16 @@ namespace DoctorAppointmentSystem.Application.Services
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly IHubContext<NotificationHub> _hubContext;
+		private readonly IServiceProvider _serviceProvider;
 
-		public NotificationService(ApplicationDbContext dbContext, IHubContext<NotificationHub> hubContext)
+		public NotificationService(
+			ApplicationDbContext dbContext,
+			IHubContext<NotificationHub> hubContext,
+			IServiceProvider serviceProvider)
 		{
 			_dbContext = dbContext;
 			_hubContext = hubContext;
+			_serviceProvider = serviceProvider;
 		}
 
 		public async Task<IEnumerable<NotificationDto>> GetNotificationsForUserAsync(Guid userId)
@@ -39,74 +45,104 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task CreateNotificationAsync(Guid userId, string message)
 		{
-			var notification = new Notification
+			_ = Task.Run(async () =>
 			{
-				NotificationId = Guid.NewGuid(),
-				UserId = userId,
-				Message = message,
-				IsRead = false,
-				CreatedDate = DateTime.UtcNow
-			};
+				try
+				{
+					using var scope = _serviceProvider.CreateScope();
+					var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-			_dbContext.Notifications.Add(notification);
-			await _dbContext.SaveChangesAsync();
+					var notification = new Notification
+					{
+						NotificationId = Guid.NewGuid(),
+						UserId = userId,
+						Message = message,
+						IsRead = false,
+						CreatedDate = DateTime.UtcNow
+					};
 
-			// Broadcast via SignalR group
-			var dto = new NotificationDto
-			{
-				NotificationId = notification.NotificationId,
-				Message = notification.Message,
-				IsRead = notification.IsRead,
-				CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
-			};
-			await _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", dto);
+					dbContext.Notifications.Add(notification);
+					await dbContext.SaveChangesAsync();
+
+					// Broadcast via SignalR group
+					var dto = new NotificationDto
+					{
+						NotificationId = notification.NotificationId,
+						Message = notification.Message,
+						IsRead = notification.IsRead,
+						CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
+					};
+					await _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", dto);
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"[Notification Error] Failed to create notification for user {userId}: {ex.Message}");
+				}
+			});
+
+			await Task.CompletedTask;
 		}
 
 		public async Task CreateNotificationForRoleAsync(string roleName, string message)
 		{
-			if (!Enum.TryParse<ERole>(roleName, true, out var parsedRole))
+			_ = Task.Run(async () =>
 			{
-				return;
-			}
-
-			var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Role == parsedRole);
-			if (role == null) return;
-
-			var users = await _dbContext.Users
-				.Where(u => EF.Property<Guid>(u, "RoleId") == role.RoleId)
-				.ToListAsync();
-
-			var notificationsToPush = new List<(Guid UserId, NotificationDto Dto)>();
-
-			foreach (var user in users)
-			{
-				var notification = new Notification
+				try
 				{
-					NotificationId = Guid.NewGuid(),
-					UserId = user.UserId,
-					Message = message,
-					IsRead = false,
-					CreatedDate = DateTime.UtcNow
-				};
-				_dbContext.Notifications.Add(notification);
+					if (!Enum.TryParse<ERole>(roleName, true, out var parsedRole))
+					{
+						return;
+					}
 
-				var dto = new NotificationDto
+					using var scope = _serviceProvider.CreateScope();
+					var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+					var role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Role == parsedRole);
+					if (role == null) return;
+
+					var users = await dbContext.Users
+						.Where(u => EF.Property<Guid>(u, "RoleId") == role.RoleId)
+						.ToListAsync();
+
+					var notificationsToPush = new List<(Guid UserId, NotificationDto Dto)>();
+
+					foreach (var user in users)
+					{
+						var notification = new Notification
+						{
+							NotificationId = Guid.NewGuid(),
+							UserId = user.UserId,
+							Message = message,
+							IsRead = false,
+							CreatedDate = DateTime.UtcNow
+						};
+						dbContext.Notifications.Add(notification);
+
+						var dto = new NotificationDto
+						{
+							NotificationId = notification.NotificationId,
+							Message = notification.Message,
+							IsRead = notification.IsRead,
+							CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
+						};
+						notificationsToPush.Add((user.UserId, dto));
+					}
+
+					await dbContext.SaveChangesAsync();
+
+					// Push to user group real-time
+					foreach (var item in notificationsToPush)
+					{
+						await _hubContext.Clients.Group(item.UserId.ToString()).SendAsync("ReceiveNotification", item.Dto);
+					}
+				}
+				catch (Exception ex)
 				{
-					NotificationId = notification.NotificationId,
-					Message = notification.Message,
-					IsRead = notification.IsRead,
-					CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
-				};
-				notificationsToPush.Add((user.UserId, dto));
-			}
+					Console.WriteLine($"[Notification Error] Failed to create notification for role {roleName}: {ex.Message}");
+				}
+			});
 
-			await _dbContext.SaveChangesAsync();
-
-			// Push to user group real-time
-			foreach (var item in notificationsToPush)
-			{
-				await _hubContext.Clients.Group(item.UserId.ToString()).SendAsync("ReceiveNotification", item.Dto);
-			}
+			await Task.CompletedTask;
 		}
 
 		public async Task MarkAllAsReadAsync(Guid userId)

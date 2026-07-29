@@ -35,8 +35,21 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(authReq).pipe(
       catchError((error: any) => {
         if (error instanceof HttpErrorResponse && error.status === 401) {
+          const role = this.authService.getRole();
           this.authService.logout();
-          this.router.navigate(['/login']);
+          // Do not redirect to the generic /login page if the error came from an authentication endpoint
+          if (!req.url.toLowerCase().includes('/api/auth/')) {
+            const queryParams = { error: 'Your session has expired. Please log in again.' };
+            if (role === 'Doctor') {
+              this.router.navigate(['/doctor/login'], { queryParams });
+            } else if (role === 'Admin') {
+              this.router.navigate(['/admin/login'], { queryParams });
+            } else if (role === 'SuperAdmin') {
+              this.router.navigate(['/superadmin/login'], { queryParams });
+            } else {
+              this.router.navigate(['/patient/login'], { queryParams });
+            }
+          }
         }
         return throwError(() => error);
       })

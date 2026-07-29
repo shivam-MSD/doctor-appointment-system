@@ -187,16 +187,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					City = _dbContext.Addresses.Where(a => a.User.UserId == d.User.UserId).Select(a => a.City).FirstOrDefault() ?? string.Empty,
 					CreatedDate = d.CreatedDate,
 					UpdatedDate = d.UpdatedDate,
-					Clinics = d.Clinics.Select(c => new ClinicBasicDto
-					{
-						ClinicId = c.ClinicId,
-						ClinicName = c.ClinicName,
-						ClinicType = c.ClinicType,
-						State = c.Address.State,
-						City = c.Address.City,
-						Area = c.Address.Area,
-						ContactNumber = c.ContactNumber
-					}).ToList()
+					Clinics = new List<ClinicBasicDto>()
 				})
 				.ToListAsync();
 
@@ -231,7 +222,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<DoctorDto> GetDoctorDetailsForPatientAsync(Guid doctorId)
 		{
-			System.Diagnostics.Debugger.Launch();
+			// System.Diagnostics.Debugger.Launch();
 			var doctor = await _dbContext.Doctors
 				.Include(d => d.User)
 				.Include(d => d.Specialization)

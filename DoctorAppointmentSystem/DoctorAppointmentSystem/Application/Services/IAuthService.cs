@@ -4,6 +4,9 @@ namespace DoctorAppointmentSystem.Application.Services
 {
 	public interface IAuthService
 	{
+		event EmailSendEventHandler? EmailSendEvent;
+		void OnEmailSendHandle(object o, EmailSendEventArgs emailSendEvent);
+
 		Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto);
 		Task<AuthResponseDto> RegisterDoctorAsync(DoctorSignUpDto doctorSignUpDto);
 		Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
@@ -17,3 +20,4 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task UpdatePasswordAsync(Guid userId, UpdatePasswordDto dto);
 	}
 }
+

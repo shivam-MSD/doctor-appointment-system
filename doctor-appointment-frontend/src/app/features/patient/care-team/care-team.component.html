@@ -12,49 +12,62 @@
     Loading your doctors...
   </div>
 
-  <div *ngIf="!isLoading && consultedDoctors.length === 0" class="glass-card" style="padding: 40px; text-align: center;">
+  <div *ngIf="!isLoading && consultedDoctors.length === 0" class="glass-card"
+    style="padding: 40px; text-align: center;">
     <div style="font-size: 3rem; margin-bottom: 10px;">🩺</div>
     <h3 style="color: var(--text-primary);">No Consulted Doctors Yet</h3>
-    <p style="color: var(--text-muted); margin-top: 10px;">Once you complete an appointment, the doctor will appear here.</p>
-    <a routerLink="/patient/book-appointment" class="btn btn-primary" style="margin-top: 20px; display: inline-block;">Book Your First Appointment</a>
+    <p style="color: var(--text-muted); margin-top: 10px;">Once you complete an appointment, the doctor will appear
+      here.</p>
+    <a routerLink="/patient/book-appointment" class="btn btn-primary"
+      style="margin-top: 20px; display: inline-block;">Book Your First Appointment</a>
   </div>
 
-  <div *ngIf="!isLoading && consultedDoctors.length > 0" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+  <div *ngIf="!isLoading && consultedDoctors.length > 0"
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
     <!-- Doctor Card -->
-    <div *ngFor="let doc of consultedDoctors" class="glass-card doctor-card" style="padding: 24px; display: flex; flex-direction: column; gap: 20px; border-top: 4px solid var(--accent-cyan);">
-      
+    <div *ngFor="let doc of consultedDoctors" class="glass-card doctor-card"
+      style="padding: 24px; display: flex; flex-direction: column; gap: 20px; border-top: 4px solid var(--accent-cyan);">
+
       <!-- Header Profile Section -->
       <div style="display: flex; gap: 16px; align-items: center;">
-        <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3);">
+        <div
+          style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3);">
           {{ doc.doctorName.charAt(0) }}
         </div>
         <div>
-          <h3 style="margin: 0; font-size: 1.25rem; color: var(--text-primary); font-weight: 700;">Dr. {{ doc.doctorName }}</h3>
-          <span style="color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+          <h3 style="margin: 0; font-size: 1.25rem; color: var(--text-primary); font-weight: 700;">Dr. {{ doc.doctorName
+            }}</h3>
+          <span
+            style="color: var(--text-secondary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-top: 4px;">
             🩺 {{ doc.specialization }}
           </span>
         </div>
       </div>
-      
+
       <!-- Stats / Badge -->
-      <div style="background: rgba(16, 185, 129, 0.1); padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+      <div
+        style="background: rgba(16, 185, 129, 0.1); padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
         <span style="font-size: 1.2rem;">🤝</span>
         <div>
-          <div style="color: #10b981; font-weight: 700; font-size: 1rem;">{{ doc.appointments?.length || 0 }} Completed</div>
+          <div style="color: #10b981; font-weight: 700; font-size: 1rem;">{{ doc.appointments?.length || 0 }} Completed
+          </div>
           <div style="color: var(--text-secondary); font-size: 0.8rem;">Total Consultations</div>
         </div>
       </div>
 
       <!-- Actions -->
       <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
-        <button (click)="openBookAppointmentModal(doc)" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: 600;">
+        <button (click)="openBookAppointmentModal(doc)" class="btn btn-primary"
+          style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: 600;">
           📅 Book Appointment
         </button>
         <div style="display: flex; gap: 10px;">
-          <button (click)="openDoctorInfo(doc)" class="btn btn-secondary" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem; padding: 10px;">
+          <button (click)="openDoctorInfo(doc)" class="btn btn-secondary"
+            style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem; padding: 10px;">
             ℹ️ Doctor Info
           </button>
-          <button (click)="openAppointmentHistory(doc)" class="btn btn-secondary" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem; padding: 10px;">
+          <button (click)="openAppointmentHistory(doc)" class="btn btn-secondary"
+            style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 0.85rem; padding: 10px;">
             📜 History
           </button>
         </div>
@@ -68,7 +81,8 @@
   <div class="modal-content glass-card" (click)="$event.stopPropagation()" style="max-width: 450px;">
     <div class="modal-header">
       <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-cyan); display: flex; align-items: center; justify-content: center; color: white;">
+        <div
+          style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-cyan); display: flex; align-items: center; justify-content: center; color: white;">
           {{ selectedDoctorForInfo.doctorName.charAt(0) }}
         </div>
         Dr. {{ selectedDoctorForInfo.doctorName }}
@@ -78,52 +92,75 @@
     <div class="modal-body" style="padding-top: 20px;">
       <div style="display: grid; gap: 16px;">
         <div class="info-group">
-          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Specialization</label>
-          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">🩺 {{ selectedDoctorForInfo.specialization }}</div>
+          <label
+            style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Specialization</label>
+          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">🩺 {{
+            selectedDoctorForInfo.specialization }}</div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div class="info-group">
-            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Qualification</label>
-            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">🎓 {{ selectedDoctorForInfo.qualification || 'N/A' }}</div>
+            <label
+              style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Qualification</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">🎓 {{
+              selectedDoctorForInfo.qualification || 'N/A' }}</div>
           </div>
           <div class="info-group">
-            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Experience</label>
-            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">⭐ {{ selectedDoctorForInfo.yearsOfExperience || 0 }} years</div>
+            <label
+              style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Experience</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">⭐ {{
+              selectedDoctorForInfo.yearsOfExperience || 0 }} years</div>
           </div>
           <div class="info-group">
-            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Licence</label>
-            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">📜 {{ selectedDoctorForInfo.licenceNumber || 'N/A' }}</div>
+            <label
+              style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Licence</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">📜 {{
+              selectedDoctorForInfo.licenceNumber || 'N/A' }}</div>
           </div>
           <div class="info-group">
-            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Age</label>
-            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">🎂 {{ selectedDoctorForInfo.age || 'N/A' }}</div>
+            <label
+              style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Age</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">🎂 {{
+              selectedDoctorForInfo.age || 'N/A' }}</div>
           </div>
         </div>
 
         <div class="info-group" style="padding-top: 10px; border-top: 1px solid var(--border-color);">
-          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Consultations</label>
-          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">✅ {{ selectedDoctorForInfo.appointments?.length || 0 }} completed appointments</div>
+          <label
+            style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Consultations</label>
+          <div style="font-size: 1.1rem; color: var(--text-primary); font-weight: 600;">✅ {{
+            selectedDoctorForInfo.appointments?.length || 0 }} completed appointments</div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div class="info-group">
-            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Fee</label>
-            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">💰 {{ selectedDoctorForInfo.consultationFee | currency:'INR' }}</div>
+            <label
+              style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Fee</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">💰 {{
+              selectedDoctorForInfo.consultationFee | currency:'INR' }}</div>
           </div>
           <div class="info-group">
-            <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Location</label>
-            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">📍 {{ selectedDoctorForInfo.city || 'N/A' }}, {{ selectedDoctorForInfo.state || 'N/A' }}</div>
+            <label
+              style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Location</label>
+            <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">📍 {{
+              selectedDoctorForInfo.city || 'N/A' }}, {{ selectedDoctorForInfo.state || 'N/A' }}</div>
           </div>
         </div>
 
-        <div class="info-group" *ngIf="selectedDoctorForInfo.aboutDoctor && selectedDoctorForInfo.aboutDoctor.trim() !== ''" style="padding-top: 10px;">
-          <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">About Doctor</label>
-          <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500; line-height: 1.5; white-space: pre-wrap;">{{ selectedDoctorForInfo.aboutDoctor }}</div>
+        <div class="info-group"
+          *ngIf="selectedDoctorForInfo.aboutDoctor && selectedDoctorForInfo.aboutDoctor.trim() !== ''"
+          style="padding-top: 10px;">
+          <label
+            style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">About
+            Doctor</label>
+          <div
+            style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500; line-height: 1.5; white-space: pre-wrap;">
+            {{ selectedDoctorForInfo.aboutDoctor }}</div>
         </div>
       </div>
-      
-      <div style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: flex-end;">
+
+      <div
+        style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: flex-end;">
         <button class="btn btn-secondary" (click)="closeDoctorInfo()">Close</button>
       </div>
     </div>
@@ -140,13 +177,16 @@
       <button class="close-btn" (click)="closeAppointmentHistory()">&times;</button>
     </div>
     <div class="modal-body" style="padding-top: 20px; max-height: 60vh; overflow-y: auto;">
-      
-      <div *ngIf="!selectedDoctorForHistory.appointments || selectedDoctorForHistory.appointments.length === 0" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+
+      <div *ngIf="!selectedDoctorForHistory.appointments || selectedDoctorForHistory.appointments.length === 0"
+        style="text-align: center; padding: 20px; color: var(--text-secondary);">
         No completed appointments found.
       </div>
 
-      <div *ngIf="selectedDoctorForHistory.appointments?.length > 0" style="display: flex; flex-direction: column; gap: 12px;">
-        <div *ngFor="let app of selectedDoctorForHistory.appointments" class="glass-card" style="padding: 16px; border-left: 4px solid var(--accent-cyan); background: rgba(255, 255, 255, 0.02);">
+      <div *ngIf="selectedDoctorForHistory.appointments?.length > 0"
+        style="display: flex; flex-direction: column; gap: 12px;">
+        <div *ngFor="let app of selectedDoctorForHistory.appointments" class="glass-card"
+          style="padding: 16px; border-left: 4px solid var(--accent-cyan); background: rgba(255, 255, 255, 0.02);">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
             <div style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem;">
               {{ app.appointmentDate | date:'mediumDate' }}
@@ -178,14 +218,35 @@
       <button class="close-btn" (click)="closeBookAppointmentModal()">&times;</button>
     </div>
     <div class="modal-body" style="padding-top: 20px; max-height: 60vh; overflow-y: auto;">
-      <div *ngIf="!selectedDoctorForBooking.clinics || selectedDoctorForBooking.clinics.length === 0" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+      <div *ngIf="bookingClinicsLoading" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+        Loading clinics...
+      </div>
+      <div *ngIf="!bookingClinicsLoading && (!bookingClinics || bookingClinics.length === 0)"
+        style="text-align: center; padding: 20px; color: var(--text-secondary);">
         No clinics available for this doctor.
       </div>
-      <div *ngIf="selectedDoctorForBooking.clinics && selectedDoctorForBooking.clinics.length > 0" style="display: flex; flex-direction: column; gap: 12px;">
-        <div *ngFor="let clinic of selectedDoctorForBooking.clinics" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+      <div *ngIf="!bookingClinicsLoading && bookingClinics && bookingClinics.length > 0"
+        style="display: flex; flex-direction: column; gap: 12px;">
+        <div *ngFor="let clinic of bookingClinics"
+          style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
           <div style="flex: 1;">
-            <div style="font-size: 1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px;">
-              {{ clinic.clinicName }} <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">({{ clinic.clinicType }})</span>
+            <div
+              style="font-size: 1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              {{ clinic.clinicName }}
+              <span
+                style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">({{
+                clinic.clinicType }})</span>
+              <span class="badge"
+                [style.background]="isClinicCurrentlyOpen(clinic) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'"
+                [style.color]="isClinicCurrentlyOpen(clinic) ? '#10b981' : '#ef4444'"
+                [style.border]="isClinicCurrentlyOpen(clinic) ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)'"
+                style="font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block;">
+                <span *ngIf="isClinicCurrentlyOpen(clinic)">🟢 Open</span>
+                <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed (Temporarily
+                  Closed)</span>
+                <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside Working
+                  Hours)</span>
+              </span>
             </div>
             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
               📍 {{ clinic.area ? clinic.area + ', ' : '' }}{{ clinic.city }}, {{ clinic.state }}
@@ -194,13 +255,18 @@
               📞 {{ clinic.contactNumber || 'Not available' }}
             </div>
           </div>
-          <a [routerLink]="['/patient/book-appointment']" [queryParams]="{ doctorId: selectedDoctorForBooking.doctorId, clinicId: clinic.clinicId }" (click)="closeBookAppointmentModal()" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px; text-decoration: none; white-space: nowrap;">Book Here</a>
+          <a *ngIf="isClinicBookable(clinic)" [routerLink]="['/patient/book-appointment']"
+            [queryParams]="{ doctorId: selectedDoctorForBooking.doctorId, clinicId: clinic.clinicId }"
+            (click)="closeBookAppointmentModal()" class="btn btn-primary"
+            style="font-size: 0.85rem; padding: 8px 16px; text-decoration: none; white-space: nowrap;">Book Here</a>
+          <span *ngIf="!isClinicBookable(clinic)"
+            style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; padding: 8px 16px; white-space: nowrap;">Unavailable</span>
         </div>
       </div>
     </div>
-    <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: flex-end;">
+    <div
+      style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: flex-end;">
       <button class="btn btn-secondary" (click)="closeBookAppointmentModal()">Cancel</button>
     </div>
   </div>
 </div>
-

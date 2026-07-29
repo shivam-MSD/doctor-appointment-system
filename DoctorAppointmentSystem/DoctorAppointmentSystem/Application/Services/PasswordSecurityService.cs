@@ -73,13 +73,20 @@ namespace DoctorAppointmentSystem.Application.Services
 			await _dbContext.SaveChangesAsync();
 
 			// 2. Cache in Redis
-			var cacheKey = _cacheKeyPrefix + userId;
-			var options = new DistributedCacheEntryOptions
+			try
 			{
-				AbsoluteExpirationRelativeToNow = expiration ?? _defaultExpiration,
-				SlidingExpiration = TimeSpan.FromHours(1)
-			};
-			await _distributedCache.SetStringAsync(cacheKey, passwordHash, options);
+				var cacheKey = _cacheKeyPrefix + userId;
+				var options = new DistributedCacheEntryOptions
+				{
+					AbsoluteExpirationRelativeToNow = expiration ?? _defaultExpiration,
+					SlidingExpiration = TimeSpan.FromHours(1)
+				};
+				await _distributedCache.SetStringAsync(cacheKey, passwordHash, options);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in StorePasswordAsync: {ex.Message}");
+			}
 		}
 
 		/// <summary>
@@ -93,7 +100,16 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			// 1. Try Redis first
 			var cacheKey = _cacheKeyPrefix + userId;
-			var cached = await _distributedCache.GetStringAsync(cacheKey);
+			string? cached = null;
+			try
+			{
+				cached = await _distributedCache.GetStringAsync(cacheKey);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in GetPasswordAsync: {ex.Message}. Falling back to DB.");
+			}
+
 			if (!string.IsNullOrWhiteSpace(cached))
 			{
 				return cached;
@@ -104,12 +120,19 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (dbEntry != null && !string.IsNullOrWhiteSpace(dbEntry.PasswordHash))
 			{
 				// Re-cache in Redis
-				var options = new DistributedCacheEntryOptions
+				try
 				{
-					AbsoluteExpirationRelativeToNow = _defaultExpiration,
-					SlidingExpiration = TimeSpan.FromHours(1)
-				};
-				await _distributedCache.SetStringAsync(cacheKey, dbEntry.PasswordHash, options);
+					var options = new DistributedCacheEntryOptions
+					{
+						AbsoluteExpirationRelativeToNow = _defaultExpiration,
+						SlidingExpiration = TimeSpan.FromHours(1)
+					};
+					await _distributedCache.SetStringAsync(cacheKey, dbEntry.PasswordHash, options);
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in GetPasswordAsync while saving cache: {ex.Message}");
+				}
 				return dbEntry.PasswordHash;
 			}
 
@@ -144,7 +167,14 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new ArgumentException("UserId cannot be empty", nameof(userId));
 
 			var cacheKey = _cacheKeyPrefix + userId;
-			await _distributedCache.RemoveAsync(cacheKey);
+			try
+			{
+				await _distributedCache.RemoveAsync(cacheKey);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[DistributedCache Warning]: Redis connection failed in InvalidatePasswordAsync: {ex.Message}");
+			}
 		}
 
 		/// <summary>

@@ -64,6 +64,22 @@ namespace DoctorAppointmentSystem.Application.Services
 			_passwordSecurityService = passwordSecurityService;
 		}
 
+		public event EmailSendEventHandler? EmailSendEvent;
+
+		public void OnEmailSendHandle(object o, EmailSendEventArgs emailSendEvent)
+		{
+			try
+			{
+				Task.Run(async () => 
+					await _emailService.SendEmailAsync(emailSendEvent.Email, emailSendEvent.Subject, emailSendEvent.Body)
+				);
+			}
+			catch (Exception ex)
+			{
+				throw;
+			}
+		}
+
 		public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
 		{
 			// 1. Check if email already exists in DB
@@ -676,12 +692,45 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task ForgotPasswordAsync(ForgotPasswordDto dto)
 		{
-			var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-			if (user == null)
+			var userWithRole = await _dbContext.Users
+				.Where(u => u.Email == dto.Email.ToLower().Trim())
+				.Select(u => new {
+					User = u,
+					RoleId = EF.Property<Guid>(u, "RoleId")
+				})
+				.FirstOrDefaultAsync();
+
+			if (userWithRole == null)
 			{
 				throw new NotFoundException("No account found with this email address.");
 			}
 
+			var role = await _dbContext.Roles.FindAsync(userWithRole.RoleId);
+			var roleName = role?.Role.ToString();
+
+			if (roleName == null || !string.Equals(roleName, dto.Role, StringComparison.OrdinalIgnoreCase))
+			{
+				throw new BadRequestException($"This email address is not registered under the '{dto.Role}' role.");
+			}
+
+			if (roleName == "Doctor")
+			{
+				var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => d.User.UserId == userWithRole.User.UserId);
+				if (doctor != null && doctor.VerificationStatus != EVerificationStatus.Verified)
+				{
+					throw new BadRequestException("Your profile is currently under review by our administration team. Password reset is not permitted until your account is approved.");
+				}
+			}
+			else if (roleName == "Admin")
+			{
+				var adminObj = await _dbContext.Admins.FirstOrDefaultAsync(a => a.User.UserId == userWithRole.User.UserId);
+				if (adminObj != null && !adminObj.IsVerified)
+				{
+					throw new BadRequestException("Your administrative profile is currently pending approval. Password reset is not permitted until your account is approved.");
+				}
+			}
+
+			var user = userWithRole.User;
 			// Generate OTP and send to email
 			var otp = _otpService.GenerateOtp();
 			user.EmailVerificationOtp = _otpService.HashOtp(otp);
@@ -702,12 +751,28 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task ResetPasswordAsync(ResetPasswordDto dto)
 		{
-			var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-			if (user == null)
+			var userWithRole = await _dbContext.Users
+				.Where(u => u.Email == dto.Email.ToLower().Trim())
+				.Select(u => new {
+					User = u,
+					RoleId = EF.Property<Guid>(u, "RoleId")
+				})
+				.FirstOrDefaultAsync();
+
+			if (userWithRole == null)
 			{
 				throw new NotFoundException("No account found with this email address.");
 			}
 
+			var role = await _dbContext.Roles.FindAsync(userWithRole.RoleId);
+			var roleName = role?.Role.ToString();
+
+			if (roleName == null || !string.Equals(roleName, dto.Role, StringComparison.OrdinalIgnoreCase))
+			{
+				throw new BadRequestException($"This email address is not registered under the '{dto.Role}' role.");
+			}
+
+			var user = userWithRole.User;
 			if (user.EmailVerificationOtpExpiry == null || user.EmailVerificationOtpExpiry < DateTime.UtcNow ||
 				!(_otpService.VerifyOtp(dto.Otp, user.EmailVerificationOtp) || string.Equals(user.EmailVerificationOtp, dto.Otp, StringComparison.Ordinal)))
 			{

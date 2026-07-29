@@ -82,16 +82,16 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  checkEmail(email: string): Observable<any> {
-    return this.http.post<any>('/api/auth/check-email', { email });
+  checkEmail(email: string, role?: string): Observable<any> {
+    return this.http.post<any>('/api/auth/check-email', { email, role });
   }
 
-  forgotPassword(email: string): Observable<any> {
-    return this.http.post<any>('/api/auth/forgot-password', { email });
+  forgotPassword(email: string, role: string): Observable<any> {
+    return this.http.post<any>('/api/auth/forgot-password', { email, role });
   }
 
-  resetPassword(email: string, otp: string, newPassword: string): Observable<any> {
-    return this.http.post<any>('/api/auth/reset-password', { email, otp, newPassword });
+  resetPassword(email: string, otp: string, newPassword: string, role: string): Observable<any> {
+    return this.http.post<any>('/api/auth/reset-password', { email, otp, newPassword, role });
   }
 
   initiatePasswordUpdate(currentPassword: string): Observable<any> {

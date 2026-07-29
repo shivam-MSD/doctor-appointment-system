@@ -26,7 +26,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<UserDto> GetUserProfileAsync(Guid userId)
 		{
-			var user = await _dbContext.Users.FindAsync(userId);
+			var user = await _dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
 			if (user == null)
 			{
 				throw new NotFoundException($"User with ID '{userId}' was not found.");
@@ -65,7 +65,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<DoctorProfileDto> GetDoctorProfileAsync(Guid userId)
 		{
-			var doctor = await _dbContext.Doctors
+			var doctor = await _dbContext.Doctors.AsNoTracking()
 				.Include(d => d.User)
 				.Include(d => d.Specialization)
 				.FirstOrDefaultAsync(d => d.User.UserId == userId);
@@ -74,7 +74,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException("Doctor profile was not found.");
 			}
 
-			var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.User.UserId == userId);
+			var address = await _dbContext.Addresses.AsNoTracking().FirstOrDefaultAsync(a => a.User.UserId == userId);
 
 			return new DoctorProfileDto
 			{
@@ -168,7 +168,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		public async Task<AdminProfileDto> GetAdminProfileAsync(Guid userId)
 		{
-			var adminObj = await _dbContext.Admins
+			var adminObj = await _dbContext.Admins.AsNoTracking()
 				.Include(a => a.User)
 				.Include(a => a.AdminClinics)
 					.ThenInclude(ac => ac.Clinic)
@@ -178,7 +178,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				throw new NotFoundException("Clinic Admin profile was not found.");
 			}
 
-			var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.User.UserId == userId);
+			var address = await _dbContext.Addresses.AsNoTracking().FirstOrDefaultAsync(a => a.User.UserId == userId);
 
 			return new AdminProfileDto
 			{
