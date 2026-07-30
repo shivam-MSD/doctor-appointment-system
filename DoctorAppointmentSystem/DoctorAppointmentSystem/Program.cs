@@ -119,6 +119,7 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IOtpServ
 builder.Services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<object>, Microsoft.AspNetCore.Identity.PasswordHasher<object>>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IPasswordSecurityService, DoctorAppointmentSystem.Application.Services.PasswordSecurityService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IWebPushService, DoctorAppointmentSystem.Application.Services.WebPushService>();
 
 // Register background services
 builder.Services.AddHostedService<DoctorAppointmentSystem.Application.BackgroundServices.AppointmentCleanupService>();

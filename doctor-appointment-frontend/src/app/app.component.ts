@@ -5,6 +5,7 @@ import { AuthService } from './core/services/auth.service';
 import { NotificationService } from './core/services/notification.service';
 import { LoadingService } from './core/services/loading.service';
 import { PwaService } from './core/services/pwa.service';
+import { PushNotificationService } from './core/services/push-notification.service';
 import { Observable, Subscription } from 'rxjs';
 
 @Component({
@@ -25,7 +26,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private notificationService: NotificationService,
     private loadingService: LoadingService,
-    public pwaService: PwaService
+    public pwaService: PwaService,
+    private pushNotificationService: PushNotificationService
   ) {
     this.toasts$ = this.toastService.toasts$;
     this.isLoading$ = this.loadingService.isLoading$;
@@ -37,6 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.authSub = this.authService.currentUser$.subscribe(user => {
       if (user && user.userId) {
         this.notificationService.startConnection(user.userId);
+        this.pushNotificationService.requestSubscription();
       } else {
         this.notificationService.stopConnection();
       }

@@ -12,10 +12,12 @@ namespace DoctorAppointmentSystem.Controllers
 	public class NotificationsController : ControllerBase
 	{
 		private readonly INotificationService _notificationService;
+		private readonly IWebPushService _webPushService;
 
-		public NotificationsController(INotificationService notificationService)
+		public NotificationsController(INotificationService notificationService, IWebPushService webPushService)
 		{
 			_notificationService = notificationService;
+			_webPushService = webPushService;
 		}
 
 		[HttpGet]
@@ -41,5 +43,24 @@ namespace DoctorAppointmentSystem.Controllers
 			await _notificationService.MarkAllAsReadAsync(userId);
 			return Ok(new { Message = "All notifications marked as read." });
 		}
+
+		[HttpPost("subscribe-push")]
+		public async Task<IActionResult> SubscribePush([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] PushSubscriptionDto dto)
+		{
+			if (userId == Guid.Empty || dto == null || string.IsNullOrWhiteSpace(dto.Endpoint))
+			{
+				return BadRequest("Invalid push subscription data.");
+			}
+
+			await _webPushService.SaveSubscriptionAsync(userId.ToString(), dto.Endpoint, dto.P256dh, dto.Auth);
+			return Ok(new { Message = "Push subscription saved successfully." });
+		}
+	}
+
+	public class PushSubscriptionDto
+	{
+		public string Endpoint { get; set; } = string.Empty;
+		public string P256dh { get; set; } = string.Empty;
+		public string Auth { get; set; } = string.Empty;
 	}
 }

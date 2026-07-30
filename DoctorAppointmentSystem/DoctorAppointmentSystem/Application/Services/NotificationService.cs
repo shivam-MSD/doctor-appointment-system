@@ -73,6 +73,13 @@ namespace DoctorAppointmentSystem.Application.Services
 						CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
 					};
 					await _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", dto);
+
+					// Dispatch background Web Push Lockscreen alert for mobile devices (when app is closed)
+					var webPushService = scope.ServiceProvider.GetService<IWebPushService>();
+					if (webPushService != null)
+					{
+						await webPushService.SendPushNotificationAsync(userId.ToString(), "HealSync Appointment Alert", message);
+					}
 				}
 				catch (Exception ex)
 				{

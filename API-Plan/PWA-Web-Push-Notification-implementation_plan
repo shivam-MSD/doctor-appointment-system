@@ -1,0 +1,73 @@
+# Implementation Plan: PWA Web Push Notifications
+
+Enable native lockscreen push notifications for mobile PWA users when the app is closed, triggered whenever a doctor or admin updates an appointment.
+
+## Architecture & Data Flow
+
+```mermaid
+sequenceDiagram
+    participant MobilePWA as Mobile PWA / Service Worker
+    participant AngularApp as Angular Frontend
+    participant Backend as C# ASP.NET Core Backend
+    participant WebPushServer as Web Push Service (FCM/Mozilla/Apple)
+
+    AngularApp->>MobilePWA: Request Notification Permission
+    MobilePWA-->>AngularApp: Granted & Device Push Subscription Token
+    AngularApp->>Backend: POST /api/notifications/subscribe-push (Device Token & VAPID keys)
+    Backend->>Backend: Store User Push Subscription in DB
+
+    Note over Backend: Doctor completes / confirms appointment
+    Backend->>WebPushServer: Send Encrypted Web Push Payload (VAPID Signed)
+    WebPushServer->>MobilePWA: Deliver Push Event to Service Worker (App Closed)
+    MobilePWA->>MobilePWA: Display Native OS Lockscreen Alert ("HealSync Appointment Update")
+```
+
+## User Review Required
+
+> [!IMPORTANT]
+> Web Push Notifications require user permission on their mobile browser (*"Allow HealSync to send notifications"*). Once allowed, notifications are delivered directly to their phone lockscreen even when the browser or app tab is closed.
+
+## Proposed Changes
+
+### Frontend (Angular PWA)
+
+#### [NEW] [push-notification.service.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/core/services/push-notification.service.ts)
+- Create Angular service to manage browser notification permissions, register VAPID push subscriptions, and send tokens to backend `/api/notifications/subscribe-push`.
+
+#### [MODIFY] [app.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/app.component.ts)
+- Request push notification permission upon user login / dashboard entry on mobile devices.
+
+#### [MODIFY] [ngsw-config.json](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/ngsw-config.json)
+- Configure Angular Service Worker to handle incoming background push notifications and display native OS notifications with HealSync branding and deep links (`/patient/dashboard`).
+
+---
+
+### Backend (C# ASP.NET Core API)
+
+#### [NEW] [UserPushSubscription.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Core/Entities/UserPushSubscription.cs)
+- Create entity to store user device push endpoints, P256DH key, Auth key, and UserId.
+
+#### [MODIFY] [ApplicationDbContext.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Infrastructure/Data/ApplicationDbContext.cs)
+- Add `DbSet<UserPushSubscription> UserPushSubscriptions` to EF Core database context.
+
+#### [NEW] [WebPushService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/WebPushService.cs)
+- Implement VAPID-signed Web Push dispatcher to deliver encrypted push notifications to browser push services (Google FCM, Mozilla, Apple APNs Web Push).
+
+#### [MODIFY] [NotificationService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/NotificationService.cs)
+- Integrate `WebPushService` to automatically dispatch lockscreen push alerts alongside email notifications whenever appointments are confirmed, rescheduled, cancelled, or completed.
+
+#### [MODIFY] [NotificationsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/NotificationsController.cs)
+- Add `[HttpPost("subscribe-push")]` endpoint to store device subscriptions.
+
+---
+
+## Verification Plan
+
+### Automated Verification
+- Run `dotnet build` on C# backend to ensure 0 compilation errors.
+- Run `npx ng build` on Angular frontend to ensure 0 compilation errors.
+
+### Manual Verification
+- Log in on mobile device, accept notification prompt.
+- Perform a doctor action (e.g., complete appointment or propose reschedule) from Doctor portal.
+- Close the mobile PWA app tab and verify native phone lockscreen alert appears with HealSync branding and link.

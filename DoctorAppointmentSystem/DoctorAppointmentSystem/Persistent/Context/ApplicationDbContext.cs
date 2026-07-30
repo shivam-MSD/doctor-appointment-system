@@ -29,6 +29,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 		public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 		public DbSet<AdminClinic> AdminClinics { get; set; }
 		public DbSet<UserPassword> UserPasswords { get; set; }
+		public DbSet<UserPushSubscription> UserPushSubscriptions { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
