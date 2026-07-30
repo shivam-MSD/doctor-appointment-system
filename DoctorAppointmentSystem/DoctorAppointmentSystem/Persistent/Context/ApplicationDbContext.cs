@@ -35,6 +35,11 @@ namespace DoctorAppointmentSystem.Persistent.Context
 		{
 			base.OnModelCreating(modelBuilder);
 
+			if (Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+			{
+				modelBuilder.HasDefaultSchema("doctorappointment");
+			}
+
 			// 1. Roles Entity Configuration
 			modelBuilder.Entity<Roles>(entity =>
 			{

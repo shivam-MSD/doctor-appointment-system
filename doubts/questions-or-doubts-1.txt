@@ -340,6 +340,9 @@ if notification takes time then user have to wait for it.
 11. Optimization, whereeve there is readonly data it is good to use - asnotracking() because we will not change the data
 it helps up where there are lakhs of data
 
+12. patient should receive email and notification for each and every status change along with patient name, date time of the appoitent if confirmed or rescedule, etc - 
+- if doctor confirm, cancelled, reschedule, or any other status
+
 
 ____________________________________________________________________________________________________
 
@@ -352,3 +355,10 @@ ________________________________________________________________________________
 🟠 Verification Audit Trail — No log of admin/clinic rejections
 🟡 Address Design — Not normalized for all address types
 And 6 more with code examples...
+
+________________________________________________________________________
+
+Now, I have to deploy my .NET application.
+Which is free platform??
+Could you please suggest me.
+

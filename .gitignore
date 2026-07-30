@@ -51,6 +51,10 @@ packages/
 # Block sensitive local application configurations
 appsettings.Development.json
 appsettings.Local.json
+appsettings.Production.json
+appsettings.Production copy.json
+appsettings.prod.json
+appsettings.prod1.json
 .microsoft/usersecrets/
 
 ## OS-specific files

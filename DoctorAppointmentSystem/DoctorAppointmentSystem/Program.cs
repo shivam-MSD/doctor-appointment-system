@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 // Explicitly load base and environment‑specific configuration files
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
@@ -44,8 +45,51 @@ builder.Services.AddAuthorization();
 builder.Services.AddOpenApi();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+if (connectionString.StartsWith("postgresql://") || connectionString.StartsWith("postgres://"))
+{
+	var uri = connectionString.Replace("postgresql://", "").Replace("postgres://", "");
+	var atIndex = uri.IndexOf('@');
+	if (atIndex != -1)
+	{
+		var credentials = uri.Substring(0, atIndex);
+		var hostDbAndOptions = uri.Substring(atIndex + 1);
+
+		var colonIndex = credentials.IndexOf(':');
+		var username = colonIndex != -1 ? credentials.Substring(0, colonIndex) : credentials;
+		var password = colonIndex != -1 ? credentials.Substring(colonIndex + 1) : "";
+
+		var questionIndex = hostDbAndOptions.IndexOf('?');
+		var hostAndDb = questionIndex != -1 ? hostDbAndOptions.Substring(0, questionIndex) : hostDbAndOptions;
+		var options = questionIndex != -1 ? hostDbAndOptions.Substring(questionIndex + 1) : "";
+
+		var slashIndex = hostAndDb.IndexOf('/');
+		var hostAndPort = slashIndex != -1 ? hostAndDb.Substring(0, slashIndex) : hostAndDb;
+		var database = slashIndex != -1 ? hostAndDb.Substring(slashIndex + 1) : "";
+
+		var hostColonIndex = hostAndPort.IndexOf(':');
+		var host = hostColonIndex != -1 ? hostAndPort.Substring(0, hostColonIndex) : hostAndPort;
+		var port = hostColonIndex != -1 ? hostAndPort.Substring(hostColonIndex + 1) : "5432";
+
+		connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};";
+		if (options.Contains("sslmode=require") || uri.Contains("sslmode=require"))
+		{
+			connectionString += "SSL Mode=Require;Trust Server Certificate=true;";
+		}
+	}
+}
+
 builder.Services.AddDbContext<DoctorAppointmentSystem.Persistent.Context.ApplicationDbContext>(options =>
-	options.UseSqlServer(connectionString));
+{
+	if (connectionString.Contains("Host="))
+	{
+		options.UseNpgsql(connectionString);
+	}
+	else
+	{
+		options.UseSqlServer(connectionString);
+	}
+});
 
 builder.Services.AddExceptionHandler<DoctorAppointmentSystem.Middleware.GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -84,7 +128,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
 	app.MapOpenApi();
 	app.UseSwaggerUI(options =>
@@ -106,7 +150,10 @@ app.MapHub<DoctorAppointmentSystem.Application.Hubs.NotificationHub>("/notificat
 using (var scope = app.Services.CreateScope())
 {
 	var db = scope.ServiceProvider.GetRequiredService<DoctorAppointmentSystem.Persistent.Context.ApplicationDbContext>();
-	db.Database.Migrate();
+	if (db.Database.IsSqlServer())
+	{
+		db.Database.Migrate();
+	}
 	await DoctorAppointmentSystem.Persistent.DbInitializer.SeedAsync(db);
 }
 

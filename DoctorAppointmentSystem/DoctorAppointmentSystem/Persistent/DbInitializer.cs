@@ -147,7 +147,14 @@ namespace DoctorAppointmentSystem.Persistent
 			await db.SaveChangesAsync();
 
 			// Default legacy clinics to true availability
-			await db.Database.ExecuteSqlRawAsync("UPDATE Clinics SET IsAvailable = 1 WHERE IsAvailable = 0 AND UnavailabilityReason IS NULL");
+			if (db.Database.IsSqlServer())
+			{
+				await db.Database.ExecuteSqlRawAsync("UPDATE Clinics SET IsAvailable = 1 WHERE IsAvailable = 0 AND UnavailabilityReason IS NULL");
+			}
+			else if (db.Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+			{
+				await db.Database.ExecuteSqlRawAsync("UPDATE doctorappointment.\"Clinics\" SET \"IsAvailable\" = TRUE WHERE \"IsAvailable\" = FALSE AND \"UnavailabilityReason\" IS NULL");
+			}
 
 			// // Copy existing legacy user password hashes into UserPasswords table if they don't already exist
 			// await db.Database.ExecuteSqlRawAsync(@"
