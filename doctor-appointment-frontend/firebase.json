@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "public": "dist/doctor-appointment-frontend",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "destination": "https://healsync-backend-xhdy.onrender.com/api/**"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

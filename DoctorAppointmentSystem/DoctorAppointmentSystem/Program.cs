@@ -7,12 +7,24 @@ using Microsoft.IdentityModel.Tokens;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 // Explicitly load base and environment‑specific configuration files
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+var reloadOnChange = builder.Environment.IsDevelopment();
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: reloadOnChange);
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: reloadOnChange);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+// Configure CORS to allow direct frontend connections from any source
+builder.Services.AddCors(options =>
+{
+	options.AddDefaultPolicy(policy =>
+	{
+		policy.AllowAnyOrigin()
+			  .AllowAnyHeader()
+			  .AllowAnyMethod();
+	});
+});
 
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt Key not configured.");
@@ -139,6 +151,8 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -362,3 +362,12 @@ Now, I have to deploy my .NET application.
 Which is free platform??
 Could you please suggest me.
 
+____________________________________________________________________________________________
+
+Please provide me each and every detail for which i have used in deployment, database :-
+1.  Every step for render.
+2. every step for Neon Postgres.
+3. Every step for redis server.
+4. Docker
+All this include in word file, in the deployment folder, so that a a developer, or a normal user , when i go through the project i can userstand what plateform i have used.
+
