@@ -35,8 +35,8 @@ const routes: Routes = [
   { path: 'superadmin/login', component: LoginComponent, data: { role: 'SuperAdmin' } },
 
   // Default fallbacks to Patient Portal
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
+  { path: 'login', redirectTo: 'patient/login', pathMatch: 'full' },
+  { path: 'register', redirectTo: 'patient/register', pathMatch: 'full' },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
 
@@ -45,7 +45,7 @@ const routes: Routes = [
     component: MainLayoutComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'login', pathMatch: 'full' },
+      { path: '', redirectTo: 'patient/login', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent }, // Shared fallback route
 
       // Patient Routes
@@ -82,7 +82,7 @@ const routes: Routes = [
       { path: 'superadmin/audit-logs', loadComponent: () => import('./features/superadmin/audit-logs/superadmin-audit-logs.component').then(m => m.SuperadminAuditLogsComponent) }
     ]
   },
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: 'patient/login' }
 ];
 
 @NgModule({

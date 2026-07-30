@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -17,6 +18,13 @@ export class AuthInterceptor implements HttpInterceptor {
     const userId = this.authService.getUserId();
 
     let authReq = req;
+
+    // Prepend the environment-configured API base URL (e.g. Render server in prod, relative path in dev)
+    if (req.url.startsWith('/api/') && environment.apiUrl) {
+      authReq = authReq.clone({
+        url: `${environment.apiUrl}${req.url}`
+      });
+    }
 
     // 1. Add JWT token to Authorization header if logged in
     if (token) {
