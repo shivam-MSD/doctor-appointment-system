@@ -4,12 +4,15 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class ThemeService {
-  private activeTheme: 'light' | 'dark' = 'dark';
+  private activeTheme: 'light' | 'dark' = 'light';
 
   constructor() {
     const cachedTheme = localStorage.getItem('theme') as 'light' | 'dark';
     if (cachedTheme) {
       this.activeTheme = cachedTheme;
+    } else {
+      this.activeTheme = 'light';
+      localStorage.setItem('theme', 'light');
     }
     this.applyTheme(this.activeTheme);
   }

@@ -51,7 +51,7 @@ export class AuthGuard implements CanActivate {
     } else if (currentUrl.includes('/superadmin/')) {
       this.router.navigate(['/superadmin/login']);
     } else {
-      this.router.navigate(['/patient/login']);
+      this.router.navigate(['/login']);
     }
   }
 
@@ -70,7 +70,7 @@ export class AuthGuard implements CanActivate {
         this.router.navigate(['/superadmin/dashboard']);
         break;
       default:
-        this.router.navigate(['/patient/login']);
+        this.router.navigate(['/login']);
     }
   }
 }

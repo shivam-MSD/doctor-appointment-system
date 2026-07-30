@@ -3,6 +3,8 @@ import { ThemeService } from './core/services/theme.service';
 import { ToastService, ToastMessage } from './core/services/toast.service';
 import { AuthService } from './core/services/auth.service';
 import { NotificationService } from './core/services/notification.service';
+import { LoadingService } from './core/services/loading.service';
+import { PwaService } from './core/services/pwa.service';
 import { Observable, Subscription } from 'rxjs';
 
 @Component({
@@ -13,15 +15,21 @@ import { Observable, Subscription } from 'rxjs';
 export class AppComponent implements OnInit, OnDestroy {
   title = 'doctor-appointment-frontend';
   toasts$: Observable<ToastMessage[]>;
+  isLoading$: Observable<boolean>;
+  showPwaPrompt$: Observable<boolean>;
   private authSub?: Subscription;
 
   constructor(
     private themeService: ThemeService,
     private toastService: ToastService,
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private loadingService: LoadingService,
+    public pwaService: PwaService
   ) {
     this.toasts$ = this.toastService.toasts$;
+    this.isLoading$ = this.loadingService.isLoading$;
+    this.showPwaPrompt$ = this.pwaService.showPrompt$;
   }
 
   ngOnInit(): void {

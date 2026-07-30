@@ -18,6 +18,7 @@ namespace DoctorAppointmentSystem.Controllers
 		}
 
 		[HttpPost("book")]
+		[Authorize(Roles = "Patient")]
 		public async Task<IActionResult> BookAppointment([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] CreateAppointmentDto dto)
 		{
 			if (userId == Guid.Empty)
@@ -30,6 +31,7 @@ namespace DoctorAppointmentSystem.Controllers
 		}
 
 		[HttpPost("cancel/{id:guid}")]
+		[Authorize(Roles = "Patient")]
 		public async Task<IActionResult> CancelAppointment([FromHeader(Name = "X-User-Id")] Guid userId, Guid id)
 		{
 			if (userId == Guid.Empty)
@@ -42,6 +44,7 @@ namespace DoctorAppointmentSystem.Controllers
 		}
 
 		[HttpPost("doctor-cancel/{id:guid}")]
+		[Authorize(Roles = "Doctor,Admin")]
 		public async Task<IActionResult> DoctorCancelAppointment([FromHeader(Name = "X-User-Id")] Guid userId, Guid id, [FromBody] RejectAppointmentDto dto)
 		{
 			if (userId == Guid.Empty)
@@ -54,6 +57,7 @@ namespace DoctorAppointmentSystem.Controllers
 		}
 
 		[HttpGet("admin-doctor-dashboard")]
+		[Authorize(Roles = "Doctor,Admin")]
 		public async Task<IActionResult> GetAdminDoctorDashboard(
 			[FromHeader(Name = "X-User-Id")] Guid userId,
 			[FromQuery] string? status,

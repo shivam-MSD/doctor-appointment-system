@@ -1,15 +1,24 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-header',
   templateUrl: './admin-header.component.html',
   styleUrls: ['./admin-header.component.css']
 })
-export class AdminHeaderComponent {
+export class AdminHeaderComponent implements OnInit {
   @Input() firstName = '';
   @Input() adminClinic: any = null;
 
   @Output() openAdminEditClinicModal = new EventEmitter<void>();
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    if (!this.firstName) {
+      this.firstName = this.authService.getFirstName('Admin') || 'Admin';
+    }
+  }
 
   onOpenAdminEditClinicModal() {
     this.openAdminEditClinicModal.emit();

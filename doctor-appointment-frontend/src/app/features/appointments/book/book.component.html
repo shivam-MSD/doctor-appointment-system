@@ -377,9 +377,11 @@
           <!-- Submit & Navigation buttons -->
           <div class="actions">
             <button class="btn btn-primary w-100" type="submit"
-              [disabled]="selectedClinic && selectedClinic.isAvailable === false"
-              [title]="(selectedClinic && selectedClinic.isAvailable === false) ? 'This clinic branch is temporarily closed' : ''">Confirm
-              Reservation</button>
+              [disabled]="isSubmitting || (selectedClinic && selectedClinic.isAvailable === false) || (dayAvailability && dayAvailability.isFull)"
+              [title]="(selectedClinic && selectedClinic.isAvailable === false) ? 'This clinic branch is temporarily closed' : ''">
+              <span *ngIf="isSubmitting" class="btn-spinner"></span>
+              <span>{{ isSubmitting ? 'Confirming Booking...' : 'Confirm Reservation' }}</span>
+            </button>
             <a routerLink="/patient/doctors" class="btn btn-secondary w-100 cancel-link">Cancel</a>
           </div>
         </form>

@@ -2,6 +2,7 @@ import { NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { ServiceWorkerModule } from '@angular/service-worker';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -41,7 +42,7 @@ import { AdminHeaderComponent } from './shared/components/admin-header/admin-hea
 import { SuperadminHeaderComponent } from './shared/components/superadmin-header/superadmin-header.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
-import { ServiceWorkerModule } from '@angular/service-worker';
+import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
 
 @NgModule({
   declarations: [
@@ -87,6 +88,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
     })
   ],
   providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]

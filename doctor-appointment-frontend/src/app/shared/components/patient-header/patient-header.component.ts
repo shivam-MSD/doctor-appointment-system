@@ -10,8 +10,8 @@ import { AppointmentService } from '../../../core/services/appointment.service';
 })
 export class PatientHeaderComponent implements OnInit {
   @Input() showWelcomeBanner = true;
+  @Input() firstName = '';
 
-  firstName = '';
   isPatientStatsLoading = true;
   patientTotalCompleted = 0;
   patientTotalUpcoming = 0;
@@ -25,10 +25,8 @@ export class PatientHeaderComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      this.firstName = user.firstName || 'Patient';
+    if (!this.firstName) {
+      this.firstName = this.authService.getFirstName('Patient') || 'Patient';
     }
 
     if (this.authService.getRole() === 'Patient') {

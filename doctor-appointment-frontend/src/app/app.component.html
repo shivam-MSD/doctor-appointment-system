@@ -1,3 +1,8 @@
+<!-- Global Top Loading Bar -->
+<div class="global-loader-bar" *ngIf="isLoading$ | async">
+  <div class="global-loader-progress"></div>
+</div>
+
 <router-outlet></router-outlet>
 
 <!-- Global Floating Top-Right Toast Notifications Overlay -->
@@ -11,5 +16,20 @@
       <span class="toast-msg">{{ toast.message }}</span>
     </div>
     <button type="button" class="toast-close" (click)="removeToast(toast.id)">&times;</button>
+  </div>
+</div>
+
+<!-- Mobile PWA App Launch / Install Banner (Zomato-style) -->
+<div class="pwa-prompt-banner" *ngIf="showPwaPrompt$ | async">
+  <div class="pwa-prompt-content">
+    <span class="pwa-icon">📱</span>
+    <div class="pwa-text">
+      <strong>Open HealSync App</strong>
+      <p>Get a faster experience on your mobile device</p>
+    </div>
+    <div class="pwa-actions">
+      <button type="button" class="btn-pwa-open" (click)="pwaService.openPwaApp()">Open App</button>
+      <button type="button" class="btn-pwa-dismiss" (click)="pwaService.dismissPrompt()">Continue in Browser</button>
+    </div>
   </div>
 </div>

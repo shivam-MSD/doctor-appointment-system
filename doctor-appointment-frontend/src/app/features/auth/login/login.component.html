@@ -7,12 +7,10 @@
       <p>Sign in to your HealSync account</p>
     </div>
 
-    <!-- Role Selector Tabs -->
+    <!-- Role Selector Tabs (Public Users Only) -->
     <div class="role-tabs" *ngIf="!isFixedRole">
       <button type="button" class="tab-btn" [class.active]="selectedRole === 'Patient'" (click)="selectRole('Patient')">👤 Patient</button>
       <button type="button" class="tab-btn" [class.active]="selectedRole === 'Doctor'" (click)="selectRole('Doctor')">🩺 Doctor</button>
-      <button type="button" class="tab-btn" [class.active]="selectedRole === 'Admin'" (click)="selectRole('Admin')">🏢 Admin</button>
-      <button type="button" class="tab-btn" [class.active]="selectedRole === 'SuperAdmin'" (click)="selectRole('SuperAdmin')">👑 SuperAdmin</button>
     </div>
 
     <form #loginForm="ngForm" (submit)="onSubmit(loginForm); $event.preventDefault()">
@@ -50,7 +48,10 @@
           required>
       </div>
 
-      <button class="btn btn-primary w-100 submit-btn" type="submit">Log In</button>
+      <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="isLoading">
+        <span *ngIf="isLoading" class="btn-spinner"></span>
+        <span>{{ isLoading ? 'Logging in...' : 'Log In' }}</span>
+      </button>
     </form>
 
     <div class="auth-footer">

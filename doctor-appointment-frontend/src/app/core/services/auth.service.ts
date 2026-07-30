@@ -9,18 +9,46 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    const cachedUser = sessionStorage.getItem('userId');
-    if (cachedUser) {
-      this.currentUserSubject.next({
-        userId: cachedUser,
-        email: sessionStorage.getItem('email'),
-        role: sessionStorage.getItem('role'),
-        token: sessionStorage.getItem('token'),
-        firstName: sessionStorage.getItem('firstName'),
-        lastName: sessionStorage.getItem('lastName'),
-        profileId: sessionStorage.getItem('profileId')
-      });
+    const activeUser = this.getActiveUserForCurrentRoute();
+    if (activeUser) {
+      this.currentUserSubject.next(activeUser);
     }
+  }
+
+  private getRoleFromPath(): string | null {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('/patient')) return 'Patient';
+    if (path.includes('/doctor')) return 'Doctor';
+    if (path.includes('/admin')) return 'Admin';
+    if (path.includes('/superadmin')) return 'SuperAdmin';
+    return null;
+  }
+
+  public getActiveUserForCurrentRoute(): any {
+    const routeRole = this.getRoleFromPath();
+    if (routeRole) {
+      const raw = localStorage.getItem(`healsync_auth_${routeRole}`);
+      if (raw) {
+        try { return JSON.parse(raw); } catch { }
+      }
+    }
+
+    // Fallback: search any stored role session
+    const roles = ['Patient', 'Doctor', 'Admin', 'SuperAdmin'];
+    for (const r of roles) {
+      const raw = localStorage.getItem(`healsync_auth_${r}`);
+      if (raw) {
+        try { return JSON.parse(raw); } catch { }
+      }
+    }
+    return null;
+  }
+
+  private saveRoleSession(user: any): void {
+    if (!user || !user.role) return;
+    const key = `healsync_auth_${user.role}`;
+    localStorage.setItem(key, JSON.stringify(user));
+    this.currentUserSubject.next(user);
   }
 
   register(registerDto: any): Observable<any> {
@@ -34,14 +62,7 @@ export class AuthService {
   login(credentials: any): Observable<any> {
     return this.http.post<any>('/api/auth/login', credentials).pipe(
       tap(user => {
-        sessionStorage.setItem('token', user.token);
-        sessionStorage.setItem('userId', user.userId);
-        sessionStorage.setItem('email', user.email);
-        sessionStorage.setItem('role', user.role);
-        sessionStorage.setItem('firstName', user.firstName || 'User');
-        sessionStorage.setItem('lastName', user.lastName || '');
-        sessionStorage.setItem('profileId', user.profileId || '');
-        this.currentUserSubject.next(user);
+        this.saveRoleSession(user);
       })
     );
   }
@@ -49,37 +70,106 @@ export class AuthService {
   verifyEmail(dto: { email: string; otp: string }): Observable<any> {
     return this.http.post<any>('/api/auth/verify-email', dto).pipe(
       tap(user => {
-        sessionStorage.setItem('token', user.token);
-        sessionStorage.setItem('userId', user.userId);
-        sessionStorage.setItem('email', user.email);
-        sessionStorage.setItem('role', user.role);
-        sessionStorage.setItem('firstName', user.firstName || 'User');
-        sessionStorage.setItem('lastName', user.lastName || '');
-        sessionStorage.setItem('profileId', user.profileId || '');
-        this.currentUserSubject.next(user);
+        this.saveRoleSession(user);
       })
     );
   }
 
-  logout() {
-    sessionStorage.clear();
-    this.currentUserSubject.next(null);
+  logout(specificRole?: string): void {
+    const roleToLogout = specificRole || this.getRole() || this.getRoleFromPath();
+    if (roleToLogout) {
+      localStorage.removeItem(`healsync_auth_${roleToLogout}`);
+    } else {
+      // Fallback: clear all healsync role keys selectively
+      const roles = ['Patient', 'Doctor', 'Admin', 'SuperAdmin'];
+      roles.forEach(r => localStorage.removeItem(`healsync_auth_${r}`));
+    }
+    
+    const remainingUser = this.getActiveUserForCurrentRoute();
+    this.currentUserSubject.next(remainingUser);
   }
 
-  getUserId(): string | null {
-    return sessionStorage.getItem('userId');
+  private getDecodedToken(specificRole?: string): any {
+    const token = this.getToken(specificRole);
+    if (!token) return null;
+    try {
+      const payload = token.split('.')[1];
+      const decodedJson = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(decodedJson);
+    } catch {
+      return null;
+    }
   }
 
-  getRole(): string | null {
-    return sessionStorage.getItem('role');
+  getFirstName(specificRole?: string): string {
+    const activeUser = this.getActiveUserForCurrentRoute();
+    if (activeUser && activeUser.firstName) {
+      return activeUser.firstName;
+    }
+    const decoded = this.getDecodedToken(specificRole);
+    if (decoded && (decoded.firstName || decoded.given_name || decoded.name)) {
+      return decoded.firstName || decoded.given_name || decoded.name;
+    }
+    return activeUser?.email ? activeUser.email.split('@')[0] : '';
   }
 
-  getToken(): string | null {
-    return sessionStorage.getItem('token');
+  public updateCachedFirstName(firstName: string, role?: string): void {
+    const activeRole = role || this.getRole(role) || this.getRoleFromPath();
+    if (!activeRole) return;
+    const key = `healsync_auth_${activeRole}`;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const user = JSON.parse(raw);
+        user.firstName = firstName;
+        localStorage.setItem(key, JSON.stringify(user));
+        this.currentUserSubject.next(user);
+      } catch { }
+    }
   }
 
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+  getUserId(specificRole?: string): string | null {
+    const activeUser = this.getActiveUserForCurrentRoute();
+    const decoded = this.getDecodedToken(specificRole);
+    if (decoded) {
+      return decoded['nameid'] || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier'] || decoded['sub'] || activeUser?.userId;
+    }
+    return activeUser?.userId || null;
+  }
+
+  getRole(specificRole?: string): string | null {
+    const activeUser = this.getActiveUserForCurrentRoute();
+    const decoded = this.getDecodedToken(specificRole);
+    if (decoded) {
+      return decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded['role'] || decoded['Role'] || activeUser?.role;
+    }
+    return activeUser?.role || null;
+  }
+
+  getToken(specificRole?: string): string | null {
+    const targetRole = specificRole || this.getRoleFromPath();
+    if (targetRole) {
+      const raw = localStorage.getItem(`healsync_auth_${targetRole}`);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed.token || null;
+        } catch { }
+      }
+    }
+    const activeUser = this.getActiveUserForCurrentRoute();
+    return activeUser?.token || null;
+  }
+
+  isAuthenticated(specificRole?: string): boolean {
+    const token = this.getToken(specificRole);
+    if (!token) return false;
+    const decoded = this.getDecodedToken(specificRole);
+    if (!decoded) return false;
+    if (decoded.exp) {
+      return decoded.exp * 1000 > Date.now();
+    }
+    return true;
   }
 
   checkEmail(email: string, role?: string): Observable<any> {

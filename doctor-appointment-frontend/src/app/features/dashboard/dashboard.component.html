@@ -15,7 +15,7 @@
   </app-admin-header>
 
   <!-- Patient Header & Metrics -->
-  <app-patient-header *ngIf="role === 'Patient'"></app-patient-header>
+  <app-patient-header *ngIf="role === 'Patient'" [firstName]="firstName"></app-patient-header>
 
   <div class="glass-card table-card" *ngIf="role === 'Patient' || role === 'Admin'">
     <div class="table-header">

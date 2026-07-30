@@ -448,7 +448,11 @@ export class BookComponent implements OnInit {
     });
   }
 
+  isSubmitting = false;
+
   onSubmit(): void {
+    if (this.isSubmitting) return;
+
     if (!this.patientId || !this.doctorId || !this.appointmentDate) {
       this.errorMessage = 'Please complete all required fields and select an appointment date.';
       this.toastService.showError(this.errorMessage);
@@ -477,6 +481,8 @@ export class BookComponent implements OnInit {
       return;
     }
 
+    this.isSubmitting = true;
+
     const payload = {
       patientId: this.patientId,
       doctorId: this.doctorId,
@@ -497,6 +503,7 @@ export class BookComponent implements OnInit {
         }, 2000);
       },
       error: (err) => {
+        this.isSubmitting = false;
         this.errorMessage = err?.error?.detail || 'Failed to book appointment. The date may be fully booked.';
         this.toastService.showError(this.errorMessage);
       }

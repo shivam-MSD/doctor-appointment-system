@@ -1309,22 +1309,29 @@ namespace DoctorAppointmentSystem.Application.Services
 
 				if (userPatient.User != null)
 				{
-					var emailSubject = "HealSync - Appointment Completed";
-					var emailTitle = "Appointment Completed";
-					var emailMsg = $"Dear {appointment.Patient.FirstName}, your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as completed. Thank you for choosing HealSync.";
+					var emailSubject = "HealSync - Appointment Consultation Completed";
+					var emailTitle = "Appointment Consultation Completed";
+					var patientFullName = $"{appointment.Patient.FirstName} {appointment.Patient.LastName}";
+					var emailMsg = $"Dear {patientFullName}, your appointment consultation with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been completed. Below are your clinical consultation notes and prescription details.";
 					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
-					var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
+					var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : DateTime.Now.ToString("hh:mm tt");
+					
+					string? followUpDetail = followUp != null ? $"{followUp.AppointmentDate:dd MMM yyyy} at {followUp.StartTime}" : "None required";
 
 					_ = Task.Run(async () => {
 						await SendAppointmentEmailAsync(
-							userPatient.User.Email,
-							emailSubject,
-							emailTitle,
-							emailMsg,
-							docName,
-							appointment.AppointmentDate.ToString("dd MMM yyyy"),
-							timeStr,
-							appointment.Clinic
+							toEmail: userPatient.User.Email,
+							subject: emailSubject,
+							title: emailTitle,
+							message: emailMsg,
+							doctorName: docName,
+							dateStr: appointment.AppointmentDate.ToString("dd MMM yyyy"),
+							timeOrStatus: $"{timeStr} (Completed)",
+							clinic: appointment.Clinic,
+							patientName: patientFullName,
+							comment: comment,
+							report: report,
+							followUpStr: followUpDetail
 						);
 					});
 				}
@@ -1813,7 +1820,13 @@ namespace DoctorAppointmentSystem.Application.Services
 			string doctorName,
 			string dateStr,
 			string timeOrStatus,
-			Clinic? clinic)
+			Clinic? clinic,
+			string? patientName = null,
+			string? comment = null,
+			string? report = null,
+			string? followUpStr = null,
+			string? cancelledBy = null,
+			string? cancelReason = null)
 		{
 			if (string.IsNullOrWhiteSpace(toEmail)) return;
 
@@ -1831,6 +1844,62 @@ namespace DoctorAppointmentSystem.Application.Services
 				clinicAddress = string.Join(", ", parts);
 			}
 
+			var extraRowsHtml = new System.Text.StringBuilder();
+
+			if (!string.IsNullOrWhiteSpace(patientName))
+			{
+				extraRowsHtml.Append($@"
+          <tr>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; width: 35%;"">Patient Name:</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">{patientName}</td>
+          </tr>");
+			}
+
+			if (!string.IsNullOrWhiteSpace(comment))
+			{
+				extraRowsHtml.Append($@"
+          <tr>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; vertical-align: top;"">Doctor Note / Clinical Observation:</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600; line-height: 1.4;"">{comment}</td>
+          </tr>");
+			}
+
+			if (!string.IsNullOrWhiteSpace(report))
+			{
+				extraRowsHtml.Append($@"
+          <tr>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; vertical-align: top;"">Prescription Note / Medical Report:</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600; line-height: 1.4;"">{report}</td>
+          </tr>");
+			}
+
+			if (!string.IsNullOrWhiteSpace(followUpStr))
+			{
+				extraRowsHtml.Append($@"
+          <tr>
+            <td style=""padding: 6px 0; color: #0284c7; font-weight: 600; vertical-align: top;"">Follow-up Date:</td>
+            <td style=""padding: 6px 0; color: #0284c7; font-weight: 700; line-height: 1.4;"">📅 {followUpStr}</td>
+          </tr>");
+			}
+
+			if (!string.IsNullOrWhiteSpace(cancelledBy))
+			{
+				extraRowsHtml.Append($@"
+          <tr>
+            <td style=""padding: 6px 0; color: #dc2626; font-weight: 600;"">Cancelled By:</td>
+            <td style=""padding: 6px 0; color: #dc2626; font-weight: 700;"">{cancelledBy}</td>
+          </tr>");
+			}
+
+			if (!string.IsNullOrWhiteSpace(cancelReason))
+			{
+				extraRowsHtml.Append($@"
+          <tr>
+            <td style=""padding: 6px 0; color: #dc2626; font-weight: 500; vertical-align: top;"">Cancellation Reason:</td>
+            <td style=""padding: 6px 0; color: #dc2626; font-weight: 600;"">{cancelReason}</td>
+          </tr>");
+			}
+
 			string htmlBody = $@"
 <div style=""font-family: 'Segoe UI', Arial, sans-serif; background-color: #f3f4f6; padding: 40px 10px; margin: 0;"">
   <div style=""max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb;"">
@@ -1843,6 +1912,7 @@ namespace DoctorAppointmentSystem.Application.Services
       
       <div style=""background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;"">
         <table style=""width: 100%; border-collapse: collapse; font-size: 15px;"">
+          {extraRowsHtml}
           <tr>
             <td style=""padding: 6px 0; color: #64748b; font-weight: 500; width: 35%;"">Doctor:</td>
             <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">Dr. {doctorName}</td>
@@ -1862,6 +1932,12 @@ namespace DoctorAppointmentSystem.Application.Services
         </table>
       </div>
       
+      <div style=""text-align: center; margin-top: 28px; margin-bottom: 24px;"">
+        <a href=""https://healsync-medical.web.app/patient/dashboard"" style=""background-color: #06b6d4; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;"">
+          View Appointment Details &rarr;
+        </a>
+      </div>
+
       <p style=""font-size: 14px; line-height: 1.5; color: #94a3b8; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px;"">This is an automated notification from HealSync. Please do not reply directly to this email.</p>
     </div>
   </div>

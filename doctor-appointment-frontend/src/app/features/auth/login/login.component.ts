@@ -55,17 +55,30 @@ export class LoginComponent implements OnInit {
 
     // Listen to query params for prefilled email, success, and error messages
     this.route.queryParams.subscribe(params => {
+      let shouldCleanUrl = false;
       if (params['message']) {
         this.successMessage = params['message'];
+        shouldCleanUrl = true;
       }
       if (params['error']) {
         this.errorMessage = params['error'];
+        shouldCleanUrl = true;
       }
       if (params['email']) {
         this.email = params['email'];
       }
       if (params['role']) {
         this.selectedRole = params['role'] as any;
+      }
+
+      if (shouldCleanUrl) {
+        // Clean error/message query parameters from browser address bar so page refresh (F5) will not display them again
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { error: null, message: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
       }
     });
   }
@@ -86,12 +99,15 @@ export class LoginComponent implements OnInit {
     return null; // Admin/SuperAdmin cannot self-register
   }
 
+  isLoading = false;
+
   selectRole(role: 'Patient' | 'Doctor' | 'Admin' | 'SuperAdmin'): void {
     this.selectedRole = role;
     this.errorMessage = '';
   }
 
   onSubmit(form: any): void {
+    if (this.isLoading) return;
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -103,8 +119,10 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    this.isLoading = true;
     this.authService.login({ email: this.email, password: this.password, role: this.selectedRole }).subscribe({
       next: (user) => {
+        this.isLoading = false;
         if (user.role !== this.selectedRole) {
           this.authService.logout();
           this.errorMessage = `Unauthorized access. Invalid credentials for the ${this.getPortalTitle()}.`;
@@ -119,12 +137,18 @@ export class LoginComponent implements OnInit {
           this.router.navigate(['/admin/dashboard']);
         } else if (user.role === 'SuperAdmin') {
           this.router.navigate(['/superadmin/dashboard']);
-        } else {
-          this.router.navigate(['/dashboard']);
         }
       },
       error: (err) => {
-        this.errorMessage = err?.error?.detail || 'Invalid email or password.';
+        this.isLoading = false;
+        if (err.status === 403 && err.error?.requiresVerification) {
+          this.verificationEmail = err.error.email || this.email;
+          this.showVerificationModal = true;
+          this.toastService.showError(err, 'Email verification required.');
+        } else {
+          this.errorMessage = this.toastService.extractErrorMessage(err, 'Invalid credentials or connection error.');
+          this.toastService.showError(this.errorMessage);
+        }
       }
     });
   }

@@ -21,20 +21,25 @@ export class ToastService {
   }
 
   showError(error: any, defaultFallbackMsg: string = 'An error occurred', duration: number = 6000): void {
-    let parsedMessage = '';
-    if (typeof error === 'string') {
-      parsedMessage = error;
-    } else {
-      parsedMessage = this.parseError(error, defaultFallbackMsg);
-    }
-    this.addToast('error', 'Validation / API Alert', parsedMessage, duration);
+    const parsedMessage = this.extractErrorMessage(error, defaultFallbackMsg);
+    this.addToast('error', 'Alert', parsedMessage, duration);
   }
 
-  private parseError(err: any, defaultMessage: string): string {
-    if (err?.error) {
+  public extractErrorMessage(err: any, defaultMessage: string = 'An unexpected error occurred'): string {
+    if (!err) return defaultMessage;
+
+    // 1. Intercept HTTP 500-level server errors globally
+    if (err?.status >= 500) {
+      return 'Our servers are experiencing a temporary issue. Please try again in a few moments.';
+    }
+
+    let messageToInspect = '';
+    if (typeof err === 'string') {
+      messageToInspect = err;
+    } else if (err?.error) {
       const errBody = err.error;
 
-      // 1. Check for ASP.NET Core Validation Errors (errors object)
+      // Check for ASP.NET Core Validation Errors (errors object)
       if (errBody.errors && typeof errBody.errors === 'object') {
         const messages: string[] = [];
         for (const prop in errBody.errors) {
@@ -48,32 +53,54 @@ export class ToastService {
           }
         }
         if (messages.length > 0) {
-          return messages.join(' ');
+          messageToInspect = messages.join(' ');
         }
       }
 
-      // 2. Check for ProblemDetails 'detail'
-      if (errBody.detail) {
-        return errBody.detail;
+      // Check for ProblemDetails 'detail'
+      if (!messageToInspect && errBody.detail && typeof errBody.detail === 'string') {
+        messageToInspect = errBody.detail;
       }
 
-      // 3. Check for general message
-      if (errBody.message) {
-        return errBody.message;
+      // Check for general message
+      if (!messageToInspect && errBody.message && typeof errBody.message === 'string') {
+        messageToInspect = errBody.message;
       }
 
-      // 4. Check for direct string body
-      if (typeof errBody === 'string') {
-        return errBody;
+      // Check for ProblemDetails 'title'
+      if (!messageToInspect && errBody.title && typeof errBody.title === 'string' && errBody.title !== 'One or more validation errors occurred.') {
+        messageToInspect = errBody.title;
+      }
+
+      // Check for direct string body
+      if (!messageToInspect && typeof errBody === 'string') {
+        messageToInspect = errBody;
       }
     }
 
-    // 5. Check if the err itself has message/detail (e.g. standard JS Error)
-    if (err?.message) {
-      return err.message;
+    if (!messageToInspect && err?.message && typeof err.message === 'string') {
+      messageToInspect = err.message;
     }
 
-    return defaultMessage;
+    if (!messageToInspect) {
+      messageToInspect = defaultMessage;
+    }
+
+    // 2. Sanitize any raw C# internal server error text or stack traces
+    const lower = messageToInspect.toLowerCase();
+    if (
+      lower.includes('internal server error') ||
+      lower.includes('system.exception') ||
+      lower.includes('nullreferenceexception') ||
+      lower.includes('argumentexception') ||
+      lower.includes('sqlexception') ||
+      lower.includes('npgsql') ||
+      lower.includes('unhandled exception')
+    ) {
+      return 'Our servers are experiencing a temporary issue. Please try again in a few moments.';
+    }
+
+    return messageToInspect;
   }
 
   private addToast(type: 'success' | 'error', title: string, message: string, duration: number): void {

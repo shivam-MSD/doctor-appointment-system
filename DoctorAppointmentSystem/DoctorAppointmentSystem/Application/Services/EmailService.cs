@@ -189,27 +189,33 @@ namespace DoctorAppointmentSystem.Application.Services
 		private static string BuildTemplate(
 			string title,
 			string titleColor,
-			string content)
+			string content,
+			string portalUrl = "https://healsync-medical.web.app/patient/dashboard",
+			string buttonText = "View Details &rarr;")
 		{
 			return $@"
-<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;'>
-
-<h2 style='color: {titleColor}; text-align: center; margin-bottom: 20px;'>
-{title}
-</h2>
-
-<hr style='border: none; border-top: 1px solid #eeeeee;' />
-
-<div style='font-size: 15px; line-height: 1.7; color: #374151;'>
-{content}
-</div>
-
-<hr style='border: none; border-top: 1px solid #eeeeee; margin-top: 25px;' />
-
-<p style='font-size: 0.8rem; color: #9ca3af; text-align: center;'>
-HealSync Medical Network App
-</p>
-
+<div style=""font-family: 'Segoe UI', Arial, sans-serif; background-color: #f1f5f9; padding: 40px 10px; margin: 0;"">
+  <div style=""max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0;"">
+    <div style=""background: linear-gradient(135deg, #0e7490, #0891b2); padding: 28px 24px; text-align: center;"">
+      <h1 style=""color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;"">HealSync Medical Network</h1>
+    </div>
+    <div style=""padding: 32px 28px; color: #1f2937;"">
+      <h2 style=""color: {titleColor}; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 600;"">{title}</h2>
+      <div style=""font-size: 15px; line-height: 1.6; color: #475569; margin-bottom: 24px;"">
+        {content}
+      </div>
+      <div style=""text-align: center; margin-top: 28px; margin-bottom: 8px;"">
+        <a href=""{portalUrl}"" style=""background-color: #06b6d4; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;"">
+          {buttonText}
+        </a>
+      </div>
+    </div>
+    <div style=""background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 24px; text-align: center;"">
+      <p style=""margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;"">
+        This is an automated notification from HealSync Medical Network.<br/>Please do not reply directly to this email.
+      </p>
+    </div>
+  </div>
 </div>";
 		}
 		/// <summary>
@@ -514,7 +520,7 @@ You may update your information and submit your profile again.
 </p>";
 			}
 
-			var body = BuildTemplate(title, color, content);
+			var body = BuildTemplate(title, color, content, "https://healsync-medical.web.app/doctor/dashboard", "Open Doctor Portal &rarr;");
 
 			await SendEmailAsync(toEmail, subject, body);
 		}
@@ -609,7 +615,7 @@ Please correct the issues and submit the clinic again.
 </p>";
 			}
 
-			var body = BuildTemplate(title, color, content);
+			var body = BuildTemplate(title, color, content, "https://healsync-medical.web.app/admin/dashboard", "Access Admin Console &rarr;");
 
 			await SendEmailAsync(toEmail, subject, body);
 		}
@@ -630,7 +636,9 @@ Please correct the issues and submit the clinic again.
 			var body = BuildTemplate(
 				"Application Received",
 				"#06b6d4",
-				content);
+				content,
+				"https://healsync-medical.web.app/doctor/dashboard",
+				"Open Doctor Portal &rarr;");
 
 			await SendEmailAsync(toEmail, subject, body);
 		}

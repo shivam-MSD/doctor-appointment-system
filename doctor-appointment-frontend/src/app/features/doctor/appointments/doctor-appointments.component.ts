@@ -303,16 +303,21 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     document.documentElement.style.overflow = '';
   }
 
+  isActionSubmitting = false;
+
   submitCancel(): void {
-    if (!this.cancelAppId) return;
+    if (!this.cancelAppId || this.isActionSubmitting) return;
     
+    this.isActionSubmitting = true;
     this.appointmentService.doctorCancelAppointment(this.cancelAppId, this.cancelReason || 'Cancelled by doctor/admin.').subscribe({
       next: () => {
+        this.isActionSubmitting = false;
         this.toastService.showSuccess('Appointment cancelled successfully.');
         this.closeCancelModal();
         this.loadAppointments();
       },
       error: (err: any) => {
+        this.isActionSubmitting = false;
         this.toastService.showError(err, 'Failed to cancel appointment.');
       }
     });
@@ -322,7 +327,6 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   openRescheduleModal(appId: string): void {
     this.selectedRescheduleAppId = appId;
     this.rescheduleDate = '';
-    this.rescheduleTime = '';
     this.rescheduleTime = '';
     this.rescheduleReason = '';
     this.showRescheduleModal = true;
@@ -357,10 +361,14 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   }
 
   submitReschedulePropose(): void {
+    if (this.isActionSubmitting) return;
+
     if (!this.rescheduleDate || !this.rescheduleReason) {
       this.toastService.showError('Date and Reason are required.');
       return;
     }
+
+    this.isActionSubmitting = true;
 
     const payload = {
       appointmentId: this.selectedRescheduleAppId,
@@ -371,11 +379,13 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
     this.appointmentService.proposeReschedule(payload).subscribe({
       next: () => {
+        this.isActionSubmitting = false;
         this.toastService.showSuccess('Reschedule proposed successfully.');
         this.closeRescheduleModal();
         this.loadAppointments();
       },
       error: (err: any) => {
+        this.isActionSubmitting = false;
         this.toastService.showError(err, 'Failed to propose reschedule.');
       }
     });

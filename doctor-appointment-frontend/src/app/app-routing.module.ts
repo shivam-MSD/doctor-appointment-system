@@ -26,7 +26,14 @@ import { PatientDoctorsComponent } from './features/patient/doctors/patient-doct
 import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
-  // Separate Portal Routes
+  // Top-Level Default Redirects (Unauthenticated)
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
+
+  // Dedicated Portal Routes
   { path: 'patient/login', component: LoginComponent, data: { role: 'Patient' } },
   { path: 'patient/register', component: RegisterComponent },
   { path: 'doctor/login', component: LoginComponent, data: { role: 'Doctor' } },
@@ -34,18 +41,12 @@ const routes: Routes = [
   { path: 'admin/login', component: LoginComponent, data: { role: 'Admin' } },
   { path: 'superadmin/login', component: LoginComponent, data: { role: 'SuperAdmin' } },
 
-  // Default fallbacks to Patient Portal
-  { path: 'login', redirectTo: 'patient/login', pathMatch: 'full' },
-  { path: 'register', redirectTo: 'patient/register', pathMatch: 'full' },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
-
+  // Authenticated Main Layout Routes
   {
     path: '',
     component: MainLayoutComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'patient/login', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent }, // Shared fallback route
 
       // Patient Routes
@@ -82,7 +83,7 @@ const routes: Routes = [
       { path: 'superadmin/audit-logs', loadComponent: () => import('./features/superadmin/audit-logs/superadmin-audit-logs.component').then(m => m.SuperadminAuditLogsComponent) }
     ]
   },
-  { path: '**', redirectTo: 'patient/login' }
+  { path: '**', redirectTo: 'login' }
 ];
 
 @NgModule({

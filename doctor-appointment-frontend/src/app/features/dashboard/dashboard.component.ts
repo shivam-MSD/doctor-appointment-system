@@ -232,7 +232,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.role = this.authService.getRole() || 'Patient';
-    this.firstName = sessionStorage.getItem('firstName') || 'User';
+    this.firstName = this.authService.getFirstName();
     this.historyMode = !!this.route.snapshot.data['historyOnly'];
     if (this.role === 'Doctor') {
       this.loadDoctorClinics();
@@ -369,6 +369,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   checkDoctorProfileCompleteness(): void {
     this.patientService.getDoctorProfile().subscribe({
       next: (profile) => {
+        if (profile.firstName) {
+          this.firstName = profile.firstName;
+          this.authService.updateCachedFirstName(profile.firstName, 'Doctor');
+        }
         // If state, city, pincode, or addressline1 are blank/empty, flag it as incomplete!
         if (!profile.state || !profile.city || !profile.pincode || !profile.addressline1) {
           this.isDoctorAddressIncomplete = true;
