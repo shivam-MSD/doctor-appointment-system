@@ -132,15 +132,20 @@
     </div>
 
     <!-- Pagination Footer -->
-    <div class="pagination-footer">
-      <button class="btn btn-secondary page-btn" [disabled]="page === 1" (click)="onPageChange(page - 1)">
-        &larr; Previous
-      </button>
-      <span class="page-info">Page <strong>{{ page }}</strong> of <strong>{{ totalPages }}</strong> ({{ totalCount }}
-        doctors found)</span>
-      <button class="btn btn-secondary page-btn" [disabled]="page === totalPages" (click)="onPageChange(page + 1)">
-        Next &rarr;
-      </button>
+    <div class="premium-pagination" *ngIf="totalCount > 0" style="margin-top: 20px;">
+      <span class="pagination-info">
+        Showing <strong>{{ (page - 1) * size + 1 }}</strong> to <strong>{{ Math.min(page * size, totalCount) }}</strong> of <strong>{{ totalCount }}</strong> doctors
+      </span>
+
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="page === 1" (click)="onPageChange(page - 1)">
+          Prev
+        </button>
+        <span class="page-current">Page {{ page }} of {{ totalPages }}</span>
+        <button class="page-btn" [disabled]="page === totalPages" (click)="onPageChange(page + 1)">
+          Next
+        </button>
+      </div>
     </div>
   </div>
 

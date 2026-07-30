@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { AppointmentService } from '../../core/services/appointment.service';
 import { Patient } from '../../core/models/patient.model';
 import { Appointment } from '../../core/models/appointment.model';
@@ -28,13 +28,8 @@ export class PatientsComponent implements OnInit {
   selectedPatientName = '';
   patientHistory: Appointment[] = [];
   isHistoryLoading = false;
-  historyFilters = {
-    Completed: true,
-    Cancelled: true,
-    Rejected: true,
-    Confirmed: true,
-    Pending: true
-  };
+  historyClinicFilters: { [clinicName: string]: boolean } = {};
+  historyStatusFilters: { [statusName: string]: boolean } = {};
 
   constructor(
     private appointmentService: AppointmentService,
@@ -125,13 +120,27 @@ export class PatientsComponent implements OnInit {
     const fullName = `${patient.firstName} ${patient.lastName}`;
     this.selectedPatientName = fullName;
     this.patientHistory = [];
+    this.historyClinicFilters = {};
+    this.historyStatusFilters = {
+      Completed: true,
+      Confirmed: true,
+      Pending: true,
+      Cancelled: true,
+      Rejected: true
+    };
     this.showHistoryModal = true;
     this.isHistoryLoading = true;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     this.appointmentService.getAdminDoctorDashboard({ patientId: patient.patientId }, 1, 100).subscribe({
       next: (res) => {
         // Sort history by date descending
         this.patientHistory = res.items.sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+        this.patientHistory.forEach(item => {
+          const clinic = item.clinicName || 'Direct';
+          this.historyClinicFilters[clinic] = true;
+        });
         this.isHistoryLoading = false;
       },
       error: (err) => {
@@ -145,52 +154,67 @@ export class PatientsComponent implements OnInit {
     this.showHistoryModal = false;
     this.selectedPatientName = '';
     this.patientHistory = [];
-    this.historyFilters = {
-      Completed: true,
-      Cancelled: true,
-      Rejected: true,
-      Confirmed: true,
-      Pending: true
-    };
+    this.historyClinicFilters = {};
+    this.historyStatusFilters = {};
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+
+  getUniqueClinicsFromHistory(): string[] {
+    const clinics = this.patientHistory
+      .map(h => h.clinicName || 'Direct')
+      .filter(name => !!name);
+    return Array.from(new Set(clinics));
+  }
+
+  getSelectedClinicsCount(): number {
+    return Object.values(this.historyClinicFilters).filter(v => v).length;
+  }
+
+  isAllHistoryClinicsSelected(): boolean {
+    const clinics = this.getUniqueClinicsFromHistory();
+    if (clinics.length === 0) return false;
+    return clinics.every(c => this.historyClinicFilters[c] !== false);
+  }
+
+  toggleAllHistoryClinics(checked: boolean): void {
+    const clinics = this.getUniqueClinicsFromHistory();
+    clinics.forEach(c => this.historyClinicFilters[c] = checked);
+  }
+
+  getSelectedStatusesCount(): number {
+    return Object.values(this.historyStatusFilters).filter(v => v).length;
+  }
+
+  isAllHistoryStatusesSelected(): boolean {
+    const statuses = ['Completed', 'Confirmed', 'Pending', 'Cancelled', 'Rejected'];
+    return statuses.every(s => this.historyStatusFilters[s] !== false);
+  }
+
+  toggleAllHistoryStatuses(checked: boolean): void {
+    const statuses = ['Completed', 'Confirmed', 'Pending', 'Cancelled', 'Rejected'];
+    statuses.forEach(s => this.historyStatusFilters[s] = checked);
   }
 
   getFilteredHistory(): Appointment[] {
     return this.patientHistory.filter(h => {
+      // Clinic Match
+      const clinic = h.clinicName || 'Direct';
+      const clinicMatch = this.historyClinicFilters[clinic] !== false;
+
+      // Status Match
       const status = h.status;
-      if (status === 'Completed') return this.historyFilters.Completed;
-      if (status === 'Cancelled') return this.historyFilters.Cancelled;
-      if (status === 'Rejected') return this.historyFilters.Rejected;
-      if (status === 'Confirmed') return this.historyFilters.Confirmed;
-      if (status === 'Pending') return this.historyFilters.Pending;
-      if (status === 'RescheduleProposed') return this.historyFilters.Pending;
-      if (status === 'FollowUpProposed') return this.historyFilters.Pending;
-      return true;
-    });
-  }
-
-  toggleAllHistoryFilters(checked: boolean): void {
-    this.historyFilters.Completed = checked;
-    this.historyFilters.Confirmed = checked;
-    this.historyFilters.Pending = checked;
-    this.historyFilters.Cancelled = checked;
-    this.historyFilters.Rejected = checked;
-  }
-
-  isAllHistoryFiltersSelected(): boolean {
-    return this.historyFilters.Completed &&
-           this.historyFilters.Confirmed &&
-           this.historyFilters.Pending &&
-           this.historyFilters.Cancelled &&
-           this.historyFilters.Rejected;
-  }
-
-  getHistoryStatusCount(status: string): number {
-    return this.patientHistory.filter(h => {
-      if (status === 'Pending') {
-        return h.status === 'Pending' || h.status === 'RescheduleProposed' || h.status === 'FollowUpProposed';
+      let statusMatch = false;
+      if (status === 'Completed') statusMatch = this.historyStatusFilters['Completed'] !== false;
+      else if (status === 'Confirmed') statusMatch = this.historyStatusFilters['Confirmed'] !== false;
+      else if (status === 'Pending' || status === 'RescheduleProposed' || status === 'FollowUpProposed') {
+        statusMatch = this.historyStatusFilters['Pending'] !== false;
       }
-      return h.status === status;
-    }).length;
+      else if (status === 'Cancelled') statusMatch = this.historyStatusFilters['Cancelled'] !== false;
+      else if (status === 'Rejected') statusMatch = this.historyStatusFilters['Rejected'] !== false;
+
+      return clinicMatch && statusMatch;
+    });
   }
 
   getStatusClass(status: string): string {
@@ -202,5 +226,15 @@ export class PatientsComponent implements OnInit {
       case 'rejected': return 'badge badge-cancelled';
       default: return 'badge';
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const elements = document.querySelectorAll('details.multiselect-dropdown');
+    elements.forEach(el => {
+      if (!el.contains(event.target as Node)) {
+        el.removeAttribute('open');
+      }
+    });
   }
 }

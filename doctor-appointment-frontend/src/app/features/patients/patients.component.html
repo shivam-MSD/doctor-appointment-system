@@ -268,7 +268,7 @@
             <thead>
               <tr>
                 <th>Clinic</th>
-                <th>Date & Time</th>
+                <th style="width: 180px; min-width: 180px;">Date & Time</th>
                 <th>Status</th>
                 <th>Doctor</th>
               </tr>
@@ -298,45 +298,67 @@
         <div *ngIf="!isHistoryLoading">
           <!-- Filter Controls -->
           <div *ngIf="patientHistory.length > 0"
-            style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Filter Status:</span>
-            <label
-              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [checked]="isAllHistoryFiltersSelected()"
-                (change)="toggleAllHistoryFilters($any($event.target).checked)"
-                style="width: 15px; height: 15px; cursor: pointer;">
-              <strong>All ({{ patientHistory.length }})</strong>
-            </label>
-            <label
-              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Completed"
-                style="width: 15px; height: 15px; cursor: pointer;">
-              <span>Completed ({{ getHistoryStatusCount('Completed') }})</span>
-            </label>
-            <label
-              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Confirmed"
-                style="width: 15px; height: 15px; cursor: pointer;">
-              <span>Confirmed ({{ getHistoryStatusCount('Confirmed') }})</span>
-            </label>
-            <label
-              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Pending"
-                style="width: 15px; height: 15px; cursor: pointer;">
-              <span>Pending / Proposed ({{ getHistoryStatusCount('Pending') }})</span>
-            </label>
-            <label
-              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Cancelled"
-                style="width: 15px; height: 15px; cursor: pointer;">
-              <span>Cancelled ({{ getHistoryStatusCount('Cancelled') }})</span>
-            </label>
-            <label
-              style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; user-select: none; margin-bottom: 0;">
-              <input type="checkbox" [(ngModel)]="historyFilters.Rejected"
-                style="width: 15px; height: 15px; cursor: pointer;">
-              <span>Rejected ({{ getHistoryStatusCount('Rejected') }})</span>
-            </label>
+            style="margin-bottom: 15px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); display: flex; gap: 20px; align-items: center; width: 100%;">
+            
+            <!-- Clinic Multi-select Dropdown -->
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); white-space: nowrap;">🏥 Clinic:</span>
+              <details class="multiselect-dropdown" style="position: relative; flex: 1;">
+                <summary style="padding: 8px 12px; font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; user-select: none;">
+                  <span style="font-weight: 600;">Selected ({{ getSelectedClinicsCount() }})</span>
+                  <span>▼</span>
+                </summary>
+                <div style="position: absolute; top: 100%; left: 0; right: 0; z-index: 10000; margin-top: 4px; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [checked]="isAllHistoryClinicsSelected()" (change)="toggleAllHistoryClinics($any($event.target).checked)" style="width: 14px; height: 14px; cursor: pointer;">
+                    <strong>Select All</strong>
+                  </label>
+                  <hr style="margin: 4px 0; border: none; border-top: 1px solid var(--border-color);">
+                  <label *ngFor="let clinic of getUniqueClinicsFromHistory()" style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [(ngModel)]="historyClinicFilters[clinic]" style="width: 14px; height: 14px; cursor: pointer;">
+                    <span>{{ clinic }}</span>
+                  </label>
+                </div>
+              </details>
+            </div>
+
+            <!-- Status Multi-select Dropdown -->
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); white-space: nowrap;">⚙️ Status:</span>
+              <details class="multiselect-dropdown" style="position: relative; flex: 1;">
+                <summary style="padding: 8px 12px; font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; user-select: none;">
+                  <span style="font-weight: 600;">Selected ({{ getSelectedStatusesCount() }})</span>
+                  <span>▼</span>
+                </summary>
+                <div style="position: absolute; top: 100%; left: 0; right: 0; z-index: 10000; margin-top: 4px; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [checked]="isAllHistoryStatusesSelected()" (change)="toggleAllHistoryStatuses($any($event.target).checked)" style="width: 14px; height: 14px; cursor: pointer;">
+                    <strong>Select All</strong>
+                  </label>
+                  <hr style="margin: 4px 0; border: none; border-top: 1px solid var(--border-color);">
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [(ngModel)]="historyStatusFilters['Completed']" style="width: 14px; height: 14px; cursor: pointer;">
+                    <span>Completed</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [(ngModel)]="historyStatusFilters['Confirmed']" style="width: 14px; height: 14px; cursor: pointer;">
+                    <span>Confirmed</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [(ngModel)]="historyStatusFilters['Pending']" style="width: 14px; height: 14px; cursor: pointer;">
+                    <span>Pending / Proposed</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [(ngModel)]="historyStatusFilters['Cancelled']" style="width: 14px; height: 14px; cursor: pointer;">
+                    <span>Cancelled</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer; margin-bottom: 0; user-select: none;">
+                    <input type="checkbox" [(ngModel)]="historyStatusFilters['Rejected']" style="width: 14px; height: 14px; cursor: pointer;">
+                    <span>Rejected</span>
+                  </label>
+                </div>
+              </details>
+            </div>
           </div>
 
           <div class="table-responsive" *ngIf="getFilteredHistory().length > 0; else noHistory">
@@ -344,7 +366,7 @@
               <thead>
                 <tr>
                   <th>Clinic</th>
-                  <th>Date & Time</th>
+                  <th style="width: 180px; min-width: 180px;">Date & Time</th>
                   <th>Status</th>
                   <th>Reason & Clinical Records</th>
                 </tr>

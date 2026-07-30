@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -31,6 +31,7 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   page = 1;
   size = 10;
   role = '';
+  Math = Math;
 
   isLoading = false;
   errorMessage = '';
@@ -43,13 +44,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   isDetailsLoading = false;
   patientHistory: any[] = [];
   isHistoryLoading = false;
-  historyFilters = {
-    Completed: true,
-    Cancelled: true,
-    Rejected: true,
-    Confirmed: true,
-    Pending: true
-  };
+  historyClinicFilters: { [key: string]: boolean } = {};
+  historyStatusFilters: { [key: string]: boolean } = {};
 
   // Reschedule Propose Modal State
   showRescheduleModal = false;
@@ -295,12 +291,16 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.cancelAppId = appId;
     this.cancelReason = '';
     this.showCancelModal = true;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
   }
 
   closeCancelModal(): void {
     this.showCancelModal = false;
     this.cancelAppId = '';
     this.cancelReason = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
   submitCancel(): void {
@@ -326,6 +326,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.rescheduleTime = '';
     this.rescheduleReason = '';
     this.showRescheduleModal = true;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
   }
 
   validateRescheduleDate(): void {
@@ -350,6 +352,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   closeRescheduleModal(): void {
     this.showRescheduleModal = false;
     this.selectedRescheduleAppId = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
   submitReschedulePropose(): void {
@@ -384,12 +388,16 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.assignTimeInput = '';
     this.assignTimeComment = '';
     this.showAssignTimeModal = true;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
   }
 
   closeAssignTimeModal(): void {
     this.showAssignTimeModal = false;
     this.selectedAssignTimeAppId = '';
     this.selectedAssignTimeAppDate = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
   submitAssignTime(): void {
@@ -416,6 +424,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.selectedAppointmentForDetails = app;
     this.isDetailsLoading = true;
     this.showPatientDetailsModal = true;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     
     // Fetch Patient Details
     this.appointmentService.getPatientDetails(app.patientId).subscribe({
@@ -438,11 +448,25 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.showMedicalHistoryModal = true;
     this.isHistoryLoading = true;
     this.patientHistory = [];
+    this.historyClinicFilters = {};
+    this.historyStatusFilters = {
+      Completed: true,
+      Confirmed: true,
+      Pending: true,
+      Cancelled: true,
+      Rejected: true
+    };
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     // Fetch Medical History
     this.appointmentService.getAdminDoctorDashboard({ patientId: app.patientId }, 1, 100).subscribe({
       next: (res) => {
         this.patientHistory = res.items.sort((a: any, b: any) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime());
+        this.patientHistory.forEach((item: any) => {
+          const clinic = item.clinicName || 'Direct';
+          this.historyClinicFilters[clinic] = true;
+        });
         this.isHistoryLoading = false;
       },
       error: (err) => {
@@ -455,43 +479,66 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   closeMedicalHistoryModal(): void {
     this.showMedicalHistoryModal = false;
     this.patientHistory = [];
-    this.historyFilters = {
-      Completed: true,
-      Cancelled: true,
-      Rejected: true,
-      Confirmed: true,
-      Pending: true
-    };
+    this.historyClinicFilters = {};
+    this.historyStatusFilters = {};
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+
+  getUniqueClinicsFromHistory(): string[] {
+    const clinics = this.patientHistory
+      .map(h => h.clinicName || 'Direct')
+      .filter(name => !!name);
+    return Array.from(new Set(clinics));
+  }
+
+  getSelectedClinicsCount(): number {
+    return Object.values(this.historyClinicFilters).filter(v => v).length;
+  }
+
+  isAllHistoryClinicsSelected(): boolean {
+    const clinics = this.getUniqueClinicsFromHistory();
+    return clinics.every(c => this.historyClinicFilters[c] !== false);
+  }
+
+  toggleAllHistoryClinics(checked: boolean): void {
+    const clinics = this.getUniqueClinicsFromHistory();
+    clinics.forEach(c => this.historyClinicFilters[c] = checked);
+  }
+
+  getSelectedStatusesCount(): number {
+    return Object.values(this.historyStatusFilters).filter(v => v).length;
+  }
+
+  isAllHistoryStatusesSelected(): boolean {
+    const statuses = ['Completed', 'Confirmed', 'Pending', 'Cancelled', 'Rejected'];
+    return statuses.every(s => this.historyStatusFilters[s] !== false);
+  }
+
+  toggleAllHistoryStatuses(checked: boolean): void {
+    const statuses = ['Completed', 'Confirmed', 'Pending', 'Cancelled', 'Rejected'];
+    statuses.forEach(s => this.historyStatusFilters[s] = checked);
   }
 
   getFilteredHistory(): any[] {
     return this.patientHistory.filter((h: any) => {
+      // Clinic Match
+      const clinic = h.clinicName || 'Direct';
+      const clinicMatch = this.historyClinicFilters[clinic] !== false;
+
+      // Status Match
       const status = h.status;
-      if (status === 'Completed') return this.historyFilters.Completed;
-      if (status === 'Cancelled') return this.historyFilters.Cancelled;
-      if (status === 'Rejected') return this.historyFilters.Rejected;
-      if (status === 'Confirmed') return this.historyFilters.Confirmed;
-      if (status === 'Pending') return this.historyFilters.Pending;
-      if (status === 'RescheduleProposed') return this.historyFilters.Pending;
-      if (status === 'FollowUpProposed') return this.historyFilters.Pending;
-      return true;
+      let statusMatch = false;
+      if (status === 'Completed') statusMatch = this.historyStatusFilters['Completed'] !== false;
+      else if (status === 'Confirmed') statusMatch = this.historyStatusFilters['Confirmed'] !== false;
+      else if (status === 'Pending' || status === 'RescheduleProposed' || status === 'FollowUpProposed') {
+        statusMatch = this.historyStatusFilters['Pending'] !== false;
+      }
+      else if (status === 'Cancelled') statusMatch = this.historyStatusFilters['Cancelled'] !== false;
+      else if (status === 'Rejected') statusMatch = this.historyStatusFilters['Rejected'] !== false;
+
+      return clinicMatch && statusMatch;
     });
-  }
-
-  toggleAllHistoryFilters(checked: boolean): void {
-    this.historyFilters.Completed = checked;
-    this.historyFilters.Confirmed = checked;
-    this.historyFilters.Pending = checked;
-    this.historyFilters.Cancelled = checked;
-    this.historyFilters.Rejected = checked;
-  }
-
-  isAllHistoryFiltersSelected(): boolean {
-    return this.historyFilters.Completed &&
-           this.historyFilters.Confirmed &&
-           this.historyFilters.Pending &&
-           this.historyFilters.Cancelled &&
-           this.historyFilters.Rejected;
   }
 
   getHistoryStatusCount(status: string): number {
@@ -506,6 +553,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   closePatientDetailsModal(): void {
     this.showPatientDetailsModal = false;
     this.selectedPatientDetails = null;
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
 
@@ -540,6 +589,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     this.showTimelineModal = true;
     this.isTimelineLoading = true;
     this.timelineLogs = [];
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     
     this.appointmentService.getAuditLogs(1, 100, undefined, appointmentId).subscribe({
       next: (res) => {
@@ -556,5 +607,17 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
   closeTimelineModal(): void {
     this.showTimelineModal = false;
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const elements = document.querySelectorAll('details.multiselect-dropdown');
+    elements.forEach(el => {
+      if (!el.contains(event.target as Node)) {
+        el.removeAttribute('open');
+      }
+    });
   }
 }

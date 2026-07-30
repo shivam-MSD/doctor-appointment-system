@@ -150,13 +150,20 @@
           totalCount) }}</strong> of <strong>{{ totalCount }}</strong> logs
       </span>
 
-      <div class="pagination-controls">
+      <div class="pagination-controls" style="gap: 6px;">
         <button class="page-btn" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">
-          <i class="fas fa-chevron-left"></i> Prev
+          Prev
         </button>
-        <span class="page-current">Page {{ currentPage }} of {{ totalPages }}</span>
+
+        <ng-container *ngFor="let page of getPageNumbers()">
+          <button *ngIf="page !== '...'" class="page-num-btn" [class.active]="currentPage === page" (click)="onPageChange($any(page))">
+            {{ page }}
+          </button>
+          <span *ngIf="page === '...'" style="padding: 0 8px; color: var(--text-muted); font-weight: bold;">...</span>
+        </ng-container>
+
         <button class="page-btn" [disabled]="currentPage === totalPages" (click)="onPageChange(currentPage + 1)">
-          Next <i class="fas fa-chevron-right"></i>
+          Next
         </button>
       </div>
     </div>
@@ -194,7 +201,54 @@
           "{{ selectedLog.notes }}"
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <!-- View Mode Switcher Tabs -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; flex-shrink: 0;">
+          <button class="premium-btn" 
+            [style.background]="viewMode === 'friendly' ? 'var(--accent-cyan)' : 'transparent'"
+            [style.color]="viewMode === 'friendly' ? 'white' : 'var(--text-secondary)'"
+            [style.border]="viewMode === 'friendly' ? 'none' : '1px solid var(--border-color)'"
+            style="padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; font-weight: 600; cursor: pointer;"
+            (click)="viewMode = 'friendly'">
+            📋 Human-Readable Changes
+          </button>
+          <button class="premium-btn" 
+            [style.background]="viewMode === 'json' ? 'var(--accent-cyan)' : 'transparent'"
+            [style.color]="viewMode === 'json' ? 'white' : 'var(--text-secondary)'"
+            [style.border]="viewMode === 'json' ? 'none' : '1px solid var(--border-color)'"
+            style="padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; font-weight: 600; cursor: pointer;"
+            (click)="viewMode = 'json'">
+            💻 Raw JSON Data
+          </button>
+        </div>
+
+        <!-- Human-Readable Friendly Mode -->
+        <div *ngIf="viewMode === 'friendly'" style="margin-bottom: 10px;">
+          <div *ngIf="getDiffList(selectedLog.oldDataJson, selectedLog.newDataJson).length === 0" 
+            style="text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; background: rgba(0,0,0,0.01); border-radius: 8px; border: 1px dashed var(--border-color);">
+            No property changes detected.
+          </div>
+          <div *ngIf="getDiffList(selectedLog.oldDataJson, selectedLog.newDataJson).length > 0" class="table-responsive">
+            <table class="dashboard-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th style="padding: 10px 12px; text-align: left; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color);">Field Name</th>
+                  <th style="padding: 10px 12px; text-align: left; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color);">Before Change</th>
+                  <th style="padding: 10px 12px; text-align: left; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color);">After Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let diff of getDiffList(selectedLog.oldDataJson, selectedLog.newDataJson)" style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 10px 12px; font-weight: 600; color: var(--text-primary); font-size: 0.85rem;">{{ diff.label }}</td>
+                  <td style="padding: 10px 12px; color: #ef4444; background: rgba(239, 68, 68, 0.02); font-size: 0.85rem; font-family: monospace;">{{ diff.oldVal }}</td>
+                  <td style="padding: 10px 12px; color: #10b981; background: rgba(16, 185, 129, 0.02); font-weight: 600; font-size: 0.85rem; font-family: monospace;">{{ diff.newVal }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Raw JSON Data Mode -->
+        <div *ngIf="viewMode === 'json'" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
           <div
             style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 15px; border-radius: 8px;">
             <div

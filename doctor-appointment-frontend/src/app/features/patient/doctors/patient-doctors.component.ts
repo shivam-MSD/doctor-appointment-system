@@ -27,6 +27,7 @@ export class PatientDoctorsComponent implements OnInit, OnDestroy {
   size = 5;
   totalCount = 0;
   totalPages = 1;
+  Math = Math;
 
   errorMessage = '';
   isDoctorsLoading = true;
