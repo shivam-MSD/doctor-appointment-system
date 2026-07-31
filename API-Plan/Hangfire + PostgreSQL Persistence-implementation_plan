@@ -1,0 +1,55 @@
+# Implementation Plan: Hangfire + PostgreSQL Persistence
+
+Integrate **Hangfire** with **PostgreSQL Database Persistence** in ASP.NET Core to ensure 100% background job crash survival, automatic retries, and real-time job monitoring via `/hangfire` dashboard.
+
+---
+
+## Why Hangfire vs Kafka?
+
+```mermaid
+graph TD
+    subgraph HealSync Web Architecture
+        A[ASP.NET Core Web API] -->|Enqueues Job| B[Hangfire Job Processor]
+        B -->|Persists Job State| C[(PostgreSQL Database)]
+        B -->|Executes Background| D[Email & WebPush Service]
+    end
+```
+
+| Criteria | Hangfire (Chosen Solution) | Apache Kafka |
+| :--- | :--- | :--- |
+| **Infrastructure Overhead** | **Zero extra servers** (Uses existing PostgreSQL DB) | Requires multi-broker Kafka/Zookeeper cluster servers |
+| **Integration Complexity** | Native .NET C# extension | Complex Java/Scala binary broker orchestration |
+| **Crash Survival** | **100% DB Persisted** in PostgreSQL | 100% Persisted in Kafka Commit Log |
+| **Dashboard UI** | Included native web UI (`/hangfire`) | Requires 3rd-party UI (Confluent / AKHQ) |
+| **Best Fit** | Monolithic & Modular .NET Web APIs (HealSync) | Distributed microservice networks (Uber, Netflix) |
+
+---
+
+## Proposed Changes
+
+### Backend (C# ASP.NET Core)
+
+#### [MODIFY] [DoctorAppointmentSystem.csproj](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/DoctorAppointmentSystem.csproj)
+- Add NuGet packages: `Hangfire.Core`, `Hangfire.AspNetCore`, `Hangfire.PostgreSql`.
+
+#### [MODIFY] [Program.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Program.cs)
+- Configure `builder.Services.AddHangfire` with `UsePostgreSqlStorage`.
+- Register `builder.Services.AddHangfireServer`.
+- Map `app.UseHangfireDashboard("/hangfire")`.
+
+#### [NEW] [HangfireJobService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/HangfireJobService.cs)
+- Create `IHangfireJobService` interface and implementation to wrap `BackgroundJob.Enqueue(...)` for sending emails and push notifications.
+
+#### [MODIFY] [AppointmentService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AppointmentService.cs)
+- Replace transient background queue calls with `_hangfireJobService.EnqueueEmail(...)` to guarantee emails and notifications survive server restarts.
+
+---
+
+## Verification Plan
+
+### Automated Verification
+- Run `dotnet build` to verify clean compilation with 0 errors.
+
+### Manual Verification
+- Access `http://localhost:5000/hangfire` (or backend port) to view the live Hangfire Job Dashboard.
+- Trigger an appointment action (e.g. book/cancel appointment) and verify jobs appear in the Hangfire "Succeeded" or "Processing" queue.

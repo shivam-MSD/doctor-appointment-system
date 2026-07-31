@@ -19,17 +19,20 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly INotificationService _notificationService;
 		private readonly IEmailService _emailService;
 		private readonly IPasswordSecurityService _passwordSecurityService;
+		private readonly IHangfireJobService _hangfireJob;
 
 		public ClinicService(
 			ApplicationDbContext dbContext, 
 			INotificationService notificationService,
 			IEmailService emailService,
-			IPasswordSecurityService passwordSecurityService)
+			IPasswordSecurityService passwordSecurityService,
+			IHangfireJobService hangfireJob)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
 			_emailService = emailService;
 			_passwordSecurityService = passwordSecurityService;
+			_hangfireJob = hangfireJob;
 		}
 
 
@@ -755,7 +758,7 @@ namespace DoctorAppointmentSystem.Application.Services
 
 					await _dbContext.SaveChangesAsync();
 
-					await _notificationService.CreateNotificationAsync(parent.Doctor.User.UserId, $"Your proposed edits for clinic branch '{parent.ClinicName}' have been approved and applied.");
+					_hangfireJob.EnqueueNotification(parent.Doctor.User.UserId.ToString(), $"Your proposed edits for clinic branch '{parent.ClinicName}' have been approved and applied.");
 
 					var editEmailSubject = $"Clinic Branch Edits Approved: {parent.ClinicName}";
 					var editEmailBody = $@"
@@ -795,7 +798,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				clinic.RejectionReason = null;
 				await _dbContext.SaveChangesAsync();
 
-				await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your clinic branch '{clinic.ClinicName}' has been verified and approved by the Super Admin.");
+				_hangfireJob.EnqueueNotification(clinic.Doctor.User.UserId.ToString(), $"Your clinic branch '{clinic.ClinicName}' has been verified and approved by the Super Admin.");
 
 				var emailSubject = $"Clinic Branch Approved: {clinic.ClinicName}";
 				var emailBody = $@"
@@ -891,12 +894,12 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			// Notify Admin user they have been approved
-			await _notificationService.CreateNotificationAsync(admin.User.UserId, $"Your Clinic Admin account for '{clinicName}' has been approved and activated.");
+			_hangfireJob.EnqueueNotification(admin.User.UserId.ToString(), $"Your Clinic Admin account for '{clinicName}' has been approved and activated.");
 			
 			// Notify Doctor user that their admin has been approved
 			if (doctorUserId.HasValue)
 			{
-				await _notificationService.CreateNotificationAsync(doctorUserId.Value, $"The Clinic Admin {admin.FirstName} {admin.LastName} assigned to '{clinicName}' has been approved.");
+				_hangfireJob.EnqueueNotification(doctorUserId.Value.ToString(), $"The Clinic Admin {admin.FirstName} {admin.LastName} assigned to '{clinicName}' has been approved.");
 
 				var doctorUserObj = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.User;
 				var doctorFirstName = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.FirstName;
@@ -1020,7 +1023,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			// Notify the doctor
 			if (doctorUserId != Guid.Empty)
 			{
-				await _notificationService.CreateNotificationAsync(doctorUserId, $"The Clinic Admin {adminName} assigned to '{clinicName}' has been rejected by the Super Admin.");
+				_hangfireJob.EnqueueNotification(doctorUserId.ToString(), $"The Clinic Admin {adminName} assigned to '{clinicName}' has been rejected by the Super Admin.");
 			}
 			await _notificationService.SendRefreshSignalAsync("Admins");
 			return adminName;
@@ -1061,7 +1064,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				_dbContext.Addresses.Remove(clinic.Address);
 				await _dbContext.SaveChangesAsync();
 
-				await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your proposed edits for clinic branch '{clinic.ClinicName}' were rejected by the Super Admin.<br><b>Reason: {rejectionReason}</b>");
+				_hangfireJob.EnqueueNotification(clinic.Doctor.User.UserId.ToString(), $"Your proposed edits for clinic branch '{clinic.ClinicName}' were rejected by the Super Admin.<br><b>Reason: {rejectionReason}</b>");
 
 				var editRejectionSubject = $"Clinic Branch Edits Rejected: {clinic.ClinicName}";
 				var editRejectionBody = $@"
@@ -1100,7 +1103,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				clinic.RejectionReason = rejectionReason;
 				await _dbContext.SaveChangesAsync();
 
-				await _notificationService.CreateNotificationAsync(clinic.Doctor.User.UserId, $"Your clinic branch '{clinic.ClinicName}' registration has been rejected.<br><b>Reason: {rejectionReason}</b>");
+				_hangfireJob.EnqueueNotification(clinic.Doctor.User.UserId.ToString(), $"Your clinic branch '{clinic.ClinicName}' registration has been rejected.<br><b>Reason: {rejectionReason}</b>");
 
 				var emailSubject = $"Clinic Registration Rejected: {clinic.ClinicName}";
 				var emailBody = $@"

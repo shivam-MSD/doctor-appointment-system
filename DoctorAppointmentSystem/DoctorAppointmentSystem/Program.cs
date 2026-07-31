@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
@@ -120,6 +122,14 @@ builder.Services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<object>
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IPasswordSecurityService, DoctorAppointmentSystem.Application.Services.PasswordSecurityService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IWebPushService, DoctorAppointmentSystem.Application.Services.WebPushService>();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IHangfireJobService, DoctorAppointmentSystem.Application.Services.HangfireJobService>();
+
+builder.Services.AddHangfire(config => config
+	.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+	.UseSimpleAssemblyNameTypeSerializer()
+	.UseRecommendedSerializerSettings()
+	.UsePostgreSqlStorage(options => options.UseNpgsqlConnection(connectionString)));
+builder.Services.AddHangfireServer();
 
 builder.Services.AddSingleton<DoctorAppointmentSystem.Application.Services.IBackgroundQueueService, DoctorAppointmentSystem.Application.Services.BackgroundQueueService>();
 builder.Services.AddHostedService<DoctorAppointmentSystem.Application.Services.BackgroundQueueHostedService>();
@@ -158,6 +168,8 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 app.UseHttpsRedirection();
 
 app.UseCors();
+
+app.UseHangfireDashboard("/hangfire");
 
 app.UseAuthentication();
 app.UseAuthorization();

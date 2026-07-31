@@ -18,6 +18,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly IServiceProvider _serviceProvider;
 		private readonly IEmailService _emailService;
 		private readonly IBackgroundQueueService _backgroundQueue;
+		private readonly IHangfireJobService _hangfireJob;
 		private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
 		public delegate void AppointmentActionLoggedEventHandler(object sender, AppointmentActionEventArgs e);
@@ -35,7 +36,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			IDistributedCache distributedCache,
 			IServiceProvider serviceProvider,
 			IEmailService emailService,
-			IBackgroundQueueService backgroundQueue)
+			IBackgroundQueueService backgroundQueue,
+			IHangfireJobService hangfireJob)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
@@ -43,6 +45,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			_serviceProvider = serviceProvider;
 			_emailService = emailService;
 			_backgroundQueue = backgroundQueue;
+			_hangfireJob = hangfireJob;
 
 			this.OnAppointmentActionLogged += HandleAppointmentActionLogged;
 		}
@@ -163,7 +166,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				var msg = $"New appointment #{appointment.QueueNumber} booked by {patient.FirstName} {patient.LastName} for {dateStr}.";
 
 				// Notify Doctor
-				await _notificationService.CreateNotificationAsync(doctor.User.UserId, msg);
+				_hangfireJob.EnqueueNotification(doctor.User.UserId.ToString(), msg);
 
 				// Notify Clinic Admin
 				if (clinic != null)
@@ -174,7 +177,7 @@ namespace DoctorAppointmentSystem.Application.Services
 						.FirstOrDefaultAsync();
 					if (adminUserIdObj.HasValue)
 					{
-						await _notificationService.CreateNotificationAsync(adminUserIdObj.Value, msg);
+						_hangfireJob.EnqueueNotification(adminUserIdObj.Value.ToString(), msg);
 					}
 				}
 				await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -194,12 +197,9 @@ namespace DoctorAppointmentSystem.Application.Services
 					var appDateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
 					var queueStr = $"Queue #{appointment.QueueNumber} (Pending Time)";
 
-					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-					{
-						await SendAppointmentEmailAsync(
-							emailTo, emailSubject, emailTitle, emailMsg, docName, appDateStr, queueStr, clinic
-						);
-					});
+					_hangfireJob.EnqueueAppointmentEmail(
+						emailTo, emailSubject, emailTitle, emailMsg, docName, appDateStr, queueStr, clinic?.ClinicName ?? "HealSync Clinic", clinic?.Address?.Addressline1 ?? "Main Branch"
+					);
 				}
 
 				return MapToDto(appointment, patient, doctor);
@@ -263,12 +263,9 @@ namespace DoctorAppointmentSystem.Application.Services
 						var emailTo = userPatient.User.Email;
 						var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
 
-						_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-						{
-							await SendAppointmentEmailAsync(
-								emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
-							);
-						});
+						_hangfireJob.EnqueueAppointmentEmail(
+							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic?.ClinicName ?? "HealSync Clinic", appointment.Clinic?.Address?.Addressline1 ?? "Main Branch"
+						);
 					}
 
 					await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -350,7 +347,7 @@ namespace DoctorAppointmentSystem.Application.Services
             .FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
         if (patientUser != null)
         {
-            await _notificationService.CreateNotificationAsync(patientUser.UserId, msg);
+            _hangfireJob.EnqueueNotification(patientUser.UserId.ToString(), msg);
 
             if (patientUser.User != null)
             {
@@ -363,12 +360,9 @@ namespace DoctorAppointmentSystem.Application.Services
                 var emailTo = patientUser.User.Email;
                 var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
 
-                _backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-                {
-                    await SendAppointmentEmailAsync(
-                        emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
-                    );
-                });
+                _hangfireJob.EnqueueAppointmentEmail(
+                    emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic?.ClinicName ?? "HealSync Clinic", appointment.Clinic?.Address?.Addressline1 ?? "Main Branch"
+                );
             }
         }
         await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -1019,12 +1013,9 @@ namespace DoctorAppointmentSystem.Application.Services
 					var emailTo = userPatient.User.Email;
 					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
 
-					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-					{
-						await SendAppointmentEmailAsync(
-							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
-						);
-					});
+					_hangfireJob.EnqueueAppointmentEmail(
+						emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic?.ClinicName ?? "HealSync Clinic", appointment.Clinic?.Address?.Addressline1 ?? "Main Branch"
+					);
 				}
 			}
 			await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -1176,7 +1167,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
 			if (userPatient != null)
 			{
-				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been approved.");
+				_hangfireJob.EnqueueNotification(userPatient.UserId.ToString(), $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been approved.");
 				
 				// Send Email to Patient
 				if (userPatient.User != null)
@@ -1190,12 +1181,9 @@ namespace DoctorAppointmentSystem.Application.Services
 					var emailTo = userPatient.User.Email;
 					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
 
-					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-					{
-						await SendAppointmentEmailAsync(
-							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
-						);
-					});
+					_hangfireJob.EnqueueAppointmentEmail(
+						emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic?.ClinicName ?? "HealSync Clinic", appointment.Clinic?.Address?.Addressline1 ?? "Main Branch"
+					);
 				}
 			}
 			await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -1232,7 +1220,7 @@ namespace DoctorAppointmentSystem.Application.Services
 				.FirstOrDefaultAsync(up => up.PatientId == appointment.Patient.PatientId);
 			if (userPatient != null)
 			{
-				await _notificationService.CreateNotificationAsync(userPatient.UserId, $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} was rejected. Reason: {reason}");
+				_hangfireJob.EnqueueNotification(userPatient.UserId.ToString(), $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} was rejected. Reason: {reason}");
 
 				if (userPatient.User != null)
 				{
@@ -1244,12 +1232,9 @@ namespace DoctorAppointmentSystem.Application.Services
 					var emailTo = userPatient.User.Email;
 					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
 
-					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-					{
-						await SendAppointmentEmailAsync(
-							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, "Rejected / Declined", appointment.Clinic
-						);
-					});
+					_hangfireJob.EnqueueAppointmentEmail(
+						emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, "Rejected / Declined", appointment.Clinic?.ClinicName ?? "HealSync Clinic", appointment.Clinic?.Address?.Addressline1 ?? "Main Branch"
+					);
 				}
 			}
 			await _notificationService.SendRefreshSignalAsync("Appointments");
@@ -1291,7 +1276,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				// 1. Send Completion Notification & Email
 				var completeMsg = $"Your appointment with Dr. {appointment.Doctor.FirstName} {appointment.Doctor.LastName} has been marked as Completed.";
-				await _notificationService.CreateNotificationAsync(userPatient.UserId, completeMsg);
+				_hangfireJob.EnqueueNotification(userPatient.UserId.ToString(), completeMsg);
 
 				if (userPatient.User != null)
 				{
@@ -1308,14 +1293,11 @@ namespace DoctorAppointmentSystem.Application.Services
 					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
 					var timeOrStatusStr = $"{timeStr} (Completed)";
 
-					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-					{
-						await SendAppointmentEmailAsync(
-							toEmail: emailTo, subject: emailSubject, title: emailTitle, message: emailMsg,
-							doctorName: docName, dateStr: dateStr, timeOrStatus: timeOrStatusStr, clinic: appointment.Clinic,
-							patientName: patientFullName, comment: comment, report: report, followUpStr: followUpDetail
-						);
-					});
+					_hangfireJob.EnqueueAppointmentEmail(
+						toEmail: emailTo, subject: emailSubject, title: emailTitle, message: emailMsg,
+						doctorName: docName, dateStr: dateStr, timeOrStatus: timeOrStatusStr, clinicName: appointment.Clinic?.ClinicName ?? "HealSync Clinic", clinicAddress: appointment.Clinic?.Address?.Addressline1 ?? "Main Branch",
+						patientName: patientFullName, comment: comment, report: report, followUpStr: followUpDetail
+					);
 				}
 
 				// 2. If follow-up details are provided, create the follow-up appointment request and send notifications/emails
@@ -1634,7 +1616,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			
 			foreach (var up in userPatients)
 			{
-				await _notificationService.CreateNotificationAsync(up.UserId, $"A new reschedule time has been proposed for your appointment on {appointment.AppointmentDate:MMM dd, yyyy}. Please review it.");
+				_hangfireJob.EnqueueNotification(up.UserId.ToString(), $"A new reschedule time has been proposed for your appointment on {appointment.AppointmentDate:MMM dd, yyyy}. Please review it.");
 				
 				if (up.User != null)
 				{
@@ -1647,12 +1629,9 @@ namespace DoctorAppointmentSystem.Application.Services
 					var emailTo = up.User.Email;
 					var dateStr = dto.ProposedDate.ToString("dd MMM yyyy");
 
-					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
-					{
-						await SendAppointmentEmailAsync(
-							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
-						);
-					});
+					_hangfireJob.EnqueueAppointmentEmail(
+						emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic?.ClinicName ?? "HealSync Clinic", appointment.Clinic?.Address?.Addressline1 ?? "Main Branch"
+					);
 				}
 			}
 
@@ -1791,7 +1770,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 		}
 
-		private async Task SendAppointmentEmailAsync(
+		public async Task SendAppointmentEmailAsync(
 			string toEmail,
 			string subject,
 			string title,

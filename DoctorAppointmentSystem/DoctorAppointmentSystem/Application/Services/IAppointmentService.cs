@@ -43,5 +43,22 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		/// <summary>Sets doctor's auto reschedule date preference.</summary>
 		Task SetDoctorAutoRescheduleDateAsync(Guid userId, DateTime? rescheduleDate);
+
+		/// <summary>Send appointment HTML email in background.</summary>
+		Task SendAppointmentEmailAsync(
+			string toEmail,
+			string subject,
+			string title,
+			string message,
+			string doctorName,
+			string dateStr,
+			string timeOrStatus,
+			Clinic? clinic,
+			string? patientName = null,
+			string? comment = null,
+			string? report = null,
+			string? followUpStr = null,
+			string? cancelledBy = null,
+			string? cancelReason = null);
 	}
 }
