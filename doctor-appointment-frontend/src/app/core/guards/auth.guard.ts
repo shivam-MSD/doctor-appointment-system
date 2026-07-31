@@ -13,10 +13,9 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     const expectedRole = route.data['expectedRole'];
-    const loginRoute = route.data['loginRoute'];
 
     if (!this.authService.isAuthenticated(expectedRole)) {
-      this.redirectToLogin(state.url, loginRoute);
+      this.redirectToLogin(expectedRole);
       return false;
     }
 
@@ -31,16 +30,14 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 
-  private redirectToLogin(currentUrl: string, targetLoginRoute?: string) {
-    if (targetLoginRoute) {
-      this.router.navigate([targetLoginRoute]);
-      return;
-    }
-    const role = this.authService.getRole();
-    if (role) {
-      this.router.navigate([`/${role.toLowerCase()}/login`]);
+  private redirectToLogin(expectedRole?: string) {
+    const role = expectedRole || this.authService.getRole() || 'Patient';
+    if (role === 'Admin') {
+      this.router.navigate(['/admin/login']);
+    } else if (role === 'SuperAdmin') {
+      this.router.navigate(['/superadmin/login']);
     } else {
-      this.router.navigate(['/patient/login']);
+      this.router.navigate(['/login'], { queryParams: { role } });
     }
   }
 

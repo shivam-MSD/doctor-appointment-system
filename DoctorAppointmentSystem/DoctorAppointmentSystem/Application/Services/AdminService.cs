@@ -22,19 +22,22 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly IDistributedCache _distributedCache;
 		private readonly IEmailService _emailService;
 		private readonly IPasswordSecurityService _passwordSecurityService;
+		private readonly Microsoft.Extensions.Logging.ILogger<AdminService> _logger;
 
 		public AdminService(
 			ApplicationDbContext dbContext,
 			INotificationService notificationService,
 			IDistributedCache distributedCache,
 			IEmailService emailService,
-			IPasswordSecurityService passwordSecurityService)
+			IPasswordSecurityService passwordSecurityService,
+			Microsoft.Extensions.Logging.ILogger<AdminService> logger)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
 			_distributedCache = distributedCache;
 			_emailService = emailService;
 			_passwordSecurityService = passwordSecurityService;
+			_logger = logger;
 		}
 
 		private string HashPassword(string password)
@@ -170,11 +173,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 				try
 				{
-					await _emailService.SendEmailAsync(doctor.User.Email, emailSubject, emailBody);
+					Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(doctor.User.Email, emailSubject, emailBody));
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine($"[Email Error]: Failed to send approval email to doctor: {ex.Message}");
+					_logger.LogError(ex, "[AdminService] Failed to enqueue approval email for doctor {Email}", doctor.User.Email);
 				}
 			}
 

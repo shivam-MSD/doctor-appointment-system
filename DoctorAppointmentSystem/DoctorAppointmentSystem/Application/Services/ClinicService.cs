@@ -20,19 +20,22 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly IEmailService _emailService;
 		private readonly IPasswordSecurityService _passwordSecurityService;
 		private readonly IHangfireJobService _hangfireJob;
+		private readonly Microsoft.Extensions.Logging.ILogger<ClinicService> _logger;
 
 		public ClinicService(
 			ApplicationDbContext dbContext, 
 			INotificationService notificationService,
 			IEmailService emailService,
 			IPasswordSecurityService passwordSecurityService,
-			IHangfireJobService hangfireJob)
+			IHangfireJobService hangfireJob,
+			Microsoft.Extensions.Logging.ILogger<ClinicService> logger)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
 			_emailService = emailService;
 			_passwordSecurityService = passwordSecurityService;
 			_hangfireJob = hangfireJob;
+			_logger = logger;
 		}
 
 
@@ -324,11 +327,11 @@ namespace DoctorAppointmentSystem.Application.Services
 			
 			try 
 			{
-				await _emailService.SendEmailAsync(doctor.User.Email, emailSubject, emailBody);
+				Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(doctor.User.Email, emailSubject, emailBody));
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Error sending clinic registration email: {ex.Message}");
+				_logger.LogError(ex, "[ClinicService] Error enqueueing clinic registration email for {Email}", doctor.User.Email);
 			}
 		}
 
@@ -459,11 +462,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			try
 			{
-				await _emailService.SendEmailAsync(doctor.User.Email, adminEmailSubject, adminEmailBody);
+				Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(doctor.User.Email, adminEmailSubject, adminEmailBody));
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Error sending admin registration email: {ex.Message}");
+				_logger.LogError(ex, "[ClinicService] Error enqueueing admin registration email for {Email}", doctor.User.Email);
 			}
 		}
 
@@ -775,9 +778,12 @@ namespace DoctorAppointmentSystem.Application.Services
 						</div>";
 					try
 					{
-						await _emailService.SendEmailAsync(parent.Doctor.User.Email, editEmailSubject, editEmailBody);
+						Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(parent.Doctor.User.Email, editEmailSubject, editEmailBody));
 					}
-					catch {}
+					catch (Exception ex)
+					{
+						_logger.LogError(ex, "[ClinicService] Failed to enqueue clinic edit approval email for {Email}", parent.Doctor.User.Email);
+					}
 				}
 			}
 			else
@@ -825,9 +831,12 @@ namespace DoctorAppointmentSystem.Application.Services
 					</div>";
 				try
 				{
-					await _emailService.SendEmailAsync(clinic.Doctor.User.Email, emailSubject, emailBody);
+					Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(clinic.Doctor.User.Email, emailSubject, emailBody));
 				}
-				catch {}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "[ClinicService] Failed to enqueue clinic approval email for {Email}", clinic.Doctor.User.Email);
+				}
 			}
 
 			await _notificationService.SendRefreshSignalAsync("Clinics");
@@ -889,11 +898,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			try
 			{
-				await _emailService.SendEmailAsync(admin.User.Email, emailSubject, emailBody);
+				Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(admin.User.Email, emailSubject, emailBody));
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"[Email Error]: Failed to send approval email to admin: {ex.Message}");
+				_logger.LogError(ex, "[ClinicService] Failed to enqueue approval email for admin {Email}", admin.User.Email);
 			}
 
 			// Notify Admin user they have been approved
@@ -920,9 +929,12 @@ namespace DoctorAppointmentSystem.Application.Services
 						</div>";
 					try
 					{
-						await _emailService.SendEmailAsync(doctorUserObj.Email, docEmailSubject, docEmailBody);
+						Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(doctorUserObj.Email, docEmailSubject, docEmailBody));
 					}
-					catch {}
+					catch (Exception ex)
+					{
+						_logger.LogError(ex, "[ClinicService] Failed to enqueue admin approval notification for doctor {Email}", doctorUserObj.Email);
+					}
 				}
 			}
 
@@ -962,11 +974,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			try
 			{
-				await _emailService.SendEmailAsync(admin.User.Email, emailSubject, emailBody);
+				Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(admin.User.Email, emailSubject, emailBody));
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"[Email Error]: Failed to send rejection email to admin: {ex.Message}");
+				_logger.LogError(ex, "[ClinicService] Failed to enqueue rejection email for admin {Email}", admin.User.Email);
 			}
 
 			var doctorUserObj = admin.AdminClinics?.FirstOrDefault()?.Clinic?.Doctor?.User;
@@ -986,9 +998,12 @@ namespace DoctorAppointmentSystem.Application.Services
 					</div>";
 				try
 				{
-					await _emailService.SendEmailAsync(doctorUserObj.Email, docEmailSubject, docEmailBody);
+					Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(doctorUserObj.Email, docEmailSubject, docEmailBody));
 				}
-				catch {}
+				catch (Exception ex)
+				{
+					_logger.LogError(ex, "[ClinicService] Failed to enqueue admin rejection email for doctor {Email}", doctorUserObj.Email);
+				}
 			}
 
 			var adminDetails = new

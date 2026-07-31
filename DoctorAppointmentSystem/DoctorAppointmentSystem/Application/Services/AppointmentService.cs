@@ -19,6 +19,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly IEmailService _emailService;
 		private readonly IBackgroundQueueService _backgroundQueue;
 		private readonly IHangfireJobService _hangfireJob;
+		private readonly Microsoft.Extensions.Logging.ILogger<AppointmentService> _logger;
 		private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
 		public delegate void AppointmentActionLoggedEventHandler(object sender, AppointmentActionEventArgs e);
@@ -37,7 +38,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			IServiceProvider serviceProvider,
 			IEmailService emailService,
 			IBackgroundQueueService backgroundQueue,
-			IHangfireJobService hangfireJob)
+			IHangfireJobService hangfireJob,
+			Microsoft.Extensions.Logging.ILogger<AppointmentService> logger)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
@@ -46,6 +48,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			_emailService = emailService;
 			_backgroundQueue = backgroundQueue;
 			_hangfireJob = hangfireJob;
+			_logger = logger;
 
 			this.OnAppointmentActionLogged += HandleAppointmentActionLogged;
 		}
@@ -1950,11 +1953,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			try
 			{
-				await _emailService.SendEmailAsync(toEmail, subject, htmlBody);
+				Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(toEmail, subject, htmlBody));
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"[Email System Error]: Failed to send email to {toEmail}: {ex.Message}");
+				_logger.LogError(ex, "[Email System Error]: Failed to enqueue email job to Hangfire for {ToEmail}", toEmail);
 			}
 		}
 

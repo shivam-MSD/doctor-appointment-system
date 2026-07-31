@@ -7,7 +7,7 @@
       <p>Sign in to your HealSync account</p>
     </div>
 
-    <!-- Role Selector Tabs (Public Users Only) -->
+    <!-- Role Selector Tabs (Public Users Only: Patient & Doctor) -->
     <div class="role-tabs" *ngIf="!isFixedRole">
       <button type="button" class="tab-btn" [class.active]="selectedRole === 'Patient'" (click)="selectRole('Patient')">👤 Patient</button>
       <button type="button" class="tab-btn" [class.active]="selectedRole === 'Doctor'" (click)="selectRole('Doctor')">🩺 Doctor</button>

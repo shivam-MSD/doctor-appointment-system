@@ -43,6 +43,8 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly IOtpService _otpService;
 		private readonly IPasswordHasher<object> _passwordHasher;
 		private readonly IPasswordSecurityService _passwordSecurityService;
+		private readonly IHttpContextAccessor _httpContextAccessor;
+		private readonly Microsoft.Extensions.Logging.ILogger<AuthService> _logger;
 
 		public AuthService(
 			ApplicationDbContext dbContext,
@@ -52,7 +54,9 @@ namespace DoctorAppointmentSystem.Application.Services
 			IDistributedCache distributedCache,
 			IOtpService otpService,
 			IPasswordHasher<object> passwordHasher,
-			IPasswordSecurityService passwordSecurityService)
+			IPasswordSecurityService passwordSecurityService,
+			IHttpContextAccessor httpContextAccessor,
+			Microsoft.Extensions.Logging.ILogger<AuthService> logger)
 		{
 			_dbContext = dbContext;
 			_emailService = emailService;
@@ -62,6 +66,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			_otpService = otpService;
 			_passwordHasher = passwordHasher;
 			_passwordSecurityService = passwordSecurityService;
+			_httpContextAccessor = httpContextAccessor;
+			_logger = logger;
 		}
 
 		public event EmailSendEventHandler? EmailSendEvent;
@@ -70,13 +76,13 @@ namespace DoctorAppointmentSystem.Application.Services
 		{
 			try
 			{
-				Task.Run(async () => 
-					await _emailService.SendEmailAsync(emailSendEvent.Email, emailSendEvent.Subject, emailSendEvent.Body)
+				Hangfire.BackgroundJob.Enqueue<IEmailService>(service =>
+					service.SendEmailAsync(emailSendEvent.Email, emailSendEvent.Subject, emailSendEvent.Body)
 				);
 			}
 			catch (Exception ex)
 			{
-				throw;
+				_logger.LogError(ex, "[AuthService] Failed to enqueue background email via OnEmailSendHandle for {Email}", emailSendEvent.Email);
 			}
 		}
 
@@ -227,6 +233,66 @@ namespace DoctorAppointmentSystem.Application.Services
 			}
 
 			user.LastLoginDate = DateTime.UtcNow;
+
+			// Extract IP, Device, and Location Details for Security & Audit Logging
+			var httpCtx = _httpContextAccessor.HttpContext;
+			string ipAddress = SecurityHelper.GetClientIpAddress(httpCtx);
+			string deviceInfo = SecurityHelper.GetDeviceAndBrowserInfo(httpCtx);
+			string nowUtcStr = DateTime.UtcNow.ToString("f");
+
+			// 1. Structured Logging
+			_logger.LogInformation("[AuthService] User {Email} ({RoleName}) logged in successfully from IP: {IpAddress}, Device: {DeviceInfo}", user.Email, roleName, ipAddress, deviceInfo);
+
+			// 2. Enqueue Login Security Email Alert via Hangfire
+			try
+			{
+				string emailHtml = SecurityHelper.BuildLoginSecurityEmailHtml(firstName, roleName, nowUtcStr, ipAddress, deviceInfo);
+				Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(user.Email, "🔐 Security Alert: New Login to your HealSync Account", emailHtml));
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "[AuthService] Failed to enqueue login security email to Hangfire for {Email}", user.Email);
+			}
+
+			// 3. Save Login Event into Role Audit Logs
+			try
+			{
+				if (role?.Role == ERole.Admin || role?.Role == ERole.SuperAdmin)
+				{
+					_dbContext.AdminAuditLogs.Add(new AdminAuditLog
+					{
+						LogId = Guid.NewGuid(),
+						AdminId = profileId ?? user.UserId,
+						Action = "LOGIN",
+						ActorUserId = user.UserId,
+						ActorName = $"{firstName} {lastName}".Trim(),
+						Timestamp = DateTime.UtcNow,
+						OldDataJson = "{}",
+						NewDataJson = "{}",
+						Notes = $"Successful Login | Role: {roleName} | IP: {ipAddress} | Device: {deviceInfo}"
+					});
+				}
+				else if (role?.Role == ERole.Doctor && profileId.HasValue)
+				{
+					_dbContext.DoctorAuditLogs.Add(new DoctorAuditLog
+					{
+						LogId = Guid.NewGuid(),
+						DoctorId = profileId.Value,
+						Action = "LOGIN",
+						ActorUserId = user.UserId,
+						ActorName = $"{firstName} {lastName}".Trim(),
+						Timestamp = DateTime.UtcNow,
+						OldDataJson = "{}",
+						NewDataJson = "{}",
+						Notes = $"Doctor Logged In | IP: {ipAddress} | Device: {deviceInfo}"
+					});
+				}
+			}
+			catch (Exception ex)
+			{
+				_logger.LogWarning(ex, "[AuthService] Failed to record login audit log for user {UserId}", user.UserId);
+			}
+
 			await _dbContext.SaveChangesAsync();
 
 			return new AuthResponseDto
@@ -614,11 +680,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 					try
 					{
-						await _emailService.SendEmailAsync(dbUser.Email, emailSubject, emailBody);
+						Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(dbUser.Email, emailSubject, emailBody));
 					}
 					catch (Exception ex)
 					{
-						Console.WriteLine($"[Email Error]: Failed to send onboarding confirmation email: {ex.Message}");
+						_logger.LogError(ex, "[Email Error]: Failed to enqueue onboarding confirmation email for {Email}", dbUser.Email);
 					}
 				}
 			}

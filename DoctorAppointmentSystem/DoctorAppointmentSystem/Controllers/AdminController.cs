@@ -1,9 +1,15 @@
-using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using DoctorAppointmentSystem.Application.Services;
 
 namespace DoctorAppointmentSystem.Controllers
 {
+	/// <summary>
+	/// API Controller managing Super Admin administrative operations: doctor onboarding verification, system audits, and multi-clinic admin assignments.
+	/// </summary>
 	[ApiController]
 	[Route("api/[controller]")]
 	[Authorize(Roles = "SuperAdmin")]
@@ -11,11 +17,22 @@ namespace DoctorAppointmentSystem.Controllers
 	{
 		private readonly IAdminService _adminService;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="AdminController"/> class.
+		/// </summary>
+		/// <param name="adminService">Super Admin service instance.</param>
 		public AdminController(IAdminService adminService)
 		{
 			_adminService = adminService;
 		}
 
+		/// <summary>
+		/// Approves or rejects a doctor onboarding application and generates temporary login credentials upon approval.
+		/// </summary>
+		/// <param name="doctorId">Target doctor ID.</param>
+		/// <param name="status">Verification status (Verified, Pending, Rejected).</param>
+		/// <param name="rejectionReason">Optional rejection explanation.</param>
+		/// <returns>Status confirmation message.</returns>
 		[HttpPost("verify-doctor/{doctorId:guid}")]
 		public async Task<IActionResult> VerifyDoctor(Guid doctorId, [FromQuery] string status, [FromQuery] string? rejectionReason = null)
 		{
@@ -36,6 +53,10 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(new { Message = $"Doctor '{name}' verification status updated to '{status}' successfully." });
 		}
 
+		/// <summary>
+		/// Retrieves all pending doctor onboarding applications awaiting Super Admin review.
+		/// </summary>
+		/// <returns>List of pending doctor profiles.</returns>
 		[HttpGet("pending-doctors")]
 		public async Task<IActionResult> GetPendingDoctors()
 		{
@@ -43,6 +64,9 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		/// <summary>
+		/// Retrieves all doctors registered in the network with optional search and date filters.
+		/// </summary>
 		[HttpGet("doctors")]
 		public async Task<IActionResult> GetAllDoctors(
 			[FromQuery] string? search,
@@ -54,6 +78,9 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		/// <summary>
+		/// Retrieves all clinic branches in the network with location and verification status filters.
+		/// </summary>
 		[HttpGet("clinics")]
 		public async Task<IActionResult> GetAllClinics(
 			[FromQuery] string? search,
@@ -65,6 +92,9 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		/// <summary>
+		/// Retrieves all clinic administrators in the network.
+		/// </summary>
 		[HttpGet("admins")]
 		public async Task<IActionResult> GetAllAdmins(
 			[FromQuery] string? search,
@@ -74,6 +104,9 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		/// <summary>
+		/// Retrieves paginated system-wide audit logs for security oversight.
+		/// </summary>
 		[HttpGet("system-audit-logs")]
 		public async Task<IActionResult> GetSystemAuditLogs(
 			[FromQuery] string? entityType,
@@ -87,6 +120,9 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		/// <summary>
+		/// Assigns a Clinic Administrator to manage one or multiple clinic branches.
+		/// </summary>
 		[HttpPost("{adminId:guid}/clinics")]
 		public async Task<IActionResult> SetClinics(Guid adminId, [FromBody] IEnumerable<Guid> clinicIds)
 		{
@@ -94,6 +130,9 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(clinics);
 		}
 
+		/// <summary>
+		/// Retrieves all clinic branches currently managed by a specific Clinic Administrator.
+		/// </summary>
 		[HttpGet("{adminId:guid}/clinics")]
 		public async Task<IActionResult> GetAdminClinics(Guid adminId)
 		{

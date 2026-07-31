@@ -17,15 +17,17 @@ builder.Configuration.AddEnvironmentVariables();
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
-// Configure CORS to allow direct frontend connections from any source
+// Configure CORS to allow direct frontend connections from any source (with SignalR WebSocket support)
 builder.Services.AddCors(options =>
 {
 	options.AddDefaultPolicy(policy =>
 	{
-		policy.AllowAnyOrigin()
+		policy.SetIsOriginAllowed(_ => true)
 			  .AllowAnyHeader()
-			  .AllowAnyMethod();
+			  .AllowAnyMethod()
+			  .AllowCredentials();
 	});
 });
 
@@ -51,6 +53,20 @@ builder.Services.AddAuthentication(options =>
 		ValidAudience = jwtAudience,
 		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
 		ClockSkew = TimeSpan.Zero
+	};
+
+	options.Events = new JwtBearerEvents
+	{
+		OnMessageReceived = context =>
+		{
+			var accessToken = context.Request.Query["access_token"];
+			var path = context.HttpContext.Request.Path;
+			if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+			{
+				context.Token = accessToken;
+			}
+			return Task.CompletedTask;
+		}
 	};
 });
 
@@ -173,6 +189,8 @@ app.UseHangfireDashboard("/hangfire");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
 
 app.MapControllers();
 app.MapHub<DoctorAppointmentSystem.Application.Hubs.NotificationHub>("/notificationHub");
