@@ -121,6 +121,9 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IPasswor
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.INotificationService, DoctorAppointmentSystem.Application.Services.NotificationService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IWebPushService, DoctorAppointmentSystem.Application.Services.WebPushService>();
 
+builder.Services.AddSingleton<DoctorAppointmentSystem.Application.Services.IBackgroundQueueService, DoctorAppointmentSystem.Application.Services.BackgroundQueueService>();
+builder.Services.AddHostedService<DoctorAppointmentSystem.Application.Services.BackgroundQueueHostedService>();
+
 // Register background services
 builder.Services.AddHostedService<DoctorAppointmentSystem.Application.BackgroundServices.AppointmentCleanupService>();
 builder.Services.AddHostedService<DoctorAppointmentSystem.Application.BackgroundServices.NotificationCleanupService>();

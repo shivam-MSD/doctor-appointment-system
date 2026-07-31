@@ -17,6 +17,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		private readonly IDistributedCache _distributedCache;
 		private readonly IServiceProvider _serviceProvider;
 		private readonly IEmailService _emailService;
+		private readonly IBackgroundQueueService _backgroundQueue;
 		private static readonly ConcurrentDictionary<string, SemaphoreSlim> _bookingLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
 		public delegate void AppointmentActionLoggedEventHandler(object sender, AppointmentActionEventArgs e);
@@ -33,13 +34,15 @@ namespace DoctorAppointmentSystem.Application.Services
 			INotificationService notificationService,
 			IDistributedCache distributedCache,
 			IServiceProvider serviceProvider,
-			IEmailService emailService)
+			IEmailService emailService,
+			IBackgroundQueueService backgroundQueue)
 		{
 			_dbContext = dbContext;
 			_notificationService = notificationService;
 			_distributedCache = distributedCache;
 			_serviceProvider = serviceProvider;
 			_emailService = emailService;
+			_backgroundQueue = backgroundQueue;
 
 			this.OnAppointmentActionLogged += HandleAppointmentActionLogged;
 		}
@@ -187,16 +190,14 @@ namespace DoctorAppointmentSystem.Application.Services
 					var emailMsg = $"Dear {patient.FirstName}, your appointment booking request has been received. Your queue position is #{appointment.QueueNumber}. The clinic will assign your appointment time shortly.";
 					var docName = $"{doctor.FirstName} {doctor.LastName}";
 					
-					_ = Task.Run(async () => {
+					var emailTo = patientUser.User.Email;
+					var appDateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
+					var queueStr = $"Queue #{appointment.QueueNumber} (Pending Time)";
+
+					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+					{
 						await SendAppointmentEmailAsync(
-							patientUser.User.Email,
-							emailSubject,
-							emailTitle,
-							emailMsg,
-							docName,
-							appointment.AppointmentDate.ToString("dd MMM yyyy"),
-							$"Queue #{appointment.QueueNumber} (Pending Time)",
-							clinic
+							emailTo, emailSubject, emailTitle, emailMsg, docName, appDateStr, queueStr, clinic
 						);
 					});
 				}
@@ -259,16 +260,13 @@ namespace DoctorAppointmentSystem.Application.Services
 						var docName = doctor != null ? $"{doctor.FirstName} {doctor.LastName}" : "Treating Doctor";
 						var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
 						
-						_ = Task.Run(async () => {
+						var emailTo = userPatient.User.Email;
+						var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
+
+						_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+						{
 							await SendAppointmentEmailAsync(
-								userPatient.User.Email,
-								emailSubject,
-								emailTitle,
-								emailMsg,
-								docName,
-								appointment.AppointmentDate.ToString("dd MMM yyyy"),
-								timeStr,
-								appointment.Clinic
+								emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
 							);
 						});
 					}
@@ -362,16 +360,13 @@ namespace DoctorAppointmentSystem.Application.Services
                 var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
                 var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
                 
-                _ = Task.Run(async () => {
+                var emailTo = patientUser.User.Email;
+                var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
+
+                _backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+                {
                     await SendAppointmentEmailAsync(
-                        patientUser.User.Email,
-                        emailSubject,
-                        emailTitle,
-                        emailMsg,
-                        docName,
-                        appointment.AppointmentDate.ToString("dd MMM yyyy"),
-                        timeStr,
-                        appointment.Clinic
+                        emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
                     );
                 });
             }
@@ -1021,16 +1016,13 @@ namespace DoctorAppointmentSystem.Application.Services
 						: $"Dear {appointment.Patient.FirstName}, your appointment has been confirmed by the clinic.";
 					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
 					
-					_ = Task.Run(async () => {
+					var emailTo = userPatient.User.Email;
+					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
+
+					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+					{
 						await SendAppointmentEmailAsync(
-							userPatient.User.Email,
-							emailSubject,
-							emailTitle,
-							emailMsg,
-							docName,
-							appointment.AppointmentDate.ToString("dd MMM yyyy"),
-							timeStr,
-							appointment.Clinic
+							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
 						);
 					});
 				}
@@ -1195,16 +1187,13 @@ namespace DoctorAppointmentSystem.Application.Services
 					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
 					var timeStr = appointment.DoctorAssignedTime.HasValue ? appointment.DoctorAssignedTime.Value.ToString("hh:mm tt") : "N/A";
 					
-					_ = Task.Run(async () => {
+					var emailTo = userPatient.User.Email;
+					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
+
+					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+					{
 						await SendAppointmentEmailAsync(
-							userPatient.User.Email,
-							emailSubject,
-							emailTitle,
-							emailMsg,
-							docName,
-							appointment.AppointmentDate.ToString("dd MMM yyyy"),
-							timeStr,
-							appointment.Clinic
+							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
 						);
 					});
 				}
@@ -1252,16 +1241,13 @@ namespace DoctorAppointmentSystem.Application.Services
 					var emailMsg = $"Dear {appointment.Patient.FirstName}, we regret to inform you that your appointment booking request has been declined by the clinic. Reason: {reason}";
 					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
 					
-					_ = Task.Run(async () => {
+					var emailTo = userPatient.User.Email;
+					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
+
+					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+					{
 						await SendAppointmentEmailAsync(
-							userPatient.User.Email,
-							emailSubject,
-							emailTitle,
-							emailMsg,
-							docName,
-							appointment.AppointmentDate.ToString("dd MMM yyyy"),
-							"Rejected / Declined",
-							appointment.Clinic
+							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, "Rejected / Declined", appointment.Clinic
 						);
 					});
 				}
@@ -1318,20 +1304,16 @@ namespace DoctorAppointmentSystem.Application.Services
 					
 					string? followUpDetail = followUp != null ? $"{followUp.AppointmentDate:dd MMM yyyy} at {followUp.StartTime}" : "None required";
 
-					_ = Task.Run(async () => {
+					var emailTo = userPatient.User.Email;
+					var dateStr = appointment.AppointmentDate.ToString("dd MMM yyyy");
+					var timeOrStatusStr = $"{timeStr} (Completed)";
+
+					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+					{
 						await SendAppointmentEmailAsync(
-							toEmail: userPatient.User.Email,
-							subject: emailSubject,
-							title: emailTitle,
-							message: emailMsg,
-							doctorName: docName,
-							dateStr: appointment.AppointmentDate.ToString("dd MMM yyyy"),
-							timeOrStatus: $"{timeStr} (Completed)",
-							clinic: appointment.Clinic,
-							patientName: patientFullName,
-							comment: comment,
-							report: report,
-							followUpStr: followUpDetail
+							toEmail: emailTo, subject: emailSubject, title: emailTitle, message: emailMsg,
+							doctorName: docName, dateStr: dateStr, timeOrStatus: timeOrStatusStr, clinic: appointment.Clinic,
+							patientName: patientFullName, comment: comment, report: report, followUpStr: followUpDetail
 						);
 					});
 				}
@@ -1662,16 +1644,13 @@ namespace DoctorAppointmentSystem.Application.Services
 					var docName = $"{appointment.Doctor.FirstName} {appointment.Doctor.LastName}";
 					var timeStr = dto.ProposedTime.Value.ToString("hh:mm tt");
 					
-					_ = Task.Run(async () => {
+					var emailTo = up.User.Email;
+					var dateStr = dto.ProposedDate.ToString("dd MMM yyyy");
+
+					_backgroundQueue.QueueBackgroundWorkItem(async (sp, ct) =>
+					{
 						await SendAppointmentEmailAsync(
-							up.User.Email,
-							emailSubject,
-							emailTitle,
-							emailMsg,
-							docName,
-							dto.ProposedDate.ToString("dd MMM yyyy"),
-							timeStr,
-							appointment.Clinic
+							emailTo, emailSubject, emailTitle, emailMsg, docName, dateStr, timeStr, appointment.Clinic
 						);
 					});
 				}
