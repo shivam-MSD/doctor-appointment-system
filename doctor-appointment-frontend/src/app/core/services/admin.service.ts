@@ -36,33 +36,23 @@ export class AdminService {
   }
 
   registerClinic(dto: any): Observable<any> {
-    const userId = sessionStorage.getItem('userId') || '';
-    const headers = new HttpHeaders().set('X-User-Id', userId);
-    return this.http.post<any>('/api/clinics/register', dto, { headers });
+    return this.http.post<any>('/api/clinics/register', dto);
   }
 
   registerClinicOnly(dto: any): Observable<any> {
-    const userId = sessionStorage.getItem('userId') || '';
-    const headers = new HttpHeaders().set('X-User-Id', userId);
-    return this.http.post<any>('/api/clinics/register-only', dto, { headers });
+    return this.http.post<any>('/api/clinics/register-only', dto);
   }
 
   registerClinicAdmin(dto: any): Observable<any> {
-    const userId = sessionStorage.getItem('userId') || '';
-    const headers = new HttpHeaders().set('X-User-Id', userId);
-    return this.http.post<any>('/api/clinics/register-admin', dto, { headers });
+    return this.http.post<any>('/api/clinics/register-admin', dto);
   }
 
   getDoctorClinics(): Observable<any[]> {
-    const userId = sessionStorage.getItem('userId') || '';
-    const headers = new HttpHeaders().set('X-User-Id', userId);
-    return this.http.get<any[]>('/api/clinics', { headers });
+    return this.http.get<any[]>('/api/clinics');
   }
 
   getDoctorAdmins(): Observable<any[]> {
-    const userId = sessionStorage.getItem('userId') || '';
-    const headers = new HttpHeaders().set('X-User-Id', userId);
-    return this.http.get<any[]>('/api/clinics/admins', { headers });
+    return this.http.get<any[]>('/api/clinics/admins');
   }
 
   getAllDoctors(search: string = '', status: string = ''): Observable<any[]> {
@@ -114,15 +104,11 @@ export class AdminService {
   }
 
   getAdminClinic(): Observable<any> {
-    const userId = sessionStorage.getItem('userId') || '';
-    const headers = new HttpHeaders().set('X-User-Id', userId);
-    return this.http.get<any>('/api/clinics/my-clinic', { headers });
+    return this.http.get<any>('/api/clinics/my-clinic');
   }
 
   updateClinicByAdmin(dto: any): Observable<any> {
-    const userId = sessionStorage.getItem('userId') || '';
-    const headers = new HttpHeaders().set('X-User-Id', userId);
-    return this.http.put<any>('/api/clinics/admin-update', dto, { headers });
+    return this.http.put<any>('/api/clinics/admin-update', dto);
   }
 
   assignAdminToClinics(adminId: string, clinicIds: string[]): Observable<any[]> {

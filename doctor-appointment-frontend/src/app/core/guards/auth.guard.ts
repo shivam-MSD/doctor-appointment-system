@@ -12,28 +12,18 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    if (!this.authService.isAuthenticated()) {
-      this.redirectToLogin(state.url);
+    const expectedRole = route.data['expectedRole'];
+    const loginRoute = route.data['loginRoute'];
+
+    if (!this.authService.isAuthenticated(expectedRole)) {
+      this.redirectToLogin(state.url, loginRoute);
       return false;
     }
 
-    const role = this.authService.getRole();
-    const url = state.url.toLowerCase();
+    const role = this.authService.getRole(expectedRole);
 
-    // Check Role-Based Access Control
-    if (url.includes('/patient/') && role !== 'Patient') {
-      this.redirectBasedOnRole(role);
-      return false;
-    }
-    if (url.includes('/doctor/') && role !== 'Doctor') {
-      this.redirectBasedOnRole(role);
-      return false;
-    }
-    if (url.includes('/admin/') && role !== 'Admin') {
-      this.redirectBasedOnRole(role);
-      return false;
-    }
-    if (url.includes('/superadmin/') && role !== 'SuperAdmin') {
+    // If route specifies an expected role, enforce it cleanly
+    if (expectedRole && role !== expectedRole) {
       this.redirectBasedOnRole(role);
       return false;
     }
@@ -41,17 +31,16 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 
-  private redirectToLogin(currentUrl: string) {
-    if (currentUrl.includes('/patient/')) {
-      this.router.navigate(['/patient/login']);
-    } else if (currentUrl.includes('/doctor/')) {
-      this.router.navigate(['/doctor/login']);
-    } else if (currentUrl.includes('/admin/')) {
-      this.router.navigate(['/admin/login']);
-    } else if (currentUrl.includes('/superadmin/')) {
-      this.router.navigate(['/superadmin/login']);
+  private redirectToLogin(currentUrl: string, targetLoginRoute?: string) {
+    if (targetLoginRoute) {
+      this.router.navigate([targetLoginRoute]);
+      return;
+    }
+    const role = this.authService.getRole();
+    if (role) {
+      this.router.navigate([`/${role.toLowerCase()}/login`]);
     } else {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/patient/login']);
     }
   }
 

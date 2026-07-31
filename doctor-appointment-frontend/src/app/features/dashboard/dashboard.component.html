@@ -851,7 +851,7 @@
 
   <!-- DOCTOR DASHBOARD: PATIENT VISIT HISTORY TIMELINE MODAL -->
   <div class="modal-backdrop" *ngIf="showHistoryModal">
-    <div class="modal-container" style="max-width: 750px; min-height: 520px; display: flex; flex-direction: column;">
+    <div class="modal-container" style="max-width: 880px; width: 94%; min-height: 520px; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3>📜 Medical History: {{ selectedPatientName }}</h3>
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
@@ -862,8 +862,8 @@
             <thead>
               <tr>
                 <th>Clinic</th>
-                <th style="width: 180px; min-width: 180px;">Date & Time</th>
-                <th>Status</th>
+                <th style="width: 160px; min-width: 160px;">Date & Time</th>
+                <th style="width: 120px;">Status</th>
                 <th>Reason</th>
                 <th>Report & Clinical Note</th>
               </tr>
@@ -988,8 +988,8 @@
               <thead>
                 <tr>
                   <th>Clinic</th>
-                  <th style="width: 180px; min-width: 180px;">Date & Time</th>
-                  <th>Status</th>
+                  <th style="width: 160px; min-width: 160px;">Date & Time</th>
+                  <th style="width: 120px;">Status</th>
                   <th>Reason</th>
                   <th>Report & Clinical Note</th>
                 </tr>
@@ -1006,16 +1006,31 @@
                         (h.doctorAssignedTime || h.startTime) | date:'shortTime' }}</span>
                     </div>
                   </td>
-                  <td>
+                  <td style="width: 120px;">
                     <span [class]="getStatusClass(h.status)">{{ formatHistoryStatus(h.status) }}</span>
                   </td>
                   <td>
-                    <div style="font-size: 0.8rem;">
-                      <span *ngIf="h.reason"
-                        style="display: block; color: var(--text-secondary); margin-bottom: 2px;">💬 Visit: {{ h.reason
-                        }}</span>
-                      <span *ngIf="h.status === 'Cancelled' && h.rejectionReason"
-                        style="display: block; color: #ef4444;">⚠️ Rejection: {{ h.rejectionReason }}</span>
+                    <div style="font-size: 0.82rem;">
+                      <div *ngIf="h.reason" style="color: var(--text-secondary);">
+                        <strong style="color: var(--text-muted); font-size: 0.75rem;">Visit:</strong>
+                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_reason']">
+                          {{ h.reason }}
+                        </div>
+                        <button *ngIf="h.reason && h.reason.length > 80" type="button" class="btn-read-more" (click)="toggleNotesRow(h.appointmentId + '_reason')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_reason'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        </button>
+                      </div>
+
+                      <div *ngIf="h.status === 'Cancelled' && h.rejectionReason"
+                        style="color: #ef4444; margin-top: 4px;">
+                        <strong style="font-size: 0.75rem;">Rejection:</strong>
+                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_rejection']">
+                          {{ h.rejectionReason }}
+                        </div>
+                        <button *ngIf="h.rejectionReason && h.rejectionReason.length > 80" type="button" class="btn-read-more" style="color: #ef4444;" (click)="toggleNotesRow(h.appointmentId + '_rejection')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_rejection'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        </button>
+                      </div>
 
                       <!-- Timestamps -->
                       <span *ngIf="h.confirmedDate"
@@ -1032,14 +1047,29 @@
                   </td>
                   <td>
                     <div
-                      style="font-size: 0.8rem; background-color: var(--bg-tertiary); padding: 8px; border-radius: 6px; border: 1px dashed var(--border-color); min-height: 40px;">
-                      <span *ngIf="h.comment"
-                        style="display: block; color: var(--text-secondary); margin-bottom: 2px;"><strong>Note:</strong>
-                        {{ h.comment }}</span>
-                      <span *ngIf="h.report" style="display: block; color: var(--accent-cyan);"><strong>Report:</strong>
-                        {{ h.report }}</span>
-                      <span *ngIf="!h.comment && !h.report" style="color: var(--text-muted); font-style: italic;">No
-                        clinical records attached.</span>
+                      style="font-size: 0.82rem; background-color: var(--bg-tertiary); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color); min-height: 40px;">
+                      
+                      <div *ngIf="h.report" style="color: var(--accent-cyan); margin-bottom: 6px;">
+                        <strong style="font-size: 0.75rem; text-transform: uppercase;">Report / Prescription:</strong>
+                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_report']" style="color: var(--text-primary);">
+                          {{ h.report }}
+                        </div>
+                        <button *ngIf="h.report && h.report.length > 90" type="button" class="btn-read-more" (click)="toggleNotesRow(h.appointmentId + '_report')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_report'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        </button>
+                      </div>
+
+                      <div *ngIf="h.comment" style="color: var(--text-secondary); font-style: italic;">
+                        <strong style="font-size: 0.75rem; text-transform: uppercase;">Note:</strong>
+                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_comment']">
+                          {{ h.comment }}
+                        </div>
+                        <button *ngIf="h.comment && h.comment.length > 90" type="button" class="btn-read-more" (click)="toggleNotesRow(h.appointmentId + '_comment')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_comment'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        </button>
+                      </div>
+
+                      <span *ngIf="!h.comment && !h.report" style="color: var(--text-muted); font-style: italic;">No clinical records attached.</span>
                     </div>
                   </td>
                 </tr>

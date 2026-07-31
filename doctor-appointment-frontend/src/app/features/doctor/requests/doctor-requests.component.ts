@@ -16,6 +16,11 @@ export class DoctorRequestsComponent implements OnInit, OnDestroy {
   consultationFilter = '';
   isLoading = false;
   errorMessage = '';
+  expandedTextRows: { [key: string]: boolean } = {};
+
+  toggleTextRow(key: string): void {
+    this.expandedTextRows[key] = !this.expandedTextRows[key];
+  }
   selectedClinicId = '';
   doctorClinics: any[] = [];
   private signalrSub?: Subscription;
@@ -256,11 +261,19 @@ export class DoctorRequestsComponent implements OnInit, OnDestroy {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'badge badge-confirmed';
       case 'pending': return 'badge badge-pending';
-      case 'completed': return 'badge badge-confirmed';
+      case 'rescheduleproposed':
+      case 'rescheduled': return 'badge badge-reschedule-proposed';
+      case 'completed': return 'badge badge-completed';
       case 'cancelled': return 'badge badge-cancelled';
       case 'rejected': return 'badge badge-cancelled';
-      default: return 'badge';
+      default: return 'badge badge-pending';
     }
+  }
+
+  getStatusLabel(status: string): string {
+    if (!status) return '';
+    if (status.toLowerCase() === 'rescheduleproposed') return 'Reschedule Proposed';
+    return status;
   }
 
   openPatientDetailsModal(patientId: string): void {

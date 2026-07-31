@@ -183,12 +183,12 @@
 
 <!-- Appointment History Modal -->
 <div class="modal-backdrop" *ngIf="selectedDoctorForHistory" (click)="closeAppointmentHistory()">
-  <div class="modal-container" style="max-width: 600px; max-height: 85vh; display: flex; flex-direction: column;"
+  <div class="modal-container" style="max-width: 880px; width: 94%; max-height: 85vh; display: flex; flex-direction: column;"
     (click)="$event.stopPropagation()">
     <!-- Header -->
     <div class="modal-header" style="flex-shrink: 0;">
       <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 1.4rem;">📜</span> History with Dr. {{ selectedDoctorForHistory.doctorName }}
+        <span style="font-size: 1.4rem;">📜</span> Medical History: Dr. {{ selectedDoctorForHistory.doctorName }}
       </h3>
       <button class="close-modal" (click)="closeAppointmentHistory()">&times;</button>
     </div>
@@ -198,7 +198,7 @@
       <div *ngIf="selectedDoctorForHistory.isLoadingHistory" style="text-align: center; color: var(--accent-cyan); padding: 40px;">
         <span class="spinner"
           style="display: inline-block; width: 24px; height: 24px; border: 3px solid rgba(6, 182, 212, 0.3); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px;"></span>
-        <div style="font-weight: 600; font-size: 0.95rem;">Loading appointment history...</div>
+        <div style="font-weight: 600; font-size: 0.95rem;">Loading medical history records...</div>
       </div>
 
       <div *ngIf="!selectedDoctorForHistory.isLoadingHistory && (!selectedDoctorForHistory.appointments || selectedDoctorForHistory.appointments.length === 0)"
@@ -214,11 +214,11 @@
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
             <div>
               <div
-                style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                style="font-weight: 700; color: var(--text-primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
                 📅 {{ app.appointmentDate | date:'fullDate' }}
               </div>
               <div
-                style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
                 <span>⏱️</span> {{ app.doctorAssignedTime ? (app.doctorAssignedTime | date:'shortTime') : 'Time N/A' }}
               </div>
             </div>
@@ -226,23 +226,42 @@
           </div>
 
           <div *ngIf="app.reason && app.reason.trim() !== ''"
-            style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 16px; border-radius: 12px; margin-bottom: 8px;">
+            style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 14px 16px; border-radius: 12px; margin-bottom: 8px;">
             <strong
-              style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">Reason
-              for visit</strong>
-            <div class="prescription-scroll" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5;">
-              {{ app.reason }}</div>
+              style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;">Reason
+              for Visit</strong>
+            <div class="text-expandable-box" [class.collapsed]="!expandedNotes[app.appointmentId + '_reason']" style="white-space: pre-wrap;">
+              {{ app.reason }}
+            </div>
+            <button *ngIf="app.reason && app.reason.length > 110" type="button" class="btn-read-more" (click)="toggleNoteExpansion(app.appointmentId + '_reason')">
+              <span>{{ expandedNotes[app.appointmentId + '_reason'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+            </button>
           </div>
 
           <div *ngIf="(app.report && app.report.trim() !== '') || (app.comment && app.comment.trim() !== '')"
             style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); padding: 16px; border-radius: 12px; margin-top: 8px;">
             <strong
-              style="display: block; font-size: 0.8rem; color: var(--accent-cyan); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">Doctor's
+              style="display: block; font-size: 0.75rem; color: var(--accent-cyan); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;">Doctor's
               Notes / Prescription</strong>
-            <div *ngIf="app.report && app.report.trim() !== ''" class="prescription-scroll"
-              style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; margin-bottom: 8px;">
-              {{ app.report }}</div>
-            <!-- <div *ngIf="app.comment && app.comment.trim() !== ''" style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; font-style: italic;">Note: {{ app.comment }}</div> -->
+            
+            <div *ngIf="app.report && app.report.trim() !== ''">
+              <div class="text-expandable-box" [class.collapsed]="!expandedNotes[app.appointmentId + '_report']" style="white-space: pre-wrap; font-size: 0.92rem;">
+                {{ app.report }}
+              </div>
+              <button *ngIf="app.report && app.report.length > 120" type="button" class="btn-read-more" (click)="toggleNoteExpansion(app.appointmentId + '_report')">
+                <span>{{ expandedNotes[app.appointmentId + '_report'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+              </button>
+            </div>
+
+            <div *ngIf="app.comment && app.comment.trim() !== ''" style="margin-top: 8px; border-top: 1px dashed rgba(6,182,212,0.15); padding-top: 8px;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Doctor Comment:</span>
+              <div class="text-expandable-box" [class.collapsed]="!expandedNotes[app.appointmentId + '_comment']" style="white-space: pre-wrap; font-size: 0.88rem; font-style: italic; color: var(--text-secondary);">
+                {{ app.comment }}
+              </div>
+              <button *ngIf="app.comment && app.comment.length > 100" type="button" class="btn-read-more" (click)="toggleNoteExpansion(app.appointmentId + '_comment')">
+                <span>{{ expandedNotes[app.appointmentId + '_comment'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

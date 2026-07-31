@@ -258,8 +258,14 @@
                   </div>
 
                   <div *ngIf="(app.status === 'Cancelled' || app.status === 'Rejected') && app.rejectionReason"
-                    style="font-size: 0.8rem; color: #ef4444;">
-                    ⚠️ <strong>Rejected:</strong> {{ app.rejectionReason }}
+                    style="font-size: 0.8rem; color: #ef4444; margin-top: 4px;">
+                    ⚠️ <strong>Rejection Reason:</strong>
+                    <div class="text-expandable-box" [class.collapsed]="!expandedTextRows[app.appointmentId + '_rejection']">
+                      {{ app.rejectionReason }}
+                    </div>
+                    <button *ngIf="app.rejectionReason && app.rejectionReason.length > 70" type="button" class="btn-read-more" style="color: #ef4444;" (click)="toggleTextRow(app.appointmentId + '_rejection')">
+                      <span>{{ expandedTextRows[app.appointmentId + '_rejection'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                    </button>
                   </div>
                   <ng-template #emptyNotes><span class="text-muted">-</span></ng-template>
                 </td>

@@ -173,7 +173,12 @@
                   </div>
                 </td>
                 <td>
-                  <span class="truncate-text" [title]="request.reason">{{ request.reason }}</span>
+                  <div class="text-expandable-box" [class.collapsed]="!expandedTextRows[request.appointmentId]">
+                    {{ request.reason || 'No reason provided.' }}
+                  </div>
+                  <button *ngIf="request.reason && request.reason.length > 75" type="button" class="btn-read-more" (click)="toggleTextRow(request.appointmentId)">
+                    <span>{{ expandedTextRows[request.appointmentId] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                  </button>
                 </td>
                 <td>
                   <div style="display: flex; gap: 8px; justify-content: center;">

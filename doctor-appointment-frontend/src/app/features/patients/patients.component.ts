@@ -30,6 +30,11 @@ export class PatientsComponent implements OnInit {
   isHistoryLoading = false;
   historyClinicFilters: { [clinicName: string]: boolean } = {};
   historyStatusFilters: { [statusName: string]: boolean } = {};
+  expandedHistoryText: { [key: string]: boolean } = {};
+
+  toggleHistoryText(key: string): void {
+    this.expandedHistoryText[key] = !this.expandedHistoryText[key];
+  }
 
   constructor(
     private appointmentService: AppointmentService,
@@ -221,11 +226,19 @@ export class PatientsComponent implements OnInit {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'badge badge-confirmed';
       case 'pending': return 'badge badge-pending';
-      case 'completed': return 'badge badge-confirmed';
+      case 'rescheduleproposed':
+      case 'rescheduled': return 'badge badge-reschedule-proposed';
+      case 'completed': return 'badge badge-completed';
       case 'cancelled': return 'badge badge-cancelled';
       case 'rejected': return 'badge badge-cancelled';
-      default: return 'badge';
+      default: return 'badge badge-pending';
     }
+  }
+
+  getStatusLabel(status: string): string {
+    if (!status) return '';
+    if (status.toLowerCase() === 'rescheduleproposed') return 'Reschedule Proposed';
+    return status;
   }
 
   @HostListener('document:click', ['$event'])

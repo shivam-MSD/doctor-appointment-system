@@ -35,6 +35,11 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
   isLoading = false;
   errorMessage = '';
+  expandedTextRows: { [key: string]: boolean } = {};
+
+  toggleTextRow(key: string): void {
+    this.expandedTextRows[key] = !this.expandedTextRows[key];
+  }
   private signalrSub?: Subscription;
 
   // Patient Details Modal States
@@ -262,11 +267,19 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'badge badge-confirmed';
       case 'pending': return 'badge badge-pending';
-      case 'completed': return 'badge badge-confirmed'; // Green
+      case 'rescheduleproposed':
+      case 'rescheduled': return 'badge badge-reschedule-proposed';
+      case 'completed': return 'badge badge-completed';
       case 'cancelled': return 'badge badge-cancelled';
       case 'rejected': return 'badge badge-cancelled';
-      default: return 'badge';
+      default: return 'badge badge-pending';
     }
+  }
+
+  getStatusLabel(status: string): string {
+    if (!status) return '';
+    if (status.toLowerCase() === 'rescheduleproposed') return 'Reschedule Proposed';
+    return status;
   }
 
   // Daily Metrics

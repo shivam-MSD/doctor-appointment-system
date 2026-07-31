@@ -18,6 +18,11 @@ export class MyDoctorsComponent implements OnInit {
   selectedDoctorForBooking: any = null;
   bookingClinics: any[] = [];
   bookingClinicsLoading = false;
+  expandedNotes: { [appId: string]: boolean } = {};
+
+  toggleNoteExpansion(appId: string): void {
+    this.expandedNotes[appId] = !this.expandedNotes[appId];
+  }
 
   constructor(
     private appointmentService: AppointmentService,

@@ -43,20 +43,29 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(authReq).pipe(
       catchError((error: any) => {
         if (error instanceof HttpErrorResponse && error.status === 401) {
+          // 1. Get role from cryptographic JWT SSOT
           const role = this.authService.getRole();
+
+          // 2. Extract loginRoute metadata from current Angular route tree
+          let loginPath = '/patient/login';
+          let routeSnap = this.router.routerState.snapshot.root;
+          while (routeSnap.firstChild) {
+            routeSnap = routeSnap.firstChild;
+            if (routeSnap.data && routeSnap.data['loginRoute']) {
+              loginPath = routeSnap.data['loginRoute'];
+            }
+          }
+
+          if (loginPath === '/patient/login' && role) {
+            loginPath = `/${role.toLowerCase()}/login`;
+          }
+
           this.authService.logout(role || undefined);
-          // Do not redirect to the generic /login page if the error came from an authentication endpoint
+
+          // Do not redirect if the error came from an authentication endpoint
           if (!req.url.toLowerCase().includes('/api/auth/')) {
             const queryParams = { error: 'Your session has expired. Please log in again.' };
-            if (role === 'Doctor') {
-              this.router.navigate(['/doctor/login'], { queryParams });
-            } else if (role === 'Admin') {
-              this.router.navigate(['/admin/login'], { queryParams });
-            } else if (role === 'SuperAdmin') {
-              this.router.navigate(['/superadmin/login'], { queryParams });
-            } else {
-              this.router.navigate(['/patient/login'], { queryParams });
-            }
+            this.router.navigate([loginPath], { queryParams });
           }
         }
         return throwError(() => error);
