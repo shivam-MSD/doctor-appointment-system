@@ -44,6 +44,35 @@ export class AppComponent implements OnInit, OnDestroy {
         this.notificationService.stopConnection();
       }
     });
+
+    // Real-time cross-tab Login & Logout Auto-Sync
+    window.addEventListener('storage', (event: StorageEvent) => {
+      if (event.key && event.key.startsWith('healsync_auth_')) {
+        const roleFromKey = event.key.replace('healsync_auth_', ''); // 'Doctor', 'Patient', 'Admin', 'SuperAdmin'
+        const currentPath = window.location.pathname.toLowerCase();
+
+        // 1. LOGOUT Event: If user logged out on another tab for the role matching current route
+        if (!event.newValue) {
+          if (currentPath.includes(`/${roleFromKey.toLowerCase()}`)) {
+            const loginPath = `/${roleFromKey.toLowerCase()}/login`;
+            this.authService.logout(roleFromKey);
+            window.location.href = loginPath;
+          }
+        } 
+        // 2. LOGIN Event: If user logged in on another tab for a role
+        else if (event.newValue) {
+          if (currentPath === '/login' || currentPath.includes('/login')) {
+            try {
+              const parsedUser = JSON.parse(event.newValue);
+              if (parsedUser && parsedUser.role) {
+                const dashPath = `/${parsedUser.role.toLowerCase()}/dashboard`;
+                window.location.href = dashPath;
+              }
+            } catch { }
+          }
+        }
+      }
+    });
   }
 
   ngOnDestroy(): void {

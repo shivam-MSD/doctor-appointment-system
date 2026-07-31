@@ -106,6 +106,20 @@ namespace DoctorAppointmentSystem.Controllers
 			return Ok(result);
 		}
 
+		[HttpGet("doctor-history/{doctorId}")]
+		public async Task<IActionResult> GetDoctorHistory(
+			[FromHeader(Name = "X-User-Id")] Guid userId,
+			[FromRoute] Guid doctorId)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header representing the authenticated user.");
+			}
+
+			var result = await _appointmentService.GetDoctorConsultationHistoryAsync(userId, doctorId);
+			return Ok(result);
+		}
+
 		[HttpGet("patients-list")]
 		public async Task<IActionResult> GetPatientsList(
 			[FromHeader(Name = "X-User-Id")] Guid userId,

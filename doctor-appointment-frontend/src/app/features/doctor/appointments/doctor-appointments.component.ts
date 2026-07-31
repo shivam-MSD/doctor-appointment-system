@@ -343,12 +343,15 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     const clinic = this.doctorClinics.find(c => c.clinicId === app.clinicId);
     if (!clinic || !clinic.openDays) return;
 
-    const selectedDate = new Date(this.rescheduleDate);
-    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const openDays = clinic.openDays.toLowerCase();
+    const selectedDate = new Date(this.rescheduleDate + 'T00:00:00');
+    const dayShort = selectedDate.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+    const dayLong = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const openDaysList = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
 
-    if (!openDays.includes(dayName)) {
-      this.toastService.showError(`The clinic is completely closed on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}s. Please select a configured Working Day or Reschedule-Only day.`);
+    const isOpen = openDaysList.some((d: string) => d === dayShort || d === dayLong || d.startsWith(dayShort));
+
+    if (!isOpen) {
+      this.toastService.showError(`The clinic '${clinic.clinicName || 'branch'}' is closed on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}s. Operating open days are: ${clinic.openDays}. Please select an open operating day.`);
       this.rescheduleDate = '';
     }
   }

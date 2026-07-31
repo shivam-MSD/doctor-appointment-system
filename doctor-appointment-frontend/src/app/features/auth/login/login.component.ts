@@ -31,8 +31,33 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.authService.isAuthenticated()) {
-      const role = this.authService.getRole();
+    // Read fixed role from route data if accessed via dedicated URL
+    this.route.data.subscribe(data => {
+      if (data && data['role']) {
+        this.selectedRole = data['role'];
+        this.isFixedRole = true;
+      }
+    });
+
+    // Listen to query params for prefilled email, success, and error messages
+    this.route.queryParams.subscribe(params => {
+      if (params['role']) {
+        this.selectedRole = params['role'];
+      }
+      if (params['message']) {
+        this.successMessage = params['message'];
+      }
+      if (params['error']) {
+        this.errorMessage = params['error'];
+      }
+      if (params['email']) {
+        this.email = params['email'];
+      }
+    });
+
+    // Only redirect if ALREADY authenticated for THIS specific login role
+    if (this.authService.isAuthenticated(this.selectedRole)) {
+      const role = this.selectedRole;
       if (role === 'Patient') {
         this.router.navigate(['/patient/dashboard']);
       } else if (role === 'Doctor') {
@@ -45,11 +70,21 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    // Read fixed role from route data if accessed via dedicated URL
-    this.route.data.subscribe(data => {
-      if (data && data['role']) {
-        this.selectedRole = data['role'];
-        this.isFixedRole = true;
+    // Real-time cross-tab login auto-redirect (Scenario 2B)
+    window.addEventListener('storage', (event: StorageEvent) => {
+      if (event.key === `healsync_auth_${this.selectedRole}` && event.newValue) {
+        if (this.authService.isAuthenticated(this.selectedRole)) {
+          const role = this.selectedRole;
+          if (role === 'Patient') {
+            this.router.navigate(['/patient/dashboard']);
+          } else if (role === 'Doctor') {
+            this.router.navigate(['/doctor/dashboard']);
+          } else if (role === 'Admin') {
+            this.router.navigate(['/admin/dashboard']);
+          } else if (role === 'SuperAdmin') {
+            this.router.navigate(['/superadmin/dashboard']);
+          }
+        }
       }
     });
 

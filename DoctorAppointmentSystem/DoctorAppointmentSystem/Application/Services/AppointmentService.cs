@@ -616,51 +616,84 @@ namespace DoctorAppointmentSystem.Application.Services
 				.Select(up => up.PatientId)
 				.ToListAsync();
 
-			// Fetch all appointments for these patients
+			if (linkedPatientIds == null || !linkedPatientIds.Any())
+			{
+				return Enumerable.Empty<ConsultedDoctorDto>();
+			}
+
+			// Fetch distinct Doctor IDs & consultation counts from appointments for these patients
+			var doctorStats = await _dbContext.Appointments.AsNoTracking()
+				.Where(app => linkedPatientIds.Contains(app.Patient.PatientId) && app.Doctor != null)
+				.GroupBy(app => app.Doctor.DoctorId)
+				.Select(g => new
+				{
+					DoctorId = g.Key,
+					CompletedCount = g.Count(app => app.EAppointmentStatus == Domain.Entities.EAppointmentStatus.Completed)
+				})
+				.ToListAsync();
+
+			if (!doctorStats.Any())
+			{
+				return Enumerable.Empty<ConsultedDoctorDto>();
+			}
+
+			var doctorIds = doctorStats.Select(s => s.DoctorId).ToList();
+
+			var doctors = await _dbContext.Doctors.AsNoTracking()
+				.Include(d => d.Specialization)
+				.Where(d => doctorIds.Contains(d.DoctorId))
+				.ToListAsync();
+
+			var statsDict = doctorStats.ToDictionary(s => s.DoctorId, s => s.CompletedCount);
+
+			var consultedDoctors = doctors.Select(doctor => new ConsultedDoctorDto
+			{
+				DoctorId = doctor.DoctorId,
+				DoctorName = $"{doctor.FirstName} {doctor.LastName}",
+				Specialization = doctor.Specialization?.SpecializationName ?? "General Physician",
+				ConsultationFee = doctor.ConsultationFee,
+				AboutDoctor = doctor.AboutDoctor,
+				Age = doctor.DOB != default ? DateTime.UtcNow.Year - doctor.DOB.Year : 0,
+				YearsOfExperience = doctor.YearsOfExperience,
+				Qualification = doctor.Qualification,
+				LicenceNumber = doctor.LicenceNumber,
+				CompletedConsultationsCount = statsDict.TryGetValue(doctor.DoctorId, out var count) ? count : 0,
+				Clinics = Enumerable.Empty<ClinicBasicDto>(),
+				Appointments = Enumerable.Empty<AppointmentDto>() // Lazy-loaded on demand when clicking History
+			}).ToList();
+
+			return consultedDoctors;
+		}
+
+		public async Task<IEnumerable<AppointmentDto>> GetDoctorConsultationHistoryAsync(Guid userId, Guid doctorId)
+		{
+			var linkedPatientIds = await _dbContext.UserPatients.AsNoTracking()
+				.Where(up => up.UserId == userId && up.IsVerified)
+				.Select(up => up.PatientId)
+				.ToListAsync();
+
+			if (!linkedPatientIds.Any())
+			{
+				return Enumerable.Empty<AppointmentDto>();
+			}
+
+			var doctor = await _dbContext.Doctors.AsNoTracking()
+				.Include(d => d.Specialization)
+				.FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+
+			if (doctor == null)
+			{
+				return Enumerable.Empty<AppointmentDto>();
+			}
+
 			var appointments = await _dbContext.Appointments.AsNoTracking()
 				.Include(app => app.Patient)
 				.Include(app => app.Clinic)
-				.Include(app => app.Doctor).ThenInclude(d => d.Specialization)
-				.Include(app => app.Doctor).ThenInclude(d => d.Clinics).ThenInclude(c => c.Address)
-				.Where(app => linkedPatientIds.Contains(app.Patient.PatientId))
+				.Where(app => linkedPatientIds.Contains(app.Patient.PatientId) && app.Doctor.DoctorId == doctorId && app.EAppointmentStatus == Domain.Entities.EAppointmentStatus.Completed)
+				.OrderByDescending(app => app.AppointmentDate)
 				.ToListAsync();
 
-			// Group appointments by Doctor
-			var groups = appointments.GroupBy(app => app.Doctor.DoctorId);
-
-			var consultedDoctors = new List<ConsultedDoctorDto>();
-
-			foreach (var group in groups)
-			{
-				var firstApp = group.First();
-				var doctor = firstApp.Doctor;
-
-				consultedDoctors.Add(new ConsultedDoctorDto
-				{
-					DoctorId = doctor.DoctorId,
-					DoctorName = $"{doctor.FirstName} {doctor.LastName}",
-					Specialization = doctor.Specialization?.SpecializationName ?? "General Physician",
-					ConsultationFee = doctor.ConsultationFee,
-					AboutDoctor = doctor.AboutDoctor,
-					Age = DateTime.UtcNow.Year - doctor.DOB.Year,
-					YearsOfExperience = doctor.YearsOfExperience,
-					Qualification = doctor.Qualification,
-					LicenceNumber = doctor.LicenceNumber,
-					Clinics = doctor.Clinics.Select(c => new ClinicBasicDto
-					{
-						ClinicId = c.ClinicId,
-						ClinicName = c.ClinicName,
-						ClinicType = c.ClinicType,
-						State = c.Address.State,
-						City = c.Address.City,
-						Area = c.Address.Area,
-						ContactNumber = c.ContactNumber
-					}).ToList(),
-					Appointments = group.Select(app => MapToDto(app, app.Patient, doctor))
-				});
-			}
-
-			return consultedDoctors;
+			return appointments.Select(app => MapToDto(app, app.Patient, doctor));
 		}
 
 		public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync()
@@ -1575,6 +1608,20 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (clinic != null && clinic.BookingWindowEndDate.HasValue && dto.ProposedDate.Date > clinic.BookingWindowEndDate.Value.Date)
 			{
 				throw new BadRequestException($"Appointments at this branch are only open until {clinic.BookingWindowEndDate.Value:yyyy-MM-dd}. Please propose an earlier date.");
+			}
+
+			// Validation: Open Operating Days
+			if (clinic != null && !string.IsNullOrWhiteSpace(clinic.OpenDays))
+			{
+				var dayShort = dto.ProposedDate.ToString("ddd").ToLower();
+				var dayLong = dto.ProposedDate.ToString("dddd").ToLower();
+				var openDaysList = clinic.OpenDays.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(d => d.ToLower()).ToList();
+
+				bool isOpen = openDaysList.Any(d => d == dayShort || d == dayLong || d.StartsWith(dayShort));
+				if (!isOpen)
+				{
+					throw new BadRequestException($"The clinic '{clinic.ClinicName}' is closed on {dto.ProposedDate:dddd}s. Operating open days are: {clinic.OpenDays}. Please propose a date falling on open operating days.");
+				}
 			}
 
 			// Get a specific lock for this clinic and proposed date

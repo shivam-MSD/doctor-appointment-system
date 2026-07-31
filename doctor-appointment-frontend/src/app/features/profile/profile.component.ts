@@ -95,8 +95,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.profileId = sessionStorage.getItem('profileId') || '';
     this.role = this.authService.getRole() || '';
+    const activeUser = this.authService.getActiveUserForCurrentRoute();
+    this.profileId = sessionStorage.getItem('profileId') || activeUser?.patientId || activeUser?.userId || '';
     this.loadProfile();
 
     if (this.role === 'Doctor') {
@@ -113,8 +114,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   loadProfile(form?: any): void {
-    if (this.role === 'Patient' && this.profileId) {
-      this.patientService.getPatientProfile(this.profileId).subscribe({
+    if (this.role === 'Patient') {
+      this.patientService.getPatientSelfProfile().subscribe({
         next: (data: any) => {
           this.firstName = data.firstName;
           this.lastName = data.lastName;
@@ -137,6 +138,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
           // Compute stats from loaded state
           this.completionStats = this.calculateStats(data);
           sessionStorage.setItem('profileCompletion', this.completionStats.percentage.toString());
+
+          if (data.patientId) {
+            sessionStorage.setItem('profileId', data.patientId);
+          }
 
           if (form && form.control) {
             form.control.markAsPristine();
@@ -241,7 +246,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         addressline1: this.addressline1,
         addressline2: this.addressline2
       };
-      request$ = this.patientService.updatePatientProfile(this.profileId, payload);
+      request$ = this.patientService.updatePatientSelfProfile(payload);
     } else if (this.role === 'Doctor') {
       const payload = {
         firstName: this.firstName,

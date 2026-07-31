@@ -88,5 +88,29 @@ namespace DoctorAppointmentSystem.Controllers
 			var result = await _userService.UpdateAdminProfileAsync(userId, dto);
 			return Ok(result);
 		}
+
+		[HttpGet("patient-profile")]
+		public async Task<IActionResult> GetPatientProfile([FromHeader(Name = "X-User-Id")] Guid userId)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			var result = await _userService.GetMyPatientProfileAsync(userId);
+			return Ok(result);
+		}
+
+		[HttpPut("patient-profile")]
+		public async Task<IActionResult> UpdatePatientProfile([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] PatientUpdateDto dto)
+		{
+			if (userId == Guid.Empty)
+			{
+				return BadRequest("Missing required X-User-Id header.");
+			}
+
+			var result = await _userService.UpdateMyPatientProfileAsync(userId, dto);
+			return Ok(result);
+		}
 	}
 }

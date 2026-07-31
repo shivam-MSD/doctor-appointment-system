@@ -43,6 +43,8 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[MaxLength(250)]
 		public string? Addressline2 { get; set; }
 
+		public string? LocationLink { get; set; }
+
 		// Clinic Admin details
 		[Required]
 		[EmailAddress]
@@ -112,6 +114,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string? EndTime { get; set; }
 		public bool IsAvailable { get; set; } = true;
 		public string? UnavailabilityReason { get; set; }
+		public string? LocationLink { get; set; }
 	}
 
 	public class RegisterAdminForClinicDto
@@ -178,6 +181,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public DateTime? BookingWindowStartDate { get; set; }
 		public string? SupportedModes { get; set; }
 		public int? MaxAppointmentsPerDay { get; set; }
+		public string? LocationLink { get; set; }
 	}
 
 	public class UpdateClinicDto
@@ -227,6 +231,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public DateTime? BookingWindowStartDate { get; set; }
 		public string? SupportedModes { get; set; }
 		public int? MaxAppointmentsPerDay { get; set; }
+		public string? LocationLink { get; set; }
 	}
 
 	public class RejectClinicDto

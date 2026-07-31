@@ -524,7 +524,8 @@ namespace DoctorAppointmentSystem.Application.Services
 				BookingWindowEndDate = x.Clinic.BookingWindowEndDate,
 				BookingWindowStartDate = x.Clinic.BookingWindowStartDate,
 				SupportedModes = x.Clinic.SupportedModes,
-				MaxAppointmentsPerDay = x.Clinic.MaxAppointmentsPerDay
+				MaxAppointmentsPerDay = x.Clinic.MaxAppointmentsPerDay,
+				LocationLink = x.Clinic.LocationLink
 			});
 		}
 
@@ -582,7 +583,8 @@ namespace DoctorAppointmentSystem.Application.Services
 				BookingWindowEndDate = x.Clinic.BookingWindowEndDate,
 				BookingWindowStartDate = x.Clinic.BookingWindowStartDate,
 				SupportedModes = x.Clinic.SupportedModes,
-				MaxAppointmentsPerDay = x.Clinic.MaxAppointmentsPerDay
+				MaxAppointmentsPerDay = x.Clinic.MaxAppointmentsPerDay,
+				LocationLink = x.Clinic.LocationLink
 			});
 		}
 
@@ -655,7 +657,8 @@ namespace DoctorAppointmentSystem.Application.Services
 					BookingWindowEndDate = c.BookingWindowEndDate,
 					BookingWindowStartDate = c.BookingWindowStartDate,
 					SupportedModes = c.SupportedModes,
-					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay
+					MaxAppointmentsPerDay = c.MaxAppointmentsPerDay,
+					LocationLink = c.LocationLink
 				})
 				.ToListAsync();
 		}
@@ -1292,6 +1295,8 @@ namespace DoctorAppointmentSystem.Application.Services
 				clinic.BookingWindowStartDate = dto.BookingWindowStartDate;
 				clinic.SupportedModes = dto.SupportedModes;
 				clinic.MaxAppointmentsPerDay = dto.MaxAppointmentsPerDay;
+				ValidateLocationLink(dto.LocationLink);
+				clinic.LocationLink = dto.LocationLink;
 
 				if (clinic.VerificationStatus == EVerificationStatus.Verified || clinic.VerificationStatus == EVerificationStatus.UpdatedPending)
 				{
@@ -1573,6 +1578,34 @@ namespace DoctorAppointmentSystem.Application.Services
 					Notes = l.Notes
 				})
 				.ToListAsync();
+		}
+
+		private static void ValidateLocationLink(string? locationLink)
+		{
+			if (string.IsNullOrWhiteSpace(locationLink)) return;
+			locationLink = locationLink.Trim();
+			if (!Uri.TryCreate(locationLink, UriKind.Absolute, out var uriResult) || 
+			   (uriResult.Scheme != Uri.UriSchemeHttp && uriResult.Scheme != Uri.UriSchemeHttps))
+			{
+				throw new BadRequestException("Invalid location link format. Please enter a valid HTTP/HTTPS URL.");
+			}
+
+			var host = uriResult.Host.ToLower();
+			var path = uriResult.AbsolutePath.ToLower();
+
+			bool isValidLocationHost = 
+				host.Contains("maps.google.") || 
+				(host.Contains("google.com") && path.Contains("/maps")) ||
+				host.Equals("maps.app.goo.gl") || 
+				host.Equals("goo.gl") || 
+				(host.Contains("bing.com") && path.Contains("/maps")) ||
+				host.Contains("openstreetmap.org") ||
+				host.Contains("waze.com");
+
+			if (!isValidLocationHost)
+			{
+				throw new BadRequestException("Location link must be a valid Google Maps or map location URL (e.g., https://maps.google.com/... or https://maps.app.goo.gl/...). Other websites or links are not allowed.");
+			}
 		}
 
 		#region Password Hashing Helper

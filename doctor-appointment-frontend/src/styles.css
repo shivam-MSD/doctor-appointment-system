@@ -1002,7 +1002,7 @@ body.light-theme .skeleton-box::after {
     align-items: flex-end !important; /* Slide from bottom */
   }
   
-  .modal-container {
+  .modal-container, .modal-content {
     width: 100% !important;
     max-width: 100% !important;
     max-height: 90vh !important;
@@ -1010,11 +1010,14 @@ body.light-theme .skeleton-box::after {
     border: none !important;
     border-top: 1px solid var(--border-color) !important;
     animation: slideUpBottomSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    position: relative;
-    padding-top: 12px;
+    position: relative !important;
+    padding-top: 16px !important;
+    padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+    margin: 0 !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5) !important;
   }
   
-  .modal-container::before {
+  .modal-container::before, .modal-content::before {
     content: '';
     position: absolute;
     top: 8px;
@@ -1023,17 +1026,43 @@ body.light-theme .skeleton-box::after {
     width: 40px;
     height: 4px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     z-index: 10;
   }
   
-  body.light-theme .modal-container::before {
-    background: rgba(0, 0, 0, 0.15);
+  body.light-theme .modal-container::before, body.light-theme .modal-content::before {
+    background: rgba(0, 0, 0, 0.2);
   }
   
   @keyframes slideUpBottomSheet {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
+  }
+
+  .close-modal, .btn-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    font-size: 1.25rem !important;
+    cursor: pointer !important;
+    z-index: 20 !important;
+    transition: all 0.2s ease !important;
+  }
+  .close-modal:hover, .btn-close:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+  }
+  body.light-theme .close-modal, body.light-theme .btn-close {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-primary) !important;
   }
 
   /* Mobile Tables Data Label (Disabled for scroll mode) */

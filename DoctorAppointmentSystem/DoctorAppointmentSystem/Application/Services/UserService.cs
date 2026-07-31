@@ -250,6 +250,102 @@ namespace DoctorAppointmentSystem.Application.Services
 			return dto;
 		}
 
+		public async Task<PatientDto> GetMyPatientProfileAsync(Guid userId)
+		{
+			var userPatient = await _dbContext.UserPatients
+				.AsNoTracking()
+				.FirstOrDefaultAsync(up => up.UserId == userId);
+			if (userPatient == null)
+			{
+				throw new NotFoundException($"Patient profile for User ID '{userId}' was not found.");
+			}
+
+			var patient = await _dbContext.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.PatientId == userPatient.PatientId);
+			if (patient == null)
+			{
+				throw new NotFoundException("Patient details were not found.");
+			}
+
+			var address = await _dbContext.Addresses.AsNoTracking().FirstOrDefaultAsync(a => a.User.UserId == userId);
+
+			return new PatientDto
+			{
+				PatientId = patient.PatientId,
+				UserId = userId,
+				FirstName = patient.FirstName,
+				LastName = patient.LastName,
+				MobileNo = patient.MobileNo,
+				Gender = patient.Gender.ToString(),
+				DOB = patient.DOB,
+				BloodGroup = patient.BloodGroup.ToString(),
+				EmergencyContactName = patient.EmergencyConactName,
+				EmergencyContactNumber = patient.EmergencyConactNumber,
+				Country = address?.Country ?? "India",
+				State = address?.State ?? "",
+				City = address?.City ?? "",
+				Area = address?.Area ?? "",
+				Pincode = address?.Pincode ?? "",
+				Addressline1 = address?.Addressline1 ?? "",
+				Addressline2 = address?.Addressline2 ?? ""
+			};
+		}
+
+		public async Task<PatientDto> UpdateMyPatientProfileAsync(Guid userId, PatientUpdateDto dto)
+		{
+			var userPatient = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.UserId == userId);
+			if (userPatient == null)
+			{
+				throw new NotFoundException("Patient record not found for user.");
+			}
+
+			var patient = await _dbContext.Patients.FirstOrDefaultAsync(p => p.PatientId == userPatient.PatientId);
+			if (patient == null)
+			{
+				throw new NotFoundException("Patient details not found.");
+			}
+
+			patient.FirstName = dto.FirstName;
+			patient.LastName = dto.LastName;
+			patient.MobileNo = dto.MobileNo;
+			if (Enum.TryParse<EGender>(dto.Gender, true, out var gender)) patient.Gender = gender;
+			patient.DOB = dto.DOB;
+			if (Enum.TryParse<EBloodGroup>(dto.BloodGroup, true, out var bg)) patient.BloodGroup = bg;
+			patient.EmergencyConactName = dto.EmergencyContactName;
+			patient.EmergencyConactNumber = dto.EmergencyContactNumber;
+
+			var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.User.UserId == userId);
+			if (address == null)
+			{
+				var user = await _dbContext.Users.FindAsync(userId);
+				address = new Address
+				{
+					AddressId = Guid.NewGuid(),
+					User = user!,
+					Country = dto.Country ?? "India",
+					State = dto.State,
+					City = dto.City,
+					Area = dto.Area,
+					Pincode = dto.Pincode,
+					Addressline1 = dto.Addressline1,
+					Addressline2 = dto.Addressline2
+				};
+				_dbContext.Addresses.Add(address);
+			}
+			else
+			{
+				address.Country = dto.Country ?? "India";
+				address.State = dto.State;
+				address.City = dto.City;
+				address.Area = dto.Area;
+				address.Pincode = dto.Pincode;
+				address.Addressline1 = dto.Addressline1;
+				address.Addressline2 = dto.Addressline2;
+			}
+
+			await _dbContext.SaveChangesAsync();
+			return await GetMyPatientProfileAsync(userId);
+		}
+
 		private string HashPassword(string password)
 		{
 			using var sha256 = SHA256.Create();

@@ -231,7 +231,21 @@ export class BookComponent implements OnInit {
   }
 
   openAppointmentHistory(doc: any): void {
-    this.selectedDoctorForHistory = doc;
+    this.selectedDoctorForHistory = { ...doc, appointments: [], isLoadingHistory: true };
+    this.appointmentService.getDoctorHistory(doc.doctorId).subscribe({
+      next: (history) => {
+        if (this.selectedDoctorForHistory && this.selectedDoctorForHistory.doctorId === doc.doctorId) {
+          this.selectedDoctorForHistory.appointments = history;
+          this.selectedDoctorForHistory.isLoadingHistory = false;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load doctor history', err);
+        if (this.selectedDoctorForHistory) {
+          this.selectedDoctorForHistory.isLoadingHistory = false;
+        }
+      }
+    });
   }
 
   closeAppointmentHistory(): void {

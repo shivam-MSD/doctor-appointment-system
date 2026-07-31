@@ -42,6 +42,10 @@ export class AppointmentService {
     return this.http.get<any[]>('/api/appointments/consulted-doctors');
   }
 
+  getDoctorHistory(doctorId: string): Observable<Appointment[]> {
+    return this.http.get<Appointment[]>(`/api/appointments/doctor-history/${doctorId}`);
+  }
+
   getPatientsList(search?: string, page = 1, size = 10): Observable<PagedResult<Patient>> {
     let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
     if (search) {

@@ -13,6 +13,14 @@ export class AuthService {
     if (activeUser) {
       this.currentUserSubject.next(activeUser);
     }
+
+    // Real-time cross-tab session synchronization (Scenario 2B)
+    window.addEventListener('storage', (event: StorageEvent) => {
+      if (event.key && event.key.startsWith('healsync_auth_')) {
+        const updatedUser = this.getActiveUserForCurrentRoute();
+        this.currentUserSubject.next(updatedUser);
+      }
+    });
   }
 
   private getRoleFromPath(): string | null {
@@ -31,9 +39,10 @@ export class AuthService {
       if (raw) {
         try { return JSON.parse(raw); } catch { }
       }
+      return null;
     }
 
-    // Fallback: search any stored role session
+    // On generic public routes (like / or /home), check all stored role sessions
     const roles = ['Patient', 'Doctor', 'Admin', 'SuperAdmin'];
     for (const r of roles) {
       const raw = localStorage.getItem(`healsync_auth_${r}`);
@@ -138,11 +147,18 @@ export class AuthService {
   }
 
   getRole(specificRole?: string): string | null {
-    const activeUser = this.getActiveUserForCurrentRoute();
-    const decoded = this.getDecodedToken(specificRole);
-    if (decoded) {
-      return decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded['role'] || decoded['Role'] || activeUser?.role;
+    const targetRole = specificRole || this.getRoleFromPath();
+    if (targetRole) {
+      const raw = localStorage.getItem(`healsync_auth_${targetRole}`);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed.role || targetRole;
+        } catch { }
+      }
+      return null;
     }
+    const activeUser = this.getActiveUserForCurrentRoute();
     return activeUser?.role || null;
   }
 
@@ -156,6 +172,7 @@ export class AuthService {
           return parsed.token || null;
         } catch { }
       }
+      return null;
     }
     const activeUser = this.getActiveUserForCurrentRoute();
     return activeUser?.token || null;

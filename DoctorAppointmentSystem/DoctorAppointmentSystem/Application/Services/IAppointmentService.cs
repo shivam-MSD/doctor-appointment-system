@@ -13,6 +13,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<PagedResult<PatientDto>> GetDashboardPatientsAsync(Guid userId, string? search, int page, int size);
 		Task<PagedResult<AppointmentDto>> GetPatientDashboardAppointmentsAsync(Guid userId, string? status, bool isHistory, int page, int size);
 		Task<IEnumerable<ConsultedDoctorDto>> GetConsultedDoctorsAsync(Guid userId);
+		Task<IEnumerable<AppointmentDto>> GetDoctorConsultationHistoryAsync(Guid userId, Guid doctorId);
 		Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync();
 		Task<IEnumerable<Specialization>> GetSpecializationsAsync();
 		Task<IEnumerable<DoctorDto>> SearchDoctorsAsync(string? state, string? city, Guid? specializationId, string? nameSearch);

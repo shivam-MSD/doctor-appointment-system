@@ -15,6 +15,14 @@ export class PatientService {
     return this.http.put<Patient>(`/api/patients/${id}`, profileDto);
   }
 
+  getPatientSelfProfile(): Observable<Patient> {
+    return this.http.get<Patient>('/api/users/patient-profile');
+  }
+
+  updatePatientSelfProfile(profileDto: any): Observable<Patient> {
+    return this.http.put<Patient>('/api/users/patient-profile', profileDto);
+  }
+
   getDoctorProfile(): Observable<any> {
     return this.http.get<any>('/api/users/doctor-profile');
   }

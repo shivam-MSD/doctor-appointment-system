@@ -146,13 +146,15 @@ namespace DoctorAppointmentSystem.Persistent
 			}
 			await db.SaveChangesAsync();
 
-			// Default legacy clinics to true availability
+			// Default legacy clinics to true availability and ensure LocationLink column exists
 			if (db.Database.IsSqlServer())
 			{
+				try { await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Clinics' AND COLUMN_NAME = 'LocationLink') ALTER TABLE Clinics ADD LocationLink nvarchar(max) NULL;"); } catch { }
 				await db.Database.ExecuteSqlRawAsync("UPDATE Clinics SET IsAvailable = 1 WHERE IsAvailable = 0 AND UnavailabilityReason IS NULL");
 			}
 			else if (db.Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
 			{
+				try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE doctorappointment.\"Clinics\" ADD COLUMN IF NOT EXISTS \"LocationLink\" text;"); } catch { }
 				await db.Database.ExecuteSqlRawAsync("UPDATE doctorappointment.\"Clinics\" SET \"IsAvailable\" = TRUE WHERE \"IsAvailable\" = FALSE AND \"UnavailabilityReason\" IS NULL");
 			}
 

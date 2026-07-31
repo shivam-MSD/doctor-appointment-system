@@ -10,5 +10,7 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<DoctorProfileDto> UpdateDoctorProfileAsync(Guid userId, DoctorProfileDto dto);
 		Task<AdminProfileDto> GetAdminProfileAsync(Guid userId);
 		Task<AdminProfileDto> UpdateAdminProfileAsync(Guid userId, AdminProfileDto dto);
+		Task<PatientDto> GetMyPatientProfileAsync(Guid userId);
+		Task<PatientDto> UpdateMyPatientProfileAsync(Guid userId, PatientUpdateDto dto);
 	}
 }

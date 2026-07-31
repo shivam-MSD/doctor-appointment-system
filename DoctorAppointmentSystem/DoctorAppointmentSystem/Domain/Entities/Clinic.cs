@@ -55,6 +55,8 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		/// <summary>Maximum number of appointments allowed per day. Null = unlimited.</summary>
 		public int? MaxAppointmentsPerDay { get; set; }
 
+		public string? LocationLink { get; set; }
+
 		[Required]
 		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 	}

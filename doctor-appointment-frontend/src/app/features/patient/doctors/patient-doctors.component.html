@@ -346,6 +346,16 @@
                     }}</strong></span>
               </div>
 
+              <!-- Google Maps Location Link -->
+              <div *ngIf="clinic.locationLink"
+                style="font-size: 0.85rem; display: flex; align-items: center; gap: 8px; margin-top: 2px; line-height: 1.5;">
+                <span style="color: var(--accent-cyan); font-size: 1rem; flex-shrink: 0;">🗺️</span>
+                <a [href]="clinic.locationLink" target="_blank" rel="noopener noreferrer"
+                  style="color: var(--accent-cyan); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  View on Google Maps <span style="font-size: 0.7rem; opacity: 0.7;">↗</span>
+                </a>
+              </div>
+
               <!-- Available Booking Dates Window -->
               <div
                 style="font-size: 0.82rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-top: 2px; line-height: 1.5;">
@@ -478,6 +488,12 @@
             {{ clinic.city }}, {{ clinic.state }}
             <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">
               📞 Contact: <strong style="color: var(--text-primary);">{{ clinic.contactNumber || 'N/A' }}</strong>
+            </div>
+            <div *ngIf="clinic.locationLink" style="margin-top: 4px;">
+              <a [href]="clinic.locationLink" target="_blank" rel="noopener noreferrer"
+                style="color: var(--accent-cyan); font-weight: 600; text-decoration: none; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+                🗺️ View on Google Maps <span style="font-size: 0.7rem; opacity: 0.7;">↗</span>
+              </a>
             </div>
           </div>
 

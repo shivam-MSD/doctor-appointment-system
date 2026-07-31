@@ -74,6 +74,7 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public int YearsOfExperience { get; set; }
 		public string Qualification { get; set; }
 		public string LicenceNumber { get; set; }
+		public int CompletedConsultationsCount { get; set; }
 		public IEnumerable<ClinicBasicDto> Clinics { get; set; } = Enumerable.Empty<ClinicBasicDto>();
 		public IEnumerable<AppointmentDto> Appointments { get; set; } = Enumerable.Empty<AppointmentDto>();
 	}
