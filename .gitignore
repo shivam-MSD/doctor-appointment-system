@@ -62,11 +62,11 @@ appsettings.prod1.json
 Thumbs.db
 
 ## Firebase & Deployment Cache
-.firebase/
-firebase-debug.log
-firebase-debug.*.log
-.firebaserc
+**/.firebase/
+**/.firebase
+**/.firebaserc
+**/firebase-debug*.log
 
 ## Gemini & Agent IDE local files
-.gemini/
-.agents/
+**/.gemini/
+**/.agents/
