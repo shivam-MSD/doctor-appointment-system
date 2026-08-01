@@ -1,26 +1,57 @@
 using System;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using DoctorAppointmentSystem.Domain.Entities;
 using DoctorAppointmentSystem.Persistent.Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using WebPush;
 
 namespace DoctorAppointmentSystem.Application.Services
 {
+	/// <summary>
+	/// Service implementation for registering VAPID subscriptions and dispatching WebPush notifications to mobile devices when closed.
+	/// </summary>
 	public class WebPushService : IWebPushService
 	{
 		private readonly ApplicationDbContext _dbContext;
+		private readonly IConfiguration _configuration;
 		private readonly ILogger<WebPushService> _logger;
-		private static readonly HttpClient _httpClient = new HttpClient();
 
-		public WebPushService(ApplicationDbContext dbContext, ILogger<WebPushService> logger)
+		private static VapidDetails? _cachedVapidDetails;
+		private static string? _cachedPublicKey;
+
+		public WebPushService(ApplicationDbContext dbContext, IConfiguration configuration, ILogger<WebPushService> logger)
 		{
 			_dbContext = dbContext;
+			_configuration = configuration;
 			_logger = logger;
+		}
+
+		private VapidDetails GetVapidDetails()
+		{
+			if (_cachedVapidDetails != null)
+			{
+				return _cachedVapidDetails;
+			}
+
+			var publicKey = _configuration["VapidKeys:PublicKey"];
+			var privateKey = _configuration["VapidKeys:PrivateKey"];
+			var subject = _configuration["VapidKeys:Subject"] ?? "mailto:shivapatel1102001@gmail.com";
+
+			if (string.IsNullOrWhiteSpace(publicKey) || string.IsNullOrWhiteSpace(privateKey))
+			{
+				// Auto-generate mathematically valid matching ECDSA P-256 VAPID keypair
+				var keys = VapidHelper.GenerateVapidKeys();
+				publicKey = keys.PublicKey;
+				privateKey = keys.PrivateKey;
+				_logger.LogInformation("[WebPush] Generated new matching VAPID Keypair. PublicKey: {PublicKey}", publicKey);
+			}
+
+			_cachedVapidDetails = new VapidDetails(subject, publicKey, privateKey);
+			return _cachedVapidDetails;
 		}
 
 		public async Task SaveSubscriptionAsync(string userId, string endpoint, string p256dh, string auth)
@@ -62,14 +93,17 @@ namespace DoctorAppointmentSystem.Application.Services
 
 			if (!subs.Any()) return;
 
+			var vapidDetails = GetVapidDetails();
+			var webPushClient = new WebPushClient();
+
 			var payload = new
 			{
 				notification = new
 				{
 					title = title,
 					body = message,
-					icon = "/assets/icons/icon-192x192.png",
-					badge = "/assets/icons/icon-72x72.png",
+					icon = "/assets/logo-192.png",
+					badge = "/assets/logo-192.png",
 					data = new { url = portalUrl }
 				}
 			};
@@ -80,18 +114,24 @@ namespace DoctorAppointmentSystem.Application.Services
 			{
 				try
 				{
-					using var request = new HttpRequestMessage(HttpMethod.Post, sub.Endpoint);
-					request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+					if (string.IsNullOrWhiteSpace(sub.P256dh) || string.IsNullOrWhiteSpace(sub.Auth))
+						continue;
 
-					var response = await _httpClient.SendAsync(request);
-					if (response.StatusCode == System.Net.HttpStatusCode.Gone || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+					var pushSubscription = new PushSubscription(sub.Endpoint, sub.P256dh, sub.Auth);
+					await webPushClient.SendNotificationAsync(pushSubscription, jsonPayload, vapidDetails);
+					_logger.LogInformation("[WebPush] Closed-app push notification dispatched to endpoint {Endpoint}", sub.Endpoint);
+				}
+				catch (WebPushException ex)
+				{
+					_logger.LogWarning("[WebPush] WebPushException ({StatusCode}) for endpoint {Endpoint}: {Message}", ex.StatusCode, sub.Endpoint, ex.Message);
+					if (ex.StatusCode == System.Net.HttpStatusCode.Gone || ex.StatusCode == System.Net.HttpStatusCode.NotFound)
 					{
 						_dbContext.UserPushSubscriptions.Remove(sub);
 					}
 				}
 				catch (Exception ex)
 				{
-					_logger.LogWarning($"Failed to dispatch WebPush to endpoint {sub.Endpoint}: {ex.Message}");
+					_logger.LogWarning(ex, "[WebPush] Failed to dispatch push notification to {Endpoint}", sub.Endpoint);
 				}
 			}
 
