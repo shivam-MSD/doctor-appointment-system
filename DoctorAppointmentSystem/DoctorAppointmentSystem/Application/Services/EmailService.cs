@@ -236,6 +236,11 @@ namespace DoctorAppointmentSystem.Application.Services
 				?? _configuration["SmtpSettings:Password"] 
 				?? _configuration["SMTP_PASSWORD"];
 
+			if (!string.IsNullOrWhiteSpace(password))
+			{
+				password = password.Replace(" ", "").Trim();
+			}
+
 			if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(password))
 			{
 				var errMsg = "[EmailService] SMTP Sender Email or Password is not configured in application settings or environment variables.";
