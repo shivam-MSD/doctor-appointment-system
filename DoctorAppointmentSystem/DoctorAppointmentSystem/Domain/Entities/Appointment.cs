@@ -64,7 +64,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		/// Gets or sets the current lifecycle status of the appointment (Pending, Confirmed, Cancelled, Completed, Rejected, Expired, RescheduleProposed, FollowUpProposed).
 		/// </summary>
 		[Required]
-		public EAppointmentStatus EAppointmentStatus { get; set; }
+		public EAppointmentStatus EAppointmentStatus { get; set; } = EAppointmentStatus.Pending;
 
 		/// <summary>
 		/// Gets or sets the reason or symptom description provided by the patient upon booking.

@@ -238,7 +238,19 @@ namespace DoctorAppointmentSystem.Application.Services
 			var httpCtx = _httpContextAccessor.HttpContext;
 			string ipAddress = SecurityHelper.GetClientIpAddress(httpCtx);
 			string deviceInfo = SecurityHelper.GetDeviceAndBrowserInfo(httpCtx);
-			string nowUtcStr = DateTime.UtcNow.ToString("f");
+			
+			DateTime nowUtc = DateTime.UtcNow;
+			DateTime localTime = DateTime.Now;
+			try
+			{
+				var istZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+				localTime = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, istZone);
+			}
+			catch
+			{
+				localTime = DateTime.Now;
+			}
+			string loginTimeStr = $"{localTime:f} (IST / Local Time)";
 
 			// 1. Structured Logging
 			_logger.LogInformation("[AuthService] User {Email} ({RoleName}) logged in successfully from IP: {IpAddress}, Device: {DeviceInfo}", user.Email, roleName, ipAddress, deviceInfo);
@@ -246,7 +258,7 @@ namespace DoctorAppointmentSystem.Application.Services
 			// 2. Enqueue Login Security Email Alert via Hangfire
 			try
 			{
-				string emailHtml = SecurityHelper.BuildLoginSecurityEmailHtml(firstName, roleName, nowUtcStr, ipAddress, deviceInfo);
+				string emailHtml = SecurityHelper.BuildLoginSecurityEmailHtml(firstName, roleName, loginTimeStr, ipAddress, deviceInfo);
 				Hangfire.BackgroundJob.Enqueue<IEmailService>(service => service.SendEmailAsync(user.Email, "🔐 Security Alert: New Login to your HealSync Account", emailHtml));
 			}
 			catch (Exception ex)

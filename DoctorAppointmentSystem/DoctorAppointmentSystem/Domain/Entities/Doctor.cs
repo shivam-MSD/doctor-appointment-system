@@ -94,7 +94,7 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		/// Gets or sets the administrative verification status of the doctor (Pending, Verified, Rejected, UpdatedPending).
 		/// </summary>
 		[Required]
-		public EVerificationStatus VerificationStatus { get; set; }
+		public EVerificationStatus VerificationStatus { get; set; } = EVerificationStatus.Pending;
 
 		/// <summary>
 		/// Gets or sets the profile image byte array for the doctor.

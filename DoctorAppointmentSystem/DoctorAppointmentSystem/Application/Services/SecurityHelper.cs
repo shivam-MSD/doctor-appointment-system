@@ -81,7 +81,7 @@ namespace DoctorAppointmentSystem.Application.Services
       <div style=""background-color: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0; border: 1px solid #e2e8f0;"">
         <table style=""width: 100%; border-collapse: collapse; font-size: 13px;"">
           <tr>
-            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; width: 130px;"">Time (UTC):</td>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; width: 130px;"">Login Time:</td>
             <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">{loginTimeStr}</td>
           </tr>
           <tr>

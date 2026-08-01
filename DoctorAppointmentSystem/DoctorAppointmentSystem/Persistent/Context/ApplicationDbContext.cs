@@ -131,7 +131,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 				entity.Property(d => d.Gender).HasConversion<string>().IsRequired();
 				entity.Property(d => d.Qualification).IsRequired().HasMaxLength(150);
 				entity.Property(d => d.LicenceNumber).IsRequired().HasMaxLength(50);
-				entity.Property(d => d.VerificationStatus).HasConversion<string>().HasDefaultValue(EVerificationStatus.Pending);
+				entity.Property(d => d.VerificationStatus).HasConversion<string>().IsRequired();
 
 				// User to Doctor (1 to 1)
 				entity.HasOne(d => d.User)
@@ -180,7 +180,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 			{
 				entity.ToTable("Appointments");
 				entity.HasKey(app => app.AppointmentId);
-				entity.Property(app => app.EAppointmentStatus).HasConversion<string>().HasDefaultValue(EAppointmentStatus.Pending);
+				entity.Property(app => app.EAppointmentStatus).HasConversion<string>().IsRequired();
 				entity.Property(app => app.EConsultationType).HasConversion<string>().IsRequired();
 				entity.Property(app => app.Reason).IsRequired().HasMaxLength(500);
 
@@ -234,7 +234,7 @@ namespace DoctorAppointmentSystem.Persistent.Context
 				entity.Property(c => c.ClinicType).IsRequired().HasMaxLength(50);
 				entity.Property(c => c.VerificationStatus)
 					.HasConversion<string>()
-					.HasDefaultValue(EVerificationStatus.Pending);
+					.IsRequired();
 				entity.Property(c => c.RejectionReason).HasMaxLength(500);
 
 				// Doctor to Clinic (1 to Many)

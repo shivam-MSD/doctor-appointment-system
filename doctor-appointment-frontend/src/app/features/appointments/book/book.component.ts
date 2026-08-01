@@ -371,11 +371,16 @@ export class BookComponent implements OnInit {
       const dateString = `${yyyy}-${mm}-${dd}`;
 
       const dayName = this.weekDaysList[dateObj.getDay()];
+      const dayLong = dayName.toLowerCase();
+      const dayShort = dayName.substring(0, 3).toLowerCase();
 
       const isPast = dateObj < today;
       const exceedsMin = minLimitDate ? dateObj < minLimitDate : false;
       const exceedsMax = maxLimitDate ? dateObj > maxLimitDate : false;
-      const isClosedDay = !openDaysArray.includes(dayName);
+      const isClosedDay = openDaysArray.length > 0 && !openDaysArray.some((d: string) => {
+        const norm = d.trim().toLowerCase();
+        return norm === dayLong || norm === dayShort || norm.startsWith(dayShort);
+      });
 
       // If clinic is manually closed, all days are unavailable
       const isClinicManuallyOpen = this.selectedClinic?.isAvailable !== false;
@@ -441,7 +446,14 @@ export class BookComponent implements OnInit {
     const dateObj = new Date(this.appointmentDate + 'T00:00:00');
     const dayName = this.weekDaysList[dateObj.getDay()];
     const openDaysArray = selectedClinic?.openDays ? selectedClinic.openDays.split(',').map((d: string) => d.trim()) : [];
-    if (openDaysArray.length > 0 && !openDaysArray.includes(dayName)) {
+    const dayLong = dayName.toLowerCase();
+    const dayShort = dayName.substring(0, 3).toLowerCase();
+    const isOpenOnDay = openDaysArray.length === 0 || openDaysArray.some((d: string) => {
+      const norm = d.trim().toLowerCase();
+      return norm === dayLong || norm === dayShort || norm.startsWith(dayShort);
+    });
+
+    if (!isOpenOnDay) {
       this.dateValidationError = `This clinic is closed on ${dayName}. Open days: ${selectedClinic?.openDays}.`;
       return;
     }

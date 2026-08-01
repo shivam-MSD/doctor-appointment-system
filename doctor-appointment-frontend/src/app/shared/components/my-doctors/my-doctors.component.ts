@@ -150,18 +150,20 @@ export class MyDoctorsComponent implements OnInit {
   }
 
   isClinicCurrentlyOpen(clinic: any): boolean {
-    if (!clinic || clinic.isAvailable === false) {
+    if (!clinic || clinic.isAvailable === false || clinic.isDoctorAvailable === false) {
       return false;
     }
 
-    if (!clinic.openDays) return true; // Default open if unspecified
+    if (!clinic.openDays) return false;
     const days = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
-    const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    if (!days.includes(todayName)) {
+    const todayLong = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const todayShort = new Date().toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+    const isOpenToday = days.some((d: string) => d === todayLong || d === todayShort || d.startsWith(todayShort));
+    if (!isOpenToday) {
       return false;
     }
 
-    if (!clinic.startTime || !clinic.endTime) return true;
+    if (!clinic.startTime || !clinic.endTime) return false;
     const starts = clinic.startTime.split(',').map((t: string) => t.trim());
     const ends = clinic.endTime.split(',').map((t: string) => t.trim());
 
