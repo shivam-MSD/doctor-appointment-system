@@ -40,3 +40,14 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Firebase & Deployment Cache
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+.firebaserc
+
+# Gemini & Agent IDE local files
+.gemini/
+.agents/
+

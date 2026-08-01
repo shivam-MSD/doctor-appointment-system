@@ -18,6 +18,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   showProfilePanel = false;
   currentDateTime: Date = new Date();
   private signalrSub?: Subscription;
+  private refreshSub?: Subscription;
   private clockSub?: Subscription;
 
   @HostListener('document:click', ['$event'])
@@ -73,12 +74,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.notifications.unshift(newNotif);
         this.cdr.detectChanges();
       });
+
+      // 3. Auto-sync notifications when app resumes from background on mobile (iOS/Android)
+      this.refreshSub = this.notificationService.refreshData$.subscribe(() => {
+        this.loadNotifications();
+      });
     }
   }
 
   ngOnDestroy(): void {
     if (this.signalrSub) {
       this.signalrSub.unsubscribe();
+    }
+    if (this.refreshSub) {
+      this.refreshSub.unsubscribe();
     }
     if (this.clockSub) {
       this.clockSub.unsubscribe();
