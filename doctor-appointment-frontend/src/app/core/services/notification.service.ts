@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { environment } from 'src/environments/environment';
+import { AudioService } from './audio.service';
 
 export interface NotificationDto {
   notificationId: string;
@@ -21,7 +22,10 @@ export class NotificationService {
   private refreshSource = new Subject<string>();
   public refreshData$ = this.refreshSource.asObservable();
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private audioService: AudioService
+  ) { }
 
   getNotifications(): Observable<NotificationDto[]> {
     return this.http.get<NotificationDto[]>('/api/notifications');
@@ -31,47 +35,16 @@ export class NotificationService {
     return this.http.post<any>('/api/notifications/mark-read', {});
   }
 
-  // startConnection(userId: string): void {
-  //   if (this.hubConnection && (this.hubConnection.state === HubConnectionState.Connected || this.hubConnection.state === HubConnectionState.Connecting)) {
-  //     return;
-  //   }
-
-  //   let hubUrl = `/notificationHub?userId=${userId}`;
-  //   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-  //     hubUrl = `http://localhost:5222/notificationHub?userId=${userId}`;
-  //   }
-
-  //   this.hubConnection = new HubConnectionBuilder()
-  //     .withUrl(hubUrl)
-  //     .withAutomaticReconnect()
-  //     .build();
-
-  //   this.hubConnection.on('ReceiveNotification', (notification: NotificationDto) => {
-  //     this.notificationReceivedSource.next(notification);
-  //   });
-
-  //   this.hubConnection.on('RefreshData', (dataArea: string) => {
-  //     this.refreshSource.next(dataArea);
-  //   });
-
-  //   this.hubConnection.start()
-  //     .then(() => console.log('SignalR NotificationHub connection started.'))
-  //     .catch(err => console.error('Error starting SignalR connection:', err));
-  // }
-
-  // stopConnection(): void {
-  //   if (this.hubConnection) {
-  //     this.hubConnection.stop()
-  //       .then(() => console.log('SignalR connection stopped.'))
-  //       .catch(err => console.error('Error stopping SignalR connection:', err));
-  //   }
-  // }
-
   startConnection(userId: string): void {
     if (!userId) return;
 
     if (this.hubConnection && (this.hubConnection.state === HubConnectionState.Connected || this.hubConnection.state === HubConnectionState.Connecting)) {
       return;
+    }
+
+    // Request native browser OS notification permission if default
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => { });
     }
 
     const baseUrl = environment.apiUrl ? environment.apiUrl : '';
@@ -92,6 +65,23 @@ export class NotificationService {
       .build();
 
     this.hubConnection.on('ReceiveNotification', (notification: NotificationDto) => {
+      // 1. Play audio chime sound and trigger mobile device vibration
+      try {
+        this.audioService.playNotificationSound();
+      } catch { }
+
+      // 2. Trigger native OS System Notification popup (Windows PC / Android / iOS)
+      try {
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          const cleanText = notification.message ? notification.message.replace(/<[^>]*>?/gm, '') : 'New notification received';
+          new Notification('HealSync Medical Network', {
+            body: cleanText,
+            icon: '/assets/logo-192.png',
+            badge: '/assets/logo-192.png'
+          });
+        }
+      } catch { }
+
       this.notificationReceivedSource.next(notification);
     });
 

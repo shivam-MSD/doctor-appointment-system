@@ -54,7 +54,9 @@ export class AppComponent implements OnInit, OnDestroy {
         // 1. LOGOUT Event: If user logged out on another tab for the role matching current route
         if (!event.newValue) {
           if (currentPath.includes(`/${roleFromKey.toLowerCase()}`)) {
-            const loginPath = `/${roleFromKey.toLowerCase()}/login`;
+            let loginPath = '/login';
+            if (roleFromKey === 'Admin') loginPath = '/admin/login';
+            if (roleFromKey === 'SuperAdmin') loginPath = '/superadmin/login';
             this.authService.logout(roleFromKey);
             window.location.href = loginPath;
           }
@@ -79,10 +81,13 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.authSub) {
       this.authSub.unsubscribe();
     }
-    this.notificationService.stopConnection();
+  }
+
+  dismissToast(id: number): void {
+    this.toastService.removeToast(id);
   }
 
   removeToast(id: number): void {
-    this.toastService.remove(id);
+    this.toastService.removeToast(id);
   }
 }

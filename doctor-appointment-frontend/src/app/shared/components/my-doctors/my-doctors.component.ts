@@ -110,33 +110,34 @@ export class MyDoctorsComponent implements OnInit {
     this.bookingClinicsLoading = true;
     document.body.style.overflow = 'hidden';
 
+    // Lazy-load clinics via API call for this specific doctor
     this.patientService.getClinicsByDoctorId(doc.doctorId).subscribe({
-      next: (res) => {
-        this.bookingClinics = res;
+      next: (res: any[]) => {
         this.bookingClinicsLoading = false;
+        const clinicsList = res || [];
 
-        // If doctor only has 1 clinic, navigate immediately
-        if (res.length === 1) {
-          const singleClinic = res[0];
+        if (clinicsList.length === 1) {
+          // If doctor has exactly 1 clinic branch, navigate directly to booking
+          const singleClinic = clinicsList[0];
+          this.closeBookAppointmentModal();
           this.router.navigate(['/patient/book-appointment'], {
             queryParams: { doctorId: doc.doctorId, clinicId: singleClinic.clinicId }
           });
+        } else if (clinicsList.length === 0) {
+          // If no clinics registered yet, navigate to booking with doctorId only
           this.closeBookAppointmentModal();
-        } else if (res.length === 0) {
-          // If no clinics registered yet, navigate to book screen with doctorId only
           this.router.navigate(['/patient/book-appointment'], {
             queryParams: { doctorId: doc.doctorId }
           });
-          this.closeBookAppointmentModal();
+        } else {
+          // Multiple clinics -> display selection list in modal / mobile bottom-sheet
+          this.bookingClinics = clinicsList;
         }
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load clinics for doctor', err);
         this.bookingClinicsLoading = false;
-        // Fallback to book page directly
-        this.router.navigate(['/patient/book-appointment'], {
-          queryParams: { doctorId: doc.doctorId }
-        });
-        this.closeBookAppointmentModal();
+        this.bookingClinics = [];
       }
     });
   }
@@ -153,14 +154,14 @@ export class MyDoctorsComponent implements OnInit {
       return false;
     }
 
-    if (!clinic.openDays) return false;
+    if (!clinic.openDays) return true; // Default open if unspecified
     const days = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
     const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     if (!days.includes(todayName)) {
       return false;
     }
 
-    if (!clinic.startTime || !clinic.endTime) return false;
+    if (!clinic.startTime || !clinic.endTime) return true;
     const starts = clinic.startTime.split(',').map((t: string) => t.trim());
     const ends = clinic.endTime.split(',').map((t: string) => t.trim());
 
@@ -202,47 +203,12 @@ export class MyDoctorsComponent implements OnInit {
         }
       }
     }
-
     return false;
   }
 
   isClinicBookable(clinic: any): boolean {
-    if (!clinic || clinic.isAvailable === false) return false;
-    if (!clinic.openDays || clinic.openDays.trim() === '') return false;
-
-    const openDayNames = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
-    const weekDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let rangeStart = new Date(today);
-    if (clinic.bookingWindowStartDate) {
-      const winStart = new Date(clinic.bookingWindowStartDate);
-      winStart.setHours(0, 0, 0, 0);
-      if (winStart > rangeStart) rangeStart = winStart;
-    }
-
-    let rangeEnd: Date | null = null;
-    if (clinic.bookingWindowEndDate) {
-      rangeEnd = new Date(clinic.bookingWindowEndDate);
-      rangeEnd.setHours(23, 59, 59, 999);
-      if (rangeEnd < today) return false;
-    }
-
-    if (rangeEnd && rangeStart > rangeEnd) return false;
-
-    const scanLimit = rangeEnd
-      ? Math.min(7, Math.ceil((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1)
-      : 7;
-
-    for (let i = 0; i < scanLimit; i++) {
-      const d = new Date(rangeStart);
-      d.setDate(d.getDate() + i);
-      if (rangeEnd && d > rangeEnd) break;
-      if (openDayNames.includes(weekDays[d.getDay()])) return true;
-    }
-
-    return false;
+    if (!clinic) return false;
+    if (clinic.isAvailable === false) return false;
+    return true;
   }
 }

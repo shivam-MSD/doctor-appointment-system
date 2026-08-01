@@ -1,4 +1,51 @@
-/* Modal Styles */
+/* Container & Grid Responsiveness */
+.my-doctors-container {
+  padding: 30px 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(145deg, var(--glass-overlay) 0%, rgba(6, 182, 212, 0.02) 100%);
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.my-doctors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.doctor-card {
+  margin-bottom: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  border-left: 4px solid var(--accent-cyan);
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .my-doctors-container {
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+  }
+  .my-doctors-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .doctor-card {
+    padding: 16px !important;
+    margin-bottom: 12px !important;
+  }
+}
+
+/* Modal & Bottom-Sheet Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -14,14 +61,14 @@
 }
 
 .modal-card {
-  background: white;
+  background: var(--bg-card-solid);
   border-radius: 16px;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
   overflow: hidden;
 }
@@ -32,7 +79,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f8fafc;
 }
 
 .modal-body {
@@ -64,7 +110,7 @@
 }
 
 .close-btn:hover {
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.1);
   color: #ef4444;
 }
 

@@ -41,73 +41,24 @@ export class LoginComponent implements OnInit {
 
     // Listen to query params for prefilled email, success, and error messages
     this.route.queryParams.subscribe(params => {
-      if (params['role']) {
-        this.selectedRole = params['role'];
-      }
-      if (params['message']) {
-        this.successMessage = params['message'];
-      }
-      if (params['error']) {
-        this.errorMessage = params['error'];
-      }
-      if (params['email']) {
-        this.email = params['email'];
-      }
-    });
-
-    // Only redirect if ALREADY authenticated for THIS specific login role
-    if (this.authService.isAuthenticated(this.selectedRole)) {
-      const role = this.selectedRole;
-      if (role === 'Patient') {
-        this.router.navigate(['/patient/dashboard']);
-      } else if (role === 'Doctor') {
-        this.router.navigate(['/doctor/dashboard']);
-      } else if (role === 'Admin') {
-        this.router.navigate(['/admin/dashboard']);
-      } else if (role === 'SuperAdmin') {
-        this.router.navigate(['/superadmin/dashboard']);
-      }
-      return;
-    }
-
-    // Real-time cross-tab login auto-redirect (Scenario 2B)
-    window.addEventListener('storage', (event: StorageEvent) => {
-      if (event.key === `healsync_auth_${this.selectedRole}` && event.newValue) {
-        if (this.authService.isAuthenticated(this.selectedRole)) {
-          const role = this.selectedRole;
-          if (role === 'Patient') {
-            this.router.navigate(['/patient/dashboard']);
-          } else if (role === 'Doctor') {
-            this.router.navigate(['/doctor/dashboard']);
-          } else if (role === 'Admin') {
-            this.router.navigate(['/admin/dashboard']);
-          } else if (role === 'SuperAdmin') {
-            this.router.navigate(['/superadmin/dashboard']);
-          }
-        }
-      }
-    });
-
-    // Listen to query params for prefilled email, success, and error messages
-    this.route.queryParams.subscribe(params => {
       let shouldCleanUrl = false;
-      if (params['message']) {
-        this.successMessage = params['message'];
-        shouldCleanUrl = true;
-      }
-      if (params['error']) {
-        this.errorMessage = params['error'];
-        shouldCleanUrl = true;
-      }
-      if (params['email']) {
-        this.email = params['email'];
-      }
       if (params['role']) {
         this.selectedRole = params['role'] as any;
       }
+      if (params['message']) {
+        this.successMessage = params['message'];
+        shouldCleanUrl = true;
+      }
+      if (params['error']) {
+        this.errorMessage = params['error'];
+        shouldCleanUrl = true;
+      }
+      if (params['email']) {
+        this.email = params['email'];
+      }
 
       if (shouldCleanUrl) {
-        // Clean error/message query parameters from browser address bar so page refresh (F5) will not display them again
+        // Clean error/message query parameters from browser address bar
         this.router.navigate([], {
           relativeTo: this.route,
           queryParams: { error: null, message: null },
@@ -116,6 +67,39 @@ export class LoginComponent implements OnInit {
         });
       }
     });
+
+    // Auto-redirect if ANY active user session is already logged in across the browser!
+    const activeUser = this.authService.getAnyActiveUser();
+    if (activeUser && activeUser.role) {
+      this.redirectToRoleDashboard(activeUser.role);
+      return;
+    }
+
+    // Real-time cross-tab login auto-redirect: when Tab 1 logs in, Tab 2 auto-logs in without refreshing!
+    window.addEventListener('storage', (event: StorageEvent) => {
+      if (event.key && event.key.startsWith('healsync_auth_') && event.newValue) {
+        try {
+          const user = JSON.parse(event.newValue);
+          if (user && user.role) {
+            sessionStorage.setItem(event.key, event.newValue);
+            this.toastService.showSuccess(`Logged in as ${user.role} from another tab!`);
+            this.redirectToRoleDashboard(user.role);
+          }
+        } catch { }
+      }
+    });
+  }
+
+  private redirectToRoleDashboard(role: string): void {
+    if (role === 'Patient') {
+      this.router.navigate(['/patient/dashboard'], { replaceUrl: true });
+    } else if (role === 'Doctor') {
+      this.router.navigate(['/doctor/dashboard'], { replaceUrl: true });
+    } else if (role === 'Admin') {
+      this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+    } else if (role === 'SuperAdmin') {
+      this.router.navigate(['/superadmin/dashboard'], { replaceUrl: true });
+    }
   }
 
   getPortalTitle(): string {
@@ -146,6 +130,14 @@ export class LoginComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
+    // If an active session already exists, prevent re-submitting and redirect immediately
+    const activeUser = this.authService.getAnyActiveUser();
+    if (activeUser && activeUser.role) {
+      this.toastService.showSuccess(`Already logged in as ${activeUser.role}. Redirecting to dashboard...`);
+      this.redirectToRoleDashboard(activeUser.role);
+      return;
+    }
+
     if (form.invalid) {
       Object.keys(form.controls).forEach(key => {
         form.controls[key].markAsTouched();
@@ -164,15 +156,7 @@ export class LoginComponent implements OnInit {
           return;
         }
         this.toastService.showSuccess('Logged in successfully!');
-        if (user.role === 'Patient') {
-          this.router.navigate(['/patient/dashboard']);
-        } else if (user.role === 'Doctor') {
-          this.router.navigate(['/doctor/dashboard']);
-        } else if (user.role === 'Admin') {
-          this.router.navigate(['/admin/dashboard']);
-        } else if (user.role === 'SuperAdmin') {
-          this.router.navigate(['/superadmin/dashboard']);
-        }
+        this.redirectToRoleDashboard(user.role);
       },
       error: (err) => {
         this.isLoading = false;
@@ -203,17 +187,7 @@ export class LoginComponent implements OnInit {
         this.toastService.showSuccess(this.verificationSuccess);
         setTimeout(() => {
           this.showVerificationModal = false;
-          if (user.role === 'Patient') {
-            this.router.navigate(['/patient/dashboard']);
-          } else if (user.role === 'Doctor') {
-            this.router.navigate(['/doctor/dashboard']);
-          } else if (user.role === 'Admin') {
-            this.router.navigate(['/admin/dashboard']);
-          } else if (user.role === 'SuperAdmin') {
-            this.router.navigate(['/superadmin/dashboard']);
-          } else {
-            this.router.navigate(['/dashboard']);
-          }
+          this.redirectToRoleDashboard(user.role);
         }, 1500);
       },
       error: (err) => {

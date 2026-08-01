@@ -70,15 +70,5 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		/// </summary>
 		[MaxLength(250)]
 		public string Addressline2 { get; set; }
-
-		/// <summary>
-		/// Gets or sets the UTC creation timestamp of the address record.
-		/// </summary>
-		public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
-		/// <summary>
-		/// Gets or sets the UTC timestamp when the address record was last updated.
-		/// </summary>
-		public DateTime UpdatedDate { get; set; }
 	}
 }

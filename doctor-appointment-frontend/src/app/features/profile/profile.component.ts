@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { PatientService } from '../../core/services/patient.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -71,7 +72,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private patientService: PatientService,
     private authService: AuthService,
     private toastService: ToastService,
-    private appointmentService: AppointmentService
+    private appointmentService: AppointmentService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnDestroy(): void {
@@ -103,6 +105,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.role === 'Doctor') {
       this.loadSpecializations();
     }
+
+    this.route.queryParams.subscribe(params => {
+      if (params['action'] === 'change-password') {
+        this.showChangePassword = true;
+      }
+    });
   }
 
   loadSpecializations(): void {

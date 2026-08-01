@@ -44,12 +44,15 @@ import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-
 import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
 
+import { AccountSecurityComponent } from './shared/components/account-security/account-security.component';
+
 @NgModule({
   declarations: [
     AppComponent,
     HeaderComponent,
     SidebarComponent,
     MainLayoutComponent,
+    AccountSecurityComponent,
     LoginComponent,
     RegisterComponent,
     DoctorRegisterComponent,

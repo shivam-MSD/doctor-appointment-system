@@ -1,6 +1,5 @@
 <!-- BOTTOM SECTION: My Doctors (Care Team) -->
-<div class="glass-card"
-  style="padding: 30px 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border-radius: 20px; border: 1px solid var(--border-color); background: linear-gradient(145deg, var(--glass-overlay) 0%, rgba(6, 182, 212, 0.02) 100%);">
+<div class="glass-card my-doctors-container">
   <h2
     style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
     <span style="font-size: 1.8rem;">👨‍⚕️</span> Recently Consulted Doctors
@@ -14,15 +13,12 @@
     style="padding: 40px; text-align: center;">
     <div style="font-size: 3rem; margin-bottom: 10px;">🩺</div>
     <h3 style="color: var(--text-primary);">No Consulted Doctors Yet</h3>
-    <p style="color: var(--text-muted); margin-top: 10px;">Once you complete an appointment, the doctor will appear
-      here.</p>
+    <p style="color: var(--text-muted); margin-top: 10px;">Once you complete an appointment, the doctor will appear here.</p>
   </div>
 
-  <div *ngIf="!isCareTeamLoading && consultedDoctors.length > 0"
-    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+  <div *ngIf="!isCareTeamLoading && consultedDoctors.length > 0" class="my-doctors-grid">
     <!-- Doctor Card -->
-    <div *ngFor="let doc of consultedDoctors" class="glass-card doctor-card"
-      style="margin-bottom: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-left: 4px solid var(--accent-cyan);">
+    <div *ngFor="let doc of consultedDoctors" class="glass-card doctor-card">
 
       <!-- Header Profile Section -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
@@ -280,61 +276,64 @@
     <!-- Header -->
     <div class="modal-header">
       <div style="display: flex; align-items: center; gap: 12px;">
-        <h3 style="margin: 0;">🏢 Select a Clinic for Dr. {{ selectedDoctorForBooking.doctorName }}</h3>
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">🏢 Select a Clinic for Dr. {{ selectedDoctorForBooking.doctorName }}</h3>
       </div>
       <button class="close-modal" (click)="closeBookAppointmentModal()">&times;</button>
     </div>
 
     <!-- Body -->
-    <div class="modal-body scrollable-body" style="padding: 24px; max-height: 60vh; overflow-y: auto;">
-      <div *ngIf="bookingClinicsLoading" style="text-align: center; color: var(--text-secondary); padding: 20px;">
-        Loading clinics...
+    <div class="modal-body scrollable-body" style="padding: 20px; max-height: 65vh; overflow-y: auto;">
+      <div *ngIf="bookingClinicsLoading" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+        <span class="spinner"
+          style="display: inline-block; width: 24px; height: 24px; border: 3px solid rgba(6, 182, 212, 0.3); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px;"></span>
+        <div style="font-weight: 600; font-size: 0.95rem;">Loading clinic details...</div>
       </div>
+
       <div *ngIf="!bookingClinicsLoading && (!bookingClinics || bookingClinics.length === 0)"
-        style="text-align: center; color: var(--text-muted); padding: 20px;">
+        style="text-align: center; color: var(--text-muted); padding: 30px; background: var(--bg-secondary); border-radius: 12px; border: 1px dashed var(--border-color);">
+        <div style="font-size: 2.5rem; margin-bottom: 10px;">🏥</div>
         No clinics available for this doctor.
       </div>
+
       <div *ngIf="!bookingClinicsLoading && bookingClinics && bookingClinics.length > 0"
-        style="display: flex; flex-direction: column; gap: 12px;">
-        <div *ngFor="let clinic of bookingClinics"
-          style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
-          <div style="flex: 1;">
-            <div
-              style="font-size: 1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              {{ clinic.clinicName }}
-              <span
-                style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">({{
-                clinic.clinicType }})</span>
+        style="display: flex; flex-direction: column; gap: 14px;">
+        <div *ngFor="let clinic of bookingClinics" class="glass-card"
+          style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 1.05rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                {{ clinic.clinicName }}
+                <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">({{ clinic.clinicType }})</span>
+              </div>
               <span class="badge"
                 [style.background]="isClinicCurrentlyOpen(clinic) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'"
                 [style.color]="isClinicCurrentlyOpen(clinic) ? '#10b981' : '#ef4444'"
                 [style.border]="isClinicCurrentlyOpen(clinic) ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)'"
-                style="font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block;">
+                style="font-size: 0.68rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 2px;">
                 <span *ngIf="isClinicCurrentlyOpen(clinic)">🟢 Open</span>
-                <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed (Temporarily
-                  Closed)</span>
-                <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside Working
-                  Hours)</span>
+                <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable === false">🔴 Closed (Temporarily Closed)</span>
+                <span *ngIf="!isClinicCurrentlyOpen(clinic) && clinic.isAvailable !== false">🔴 Closed (Outside Working Hours)</span>
               </span>
             </div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
-              📍 {{ clinic.area ? clinic.area + ', ' : '' }}{{ clinic.city }}, {{ clinic.state }}
-            </div>
-            <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">
-              📞 {{ clinic.contactNumber || 'Not available' }}
-            </div>
-            <div *ngIf="clinic.locationLink" style="font-size: 0.85rem; margin-top: 4px;">
+
+            <button *ngIf="isClinicBookable(clinic)"
+              (click)="onBookClinic(selectedDoctorForBooking.doctorId, clinic.clinicId)" class="btn btn-primary"
+              style="font-size: 0.82rem; padding: 8px 16px; white-space: nowrap; flex-shrink: 0;">Book Here</button>
+            <span *ngIf="!isClinicBookable(clinic)"
+              style="font-size: 0.82rem; color: var(--text-muted); font-style: italic; padding: 8px 12px; white-space: nowrap; flex-shrink: 0;">Unavailable</span>
+          </div>
+
+          <div style="font-size: 0.88rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px; border-top: 1px dashed var(--border-color); padding-top: 8px;">
+            <div>📍 {{ clinic.area ? clinic.area + ', ' : '' }}{{ clinic.city }}, {{ clinic.state }}</div>
+            <div style="color: var(--text-primary); font-weight: 500;">📞 {{ clinic.contactNumber || 'Not available' }}</div>
+            <div *ngIf="clinic.locationLink" style="margin-top: 2px;">
               <a [href]="clinic.locationLink" target="_blank" rel="noopener noreferrer"
-                style="color: var(--accent-cyan); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                style="color: var(--accent-cyan); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem;">
                 🗺️ View on Google Maps <span style="font-size: 0.7rem; opacity: 0.7;">↗</span>
               </a>
             </div>
           </div>
-          <button *ngIf="isClinicBookable(clinic)"
-            (click)="onBookClinic(selectedDoctorForBooking.doctorId, clinic.clinicId)" class="btn btn-primary"
-            style="font-size: 0.85rem; padding: 8px 16px; white-space: nowrap;">Book Here</button>
-          <span *ngIf="!isClinicBookable(clinic)"
-            style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; padding: 8px 16px; white-space: nowrap;">Unavailable</span>
         </div>
       </div>
     </div>

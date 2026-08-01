@@ -16,6 +16,8 @@ export class ToastService {
   toasts$: Observable<ToastMessage[]> = this.toastsSubject.asObservable();
   private counter = 0;
 
+  constructor() {}
+
   showSuccess(message: string, title: string = 'Success', duration: number = 4000): void {
     this.addToast('success', title, message, duration);
   }
@@ -28,7 +30,7 @@ export class ToastService {
   public extractErrorMessage(err: any, defaultMessage: string = 'An unexpected error occurred'): string {
     if (!err) return defaultMessage;
 
-    // 1. Intercept HTTP 500-level server errors globally
+    // Intercept HTTP 500-level server errors globally
     if (err?.status >= 500) {
       return 'Our servers are experiencing a temporary issue. Please try again in a few moments.';
     }
@@ -39,7 +41,6 @@ export class ToastService {
     } else if (err?.error) {
       const errBody = err.error;
 
-      // Check for ASP.NET Core Validation Errors (errors object)
       if (errBody.errors && typeof errBody.errors === 'object') {
         const messages: string[] = [];
         for (const prop in errBody.errors) {
@@ -57,36 +58,15 @@ export class ToastService {
         }
       }
 
-      // Check for ProblemDetails 'detail'
-      if (!messageToInspect && errBody.detail && typeof errBody.detail === 'string') {
-        messageToInspect = errBody.detail;
+      if (!messageToInspect) {
+        messageToInspect = errBody.detail || errBody.title || errBody.message || JSON.stringify(errBody);
       }
-
-      // Check for general message
-      if (!messageToInspect && errBody.message && typeof errBody.message === 'string') {
-        messageToInspect = errBody.message;
-      }
-
-      // Check for ProblemDetails 'title'
-      if (!messageToInspect && errBody.title && typeof errBody.title === 'string' && errBody.title !== 'One or more validation errors occurred.') {
-        messageToInspect = errBody.title;
-      }
-
-      // Check for direct string body
-      if (!messageToInspect && typeof errBody === 'string') {
-        messageToInspect = errBody;
-      }
-    }
-
-    if (!messageToInspect && err?.message && typeof err.message === 'string') {
+    } else if (err?.message) {
       messageToInspect = err.message;
+    } else {
+      messageToInspect = JSON.stringify(err);
     }
 
-    if (!messageToInspect) {
-      messageToInspect = defaultMessage;
-    }
-
-    // 2. Sanitize any raw C# internal server error text or stack traces
     const lower = messageToInspect.toLowerCase();
     if (
       lower.includes('internal server error') ||
@@ -119,5 +99,9 @@ export class ToastService {
   remove(id: number): void {
     const filtered = this.toastsSubject.value.filter(t => t.id !== id);
     this.toastsSubject.next(filtered);
+  }
+
+  removeToast(id: number): void {
+    this.remove(id);
   }
 }

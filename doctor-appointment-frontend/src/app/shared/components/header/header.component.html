@@ -26,6 +26,11 @@
       <span class="theme-icon">{{ themeService.getCurrentTheme() === 'dark' ? '☀️' : '🌙' }}</span>
     </button>
 
+    <!-- Sound Notification Toggle Switcher -->
+    <button class="icon-btn" (click)="toggleSound()" [title]="isSoundEnabled() ? 'Sound Notifications Enabled (Click to Mute)' : 'Sound Notifications Muted (Click to Unmute)'">
+      <span class="sound-icon">{{ isSoundEnabled() ? '🔊' : '🔇' }}</span>
+    </button>
+
     <!-- User Information & Session Controls -->
     <ng-container *ngIf="authService.currentUser$ | async as user; else authLinks">
       <!-- Notification Bell -->

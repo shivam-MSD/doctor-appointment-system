@@ -43,7 +43,6 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(authReq).pipe(
       catchError((error: any) => {
         if (error instanceof HttpErrorResponse && error.status === 401) {
-          // 1. Traverse Angular route snapshot tree to extract expectedRole metadata
           let expectedRole: string | undefined;
           let routeSnap = this.router.routerState.snapshot.root;
           while (routeSnap.firstChild) {
@@ -54,20 +53,21 @@ export class AuthInterceptor implements HttpInterceptor {
           }
 
           const jwtRole = this.authService.getRole();
-          const expiredRole = expectedRole || jwtRole || 'Patient';
+          const expiredRole = expectedRole || jwtRole;
 
           this.authService.logout(jwtRole || undefined);
 
           // Do not redirect if the error came from an authentication endpoint
           if (!req.url.toLowerCase().includes('/api/auth/')) {
             const queryParams = { error: 'Your session has expired. Please log in again.' };
+            let targetRoute = '/login';
             if (expiredRole === 'Admin') {
-              this.router.navigate(['/admin/login'], { queryParams });
+              targetRoute = '/admin/login';
             } else if (expiredRole === 'SuperAdmin') {
-              this.router.navigate(['/superadmin/login'], { queryParams });
-            } else {
-              this.router.navigate(['/login'], { queryParams: { ...queryParams, role: expiredRole } });
+              targetRoute = '/superadmin/login';
             }
+
+            this.router.navigate([targetRoute], { queryParams, replaceUrl: true });
           }
         }
         return throwError(() => error);

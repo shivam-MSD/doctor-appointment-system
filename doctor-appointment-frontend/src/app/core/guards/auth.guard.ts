@@ -13,50 +13,26 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     const expectedRole = route.data['expectedRole'];
+    const targetLoginRoute = route.data['loginRoute'] || this.getLoginRouteForRole(expectedRole);
 
     if (!this.authService.isAuthenticated(expectedRole)) {
-      this.redirectToLogin(expectedRole);
+      this.router.navigate([targetLoginRoute], { replaceUrl: true });
       return false;
     }
 
-    const role = this.authService.getRole(expectedRole);
+    const activeRole = this.authService.getRole(expectedRole);
 
-    // If route specifies an expected role, enforce it cleanly
-    if (expectedRole && role !== expectedRole) {
-      this.redirectBasedOnRole(role);
+    if (expectedRole && activeRole !== expectedRole) {
+      this.router.navigate([targetLoginRoute], { replaceUrl: true });
       return false;
     }
 
     return true;
   }
 
-  private redirectToLogin(expectedRole?: string) {
-    const role = expectedRole || this.authService.getRole() || 'Patient';
-    if (role === 'Admin') {
-      this.router.navigate(['/admin/login']);
-    } else if (role === 'SuperAdmin') {
-      this.router.navigate(['/superadmin/login']);
-    } else {
-      this.router.navigate(['/login'], { queryParams: { role } });
-    }
-  }
-
-  private redirectBasedOnRole(role: string | null) {
-    switch (role) {
-      case 'Patient':
-        this.router.navigate(['/patient/dashboard']);
-        break;
-      case 'Doctor':
-        this.router.navigate(['/doctor/dashboard']);
-        break;
-      case 'Admin':
-        this.router.navigate(['/admin/dashboard']);
-        break;
-      case 'SuperAdmin':
-        this.router.navigate(['/superadmin/dashboard']);
-        break;
-      default:
-        this.router.navigate(['/login']);
-    }
+  private getLoginRouteForRole(role?: string): string {
+    if (role === 'Admin') return '/admin/login';
+    if (role === 'SuperAdmin') return '/superadmin/login';
+    return '/login'; // Patient & Doctor redirect to main shared /login page
   }
 }

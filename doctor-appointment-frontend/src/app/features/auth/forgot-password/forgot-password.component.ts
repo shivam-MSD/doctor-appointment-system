@@ -30,6 +30,15 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // If user is ALREADY logged in, redirect them to their profile/security settings page instead of showing unauthenticated forgot password form
+    const activeUser = this.authService.getAnyActiveUser();
+    if (activeUser && activeUser.role) {
+      this.toastService.showSuccess('You are already logged in. Redirecting to Profile Settings...');
+      const profilePath = `/${activeUser.role.toLowerCase()}/profile`;
+      this.router.navigate([profilePath], { replaceUrl: true });
+      return;
+    }
+
     this.route.queryParams.subscribe(params => {
       if (params['role']) {
         this.role = params['role'] as any;
@@ -41,6 +50,34 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
     if (this.cooldownInterval) {
       clearInterval(this.cooldownInterval);
     }
+  }
+
+  get passwordStrength(): 'weak' | 'medium' | 'strong' {
+    if (!this.newPassword) return 'weak';
+    let score = 0;
+    if (this.newPassword.length >= 8) score++;
+    if (/[A-Z]/.test(this.newPassword)) score++;
+    if (/[0-9]/.test(this.newPassword)) score++;
+    if (/[^A-Za-z0-9]/.test(this.newPassword)) score++;
+    if (score >= 3) return 'strong';
+    if (score >= 2) return 'medium';
+    return 'weak';
+  }
+
+  get passwordsMatch(): boolean {
+    return this.newPassword === this.confirmPassword;
+  }
+
+  resendOtp(): void {
+    if (this.resendCooldown > 0 || this.isLoading) return;
+    this.onSendOtp();
+  }
+
+  goToLogin(): void {
+    let target = '/login';
+    if (this.role === 'Admin') target = '/admin/login';
+    if (this.role === 'SuperAdmin') target = '/superadmin/login';
+    this.router.navigate([target]);
   }
 
   startCooldown(): void {
@@ -112,50 +149,9 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       },
       error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'Failed to reset password. Please check your OTP and try again.');
+        this.toastService.showError(err?.error?.detail || 'Invalid or expired OTP code.');
         this.isLoading = false;
       }
     });
-  }
-
-  resendOtp(): void {
-    if (this.resendCooldown > 0 || this.isLoading) return;
-    this.isLoading = true;
-    this.authService.forgotPassword(this.email, this.role).subscribe({
-      next: (res) => {
-        this.toastService.showSuccess('A new OTP has been sent successfully!');
-        this.isLoading = false;
-        this.startCooldown();
-      },
-      error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'Failed to resend OTP. Please try again.');
-        this.isLoading = false;
-      }
-    });
-  }
-
-  goToLogin(): void {
-    if (this.role === 'Doctor') {
-      this.router.navigate(['/doctor/login']);
-    } else if (this.role === 'Admin') {
-      this.router.navigate(['/admin/login']);
-    } else if (this.role === 'SuperAdmin') {
-      this.router.navigate(['/superadmin/login']);
-    } else if (this.role === 'Patient') {
-      this.router.navigate(['/patient/login']);
-    } else {
-      this.router.navigate(['/login']);
-    }
-  }
-
-  get passwordsMatch(): boolean {
-    return this.newPassword === this.confirmPassword;
-  }
-
-  get passwordStrength(): string {
-    if (!this.newPassword) return '';
-    if (this.newPassword.length < 6) return 'weak';
-    if (this.newPassword.length >= 10 && /[A-Z]/.test(this.newPassword) && /[0-9]/.test(this.newPassword)) return 'strong';
-    return 'medium';
   }
 }

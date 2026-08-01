@@ -1,29 +1,38 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { NotificationService } from './notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    const activeUser = this.getActiveUserForCurrentRoute();
+  constructor(
+    private http: HttpClient,
+    private injector: Injector
+  ) {
+    const activeUser = this.getAnyActiveUser();
     if (activeUser) {
       this.currentUserSubject.next(activeUser);
     }
 
-    // Real-time cross-tab session synchronization (Scenario 2B)
+    // Real-time cross-tab session synchronization: Auto-login / Logout sync
     window.addEventListener('storage', (event: StorageEvent) => {
-      if (event.key && event.key.startsWith('healsync_auth_')) {
-        const updatedUser = this.getActiveUserForCurrentRoute();
-        this.currentUserSubject.next(updatedUser);
+      if (event.key === 'healsync_logout_event' || (event.key && event.key.startsWith('healsync_auth_') && !event.newValue)) {
+        this.logout();
+      } else if (event.key && event.key.startsWith('healsync_auth_') && event.newValue) {
+        try {
+          sessionStorage.setItem(event.key, event.newValue);
+          const user = JSON.parse(event.newValue);
+          this.currentUserSubject.next(user);
+        } catch { }
       }
     });
   }
 
-  private getRoleFromPath(): string | null {
+  public getRoleFromPath(): string | null {
     const path = window.location.pathname.toLowerCase();
     if (path.startsWith('/superadmin') || path.includes('/superadmin/')) return 'SuperAdmin';
     if (path.startsWith('/doctor') || path.includes('/doctor/')) return 'Doctor';
@@ -32,35 +41,67 @@ export class AuthService {
     return null;
   }
 
-  public getActiveUserForCurrentRoute(): any {
+  /**
+   * Checks if ANY valid active user (Patient, Doctor, Admin, SuperAdmin) exists across sessionStorage or localStorage.
+   */
+  public getAnyActiveUser(): any {
+    const roles = ['Patient', 'Doctor', 'Admin', 'SuperAdmin'];
+    
+    // 1. Check current route role first
     const routeRole = this.getRoleFromPath();
-    const storageKeys = routeRole
-      ? [`healsync_auth_${routeRole}`]
-      : ['healsync_auth_Doctor', 'healsync_auth_Patient', 'healsync_auth_Admin', 'healsync_auth_SuperAdmin'];
-
-    // 1. Try tab-isolated sessionStorage first
-    for (const key of storageKeys) {
-      const raw = sessionStorage.getItem(key);
-      if (raw) {
-        try { return JSON.parse(raw); } catch { }
+    if (routeRole) {
+      const key = `healsync_auth_${routeRole}`;
+      const rawSession = sessionStorage.getItem(key);
+      if (rawSession) {
+        try {
+          const user = JSON.parse(rawSession);
+          if (user && user.token) return user;
+        } catch { }
+      }
+      const rawLocal = localStorage.getItem(key);
+      if (rawLocal) {
+        try {
+          const user = JSON.parse(rawLocal);
+          if (user && user.token) {
+            sessionStorage.setItem(key, rawLocal);
+            return user;
+          }
+        } catch { }
       }
     }
 
-    // 2. Fallback to localStorage
-    for (const key of storageKeys) {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        try { return JSON.parse(raw); } catch { }
+    // 2. Check all roles across sessionStorage and localStorage
+    for (const r of roles) {
+      const key = `healsync_auth_${r}`;
+      const rawSession = sessionStorage.getItem(key);
+      if (rawSession) {
+        try {
+          const user = JSON.parse(rawSession);
+          if (user && user.token) return user;
+        } catch { }
+      }
+      const rawLocal = localStorage.getItem(key);
+      if (rawLocal) {
+        try {
+          const user = JSON.parse(rawLocal);
+          if (user && user.token) {
+            sessionStorage.setItem(key, rawLocal);
+            return user;
+          }
+        } catch { }
       }
     }
 
     return null;
   }
 
+  public getActiveUserForCurrentRoute(): any {
+    return this.getAnyActiveUser();
+  }
+
   private saveRoleSession(user: any): void {
     if (!user || !user.role) return;
     const key = `healsync_auth_${user.role}`;
-    // Save to tab-specific sessionStorage and cross-tab localStorage
     sessionStorage.setItem(key, JSON.stringify(user));
     localStorage.setItem(key, JSON.stringify(user));
     this.currentUserSubject.next(user);
@@ -90,22 +131,42 @@ export class AuthService {
     );
   }
 
+  /**
+   * Enterprise-Grade Comprehensive Logout Sequence:
+   * 1. Disconnect SignalR notifications BEFORE clearing storage (sending graceful disconnect frame with JWT).
+   * 2. Clear sessionStorage completely.
+   * 3. Targeted purge of HealSync-prefixed keys in localStorage.
+   * 4. Broadcast explicit 'healsync_logout_event' timestamp to instantly terminate other open tabs.
+   * 5. Notify currentUserSubject subscribers of unauthenticated state.
+   */
   logout(specificRole?: string): void {
-    const roleToLogout = specificRole || this.getRole() || this.getRoleFromPath();
-    if (roleToLogout) {
-      const key = `healsync_auth_${roleToLogout}`;
-      sessionStorage.removeItem(key);
-      localStorage.removeItem(key);
-    } else {
-      const roles = ['Patient', 'Doctor', 'Admin', 'SuperAdmin'];
-      roles.forEach(r => {
-        sessionStorage.removeItem(`healsync_auth_${r}`);
-        localStorage.removeItem(`healsync_auth_${r}`);
-      });
-    }
+    // 1. Stop SignalR connection before token removal
+    try {
+      const notificationService = this.injector.get(NotificationService);
+      if (notificationService) {
+        notificationService.stopConnection();
+      }
+    } catch { }
 
-    const remainingUser = this.getActiveUserForCurrentRoute();
-    this.currentUserSubject.next(remainingUser);
+    // 2. Clear sessionStorage
+    try {
+      sessionStorage.clear();
+    } catch { }
+
+    // 3. Targeted localStorage purge for HealSync-prefixed keys
+    try {
+      Object.keys(localStorage)
+        .filter(key => key.startsWith('healsync_'))
+        .forEach(key => localStorage.removeItem(key));
+    } catch { }
+
+    // 4. Explicit Cross-Tab Logout Broadcast
+    try {
+      localStorage.setItem('healsync_logout_event', Date.now().toString());
+    } catch { }
+
+    // 5. Emit null to currentUserSubject
+    this.currentUserSubject.next(null);
   }
 
   private getDecodedToken(specificRole?: string): any {
@@ -121,7 +182,7 @@ export class AuthService {
   }
 
   getFirstName(specificRole?: string): string {
-    const activeUser = this.getActiveUserForCurrentRoute();
+    const activeUser = this.getAnyActiveUser();
     if (activeUser && activeUser.firstName) {
       return activeUser.firstName;
     }
@@ -149,7 +210,7 @@ export class AuthService {
   }
 
   getUserId(specificRole?: string): string | null {
-    const activeUser = this.getActiveUserForCurrentRoute();
+    const activeUser = this.getAnyActiveUser();
     const decoded = this.getDecodedToken(specificRole);
     if (decoded) {
       return decoded['nameid'] || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier'] || decoded['sub'] || activeUser?.userId;
@@ -158,19 +219,18 @@ export class AuthService {
   }
 
   getRole(specificRole?: string): string | null {
-    // Single Source of Truth: Extract role from cryptographic JWT token first
     const decoded = this.getDecodedToken(specificRole);
     if (decoded) {
       const jwtRole = decoded['role'] || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
       if (jwtRole) return jwtRole;
     }
 
-    const activeUser = this.getActiveUserForCurrentRoute();
+    const activeUser = this.getAnyActiveUser();
     return activeUser?.role || null;
   }
 
   getToken(specificRole?: string): string | null {
-    const activeUser = this.getActiveUserForCurrentRoute();
+    const activeUser = this.getAnyActiveUser();
     if (activeUser && activeUser.token) {
       return activeUser.token;
     }
@@ -188,12 +248,17 @@ export class AuthService {
   }
 
   isAuthenticated(specificRole?: string): boolean {
-    const token = this.getToken(specificRole);
-    if (!token) return false;
+    const activeUser = this.getAnyActiveUser();
+    if (!activeUser || !activeUser.token) return false;
+    if (specificRole && activeUser.role !== specificRole) return false;
+
+    // Verify token expiration
     const decoded = this.getDecodedToken(specificRole);
-    if (!decoded) return false;
-    if (decoded.exp) {
-      return decoded.exp * 1000 > Date.now();
+    if (decoded && decoded.exp) {
+      if (decoded.exp * 1000 <= Date.now()) {
+        this.logout();
+        return false;
+      }
     }
     return true;
   }

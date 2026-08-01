@@ -285,7 +285,6 @@ namespace DoctorAppointmentSystem.Controllers
 			{
 				return BadRequest("Missing required X-User-Id header.");
 			}
-
 			await _appointmentService.RespondToRescheduleAsync(userId, dto);
 			return Ok(new { Message = "Reschedule response recorded successfully." });
 		}

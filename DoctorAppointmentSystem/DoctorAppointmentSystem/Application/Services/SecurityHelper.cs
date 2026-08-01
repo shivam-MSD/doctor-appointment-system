@@ -3,80 +3,86 @@ using Microsoft.AspNetCore.Http;
 
 namespace DoctorAppointmentSystem.Application.Services
 {
+	/// <summary>
+	/// Helper utility class for generating security alert email templates and login tracking details.
+	/// </summary>
 	public static class SecurityHelper
 	{
-		public static string GetClientIpAddress(HttpContext? httpContext)
+		/// <summary>
+		/// Extracts the client IP address from the HTTP request context headers.
+		/// </summary>
+		public static string GetClientIpAddress(HttpContext? context)
 		{
-			if (httpContext == null) return "Unknown IP";
+			if (context == null) return "127.0.0.1 (Localhost)";
 
-			// Check common proxy headers (Render, Cloudflare, Nginx)
-			string? ip = httpContext.Request.Headers["CF-Connecting-IP"].ToString();
-			if (string.IsNullOrWhiteSpace(ip))
+			string? headerIp = context.Request.Headers["X-Forwarded-For"].ToString();
+			if (!string.IsNullOrEmpty(headerIp))
 			{
-				ip = httpContext.Request.Headers["X-Forwarded-For"].ToString();
-				if (!string.IsNullOrWhiteSpace(ip) && ip.Contains(","))
-				{
-					ip = ip.Split(',')[0].Trim();
-				}
+				return headerIp.Split(',')[0].Trim();
 			}
 
-			if (string.IsNullOrWhiteSpace(ip))
+			var remoteIp = context.Connection.RemoteIpAddress?.ToString();
+			if (string.IsNullOrEmpty(remoteIp) || remoteIp == "::1")
 			{
-				ip = httpContext.Connection.RemoteIpAddress?.ToString();
+				return "127.0.0.1 (Localhost)";
 			}
 
-			return string.IsNullOrWhiteSpace(ip) || ip == "::1" || ip == "127.0.0.1" ? "127.0.0.1 (Localhost)" : ip;
+			return remoteIp;
 		}
 
-		public static string GetDeviceAndBrowserInfo(HttpContext? httpContext)
+		/// <summary>
+		/// Extracts device and browser information from the User-Agent header.
+		/// </summary>
+		public static string GetDeviceAndBrowserInfo(HttpContext? context)
 		{
-			if (httpContext == null) return "Unknown Device";
+			if (context == null) return "Unknown Device / Browser";
 
-			string userAgent = httpContext.Request.Headers["User-Agent"].ToString();
-			if (string.IsNullOrWhiteSpace(userAgent)) return "Web Browser";
+			string userAgent = context.Request.Headers["User-Agent"].ToString();
+			if (string.IsNullOrEmpty(userAgent)) return "Standard Web Client";
 
-			string browser = "Web Browser";
+			string browser = "Browser";
 			if (userAgent.Contains("Edg")) browser = "Microsoft Edge";
 			else if (userAgent.Contains("Chrome")) browser = "Google Chrome";
 			else if (userAgent.Contains("Firefox")) browser = "Mozilla Firefox";
-			else if (userAgent.Contains("Safari") && !userAgent.Contains("Chrome")) browser = "Apple Safari";
-			else if (userAgent.Contains("Opera") || userAgent.Contains("OPR")) browser = "Opera";
+			else if (userAgent.Contains("Safari")) browser = "Apple Safari";
 
-			string os = "Unknown OS";
-			if (userAgent.Contains("Windows NT 10.0")) os = "Windows 10/11";
-			else if (userAgent.Contains("Windows")) os = "Windows OS";
+			string os = "Device";
+			if (userAgent.Contains("Windows")) os = "Windows PC";
+			else if (userAgent.Contains("Mac OS")) os = "macOS";
+			else if (userAgent.Contains("iPhone") || userAgent.Contains("iPad")) os = "iOS Device";
 			else if (userAgent.Contains("Android")) os = "Android Mobile";
-			else if (userAgent.Contains("iPhone") || userAgent.Contains("iPad")) os = "iOS (iPhone/iPad)";
-			else if (userAgent.Contains("Mac OS X")) os = "macOS";
-			else if (userAgent.Contains("Linux")) os = "Linux OS";
 
 			return $"{browser} on {os}";
 		}
 
-		public static string BuildLoginSecurityEmailHtml(
-			string userName,
-			string role,
-			string loginTimeStr,
-			string ipAddress,
-			string deviceInfo)
+		/// <summary>
+		/// Builds a styled HTML email body for new login security notifications.
+		/// </summary>
+		public static string BuildLoginSecurityEmailHtml(string firstName, string role, string loginTimeStr, string ipAddress, string deviceInfo)
 		{
 			return $@"
-<div style=""font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; padding: 30px 15px;"">
-  <div style=""max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;"">
-    <div style=""background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); padding: 24px; text-align: center;"">
-      <h1 style=""color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;"">🔐 Security Alert: New Login</h1>
-      <p style=""color: #e0f2fe; margin: 6px 0 0 0; font-size: 13px;"">HealSync Account Security Notification</p>
-    </div>
+<div style=""font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f8fafc; padding: 20px; color: #0f172a;"">
+  <div style=""max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;"">
     
-    <div style=""padding: 28px 24px;"">
-      <p style=""font-size: 15px; color: #334155; margin-top: 0;"">Hello <strong>{userName}</strong>,</p>
-      <p style=""font-size: 14px; color: #475569; line-height: 1.5;"">We noticed a new login to your HealSync account ({role} Portal). Here are the details of the session:</p>
-      
-      <div style=""background-color: #f1f5f9; border-left: 4px solid #06b6d4; padding: 16px; border-radius: 6px; margin: 20px 0;"">
+    <!-- Header -->
+    <div style=""background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); padding: 24px; text-align: center; color: #ffffff;"">
+      <h2 style=""margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;"">🔑 Security Alert: New Login</h2>
+      <p style=""margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;"">HealSync Account Security Notification</p>
+    </div>
+
+    <!-- Content -->
+    <div style=""padding: 28px;"">
+      <p style=""font-size: 14px; margin-top: 0;"">Hello {firstName},</p>
+      <p style=""font-size: 14px; line-height: 1.5; color: #334155;"">
+        We detected a new login to your HealSync account (<strong>{role} Portal</strong>). Here are the details of the login session:
+      </p>
+
+      <!-- Details Table -->
+      <div style=""background-color: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0; border: 1px solid #e2e8f0;"">
         <table style=""width: 100%; border-collapse: collapse; font-size: 13px;"">
           <tr>
-            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; width: 35%;"">Login Time:</td>
-            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">{loginTimeStr} (UTC)</td>
+            <td style=""padding: 6px 0; color: #64748b; font-weight: 500; width: 130px;"">Time (UTC):</td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">{loginTimeStr}</td>
           </tr>
           <tr>
             <td style=""padding: 6px 0; color: #64748b; font-weight: 500;"">Role Portal:</td>
@@ -96,7 +102,7 @@ namespace DoctorAppointmentSystem.Application.Services
       <p style=""font-size: 13px; color: #64748b; line-height: 1.5;"">If this was you, no action is required. If you did not log in at this time, please change your password immediately or contact our support team.</p>
 
       <div style=""text-align: center; margin-top: 24px;"">
-        <a href=""https://healsync-medical.web.app/forgot-password"" style=""background-color: #ef4444; color: #ffffff; text-decoration: none; padding: 10px 22px; border-radius: 6px; font-weight: 600; font-size: 13px; display: inline-block;"">
+        <a href=""https://healsync-medical.web.app/account/security?role={role}&action=review-login"" style=""background-color: #ef4444; color: #ffffff; text-decoration: none; padding: 10px 22px; border-radius: 6px; font-weight: 600; font-size: 13px; display: inline-block;"">
           Secure My Account &rarr;
         </a>
       </div>

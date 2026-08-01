@@ -2,8 +2,9 @@ import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef, Output, 
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { AudioService } from '../../../core/services/audio.service';
 import { NotificationService, NotificationDto } from '../../../core/services/notification.service';
-import { Subscription, interval, timer } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -36,6 +37,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     public themeService: ThemeService,
+    public audioService: AudioService,
     private notificationService: NotificationService,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -44,6 +46,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isAuthPage(): boolean {
     const url = this.router.url.toLowerCase();
     return url.includes('login') || url.includes('register') || url.includes('forgot-password');
+  }
+
+  isSoundEnabled(): boolean {
+    return this.audioService.isSoundEnabled();
+  }
+
+  toggleSound(): void {
+    this.audioService.toggleSound();
   }
 
   ngOnInit(): void {
@@ -58,10 +68,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.loadNotifications();
 
       // 2. Listen to incoming push events
-      this.signalrSub = this.notificationService.notificationReceived$.subscribe({
-        next: (notification: NotificationDto) => {
-          this.notifications = [notification, ...this.notifications];
-        }
+      this.notificationService.startConnection(userId);
+      this.signalrSub = this.notificationService.notificationReceived$.subscribe(newNotif => {
+        this.notifications.unshift(newNotif);
+        this.cdr.detectChanges();
       });
     }
   }
@@ -76,37 +86,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   loadNotifications(): void {
-    if (!this.authService.getUserId()) return;
-
     this.notificationService.getNotifications().subscribe({
-      next: (res) => {
-        this.notifications = res;
+      next: (data) => {
+        this.notifications = data;
+        this.cdr.detectChanges();
       },
-      error: () => {
-        // Fail silently to prevent console pollution
-      }
-    });
-  }
-
-  toggleNotificationsPanel(): void {
-    this.showNotificationsPanel = !this.showNotificationsPanel;
-    this.showProfilePanel = false;
-    if (this.showNotificationsPanel) {
-      this.loadNotifications();
-    }
-  }
-
-  toggleProfilePanel(): void {
-    this.showProfilePanel = !this.showProfilePanel;
-    this.showNotificationsPanel = false;
-  }
-
-  markAllAsRead(): void {
-    this.notificationService.markAllAsRead().subscribe({
-      next: () => {
-        this.notifications = this.notifications.map(n => ({ ...n, isRead: true }));
-        this.showNotificationsPanel = false;
-      }
+      error: (err) => console.error('Failed to load notifications', err)
     });
   }
 
@@ -114,23 +99,54 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return this.notifications.filter(n => !n.isRead).length;
   }
 
+  toggleNotificationsPanel(): void {
+    this.showNotificationsPanel = !this.showNotificationsPanel;
+    if (this.showNotificationsPanel) {
+      this.showProfilePanel = false;
+    }
+  }
+
+  toggleProfilePanel(): void {
+    this.showProfilePanel = !this.showProfilePanel;
+    if (this.showProfilePanel) {
+      this.showNotificationsPanel = false;
+    }
+  }
+
+  markAllAsRead(): void {
+    this.notificationService.markAllAsRead().subscribe({
+      next: () => {
+        this.notifications.forEach(n => n.isRead = true);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   toggleTheme(): void {
     this.themeService.toggleTheme();
   }
 
-  logout(): void {
-    const role = this.authService.getRole();
-    this.notificationService.stopConnection();
-    this.authService.logout();
+  getFirstName(): string {
+    return this.authService.getFirstName();
+  }
 
-    if (role === 'Doctor') {
-      this.router.navigate(['/doctor/login']);
-    } else if (role === 'Admin') {
-      this.router.navigate(['/admin/login']);
-    } else if (role === 'SuperAdmin') {
-      this.router.navigate(['/superadmin/login']);
-    } else {
-      this.router.navigate(['/patient/login']);
-    }
+  getUserRole(): string {
+    return this.authService.getRole() || 'User';
+  }
+
+  navigateToProfile(): void {
+    this.showProfilePanel = false;
+    const role = this.getUserRole().toLowerCase();
+    this.router.navigate([`/${role}/profile`]);
+  }
+
+  logout(): void {
+    this.showProfilePanel = false;
+    this.authService.logout();
+    const role = this.getUserRole();
+    let targetRoute = '/login';
+    if (role === 'Admin') targetRoute = '/admin/login';
+    if (role === 'SuperAdmin') targetRoute = '/superadmin/login';
+    this.router.navigate([targetRoute], { replaceUrl: true });
   }
 }
