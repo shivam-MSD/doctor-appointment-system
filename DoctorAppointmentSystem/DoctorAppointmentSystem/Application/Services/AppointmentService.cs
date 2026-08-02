@@ -1834,22 +1834,62 @@ namespace DoctorAppointmentSystem.Application.Services
 			string? report = null,
 			string? followUpStr = null,
 			string? cancelledBy = null,
-			string? cancelReason = null)
+			string? cancelReason = null,
+			string? overrideClinicName = null,
+			string? overrideClinicAddress = null)
 		{
 			if (string.IsNullOrWhiteSpace(toEmail)) return;
 
-			string clinicName = clinic?.ClinicName ?? "N/A";
-			string clinicAddress = "N/A";
+			string clinicName = !string.IsNullOrWhiteSpace(overrideClinicName) && overrideClinicName != "N/A"
+				? overrideClinicName
+				: (clinic?.ClinicName ?? "HealSync Medical Center");
+
+			string clinicAddress = "Main Branch";
+			string? locationLink = clinic?.LocationLink;
+
 			if (clinic != null)
 			{
-				var parts = new List<string>();
-				if (!string.IsNullOrWhiteSpace(clinic.Address?.Addressline1)) parts.Add(clinic.Address.Addressline1);
-				if (!string.IsNullOrWhiteSpace(clinic.Address?.Addressline2)) parts.Add(clinic.Address.Addressline2);
-				if (!string.IsNullOrWhiteSpace(clinic.Address?.Area)) parts.Add(clinic.Address.Area);
-				if (!string.IsNullOrWhiteSpace(clinic.Address?.City)) parts.Add(clinic.Address.City);
-				if (!string.IsNullOrWhiteSpace(clinic.Address?.State)) parts.Add(clinic.Address.State);
-				if (!string.IsNullOrWhiteSpace(clinic.Address?.Pincode)) parts.Add(clinic.Address.Pincode);
-				clinicAddress = string.Join(", ", parts);
+				var targetAddress = clinic.Address;
+				if (targetAddress == null && clinic.ClinicId != Guid.Empty)
+				{
+					var dbClinic = await _dbContext.Clinics.AsNoTracking()
+						.Include(c => c.Address)
+						.FirstOrDefaultAsync(c => c.ClinicId == clinic.ClinicId);
+					if (dbClinic?.Address != null)
+					{
+						targetAddress = dbClinic.Address;
+						if (string.IsNullOrWhiteSpace(locationLink))
+						{
+							locationLink = dbClinic.LocationLink;
+						}
+					}
+				}
+
+				if (targetAddress != null)
+				{
+					var parts = new List<string>();
+					if (!string.IsNullOrWhiteSpace(targetAddress.Addressline1)) parts.Add(targetAddress.Addressline1);
+					if (!string.IsNullOrWhiteSpace(targetAddress.Addressline2)) parts.Add(targetAddress.Addressline2);
+					if (!string.IsNullOrWhiteSpace(targetAddress.Area)) parts.Add(targetAddress.Area);
+					if (!string.IsNullOrWhiteSpace(targetAddress.City)) parts.Add(targetAddress.City);
+					if (!string.IsNullOrWhiteSpace(targetAddress.State)) parts.Add(targetAddress.State);
+					if (!string.IsNullOrWhiteSpace(targetAddress.Pincode)) parts.Add(targetAddress.Pincode);
+
+					if (parts.Any())
+					{
+						clinicAddress = string.Join(", ", parts);
+					}
+				}
+			}
+			else if (!string.IsNullOrWhiteSpace(overrideClinicAddress) && overrideClinicAddress != "N/A")
+			{
+				clinicAddress = overrideClinicAddress;
+			}
+
+			string locationHtml = $"📍 {clinicAddress}";
+			if (!string.IsNullOrWhiteSpace(locationLink))
+			{
+				locationHtml += $"<br/><a href=\"{locationLink}\" target=\"_blank\" style=\"color: #06b6d4; text-decoration: underline; font-weight: 500; font-size: 13px;\">🗺️ Open Location in Google Maps &rarr;</a>";
 			}
 
 			var extraRowsHtml = new System.Text.StringBuilder();
@@ -1862,7 +1902,6 @@ namespace DoctorAppointmentSystem.Application.Services
             <td style=""padding: 6px 0; color: #0f172a; font-weight: 600;"">{patientName}</td>
           </tr>");
 			}
-
 			if (!string.IsNullOrWhiteSpace(comment))
 			{
 				extraRowsHtml.Append($@"
@@ -1935,7 +1974,7 @@ namespace DoctorAppointmentSystem.Application.Services
           </tr>
           <tr>
             <td style=""padding: 6px 0; color: #64748b; font-weight: 500; vertical-align: top;"">Clinic Branch:</td>
-            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600; line-height: 1.4;"">{clinicName}<br/><span style=""font-weight: 400; color: #475569; font-size: 14px;"">📍 {clinicAddress}</span></td>
+            <td style=""padding: 6px 0; color: #0f172a; font-weight: 600; line-height: 1.4;"">{clinicName}<br/><span style=""font-weight: 400; color: #475569; font-size: 14px;"">{locationHtml}</span></td>
           </tr>
         </table>
       </div>

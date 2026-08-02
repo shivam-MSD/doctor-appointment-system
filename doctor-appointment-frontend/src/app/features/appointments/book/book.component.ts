@@ -32,6 +32,31 @@ export class BookComponent implements OnInit {
   currentMonth = new Date();
   calendarDays: any[] = [];
 
+  get selectedDateObj(): Date | null {
+    if (!this.appointmentDate) return null;
+    return new Date(this.appointmentDate + 'T00:00:00');
+  }
+
+  get selectedMonth(): string {
+    const d = this.selectedDateObj;
+    return d ? d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase() : '';
+  }
+
+  get selectedDayNumber(): number | string {
+    const d = this.selectedDateObj;
+    return d ? d.getDate() : '';
+  }
+
+  get selectedDayName(): string {
+    const d = this.selectedDateObj;
+    return d ? d.toLocaleDateString('en-US', { weekday: 'long' }) : '';
+  }
+
+  get selectedYear(): number | string {
+    const d = this.selectedDateObj;
+    return d ? d.getFullYear() : '';
+  }
+
   // Day availability info (for selected date)
   dayAvailability: any = null;
   isLoadingAvailability = false;
@@ -474,7 +499,13 @@ export class BookComponent implements OnInit {
     });
   }
 
+  showBookingConfirmationModal = false;
   isSubmitting = false;
+
+  getSelectedPatientName(): string {
+    const p = this.patients.find(x => x.patientId === this.patientId);
+    return p ? `${p.firstName} ${p.lastName}` : 'Self';
+  }
 
   onSubmit(): void {
     if (this.isSubmitting) return;
@@ -507,6 +538,18 @@ export class BookComponent implements OnInit {
       return;
     }
 
+    // Open Confirmation Popup Modal
+    this.showBookingConfirmationModal = true;
+  }
+
+  closeConfirmationModal(): void {
+    this.showBookingConfirmationModal = false;
+  }
+
+  confirmFinalBooking(): void {
+    if (this.isSubmitting) return;
+
+    this.showBookingConfirmationModal = false;
     this.isSubmitting = true;
 
     const payload = {

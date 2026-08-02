@@ -20,6 +20,14 @@ namespace DoctorAppointmentSystem.Controllers
 			_webPushService = webPushService;
 		}
 
+		[HttpGet("vapid-public-key")]
+		[AllowAnonymous]
+		public IActionResult GetVapidPublicKey()
+		{
+			var publicKey = _webPushService.GetVapidPublicKey();
+			return Ok(new { PublicKey = publicKey });
+		}
+
 		[HttpGet]
 		public async Task<IActionResult> GetNotifications([FromHeader(Name = "X-User-Id")] Guid userId)
 		{

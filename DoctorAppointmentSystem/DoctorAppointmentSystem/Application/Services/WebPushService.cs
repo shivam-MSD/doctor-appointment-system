@@ -54,6 +54,11 @@ namespace DoctorAppointmentSystem.Application.Services
 			return _cachedVapidDetails;
 		}
 
+		public string GetVapidPublicKey()
+		{
+			return GetVapidDetails().PublicKey;
+		}
+
 		public async Task SaveSubscriptionAsync(string userId, string endpoint, string p256dh, string auth)
 		{
 			if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(endpoint))

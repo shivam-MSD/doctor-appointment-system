@@ -7,7 +7,7 @@ import { PatientService } from '../../core/services/patient.service';
 import { ToastService } from '../../core/services/toast.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Appointment } from '../../core/models/appointment.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -62,6 +62,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   followUpCurrentMonth: Date = new Date();
   followUpCalendarDays: any[] = [];
   weekDaysList: string[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  todayDateObj = new Date();
+  todayMonth = new Date().toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  todayDayNumber = new Date().getDate();
+  todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  todayYear = new Date().getFullYear();
 
   // Warning Confirmation Modals
   showCompleteConfirm = false;
@@ -227,7 +233,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private patientService: PatientService,
     private toastService: ToastService,
     private notificationService: NotificationService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -527,8 +534,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.showRescheduleModal = true;
   }
 
+  appointmentViewMode: 'table' | 'card' = 'table';
+
+  bookAgain(app: any): void {
+    if (app?.doctorId) {
+      this.router.navigate(['/patient/book-appointment'], {
+        queryParams: { doctorId: app.doctorId, clinicId: app.clinicId || '' }
+      });
+    }
+  }
+
   validateRescheduleDate(): void {
     if (!this.rescheduleDate || !this.selectedRescheduleAppId) return;
+
+    const selectedDate = new Date(this.rescheduleDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      this.toastService.showError('Proposed reschedule date cannot be in the past.');
+      this.rescheduleDate = '';
+      return;
+    }
 
     const app = this.appointments.find(a => a.appointmentId === this.selectedRescheduleAppId);
     if (!app) return;
@@ -540,15 +567,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clinic = this.adminClinic;
     }
 
-    if (!clinic || !clinic.openDays) return;
+    if (!clinic) return;
 
-    const selectedDate = new Date(this.rescheduleDate);
-    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const openDays = clinic.openDays.toLowerCase();
+    // 1. Booking Window Date Validation
+    if (clinic.bookingWindowStartDate) {
+      const windowStart = new Date(clinic.bookingWindowStartDate);
+      windowStart.setHours(0, 0, 0, 0);
+      if (selectedDate < windowStart) {
+        this.toastService.showError(`Selected date is before the clinic's active booking window start date (${windowStart.toLocaleDateString()}).`);
+        this.rescheduleDate = '';
+        return;
+      }
+    }
 
-    if (!openDays.includes(dayName)) {
-      this.toastService.showError(`The clinic is completely closed on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}s. Please select a configured Working Day or Reschedule-Only day.`);
-      this.rescheduleDate = '';
+    if (clinic.bookingWindowEndDate) {
+      const windowEnd = new Date(clinic.bookingWindowEndDate);
+      windowEnd.setHours(23, 59, 59, 999);
+      if (selectedDate > windowEnd) {
+        this.toastService.showError(`Selected date exceeds the clinic's active booking window end date (${windowEnd.toLocaleDateString()}).`);
+        this.rescheduleDate = '';
+        return;
+      }
+    }
+
+    // 2. Open Days / Reschedule Days Validation
+    if (clinic.openDays) {
+      const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const openDaysLower = clinic.openDays.toLowerCase();
+
+      const isNormalOpen = openDaysLower.includes(dayName);
+      const isRescheduleOpen = openDaysLower.includes(`[reschedule:${dayName}]`);
+
+      if (!isNormalOpen && !isRescheduleOpen) {
+        this.toastService.showError(`The clinic is closed on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}s. Please select an allowed Working Day or Reschedule-Only day.`);
+        this.rescheduleDate = '';
+      }
     }
   }
 

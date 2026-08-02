@@ -171,22 +171,16 @@ export class NotificationService {
 
     const onAppResume = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[Mobile PWA Lifecycle] App resumed / focused. Checking SignalR state...');
-
-        // 1. Re-establish SignalR connection if disconnected
+        // Re-establish SignalR connection if disconnected silently
         if (this.currentUserId) {
           if (!this.hubConnection || this.hubConnection.state === HubConnectionState.Disconnected) {
             this.startConnection(this.currentUserId);
           }
         }
-
-        // 2. Trigger automatic silent data refresh for UI components (Header, Dashboard, Notifications)
-        this.refreshSource.next('All');
       }
     };
 
     document.addEventListener('visibilitychange', onAppResume);
-    window.addEventListener('focus', onAppResume);
     window.addEventListener('online', onAppResume);
   }
 }

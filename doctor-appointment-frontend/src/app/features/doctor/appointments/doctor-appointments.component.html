@@ -9,9 +9,19 @@
     <div class="role-badge">{{ completedOnlyMode ? 'Completed' : 'Appointments' }}</div>
   </div>
   <!-- Filters Dashboard Panel -->
-  <div class="glass-card filter-card">
-    <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center;">
-      <h3>🔍 Filter Appointments</h3>
+  <div class="glass-card filter-card-styled">
+    <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <h3 style="margin: 0;">🔍 Filter Appointments</h3>
+        <div class="view-mode-switcher">
+          <button class="view-mode-btn" [class.active]="appointmentViewMode === 'table'" (click)="appointmentViewMode = 'table'" title="Table View">
+            📊 Table
+          </button>
+          <button class="view-mode-btn" [class.active]="appointmentViewMode === 'card'" (click)="appointmentViewMode = 'card'" title="Card View">
+            🎴 Cards
+          </button>
+        </div>
+      </div>
       <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
     </div>
 
@@ -211,7 +221,55 @@
             Reschedule Proposed</span>
         </div>
 
-        <div class="table-responsive" *ngIf="getFilteredAppointments().length > 0; else emptyState">
+        <!-- Skeleton Loading State (Table View) -->
+        <div class="table-responsive" *ngIf="isLoading && appointmentViewMode === 'table'">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Clinic / Location</th>
+                <th>Date & Time</th>
+                <th>Clinical Note / Report</th>
+                <th style="text-align: center;">Quick Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let i of [1,2,3,4,5]" class="skeleton-table-row">
+                <td><div class="skeleton-box" style="height: 18px; width: 110px;"></div></td>
+                <td><div class="skeleton-box" style="height: 18px; width: 140px;"></div></td>
+                <td><div class="skeleton-box" style="height: 18px; width: 120px;"></div></td>
+                <td><div class="skeleton-box" style="height: 18px; width: 150px;"></div></td>
+                <td style="text-align: center;"><div class="skeleton-box" style="height: 28px; width: 100px; border-radius: 6px; margin: 0 auto;"></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Skeleton Loading State (Card View) -->
+        <div class="skeleton-card-grid" *ngIf="isLoading && appointmentViewMode === 'card'" style="padding: 15px;">
+          <div class="skeleton-card-item" *ngFor="let i of [1,2,3,4,5,6]">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div class="skeleton-box" style="height: 14px; width: 120px; margin-bottom: 6px;"></div>
+                <div class="skeleton-box" style="height: 20px; width: 160px;"></div>
+              </div>
+              <div class="skeleton-box" style="height: 22px; width: 80px; border-radius: 12px;"></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; margin: 10px 0;">
+              <div class="skeleton-box" style="height: 16px; width: 90%;"></div>
+              <div class="skeleton-box" style="height: 16px; width: 75%;"></div>
+              <div class="skeleton-box" style="height: 16px; width: 60%;"></div>
+            </div>
+
+            <div style="display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+              <div class="skeleton-box" style="height: 32px; flex: 1; border-radius: 6px;"></div>
+              <div class="skeleton-box" style="height: 32px; flex: 1; border-radius: 6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive" *ngIf="!isLoading && getFilteredAppointments().length > 0 && appointmentViewMode === 'table'; else emptyState">
           <table class="dashboard-table table-stacked-mobile">
             <thead>
               <tr>
@@ -219,7 +277,7 @@
                 <th>Clinic / Location</th>
                 <th>Date & Time</th>
                 <th>Clinical Note / Report</th>
-                <th>Actions</th>
+                <th style="min-width: 150px; text-align: center; white-space: nowrap;">QUICK ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -274,7 +332,7 @@
                   <button class="btn btn-sm-outline" (click)="openTimelineModal(app.appointmentId)"
                     style="border: 1px solid #8b5cf6; color: #8b5cf6; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.05); cursor: pointer; width: 100%; font-weight: 600;"
                     title="View Audit Trail">
-                    <i class="fas fa-history" style="margin-right: 4px;"></i> Timeline
+                    ⏱️ Timeline
                   </button>
 
                   <!-- Assign Time / Edit Time button for Pending/Confirmed -->
@@ -303,9 +361,53 @@
               </tr>
             </tbody>
           </table>
+        </div>
 
-          <!-- Pagination controls -->
-          <div class="premium-pagination" *ngIf="totalCount > 0" style="margin-top: 15px;">
+        <!-- Card View Layout -->
+        <div class="appointment-card-grid" *ngIf="!isLoading && getFilteredAppointments().length > 0 && appointmentViewMode === 'card'" style="padding: 15px;">
+          <div class="appointment-card-item" *ngFor="let app of getPaginatedAppointments()" [style.border-left]="'5px solid ' + getStatusColor(app.status)">
+            <div class="appointment-card-header">
+              <div>
+                <div style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">
+                  PATIENT: <span style="color: var(--accent-cyan);">{{ app.patientName }}</span>
+                </div>
+                <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary); margin-top: 2px;">
+                  {{ app.clinicName || 'Clinic Branch' }}
+                </div>
+              </div>
+              <span class="badge" [style.background]="getStatusColor(app.status)" style="color: white; padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">
+                {{ getStatusLabel(app.status) }}
+              </span>
+            </div>
+
+            <div class="appointment-card-body">
+              <div style="display: flex; justify-content: space-between; font-size: 0.86rem;">
+                <span style="color: var(--text-secondary); font-weight: 600;">Date & Time:</span>
+                <span style="font-weight: 700; color: var(--text-primary);">
+                  {{ app.appointmentDate | date:'EEE, MMM d, y' }} {{ app.doctorAssignedTime ? (app.doctorAssignedTime | date:'shortTime') : '' }}
+                </span>
+              </div>
+              <div *ngIf="app.comment" style="font-size: 0.82rem; background: rgba(6, 182, 212, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--accent-cyan); margin-top: 4px;">
+                <strong>Clinical Note:</strong> {{ app.comment }}
+              </div>
+            </div>
+
+            <div class="appointment-card-footer">
+              <button class="btn btn-sm-outline btn-card-half" (click)="openTimelineModal(app.appointmentId)"
+                style="border-color: #8b5cf6; color: #8b5cf6;"
+                title="View Audit Trail">
+                ⏱️ Timeline
+              </button>
+              <button class="btn btn-primary btn-card-half" (click)="openPatientDetailsModal(app)"
+                style="background: var(--accent-cyan); border: none;">
+                👤 Patient Profile
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination controls -->
+        <div class="premium-pagination" *ngIf="totalCount > 0" style="margin-top: 15px;">
             <span class="pagination-info">
               Showing <strong>{{ (page - 1) * size + 1 }}</strong> to <strong>{{ Math.min(page * size, totalCount) }}</strong> of <strong>{{ totalCount }}</strong> appointments
             </span>
@@ -320,10 +422,24 @@
 
 
         <ng-template #emptyState>
-          <div class="empty-state">
-            <span class="empty-icon">📅</span>
-            <h4>No Appointments Found</h4>
-            <p>No appointments match the selected filters or search queries.</p>
+          <div class="calendar-booklet-empty-state">
+            <div class="calendar-booklet-card">
+              <div class="calendar-booklet-binder">
+                <span>📅 {{ todayMonth }} {{ todayYear }}</span>
+                <span style="font-size: 0.72rem; letter-spacing: 0.5px; opacity: 0.9;">TODAY</span>
+              </div>
+              <div class="calendar-booklet-body">
+                <div class="calendar-booklet-day-num">{{ todayDayNumber }}</div>
+                <div class="calendar-booklet-day-name">{{ todayDayName }}</div>
+              </div>
+            </div>
+
+            <h4 style="font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">
+              📅 Patient Appointments Today
+            </h4>
+            <p style="color: var(--text-secondary); max-width: 420px; margin: 0 auto 15px auto; font-size: 0.92rem; line-height: 1.5;">
+              No patient appointments found matching the selected clinic or search filters for today, {{ todayDayName }}, {{ todayMonth }} {{ todayDayNumber }}.
+            </p>
           </div>
         </ng-template>
       </div>
@@ -768,4 +884,3 @@
       </div>
     </div>
   </div>
-</div>

@@ -34,7 +34,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			_backgroundJobClient.Enqueue<IAppointmentService>(appService =>
 				appService.SendAppointmentEmailAsync(
 					toEmail, subject, title, message, doctorName, dateStr, timeOrStatus,
-					null, patientName, comment, report, followUpStr, null, null
+					null, patientName, comment, report, followUpStr, null, null,
+					clinicName, clinicAddress
 				)
 			);
 		}

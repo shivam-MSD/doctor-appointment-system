@@ -24,6 +24,12 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   startDateFilter = '';
   endDateFilter = '';
   
+  todayDateObj = new Date();
+  todayMonth = new Date().toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  todayDayNumber = new Date().getDate();
+  todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  todayYear = new Date().getFullYear();
+
   // Tabs: 'upcoming', 'past', 'cancelled', 'all'
   activeTab: 'upcoming' | 'past' | 'cancelled' | 'all' = 'upcoming';
 
@@ -108,11 +114,12 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
   }
 
   loadDoctorClinics(): void {
-    const profileId = sessionStorage.getItem('profileId');
-    if (!profileId) return;
-    this.appointmentService.getClinicsForDoctor(profileId).subscribe({
+    const user = this.authService.getAnyActiveUser();
+    const doctorId = user?.doctorId || user?.profileId || user?.userId || this.authService.getUserId() || sessionStorage.getItem('profileId');
+    if (!doctorId) return;
+    this.appointmentService.getClinicsForDoctor(doctorId).subscribe({
       next: (res) => {
-        this.doctorClinics = res;
+        this.doctorClinics = res || [];
       }
     });
   }
@@ -349,23 +356,32 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
 
   validateRescheduleDate(): void {
     if (!this.rescheduleDate || !this.selectedRescheduleAppId) return;
+
+    const selectedDate = new Date(this.rescheduleDate + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      this.toastService.showError('Proposed reschedule date cannot be in the past.');
+      this.rescheduleDate = '';
+      return;
+    }
     
     const app = this.appointments.find(a => a.appointmentId === this.selectedRescheduleAppId);
     if (!app) return;
 
     const clinic = this.doctorClinics.find(c => c.clinicId === app.clinicId);
-    if (!clinic || !clinic.openDays) return;
+    if (clinic && clinic.openDays) {
+      const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const openDaysLower = clinic.openDays.toLowerCase();
 
-    const selectedDate = new Date(this.rescheduleDate + 'T00:00:00');
-    const dayShort = selectedDate.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
-    const dayLong = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const openDaysList = clinic.openDays.split(',').map((d: string) => d.trim().toLowerCase());
+      const isNormalOpen = openDaysLower.includes(dayName);
+      const isRescheduleOpen = openDaysLower.includes(`[reschedule:${dayName}]`);
 
-    const isOpen = openDaysList.some((d: string) => d === dayShort || d === dayLong || d.startsWith(dayShort));
-
-    if (!isOpen) {
-      this.toastService.showError(`The clinic '${clinic.clinicName || 'branch'}' is closed on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}s. Operating open days are: ${clinic.openDays}. Please select an open operating day.`);
-      this.rescheduleDate = '';
+      if (!isNormalOpen && !isRescheduleOpen) {
+        this.toastService.showError(`The clinic '${clinic.clinicName || 'branch'}' is closed on ${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}s. Operating open days are: ${clinic.openDays}. Please select an allowed Working Day or Reschedule-Only day.`);
+        this.rescheduleDate = '';
+      }
     }
   }
 
@@ -375,6 +391,8 @@ export class DoctorAppointmentsComponent implements OnInit, OnDestroy {
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   }
+
+  appointmentViewMode: 'table' | 'card' = 'table';
 
   submitReschedulePropose(): void {
     if (this.isActionSubmitting) return;

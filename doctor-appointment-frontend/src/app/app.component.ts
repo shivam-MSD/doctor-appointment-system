@@ -75,6 +75,82 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    // Global Swipe-to-Dismiss for Mobile Bottom Sheet Modals
+    this.setupSwipeToDismiss();
+  }
+
+  private setupSwipeToDismiss(): void {
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+    let modalEl: HTMLElement | null = null;
+
+    document.addEventListener('touchstart', (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      // Only trigger on the top 60px of a modal-container (the drag handle area)
+      const container = target.closest('.modal-container') as HTMLElement;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const touchY = e.touches[0].clientY;
+
+      // Only allow swipe if touching the top 60px area (drag handle zone)
+      if (touchY - rect.top > 60) return;
+
+      startY = touchY;
+      currentY = touchY;
+      isDragging = true;
+      modalEl = container;
+      modalEl.style.transition = 'none';
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e: TouchEvent) => {
+      if (!isDragging || !modalEl) return;
+      currentY = e.touches[0].clientY;
+      const deltaY = currentY - startY;
+
+      // Only allow downward drag
+      if (deltaY > 0) {
+        modalEl.style.transform = `translateY(${deltaY}px)`;
+        modalEl.style.opacity = `${Math.max(0.4, 1 - deltaY / 400)}`;
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      if (!isDragging || !modalEl) return;
+      const deltaY = currentY - startY;
+      const dismissTarget = modalEl; // Capture reference before nulling
+
+      modalEl.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+
+      if (deltaY > 80) {
+        // Swipe threshold reached — dismiss
+        dismissTarget.style.transform = 'translateY(100%)';
+        dismissTarget.style.opacity = '0';
+        setTimeout(() => {
+          // Click the backdrop to trigger Angular's close handler
+          const backdrop = dismissTarget.closest('.modal-backdrop') as HTMLElement;
+          if (backdrop) backdrop.click();
+          // Reset styles
+          dismissTarget.style.transform = '';
+          dismissTarget.style.opacity = '';
+          dismissTarget.style.transition = '';
+        }, 250);
+      } else {
+        // Not enough swipe — snap back
+        dismissTarget.style.transform = 'translateY(0)';
+        dismissTarget.style.opacity = '1';
+        setTimeout(() => {
+          dismissTarget.style.transform = '';
+          dismissTarget.style.opacity = '';
+          dismissTarget.style.transition = '';
+        }, 300);
+      }
+
+      isDragging = false;
+      modalEl = null;
+    }, { passive: true });
   }
 
   ngOnDestroy(): void {

@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SwPush } from '@angular/service-worker';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PushNotificationService {
-  private readonly VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeA04E01D9J0qU1R3aY4n4e8o-Q_E_G_W_Y';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,
@@ -36,25 +37,32 @@ export class PushNotificationService {
     if (!userId) return;
 
     if (this.swPush.isEnabled) {
-      this.swPush.requestSubscription({
-        serverPublicKey: this.VAPID_PUBLIC_KEY
-      }).then(sub => {
-        const subJson = sub.toJSON();
-        const p256dh = subJson.keys ? subJson.keys['p256dh'] : '';
-        const auth = subJson.keys ? subJson.keys['auth'] : '';
+      this.http.get<{ publicKey: string }>(`${this.apiUrl}/notifications/vapid-public-key`).subscribe({
+        next: (res) => {
+          if (!res?.publicKey) return;
 
-        const payload = {
-          endpoint: sub.endpoint,
-          p256dh,
-          auth
-        };
+          this.swPush.requestSubscription({
+            serverPublicKey: res.publicKey
+          }).then(sub => {
+            const subJson = sub.toJSON();
+            const p256dh = subJson.keys ? subJson.keys['p256dh'] : '';
+            const auth = subJson.keys ? subJson.keys['auth'] : '';
 
-        this.http.post('/api/notifications/subscribe-push', payload).subscribe({
-          next: () => console.log('[Push] Device push token registered successfully.'),
-          error: (err) => console.error('[Push] Failed to register subscription:', err)
-        });
-      }).catch(err => {
-        console.warn('[Push] SwPush subscription request skipped:', err);
+            const payload = {
+              endpoint: sub.endpoint,
+              p256dh,
+              auth
+            };
+
+            this.http.post(`${this.apiUrl}/notifications/subscribe-push`, payload).subscribe({
+              next: () => console.log('[Push] Device push token registered successfully.'),
+              error: (err) => console.error('[Push] Failed to register subscription:', err)
+            });
+          }).catch(err => {
+            console.warn('[Push] SwPush subscription request skipped:', err);
+          });
+        },
+        error: (err) => console.warn('[Push] Failed to fetch VAPID public key:', err)
       });
     }
   }

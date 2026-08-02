@@ -242,6 +242,223 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-1px);
 }
 
+/* Filter Card & Layout Enhancements */
+.filter-card-styled {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.92)) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 14px !important;
+  padding: 18px 22px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03) !important;
+  margin-bottom: 20px !important;
+  transition: all 0.25s ease !important;
+}
+
+[data-theme="dark"] .filter-card-styled {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.9)) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+}
+
+/* View Mode Switcher Toggle */
+.view-mode-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 3px;
+  border-radius: 8px;
+  gap: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .view-mode-switcher {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.view-mode-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 11px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.view-mode-btn.active {
+  background: var(--accent-cyan);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(6, 182, 212, 0.3);
+}
+
+/* Card View Grid Layout & Full Width Edge-to-Edge Action Buttons */
+.appointment-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 16px 0;
+}
+
+.appointment-card-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  position: relative;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+[data-theme="dark"] .appointment-card-item {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.appointment-card-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(6, 182, 212, 0.15);
+  border-color: var(--accent-cyan);
+}
+
+.appointment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+[data-theme="dark"] .appointment-card-header {
+  border-bottom-color: #334155;
+}
+
+.appointment-card-body {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.appointment-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  width: 100%;
+}
+
+[data-theme="dark"] .appointment-card-footer {
+  border-top-color: #334155;
+}
+
+/* Card buttons stretch edge-to-edge till the card border */
+.appointment-card-footer .btn-card-half {
+  flex: 1 1 calc(50% - 5px) !important;
+  width: calc(50% - 5px) !important;
+  text-align: center !important;
+  justify-content: center !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+}
+
+.appointment-card-footer .btn-card-full {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  text-align: center !important;
+  justify-content: center !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+}
+
+/* Calendar Booklet Empty State Widget - Compact Sizing */
+.calendar-booklet-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.calendar-booklet-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  width: 100%;
+  max-width: 220px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  margin-bottom: 16px;
+}
+
+[data-theme="dark"] .calendar-booklet-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.calendar-booklet-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(6, 182, 212, 0.14);
+}
+
+.calendar-booklet-binder {
+  background: linear-gradient(135deg, var(--accent-cyan, #06b6d4), #0284c7);
+  padding: 8px 14px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-booklet-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.calendar-booklet-day-num {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--text-primary, #0f172a);
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 4px 0;
+}
+
+.calendar-booklet-day-name {
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--accent-cyan, #06b6d4);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 /* Status Badges */
 .badge {
   display: inline-flex;
@@ -490,8 +707,9 @@ form.ng-submitted .form-control.ng-invalid,
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -712,6 +930,34 @@ body.light-theme .skeleton-box::after {
   100% {
     transform: translateX(100%);
   }
+}
+
+/* Skeleton Loading Layouts for Table & Cards */
+.skeleton-table-row td {
+  padding: 14px 12px !important;
+}
+
+.skeleton-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 16px 0;
+}
+
+.skeleton-card-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+[data-theme="dark"] .skeleton-card-item {
+  background: #1e293b;
+  border-color: #334155;
 }
 
 /* =========================================================================
@@ -1154,12 +1400,31 @@ body.light-theme .skeleton-box::after {
   text-shadow: none !important;
 }
 
-/* Global Table Header Alignment Fixes */
+/* Global Table Compact Sizing & Single-Line Headers */
 .dashboard-table th,
 .premium-table th,
 table th {
   vertical-align: middle !important;
   text-align: left !important;
+  white-space: nowrap !important;
+  padding: 9px 12px !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.3px !important;
+}
+
+.dashboard-table td,
+.premium-table td,
+table td {
+  padding: 9px 12px !important;
+  vertical-align: middle !important;
+  font-size: 0.88rem !important;
+}
+
+.dashboard-table th:last-child,
+.premium-table th:last-child,
+table th:last-child {
+  white-space: nowrap !important;
+  text-align: center !important;
 }
 
 /* Global Aesthetic Zebra Striping & Distinct Row Borders for All Tables */

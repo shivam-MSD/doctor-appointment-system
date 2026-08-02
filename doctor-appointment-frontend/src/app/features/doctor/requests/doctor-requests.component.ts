@@ -4,6 +4,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { Appointment } from '../../../core/models/appointment.model';
 import { Subscription } from 'rxjs';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-doctor-requests',
@@ -51,6 +52,7 @@ export class DoctorRequestsComponent implements OnInit, OnDestroy {
   historyStatusFilters: { [statusName: string]: boolean } = {};
 
   constructor(
+    private authService: AuthService,
     private appointmentService: AppointmentService,
     private toastService: ToastService,
     private notificationService: NotificationService
@@ -302,11 +304,12 @@ export class DoctorRequestsComponent implements OnInit, OnDestroy {
 
 
   loadDoctorClinics(): void {
-    const profileId = sessionStorage.getItem('profileId');
-    if (!profileId) return;
-    this.appointmentService.getClinicsForDoctor(profileId).subscribe({
+    const user = this.authService.getAnyActiveUser();
+    const doctorId = user?.doctorId || user?.profileId || user?.userId || this.authService.getUserId() || sessionStorage.getItem('profileId');
+    if (!doctorId) return;
+    this.appointmentService.getClinicsForDoctor(doctorId).subscribe({
       next: (res) => {
-        this.doctorClinics = res;
+        this.doctorClinics = res || [];
       }
     });
   }

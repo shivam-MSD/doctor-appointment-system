@@ -107,6 +107,8 @@ namespace DoctorAppointmentSystem.Application.Services
 			string? report = null,
 			string? followUpStr = null,
 			string? cancelledBy = null,
-			string? cancelReason = null);
+			string? cancelReason = null,
+			string? overrideClinicName = null,
+			string? overrideClinicAddress = null);
 	}
 }
