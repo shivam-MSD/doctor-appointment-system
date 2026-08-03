@@ -1,0 +1,92 @@
+# Phase 2 (Part 1): Brand Design System & Lucide Icon Overhaul
+
+We will transform HealSync's visual design system from multi-color gradients and emojis to an executive, single-brand navy palette (#243B63) paired with **Lucide Icons** (`lucide-angular`).
+
+---
+
+## 🎨 1. Core Color System (`src/styles.css`)
+
+We will update CSS variables to reflect the INDmoney-inspired navy brand palette:
+
+| Role | Variable | Hex Color | Description |
+| :--- | :--- | :--- | :--- |
+| **Brand Primary Navy** | `--primary-color` / `--brand-navy` | `#243B63` | Headers, active nav, primary buttons, logo |
+| **Deep Navy (Dark Header)** | `--deep-navy` | `#1C2B4F` | Top navigation bar / statement headers |
+| **Light Card Surface** | `--card-bg-light` | `#F5F5F8` | Subtle card background |
+| **Pure White Surface** | `--surface-white` | `#FFFFFF` | Primary content panels |
+| **Accent Positive (Success)** | `--accent-green` / `--status-confirmed` | `#00C896` | Confirmed, gains, success badges |
+| **Danger Red** | `--accent-red` / `--status-cancelled` | `#EF4444` | Cancelled, rejection, destructive actions |
+| **Pending Amber** | `--accent-amber` / `--status-pending` | `#F59E0B` | Pending status |
+| **Neutral Text** | `--text-primary` | `#1E293B` | High contrast body text |
+| **Muted Text** | `--text-secondary` | `#64748B` | Labels, captions |
+| **Icon Standard Color** | `--icon-color` | `#243B63` | Single-color uniform icon stroke |
+
+---
+
+## 📦 2. Lucide Icon Migration (`lucide-angular`)
+
+We will install `lucide-angular` and register all necessary icons in a shared Icon Module or `AppModule`.
+
+### Icon Replacement Map:
+1. `📅` → `Calendar` / `CalendarClock` / `CalendarSync`
+2. `🚀` → `TrendingUp`
+3. `⏳` → `Hourglass` / `Clock`
+4. `✅` → `CheckCircle2`
+5. `🌙` → `Moon` / `Sun`
+6. `🔔` → `Bell`
+7. `📊` → `LayoutDashboard`
+8. `📋` → `CalendarCheck` / `ClipboardList`
+9. `📄` → `History` / `FileText`
+10. `🩺` → `Stethoscope`
+11. `📃` → `ScrollText`
+12. `👤` → `User` / `UserCircle` / `Users`
+13. `🔍` → `Search`
+14. `👁` → `Eye`
+15. `⏱` → `History` / `Clock`
+16. `📝` → `FileText`
+17. `➕` → `Plus` / `PlusCircle`
+18. `🔗` → `Link`
+19. `✏️` → `Pencil`
+20. `🏠` / `📍` → `MapPin`
+21. `📞` → `Phone`
+22. `🏥` / `🏢` → `Building2`
+23. `✔️` → `BadgeCheck`
+24. `🔒` → `Lock`
+25. `⚠️` → `AlertTriangle`
+26. `✉️` → `Mail`
+27. `📱` → `MessageSquare`
+28. `⬇️` → `Download`
+29. `📤` → `Upload`
+30. `❌` → `XCircle`
+31. `🔄` → `RefreshCw`
+32. `💳` → `CreditCard`
+33. `🏆` → `Award`
+34. `⚙️` → `Settings`
+
+---
+
+## 🛠️ Implementation Steps
+
+### Phase 2.1: Package Installation & Shared Module Setup
+1. Run `npm install lucide-angular` inside `doctor-appointment-frontend`.
+2. Import `LucideAngularModule` into `SharedModule` / `AppModule` with all required Lucide icons.
+
+### Phase 2.2: Global Design System & CSS Token Overhaul
+1. Update `src/styles.css` root CSS variables (`--primary-color: #243B63`, `--brand-navy: #243B63`, `--deep-navy: #1C2B4F`, etc.).
+2. Update global header, sidebar, button, card, modal, and badge styles to use `#243B63` solid navy styling.
+
+### Phase 2.3: Logo Recolor
+1. Update top nav & auth screen logo badges to solid brand navy (`#243B63`), removing multi-color gradients.
+
+### Phase 2.4: Component Emoji Replacement
+1. Replace emojis across:
+   - Sidebar navigation & headers ([patient-header](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/patient-header/patient-header.component.html), [doctor-header](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/doctor-header/doctor-header.component.html), [admin-header](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/shared/components/admin-header/admin-header.component.html), etc.)
+   - Patient screens ([dashboard](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patient/dashboard/dashboard.component.html), [book](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/appointments/book/book.component.html), [patient-doctors](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patient/doctors/patient-doctors.component.html), [appointments](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/patient/appointments/patient-appointments.component.html))
+   - Doctor screens ([dashboard](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/dashboard/doctor-dashboard.component.html), [doctor-appointments](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.html), [doctor-requests](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/requests/doctor-requests.component.html))
+
+---
+
+## 🧪 Verification Plan
+
+1. **Build Verification**: Run `npm run build` to ensure all Lucide icon imports and Angular components compile cleanly.
+2. **Visual Verification**: Check color consistency across light and dark modes, verifying `#243B63` navy presence and Lucide single-stroke icon rendering.

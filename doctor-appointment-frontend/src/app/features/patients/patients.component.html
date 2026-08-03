@@ -1,18 +1,19 @@
 <div class="patients-wrapper">
   <!-- Portal Title -->
-  <div class="glass-card welcome-card">
+  <div class="glass-card welcome-card" style="border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9)); padding: 22px 26px; border-radius: 16px; margin-bottom: 24px;">
     <div class="welcome-text">
-      <!-- <h2>Search Patients</h2> -->
-      <h2>Find Your Patient</h2>
-      <p>Search, filter, and view demographic profiles & medical history of registered patients.</p>
+      <h2 style="font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0;">Find Your Patient</h2>
+      <p style="color: var(--text-secondary); margin: 0;">Search, filter, and view demographic profiles & medical history of registered patients.</p>
     </div>
-    <div class="role-badge">Patient Directory</div>
+    <div class="role-badge" style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy); font-weight: 700;">Patient Directory</div>
   </div>
 
   <!-- Filters Dashboard Panel -->
   <div class="glass-card filter-card-styled">
-    <div class="filter-header">
-      <h3>🔍 Directory Filters</h3>
+    <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <lucide-icon name="search" [size]="18" style="color: var(--brand-navy);"></lucide-icon> Directory Filters
+      </h3>
       <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
     </div>
 

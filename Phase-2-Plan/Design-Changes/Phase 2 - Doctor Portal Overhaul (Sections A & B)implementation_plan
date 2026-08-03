@@ -1,0 +1,53 @@
+# Implementation Plan: Phase 2 - Doctor Portal Overhaul (Sections A & B)
+
+We will upgrade the **Doctor Dashboard & Appointment Management** adhering strictly to our single-brand navy palette (`#243B63` / `#1C2B4F`) and Lucide outline vector icons.
+
+---
+
+## 🩺 1. Section A: Doctor Dashboard Enhancements
+
+### Key Features:
+1. **"Who's Next" Today's Live Queue Card**:
+   - Renders a prominent card at top of Doctor Dashboard highlighting the current active patient in queue (Patient Name, Queue #, Reason for visit, Assigned Time, direct action buttons).
+
+2. **Pending Action Alerts Banner**:
+   - Sticky notification banner alerting the practitioner of pending items (e.g. `⚠️ 3 Appointment Requests Awaiting Your Confirmation`).
+
+3. **Doctor On-Duty / Availability Status Switch**:
+   - Interactive toggle (`🟢 On-Duty / Accepting Patients` vs `🔴 On Leave / Bookings Paused`) right in the top doctor header.
+
+---
+
+## 📅 2. Section B: Doctor Appointments Management
+
+### Key Features:
+1. **Status-Based Filter Tabs**:
+   - Tabbed view (`All`, `Pending Requests`, `Today's Queue`, `Completed`, `Rescheduled`, `Cancelled`) replacing flat messy lists.
+
+2. **Direct Action Triggers**:
+   - Prominent, un-nested action buttons on pending request rows: `✓ Confirm & Assign Time`, `✕ Reject`, `📅 Reschedule`.
+
+3. **Interactive Reschedule Modal**:
+   - Modal popup allowing the doctor to select a new proposed date and assigned time slot cleanly.
+
+4. **Patient Quick-Info Drawer / Modal**:
+   - Quick modal preview showing patient age, gender, reason for visit, and consultation history count with this doctor.
+
+5. **Post-Consultation Notes & Diagnosis Modal**:
+   - Dedicated modal for doctors to enter consultation diagnosis, clinical notes, and recommended follow-up date upon marking an appointment `Completed`.
+
+---
+
+## 🛠️ Proposed File Changes
+
+- `doctor-header.component.html` & `doctor-header.component.ts`: Add On-Duty toggle & status badge.
+- `dashboard.component.html` & `dashboard.component.ts`: Integrate "Who's Next" Queue card, Pending Action alerts banner, and Post-Consultation Notes modal.
+- `doctor-appointments.component.html` & `doctor-appointments.component.ts`: Add status tabs, direct action triggers, Reschedule modal, and Patient Quick-Info modal.
+
+---
+
+## 🧪 Verification Plan
+
+1. **Build Verification**: Run `npx ng build --configuration=development` to confirm 0 compilation errors.
+2. **Dashboard Verification**: Test "Who's Next" queue card, On-Duty switch toggle, and pending alerts banner.
+3. **Appointments Verification**: Test status tabs, direct Accept/Reject/Reschedule triggers, and Consultation Notes entry.

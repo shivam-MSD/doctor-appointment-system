@@ -3,12 +3,16 @@
 
 /* Define Design System Theme Variables */
 :root {
-  --bg-primary: #090d16;
-  --bg-secondary: #0f1626;
-  --bg-card: rgba(15, 22, 38, 0.7);
-  --bg-card-solid: #0f1626;
+  --brand-navy: #243B63;
+  --deep-navy: #1C2B4F;
+  --icon-color: #243B63;
+  
+  --bg-primary: #0b1329;
+  --bg-secondary: #141f36;
+  --bg-card: rgba(20, 31, 54, 0.85);
+  --bg-card-solid: #141f36;
   --border-color: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(6, 182, 212, 0.3);
+  --border-hover: rgba(36, 59, 99, 0.5);
   
   --glass-overlay: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
@@ -17,38 +21,46 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
-  --accent-cyan: #06b6d4;
+  --primary-color: #243B63;
+  --accent-cyan: #243B63;
   --accent-blue: #3b82f6;
   --accent-purple: #8b5cf6;
   
-  --status-pending: #eab308;
-  --status-confirmed: #10b981;
+  --status-pending: #f59e0b;
+  --status-confirmed: #00c896;
   --status-cancelled: #ef4444;
-  --status-completed: #3b82f6;
+  --status-completed: #243B63;
   
   --font-display: 'Outfit', 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
   
-  --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.15);
+  --shadow-glow: 0 4px 20px rgba(36, 59, 99, 0.2);
   --glass-blur: blur(12px);
 }
 
 body.light-theme {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #f1f5f9;
-  --bg-card: rgba(255, 255, 255, 0.85);
+  --brand-navy: #243B63;
+  --deep-navy: #1C2B4F;
+  --icon-color: #243B63;
+
+  --bg-primary: #F5F5F8;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
   --bg-card-solid: #ffffff;
-  --border-color: rgba(15, 23, 42, 0.08);
-  --border-hover: rgba(6, 182, 212, 0.4);
+  --border-color: rgba(36, 59, 99, 0.1);
+  --border-hover: rgba(36, 59, 99, 0.3);
   
-  --glass-overlay: rgba(0, 0, 0, 0.03);
-  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-overlay: rgba(0, 0, 0, 0.02);
+  --glass-border: rgba(36, 59, 99, 0.12);
   
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-primary: #1E293B;
+  --text-secondary: #4B5563;
+  --text-muted: #64748B;
+
+  --primary-color: #243B63;
+  --accent-cyan: #243B63;
   
-  --shadow-glow: 0 4px 20px rgba(6, 182, 212, 0.1);
+  --shadow-glow: 0 4px 20px rgba(36, 59, 99, 0.08);
 }
 
 /* Global Reset & Body */
@@ -1689,4 +1701,196 @@ button[disabled] {
   border: none;
   font-size: 0.75rem;
   cursor: pointer;
+}
+
+/* ==========================================================================
+   GLOBAL POPUP MODAL DESIGN SYSTEM (BRAND NAVY #243B63 / #1C2B4F)
+   ========================================================================== */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-container, .modal-content {
+  background: var(--bg-card-solid, #ffffff);
+  border-radius: 20px !important;
+  border: 1px solid rgba(36, 59, 99, 0.15) !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #1C2B4F, #243B63) !important;
+  color: #ffffff !important;
+  padding: 18px 24px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.modal-header h3, .modal-header h4, .modal-title {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 1.2rem !important;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-header .close-modal, .modal-header .btn-close, .modal-header button.close {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: none !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  font-size: 1.3rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.modal-header .close-modal:hover, .modal-header .btn-close:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.modal-body {
+  padding: 24px !important;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 16px 24px !important;
+  background: rgba(245, 245, 248, 0.9) !important;
+  border-top: 1px solid rgba(36, 59, 99, 0.1) !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   INDmoney Style Pill Tabs & Aesthetic Toggle Switches
+   ========================================================================== */
+
+/* INDmoney Container */
+.ind-tabs-container {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  border-radius: 12px;
+  gap: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  width: 100%;
+}
+
+.ind-tabs-container.auto-width {
+  width: auto !important;
+  display: inline-flex !important;
+}
+
+/* INDmoney Pill Tab Buttons */
+.ind-tab-btn {
+  border: 1px solid transparent;
+  padding: 7px 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: var(--text-secondary);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+  flex: 1;
+}
+
+.ind-tabs-container.auto-width .ind-tab-btn {
+  flex: initial !important;
+}
+
+.ind-tab-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
+}
+
+.ind-tab-btn.active {
+  background: var(--brand-navy) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25) !important;
+  border: 1px solid var(--brand-navy) !important;
+}
+
+/* Modern Aesthetic iOS-Style Toggle Switch */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider-toggle {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px;
+}
+
+.slider-toggle:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+}
+
+input:checked + .slider-toggle {
+  background-color: var(--brand-navy);
+}
+
+input:checked + .slider-toggle:before {
+  transform: translateX(20px);
 }

@@ -13,7 +13,13 @@ export class DoctorHeaderComponent {
 
   @Output() openClinicModal = new EventEmitter<void>();
 
+  isOnDuty = true;
+
   onOpenClinicModal() {
     this.openClinicModal.emit();
+  }
+
+  toggleOnDuty() {
+    this.isOnDuty = !this.isOnDuty;
   }
 }

@@ -50,4 +50,8 @@ export class PatientService {
   getClinicsByDoctorId(doctorId: string): Observable<any[]> {
     return this.http.get<any[]>(`/api/clinics/doctor/${doctorId}`);
   }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    return this.http.post<any>('/api/users/change-password', { currentPassword, newPassword });
+  }
 }

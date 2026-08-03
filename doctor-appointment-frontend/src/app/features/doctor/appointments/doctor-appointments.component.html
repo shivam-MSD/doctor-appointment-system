@@ -1,27 +1,19 @@
 <div class="appointments-wrapper">
   <!-- Portal Title -->
-  <div class="glass-card welcome-card">
+  <div class="glass-card welcome-card" style="border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9)); padding: 22px 26px; border-radius: 16px; margin-bottom: 24px;">
     <div class="welcome-text">
-      <h2>{{ completedOnlyMode ? 'Completed Appointments Directory' : 'Appointments Directory' }}</h2>
-      <p>{{ completedOnlyMode ? 'Browse and view all completed patient consultations and historical records.' : 'Filter,
-        search, and view all scheduled, past, and upcoming appointments across clinics.' }}</p>
+      <h2 style="font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0;">{{ completedOnlyMode ? 'Completed Appointments Directory' : 'Appointments Directory' }}</h2>
+      <p style="color: var(--text-secondary); margin: 0;">{{ completedOnlyMode ? 'Browse and view all completed patient consultations and historical records.' : 'Filter, search, and view all scheduled, past, and upcoming appointments across clinics.' }}</p>
     </div>
-    <div class="role-badge">{{ completedOnlyMode ? 'Completed' : 'Appointments' }}</div>
+    <div class="role-badge" style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy); font-weight: 700;">{{ completedOnlyMode ? 'Completed' : 'Appointments' }}</div>
   </div>
+
   <!-- Filters Dashboard Panel -->
   <div class="glass-card filter-card-styled">
     <div class="filter-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <h3 style="margin: 0;">🔍 Filter Appointments</h3>
-        <div class="view-mode-switcher">
-          <button class="view-mode-btn" [class.active]="appointmentViewMode === 'table'" (click)="appointmentViewMode = 'table'" title="Table View">
-            📊 Table
-          </button>
-          <button class="view-mode-btn" [class.active]="appointmentViewMode === 'card'" (click)="appointmentViewMode = 'card'" title="Card View">
-            🎴 Cards
-          </button>
-        </div>
-      </div>
+      <h3 style="margin: 0; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <lucide-icon name="search" [size]="18" style="color: var(--brand-navy);"></lucide-icon> Filter Appointments
+      </h3>
       <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
     </div>
 
@@ -41,22 +33,10 @@
       <!-- Consultation filter -->
       <div class="form-group" style="display: flex; flex-direction: column;">
         <label class="form-label" style="margin-bottom: 8px;">Consultation Type</label>
-        <div class="tabs-container"
-          style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px; height: 100%;">
-          <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'"
-            [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'"
-            (click)="consultationFilter = ''; onFilterChange()"
-            style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">All</button>
-          <button class="btn"
-            [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'"
-            [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'"
-            (click)="consultationFilter = 'InPerson'; onFilterChange()"
-            style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">In-Person</button>
-          <button class="btn"
-            [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'"
-            [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'"
-            (click)="consultationFilter = 'VideoCall'; onFilterChange()"
-            style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600; flex: 1;">Video</button>
+        <div class="ind-tabs-container">
+          <button class="ind-tab-btn" [class.active]="consultationFilter === ''" (click)="consultationFilter = ''; onFilterChange()">All</button>
+          <button class="ind-tab-btn" [class.active]="consultationFilter === 'InPerson'" (click)="consultationFilter = 'InPerson'; onFilterChange()">In-Person</button>
+          <button class="ind-tab-btn" [class.active]="consultationFilter === 'VideoCall'" (click)="consultationFilter = 'VideoCall'; onFilterChange()">Video</button>
         </div>
       </div>
 
@@ -176,24 +156,37 @@
 
       <!-- Appointments List Table -->
       <div class="glass-card table-card" *ngIf="!isLoading" style="margin: 0;">
-        <div class="table-header" style="flex-direction: column; align-items: flex-start; gap: 20px;">
-          <h3 style="margin-bottom: 0;">{{ completedOnlyMode ? 'Completed Patient Appointments' : 'Patient Appointments'
-            }} ({{ getFilteredAppointments().length }})</h3>
+        <div class="table-header" style="flex-direction: column; align-items: flex-start; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 12px;">
+            <h3 style="margin: 0; font-weight: 800;">
+              {{ completedOnlyMode ? 'Completed Patient Appointments' : 'Patient Appointments' }} ({{ getFilteredAppointments().length }})
+            </h3>
 
-          <!-- Appointment UI Tabs -->
-          <div *ngIf="!completedOnlyMode" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
-            <button class="btn" [ngClass]="activeTab === 'upcoming' ? 'btn-primary' : 'btn-secondary'"
-              (click)="setTab('upcoming')" style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">Upcoming
-              & New</button>
-            <button class="btn" [ngClass]="activeTab === 'past' ? 'btn-primary' : 'btn-secondary'"
-              (click)="setTab('past')" style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">Past &
-              Completed</button>
-            <button class="btn" [ngClass]="activeTab === 'cancelled' ? 'btn-primary' : 'btn-secondary'"
-              (click)="setTab('cancelled')"
-              style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">Cancelled / Rejected</button>
-            <button class="btn" [ngClass]="activeTab === 'all' ? 'btn-primary' : 'btn-secondary'"
-              (click)="setTab('all')" style="border-radius: 20px; padding: 6px 16px; font-size: 0.85rem;">All
-              Records</button>
+            <!-- Relocated View Mode Switcher (Table vs Cards) -->
+            <div class="ind-tabs-container auto-width">
+              <button class="ind-tab-btn" [class.active]="appointmentViewMode === 'table'" (click)="appointmentViewMode = 'table'" title="Table View">
+                📊 Table View
+              </button>
+              <button class="ind-tab-btn" [class.active]="appointmentViewMode === 'card'" (click)="appointmentViewMode = 'card'" title="Card View">
+                🎴 Cards View
+              </button>
+            </div>
+          </div>
+
+          <!-- Appointment UI INDmoney Pill Tabs -->
+          <div *ngIf="!completedOnlyMode" class="ind-tabs-container auto-width">
+            <button class="ind-tab-btn" [class.active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">
+              Upcoming & New
+            </button>
+            <button class="ind-tab-btn" [class.active]="activeTab === 'past'" (click)="setTab('past')">
+              Past & Completed
+            </button>
+            <button class="ind-tab-btn" [class.active]="activeTab === 'cancelled'" (click)="setTab('cancelled')">
+              Cancelled / Rejected
+            </button>
+            <button class="ind-tab-btn" [class.active]="activeTab === 'all'" (click)="setTab('all')">
+              All Records
+            </button>
           </div>
         </div>
 

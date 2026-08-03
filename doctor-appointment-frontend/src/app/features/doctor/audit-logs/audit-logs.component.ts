@@ -7,10 +7,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Subscription } from 'rxjs';
 
+import { LucideAngularModule } from 'lucide-angular';
+
 @Component({
   selector: 'app-audit-logs',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './audit-logs.component.html',
   styleUrls: ['./audit-logs.component.css']
 })

@@ -46,6 +46,17 @@ import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
 
 import { AccountSecurityComponent } from './shared/components/account-security/account-security.component';
 
+import { 
+  LucideAngularModule, 
+  Calendar, CalendarClock, CalendarCheck, CalendarSync,
+  TrendingUp, Hourglass, Clock, CheckCircle2, Moon, Sun, Bell, 
+  LayoutDashboard, ClipboardList, History, Stethoscope, ScrollText, 
+  User, UserCircle, Users, Search, Eye, FileText, Plus, PlusCircle, 
+  Link, Pencil, MapPin, Phone, Building2, BadgeCheck, Lock, AlertTriangle, 
+  Mail, MessageSquare, Download, Upload, XCircle, RefreshCw, CreditCard, 
+  Award, Settings, Syringe, Pill, Heart, Activity, Video, Check
+} from 'lucide-angular';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -83,6 +94,15 @@ import { AccountSecurityComponent } from './shared/components/account-security/a
     HttpClientModule,
     FormsModule,
     AppRoutingModule,
+    LucideAngularModule.pick({
+      Calendar, CalendarClock, CalendarCheck, CalendarSync,
+      TrendingUp, Hourglass, Clock, CheckCircle2, Moon, Sun, Bell, 
+      LayoutDashboard, ClipboardList, History, Stethoscope, ScrollText, 
+      User, UserCircle, Users, Search, Eye, FileText, Plus, PlusCircle, 
+      Link, Pencil, MapPin, Phone, Building2, BadgeCheck, Lock, AlertTriangle, 
+      Mail, MessageSquare, Download, Upload, XCircle, RefreshCw, CreditCard, 
+      Award, Settings, Syringe, Pill, Heart, Activity, Video, Check
+    }),
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       // Register the ServiceWorker as soon as the application is stable

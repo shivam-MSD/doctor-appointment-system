@@ -41,6 +41,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   about = '';
   specializations: any[] = [];
   specializationId = '';
+  verificationStatus = 'Approved';
+  rejectionReason = '';
+  languagesSpoken = 'English, Hindi, Gujarati';
 
   // Admin Fields
   clinicName = '';

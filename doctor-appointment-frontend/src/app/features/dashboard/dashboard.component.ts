@@ -15,7 +15,7 @@ import { ActivatedRoute, Router } from '@angular/router';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  role = '';
+  role: any = '';
   Math = Math;
   appointments: Appointment[] = [];
   statusFilter = '';
@@ -100,11 +100,57 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.appointments.filter(a => !['Completed', 'Cancelled', 'Rejected', 'RescheduleProposed'].includes(a.status)).length;
   }
 
+  get currentDoctorActivePatient(): Appointment | null {
+    if (this.role !== 'Doctor' || !this.appointments || this.appointments.length === 0) return null;
+    const active = this.appointments.filter(a => a.status === 'Confirmed');
+    return active.length > 0 ? active[0] : null;
+  }
+
+  get doctorPendingRequestsCount(): number {
+    if (this.role !== 'Doctor' || !this.appointments) return 0;
+    return this.appointments.filter(a => a.status === 'Pending').length;
+  }
+
   // Patient metrics
   isPatientStatsLoading = true;
   patientTotalCompleted = 0;
   patientTotalUpcoming = 0; // Excludes today
   patientTotalPending = 0;
+
+  get nextUpcomingAppointment(): Appointment | null {
+    if (this.role !== 'Patient' || !this.appointments || this.appointments.length === 0) return null;
+    const upcoming = this.appointments.filter(a => a.status === 'Confirmed' || a.status === 'Pending' || a.status === 'RescheduleProposed');
+    return upcoming.length > 0 ? upcoming[0] : null;
+  }
+
+  get twentyFourHourAppointment(): Appointment | null {
+    if (this.role !== 'Patient' || !this.appointments || this.appointments.length === 0) return null;
+    const now = new Date().getTime();
+    const twentyFourHoursLater = now + (24 * 60 * 60 * 1000);
+    const upcoming24h = this.appointments.filter(a => {
+      if (a.status !== 'Confirmed') return false;
+      const appTime = new Date(a.appointmentDate).getTime();
+      return appTime >= now && appTime <= twentyFourHoursLater;
+    });
+    return upcoming24h.length > 0 ? upcoming24h[0] : null;
+  }
+
+  onPatientStatClick(statusFilter: string): void {
+    this.statusFilter = statusFilter;
+    this.onFilterChange(statusFilter);
+    const tableEl = document.querySelector('.table-card');
+    if (tableEl) {
+      tableEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  bookFollowUp(app: Appointment): void {
+    if (app.doctorId) {
+      this.router.navigate(['/patient/book-appointment'], {
+        queryParams: { doctorId: app.doctorId, clinicId: app.clinicId || '' }
+      });
+    }
+  }
 
   // Patient Details Modal States
   showPatientDetailsModal = false;
@@ -321,6 +367,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.errorMessage = 'Failed to load dashboard appointments.';
+          this.appointments = [];
           this.isDashboardLoading = false;
         }
       });
@@ -535,6 +582,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   appointmentViewMode: 'table' | 'card' = 'table';
+
+  markAsCompleted(appId: string): void {
+    this.appointmentService.completeAppointment(appId).subscribe({
+      next: () => {
+        this.toastService.showSuccess('Appointment marked as Completed!');
+        this.loadDashboardData();
+      },
+      error: (err: any) => this.toastService.showError(err, 'Failed to complete appointment')
+    });
+  }
 
   bookAgain(app: any): void {
     if (app?.doctorId) {

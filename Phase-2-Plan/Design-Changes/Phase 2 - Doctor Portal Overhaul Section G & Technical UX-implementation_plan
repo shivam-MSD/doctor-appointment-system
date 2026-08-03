@@ -1,0 +1,47 @@
+# Implementation Plan: Phase 2 - Doctor Portal Overhaul (Section G & Technical UX)
+
+We will implement the final phase of Doctor Portal improvements focusing on **Activity Logs (Section G)** and **Cross-Cutting Technical UX Enhancements** adhering strictly to our single-brand navy palette (`#243B63` / `#1C2B4F`) and Lucide outline vector icons.
+
+---
+
+## 📜 1. Section G: Doctor Activity Log Overhaul (`/doctor/audit-logs`)
+
+### Key Features:
+1. **Patient & Doctor Friendly Title**:
+   - Renamed header from *"Audit Logs"* to **"Activity Log"** (`<lucide-icon name="history">`).
+
+2. **Category Filter Tabs & Date Range Selector**:
+   - Filter chips: `All Activities`, `Appointments`, `Clinics`, `Admin Actions`.
+   - Date Range Pickers: Start Date & End Date controls for custom period auditing.
+
+3. **Event-Specific Lucide Vector Icons**:
+   - Color-coded Lucide vector icons (`calendar-check`, `building-2`, `users`, `user`) for visual log scanning.
+
+---
+
+## 🎨 2. Cross-Cutting Technical-UX Enhancements
+
+### Key Features:
+1. **Explicit Role-Switch Indicator Badge**:
+   - Displays clear role badges (`PATIENT`, `DOCTOR`, `CLINIC ADMIN`, `SUPER ADMIN`) in header and sidebar so multi-role users always know their active context.
+
+2. **Universal Skeleton Loaders**:
+   - Animated skeleton loading states across all directory tables & metric cards during data fetch.
+
+3. **Single-Brand Navy CSS Tokens & High Contrast**:
+   - `#243B63` primary brand navy, `#1C2B4F` deep navy, and `#00C896` success green.
+
+---
+
+## 🛠️ Proposed File Changes
+
+- `audit-logs.component.html` & `audit-logs.component.ts`: Add Category tabs, Date range filters, and Lucide icons.
+- `header.component.html` & `sidebar.component.html`: Ensure explicit role indicator badges are rendered for all 4 roles.
+
+---
+
+## 🧪 Verification Plan
+
+1. **Build Verification**: Run `npx ng build --configuration=development` to confirm 0 compilation errors.
+2. **Activity Log Verification**: Test category filter tabs, date range pickers, and icon rendering.
+3. **Role Badge Verification**: Verify role badges in top header & sidebar for all 4 user roles.

@@ -1,0 +1,56 @@
+# Implementation Plan: Centralized Universal Settings System
+
+We will create a centralized **Settings View & Module** (`/settings`) accessible via the sidebar for ALL user roles (Patient, Doctor, Admin, SuperAdmin) adhering to our single-brand navy palette (`#243B63` / `#1C2B4F`) and Lucide outline vector icons.
+
+---
+
+## ⚙️ 1. Header Cleanup & Navigation Integration
+1. **Header Cleanup**:
+   - Remove sound icon toggle from `header.component.html` (relocating it cleanly to Settings -> Notifications & Sound).
+
+2. **Sidebar Navigation**:
+   - Add **"Settings"** nav item (`<lucide-icon name="settings">`) for all 4 user roles in `sidebar.component.html`.
+
+---
+
+## 🎨 2. Settings View Component & Sub-Sections
+
+### A. 🔔 Notifications & Sound (All Users)
+- **Notification Sound Master Toggle**: Enable/Disable audio alerts (persisted in LocalStorage).
+- **Sound Tone Selector**: Dropdown to select notification chime tone (Default Chime / Medical Bell).
+- **Per-Channel Toggles**: Email Alerts, SMS Notifications, In-App Push Badges.
+
+### B. 🔒 Account & Security (All Users)
+- **Change Password**: Relocated from Profile section into a clean security form.
+- **Active Session Overview**: Displays current logged-in role & active session details.
+
+### C. 🎨 Appearance & Display (All Users)
+- **Theme Mode Selector**: Light Mode ↔ Dark Mode ↔ System Default.
+- **Font Size & Accessibility**: Normal ↔ Large font scaling preference.
+
+### D. 🧑‍⚕️ / 👨‍⚕️ Role-Specific Settings
+- **Patient Settings**:
+  - Default Consultation Mode Preference (In-Person vs. Video Consultation).
+- **Doctor Settings**:
+  - Auto-Accept Appointment Requests toggle (manual review vs instant confirm).
+  - Default Appointment Slot Duration (15 / 20 / 30 mins).
+- **Admin / SuperAdmin Settings**:
+  - Verification Queue Alert Preferences (Notify on new doctor/clinic registration).
+
+---
+
+## 🛠️ Proposed File Changes
+
+- `header.component.html` & `header.component.ts`: Remove sound bell toggle from header.
+- `sidebar.component.html`: Add Settings nav item for Patient, Doctor, Admin, and SuperAdmin.
+- `app-routing.module.ts`: Register `/settings` route mapping to Settings component.
+- `settings.component.html` & `settings.component.ts`: Create new centralized Settings component with tabbed navigation.
+
+---
+
+## 🧪 Verification Plan
+
+1. **Build Verification**: Run `npx ng build --configuration=development` to verify 0 compilation errors.
+2. **Navigation Check**: Verify Settings tab appears in sidebar for all 4 roles.
+3. **Sound Toggle Check**: Toggling sound enable/disable in Settings updates audio alert behavior.
+4. **Security Check**: Test password update validation.

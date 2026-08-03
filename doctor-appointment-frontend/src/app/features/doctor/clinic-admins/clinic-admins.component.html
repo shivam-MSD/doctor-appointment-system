@@ -1,10 +1,13 @@
 <div class="dashboard-wrapper">
   <!-- Greeting Banner -->
-  <div class="glass-card welcome-card">
+  <div class="glass-card welcome-card" style="border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9)); padding: 22px 26px; border-radius: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
     <div class="welcome-text">
-      <h2>👥 Clinic Administrators</h2>
-      <p>View all administrators assigned to your clinic or hospital branches.</p>
+      <h2 style="font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
+        <lucide-icon name="users" [size]="24" style="color: var(--brand-navy);"></lucide-icon> Clinic Staff Administrators
+      </h2>
+      <p style="color: var(--text-secondary); margin: 0;">View and manage administrators assigned to your practice clinics or hospital branches.</p>
     </div>
+    <div class="role-badge" style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy); font-weight: 700;">Staff Admins</div>
   </div>
 
   <!-- Admins Directory Table Card -->

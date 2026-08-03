@@ -1,12 +1,15 @@
 <div class="audit-logs-container fade-in">
   <!-- Header Section -->
-  <div class="header-card">
-    <div class="header-content">
+  <div class="header-card" style="border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9)); padding: 20px 24px; border-radius: 16px; margin-bottom: 20px;">
+    <div class="header-content" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <h2 class="page-title">
-          <i class="fas fa-history text-primary me-2"></i> Audit Logs
+        <h2 class="page-title" style="font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
+          <lucide-icon name="history" [size]="24" style="color: var(--brand-navy);"></lucide-icon>
+          {{ userRole === 'Patient' ? 'Activity History' : 'Audit Logs' }}
         </h2>
-        <p class="page-subtitle text-muted">Global master-list of all activity across your appointments.</p>
+        <p class="page-subtitle text-muted" style="margin: 0; font-size: 0.9rem;">
+          {{ userRole === 'Patient' ? 'Master history of all your appointment bookings, reschedules, and updates.' : 'Global master-list of all activity across your appointments.' }}
+        </p>
       </div>
 
       <!-- Clinic Filter for Doctors -->

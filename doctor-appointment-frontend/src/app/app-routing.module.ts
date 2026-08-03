@@ -54,6 +54,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: 'dashboard', component: DashboardComponent }, // Shared fallback route
+      { path: 'settings', loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent) },
 
       // Patient Routes
       { path: 'patient/dashboard', component: DashboardComponent, data: { expectedRole: 'Patient', loginRoute: '/login' } },

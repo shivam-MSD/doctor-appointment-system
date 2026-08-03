@@ -1,6 +1,66 @@
 <!-- Patient Header (Banner + Metrics) -->
 <app-patient-header></app-patient-header>
 
+<!-- STEPPER PROGRESS INDICATOR BAR -->
+<div class="glass-card stepper-bar" style="margin: 0 20px 20px 20px; padding: 16px 24px; border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(245,245,248,0.95)); border-radius: 16px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; position: relative; flex-wrap: wrap; gap: 12px;">
+    
+    <!-- Step 1 -->
+    <div style="display: flex; align-items: center; gap: 10px; z-index: 2;">
+      <div [style.background]="doctorId ? '#00c896' : 'var(--brand-navy)'" style="color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.88rem; box-shadow: 0 4px 10px rgba(36, 59, 99, 0.2);">
+        <lucide-icon *ngIf="doctorId" name="check" [size]="16"></lucide-icon>
+        <span *ngIf="!doctorId">1</span>
+      </div>
+      <div>
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Step 1</div>
+        <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary);">Select Doctor</div>
+      </div>
+    </div>
+
+    <div class="hide-on-mobile" style="flex: 1; height: 2px; background: rgba(36, 59, 99, 0.15); margin: 0 12px;"></div>
+
+    <!-- Step 2 -->
+    <div style="display: flex; align-items: center; gap: 10px; z-index: 2;">
+      <div [style.background]="clinicId ? '#00c896' : (doctorId ? 'var(--brand-navy)' : 'rgba(36, 59, 99, 0.2)')" style="color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.88rem;">
+        <lucide-icon *ngIf="clinicId" name="check" [size]="16"></lucide-icon>
+        <span *ngIf="!clinicId">2</span>
+      </div>
+      <div>
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Step 2</div>
+        <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary);">Select Clinic</div>
+      </div>
+    </div>
+
+    <div class="hide-on-mobile" style="flex: 1; height: 2px; background: rgba(36, 59, 99, 0.15); margin: 0 12px;"></div>
+
+    <!-- Step 3 -->
+    <div style="display: flex; align-items: center; gap: 10px; z-index: 2;">
+      <div [style.background]="selectedDateObj ? '#00c896' : (clinicId ? 'var(--brand-navy)' : 'rgba(36, 59, 99, 0.2)')" style="color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.88rem;">
+        <lucide-icon *ngIf="selectedDateObj" name="check" [size]="16"></lucide-icon>
+        <span *ngIf="!selectedDateObj">3</span>
+      </div>
+      <div>
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Step 3</div>
+        <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary);">Date & Mode</div>
+      </div>
+    </div>
+
+    <div class="hide-on-mobile" style="flex: 1; height: 2px; background: rgba(36, 59, 99, 0.15); margin: 0 12px;"></div>
+
+    <!-- Step 4 -->
+    <div style="display: flex; align-items: center; gap: 10px; z-index: 2;">
+      <div style="background: rgba(36, 59, 99, 0.2); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.88rem;">
+        4
+      </div>
+      <div>
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Step 4</div>
+        <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary);">Confirm Reservation</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- FULL WIDTH: Smart Info Box (if no doctor selected) -->
 <div class="booking-wrapper" *ngIf="!isInitializing && (!doctorId || !clinicId)"
   style="padding: 0 20px; margin-bottom: 20px; width: 100%;">

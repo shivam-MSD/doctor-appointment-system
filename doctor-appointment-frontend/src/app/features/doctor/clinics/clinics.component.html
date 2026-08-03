@@ -1,11 +1,16 @@
 <div class="dashboard-wrapper">
   <!-- Greeting Banner -->
-  <div class="glass-card welcome-card">
+  <div class="glass-card welcome-card" style="border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9)); padding: 22px 26px; border-radius: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
     <div class="welcome-text">
-      <h2>🏢 My Clinic Locations</h2>
-      <p>Register and manage your clinic or hospital branches.</p>
+      <h2 style="font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
+        <lucide-icon name="building-2" [size]="24" style="color: var(--brand-navy);"></lucide-icon> My Practice Locations
+      </h2>
+      <p style="color: var(--text-secondary); margin: 0;">Register and manage your clinical branches, opening hours, and consultation fees.</p>
     </div>
-    <button class="btn btn-primary" (click)="openClinicModal()">+ Register New Clinic</button>
+    <button class="btn btn-primary" (click)="openClinicModal()"
+      style="background: linear-gradient(135deg, #1C2B4F, #243B63); border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(36, 59, 99, 0.25);">
+      <lucide-icon name="plus" [size]="16"></lucide-icon> Register New Clinic
+    </button>
   </div>
 
   <!-- <div *ngIf="successMessage" class="success-banner">
@@ -624,12 +629,11 @@
         </div>
 
         <!-- Split Shift Selector Switch -->
-        <div class="form-group" style="margin-top: 15px;">
-          <label class="form-label"
-            style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-            <input type="checkbox" [(ngModel)]="isSplitShift" (ngModelChange)="validateTimingsChange()"
-              name="isSplitShift" style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
-            <span>Support Split Shift Timings (Morning & Evening sessions)</span>
+        <div class="form-group" style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.02); padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.05);">
+          <span style="font-weight: 600; color: var(--text-primary);">Support Split Shift Timings (Morning & Evening sessions)</span>
+          <label class="switch-toggle">
+            <input type="checkbox" [(ngModel)]="isSplitShift" (ngModelChange)="validateTimingsChange()" name="isSplitShift">
+            <span class="slider-toggle"></span>
           </label>
         </div>
 
@@ -647,55 +651,52 @@
           </div>
         </div>
 
-        <!-- Split Timing Inputs -->
-        <div
-          style="margin-top: 15px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px;"
-          *ngIf="isSplitShift">
-          <h5 style="margin: 0 0 10px 0; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase;">
-            Session 1 (e.g. Morning Shift)</h5>
+        <!-- Split Shift Timing Inputs -->
+        <div *ngIf="isSplitShift" style="margin-top: 15px;">
+          <div style="font-weight: 700; color: var(--accent-cyan); font-size: 0.88rem; margin-bottom: 8px;">🌅 Session 1 (Morning Shift)</div>
           <div class="form-row">
             <div class="form-group col-6">
-              <label class="form-label">Opening Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="startTime1" (ngModelChange)="validateTimingsChange()"
-                name="startTime1">
+              <label class="form-label">Morning Start *</label>
+              <input type="time" class="form-control" [(ngModel)]="startTime1" (ngModelChange)="validateTimingsChange()" name="startTime1">
             </div>
             <div class="form-group col-6">
-              <label class="form-label">Closing Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="endTime1" (ngModelChange)="validateTimingsChange()"
-                name="endTime1">
+              <label class="form-label">Morning End *</label>
+              <input type="time" class="form-control" [(ngModel)]="endTime1" (ngModelChange)="validateTimingsChange()" name="endTime1">
             </div>
           </div>
 
-          <h5
-            style="margin: 15px 0 10px 0; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase; border-top: 1px solid var(--border-color); padding-top: 15px;">
-            Session 2 (e.g. Evening Shift)</h5>
+          <div style="font-weight: 700; color: var(--accent-purple); font-size: 0.88rem; margin-top: 12px; margin-bottom: 8px;">🌆 Session 2 (Evening Shift)</div>
           <div class="form-row">
             <div class="form-group col-6">
-              <label class="form-label">Opening Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="startTime2" (ngModelChange)="validateTimingsChange()"
-                name="startTime2">
+              <label class="form-label">Evening Start *</label>
+              <input type="time" class="form-control" [(ngModel)]="startTime2" (ngModelChange)="validateTimingsChange()" name="startTime2">
             </div>
             <div class="form-group col-6">
-              <label class="form-label">Closing Time *</label>
-              <input type="time" class="form-control" [(ngModel)]="endTime2" (ngModelChange)="validateTimingsChange()"
-                name="endTime2">
+              <label class="form-label">Evening End *</label>
+              <input type="time" class="form-control" [(ngModel)]="endTime2" (ngModelChange)="validateTimingsChange()" name="endTime2">
             </div>
           </div>
         </div>
 
-        <!-- Immediate UI error feedbacks -->
-        <div *ngIf="timingsErrorMessage"
-          style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 12px; border-radius: 6px; font-size: 0.8rem; color: #f87171; display: flex; gap: 8px; align-items: center; margin-top: 12px; font-weight: 500;">
+        <!-- Timing Validation Error Banner -->
+        <div *ngIf="timingsErrorMessage" style="margin-top: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border-left: 3.5px solid #ef4444; border-radius: 8px; font-size: 0.85rem; color: #dc2626; font-weight: 600; display: flex; align-items: center; gap: 8px;">
           <span>⚠️ {{ timingsErrorMessage }}</span>
         </div>
 
+        <!-- Operating Open Days Selector -->
+        <div class="form-group" style="margin-top: 15px;">
+          <label class="form-label">Open Operating Days *</label>
+          <input type="text" class="form-control" [(ngModel)]="clinicTimingsForm.openDays" name="openDays"
+            placeholder="e.g. Mon-Sat or Mon, Wed, Fri">
+          <small class="form-text text-muted">Specifies operating days shown to patients (e.g., "Mon-Sat" or "Mon, Wed, Fri").</small>
+        </div>
+
         <!-- Availability Toggle -->
-        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-          <label class="form-label"
-            style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isAvailable" name="isAvailable"
-              style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
-            <span>Branch is Open & Available for Bookings</span>
+        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-weight: 600; color: var(--text-primary);">Branch is Open & Available for Bookings</span>
+          <label class="switch-toggle">
+            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isAvailable" name="isAvailable">
+            <span class="slider-toggle"></span>
           </label>
         </div>
 
@@ -707,13 +708,12 @@
         </div>
 
         <!-- Doctor Availability Toggle (Clinic is open, but doctor themselves is unavailable) -->
-        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;"
+        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; align-items: center; justify-content: space-between;"
           *ngIf="clinicTimingsForm.isAvailable">
-          <label class="form-label"
-            style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isDoctorAvailable" name="isDoctorAvailable"
-              style="width: 16px; height: 16px; accent-color: var(--accent-cyan);">
-            <span>Doctor is Personally Available at this Branch</span>
+          <span style="font-weight: 600; color: var(--text-primary);">Doctor is Personally Available at this Branch</span>
+          <label class="switch-toggle">
+            <input type="checkbox" [(ngModel)]="clinicTimingsForm.isDoctorAvailable" name="isDoctorAvailable">
+            <span class="slider-toggle"></span>
           </label>
         </div>
 
