@@ -41,6 +41,10 @@ export class AuthService {
     return null;
   }
 
+  public isLoggedIn(): boolean {
+    return !!this.getAnyActiveUser();
+  }
+
   /**
    * Checks if ANY valid active user (Patient, Doctor, Admin, SuperAdmin) exists across sessionStorage or localStorage.
    */

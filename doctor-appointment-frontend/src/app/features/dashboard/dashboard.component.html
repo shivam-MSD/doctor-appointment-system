@@ -13,7 +13,8 @@
   <div *ngIf="role === 'Doctor' && doctorPendingRequestsCount > 0" class="glass-card"
     style="margin-bottom: 20px; padding: 16px 22px; border-left: 5px solid #f59e0b; background: linear-gradient(135deg, rgba(254, 243, 199, 0.9), rgba(255, 251, 235, 0.9)); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.12);">
     <div style="display: flex; align-items: center; gap: 14px;">
-      <div style="background: #f59e0b; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800;">
+      <div
+        style="background: #f59e0b; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800;">
         ⚠️
       </div>
       <div>
@@ -21,7 +22,8 @@
           Pending Action Required!
         </h4>
         <p style="margin: 0; font-size: 0.85rem; color: #92400e;">
-          You have <strong>{{ doctorPendingRequestsCount }} pending patient booking request(s)</strong> awaiting your confirmation or time slot assignment.
+          You have <strong>{{ doctorPendingRequestsCount }} pending patient booking request(s)</strong> awaiting your
+          confirmation or time slot assignment.
         </p>
       </div>
     </div>
@@ -34,23 +36,27 @@
   <!-- DOCTOR "WHO'S NEXT" LIVE QUEUE CARD -->
   <div *ngIf="role === 'Doctor' && currentDoctorActivePatient" class="glass-card"
     style="margin-bottom: 24px; padding: 22px; border-left: 5px solid #00c896; background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240, 253, 244, 0.8)); box-shadow: 0 12px 35px rgba(0, 200, 150, 0.08); border-radius: 18px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="background: rgba(0, 200, 150, 0.15); color: #00c896; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase;">
+        <span
+          style="background: rgba(0, 200, 150, 0.15); color: #00c896; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase;">
           ⚡ NEXT PATIENT IN LINE
         </span>
         <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 700;">
           Queue #{{ currentDoctorActivePatient.queueNumber || '1' }}
         </span>
       </div>
-      <span class="badge" style="background: #00c896; color: white; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.78rem;">
+      <span class="badge"
+        style="background: #00c896; color: white; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.78rem;">
         Confirmed Consultation
       </span>
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
       <div style="display: flex; align-items: center; gap: 16px;">
-        <div style="background: var(--brand-navy); color: white; width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; box-shadow: 0 6px 16px rgba(36, 59, 99, 0.25);">
+        <div
+          style="background: var(--brand-navy); color: white; width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; box-shadow: 0 6px 16px rgba(36, 59, 99, 0.25);">
           👤
         </div>
         <div>
@@ -58,7 +64,8 @@
             {{ currentDoctorActivePatient.patientName }}
           </h3>
           <p style="margin: 0; font-size: 0.88rem; color: var(--brand-navy); font-weight: 700;">
-            {{ currentDoctorActivePatient.patientGender }}, {{ currentDoctorActivePatient.patientAge }} Yrs • Reason: "{{ currentDoctorActivePatient.reason }}"
+            {{ currentDoctorActivePatient.patientGender }}, {{ currentDoctorActivePatient.patientAge }} Yrs • Reason:
+            "{{ currentDoctorActivePatient.reason }}"
           </p>
           <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">
             📍 {{ currentDoctorActivePatient.clinicName || 'Clinic Location' }}
@@ -84,7 +91,8 @@
   <div *ngIf="role === 'Patient' && twentyFourHourAppointment" class="glass-card"
     style="margin-bottom: 20px; padding: 16px 22px; border-left: 5px solid #f59e0b; background: linear-gradient(135deg, rgba(254, 243, 199, 0.9), rgba(255, 251, 235, 0.9)); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.15);">
     <div style="display: flex; align-items: center; gap: 14px;">
-      <div style="background: #f59e0b; color: white; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
+      <div
+        style="background: #f59e0b; color: white; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
         ⏰
       </div>
       <div>
@@ -92,7 +100,9 @@
           Upcoming Visit within 24 Hours!
         </h4>
         <p style="margin: 0; font-size: 0.85rem; color: #92400e;">
-          You have an appointment scheduled with <strong>Dr. {{ twentyFourHourAppointment.doctorName }}</strong> on {{ twentyFourHourAppointment.appointmentDate | date:'EEEE, MMM d' }} (Queue #{{ twentyFourHourAppointment.queueNumber || '-' }}).
+          You have an appointment scheduled with <strong>Dr. {{ twentyFourHourAppointment.doctorName }}</strong> on {{
+          twentyFourHourAppointment.appointmentDate | date:'EEEE, MMM d' }} (Queue #{{
+          twentyFourHourAppointment.queueNumber || '-' }}).
         </p>
       </div>
     </div>
@@ -103,29 +113,34 @@
   </div>
 
   <!-- Patient Header & Metrics -->
-  <app-patient-header *ngIf="role === 'Patient'" [firstName]="firstName" (statClick)="onPatientStatClick($event)"></app-patient-header>
+  <app-patient-header *ngIf="role === 'Patient'" [firstName]="firstName"
+    (statClick)="onPatientStatClick($event)"></app-patient-header>
 
   <!-- PATIENT FEATURED NEXT UPCOMING APPOINTMENT CARD -->
   <div *ngIf="role === 'Patient' && !historyMode && nextUpcomingAppointment" class="glass-card"
     style="margin-bottom: 24px; padding: 22px; border-left: 5px solid #00c896; background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240, 253, 244, 0.8)); box-shadow: 0 12px 35px rgba(0, 200, 150, 0.08); border-radius: 18px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="background: rgba(0, 200, 150, 0.15); color: #00c896; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase;">
+        <span
+          style="background: rgba(0, 200, 150, 0.15); color: #00c896; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase;">
           ⚡ Next Upcoming Visit
         </span>
         <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">
           Queue #{{ nextUpcomingAppointment.queueNumber || '-' }}
         </span>
       </div>
-      <span class="badge" [style.background]="getStatusColor(nextUpcomingAppointment.status)" style="color: white; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.78rem;">
+      <span class="badge" [style.background]="getStatusColor(nextUpcomingAppointment.status)"
+        style="color: white; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.78rem;">
         {{ getPatientBadgeText(nextUpcomingAppointment.status) }}
       </span>
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
       <div style="display: flex; align-items: center; gap: 16px;">
-        <div style="background: var(--brand-navy); color: white; width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; box-shadow: 0 6px 16px rgba(36, 59, 99, 0.25);">
-          🩺
+        <div
+          style="background: var(--brand-navy); color: white; width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(36, 59, 99, 0.25);">
+          <lucide-icon name="stethoscope" [size]="26" style="color: #ffffff;"></lucide-icon>
         </div>
         <div>
           <h3 style="margin: 0 0 3px 0; font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">
@@ -140,19 +155,22 @@
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.8); padding: 12px 18px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.06);">
+      <div
+        style="display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.8); padding: 12px 18px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.06);">
         <div>
-          <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Appointment Date & Time</div>
+          <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+            Appointment Date & Time</div>
           <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); margin-top: 2px;">
             📅 {{ nextUpcomingAppointment.appointmentDate | date:'EEEE, MMM d, y' }}
           </div>
           <div style="font-size: 0.82rem; font-weight: 700; color: var(--brand-navy); margin-top: 1px;">
-            ⏰ {{ nextUpcomingAppointment.doctorAssignedTime ? (nextUpcomingAppointment.doctorAssignedTime | date:'shortTime') : 'Time Pending Clinic Assignment' }}
+            ⏰ {{ nextUpcomingAppointment.doctorAssignedTime ? (nextUpcomingAppointment.doctorAssignedTime |
+            date:'shortTime') : 'Time Pending Clinic Assignment' }}
           </div>
         </div>
         <button class="btn btn-primary" (click)="openDoctorDetailsModal(nextUpcomingAppointment.doctorId)"
-          style="background: var(--brand-navy); border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; color: white; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-          <lucide-icon name="eye" [size]="15"></lucide-icon> Doctor Details
+          style="background: var(--brand-navy); border: none; padding: 10px 16px; border-radius: 10px; font-weight: 500; font-size: 0.85rem; color: white; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);">
+          <lucide-icon name="eye" [size]="15" style="color: #ffffff;"></lucide-icon> Doctor Details
         </button>
       </div>
     </div>
@@ -181,17 +199,17 @@
         </select>
         <div class="tabs-container"
           style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px;">
-          <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'"
+          <button class="btn" [style.background]="consultationFilter === '' ? 'var(--brand-navy)' : 'transparent'"
             [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'"
             (click)="consultationFilter = ''; onFilterChange()"
             style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">All</button>
           <button class="btn"
-            [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'"
+            [style.background]="consultationFilter === 'InPerson' ? 'var(--brand-navy)' : 'transparent'"
             [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'"
             (click)="consultationFilter = 'InPerson'; onFilterChange()"
             style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">In-Person</button>
           <button class="btn"
-            [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'"
+            [style.background]="consultationFilter === 'VideoCall' ? 'var(--brand-navy)' : 'transparent'"
             [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'"
             (click)="consultationFilter = 'VideoCall'; onFilterChange()"
             style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">Video</button>
@@ -202,11 +220,15 @@
 
         <!-- View Switcher Toggle -->
         <div class="ind-tabs-container auto-width" style="margin-left: 8px;">
-          <button class="ind-tab-btn" [class.active]="appointmentViewMode === 'table'" (click)="appointmentViewMode = 'table'" title="Table View">
-            📊 Table
+          <button class="ind-tab-btn" [class.active]="appointmentViewMode === 'table'"
+            (click)="appointmentViewMode = 'table'" title="Table View">
+            <lucide-icon name="layout-dashboard" [size]="14"
+              style="margin-right: 4px; display: inline-block; vertical-align: middle;"></lucide-icon> Table
           </button>
-          <button class="ind-tab-btn" [class.active]="appointmentViewMode === 'card'" (click)="appointmentViewMode = 'card'" title="Card View">
-            🎴 Cards
+          <button class="ind-tab-btn" [class.active]="appointmentViewMode === 'card'"
+            (click)="appointmentViewMode = 'card'" title="Card View">
+            <lucide-icon name="clipboard-list" [size]="14"
+              style="margin-right: 4px; display: inline-block; vertical-align: middle;"></lucide-icon> Cards
           </button>
         </div>
       </div>
@@ -258,14 +280,30 @@
         </thead>
         <tbody>
           <tr *ngFor="let i of [1,2,3,4,5]" class="skeleton-table-row">
-            <td><div class="skeleton-box" style="height: 18px; width: 110px;"></div></td>
-            <td><div class="skeleton-box" style="height: 18px; width: 100px;"></div></td>
-            <td><div class="skeleton-box" style="height: 26px; width: 26px; border-radius: 50%;"></div></td>
-            <td><div class="skeleton-box" style="height: 18px; width: 120px;"></div></td>
-            <td><div class="skeleton-box" style="height: 22px; width: 85px; border-radius: 12px;"></div></td>
-            <td><div class="skeleton-box" style="height: 26px; width: 70px; border-radius: 6px;"></div></td>
-            <td><div class="skeleton-box" style="height: 26px; width: 80px; border-radius: 6px;"></div></td>
-            <td style="text-align: center;"><div class="skeleton-box" style="height: 28px; width: 90px; border-radius: 6px; margin: 0 auto;"></div></td>
+            <td>
+              <div class="skeleton-box" style="height: 18px; width: 110px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 18px; width: 100px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 26px; width: 26px; border-radius: 50%;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 18px; width: 120px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 22px; width: 85px; border-radius: 12px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 26px; width: 70px; border-radius: 6px;"></div>
+            </td>
+            <td>
+              <div class="skeleton-box" style="height: 26px; width: 80px; border-radius: 6px;"></div>
+            </td>
+            <td style="text-align: center;">
+              <div class="skeleton-box" style="height: 28px; width: 90px; border-radius: 6px; margin: 0 auto;"></div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -296,7 +334,8 @@
     </div>
 
     <!-- Appointments Table View -->
-    <div class="table-responsive" *ngIf="!isDashboardLoading && filteredAppointments.length > 0 && appointmentViewMode === 'table'">
+    <div class="table-responsive"
+      *ngIf="!isDashboardLoading && filteredAppointments.length > 0 && appointmentViewMode === 'table'">
       <table class="dashboard-table">
         <thead>
           <tr>
@@ -315,14 +354,16 @@
             <td class="bold" data-label="Doctor">
               <a href="javascript:void(0)" (click)="openDoctorDetailsModal(app.doctorId)"
                 style="color: var(--text-primary); text-decoration: none;" title="Click to view doctor profile">
-                {{ app.doctorName }} <span style="color: var(--accent-cyan); margin-left: 4px;">ℹ️</span>
+                {{ app.doctorName }} <span
+                  style="background: var(--brand-navy); color: #ffffff; border-radius: 4px; padding: 1px 5px; font-size: 0.7rem; font-weight: 900; margin-left: 4px; display: inline-block; vertical-align: middle; line-height: 1.1;">i</span>
               </a>
             </td>
             <td data-label="Patient">
               <ng-container *ngIf="role !== 'Patient'; else plainPatientName">
                 <a href="javascript:void(0)" (click)="openPatientDetailsModal(app.patientId)"
                   style="color: var(--text-primary); text-decoration: none;" title="Click to view patient details">
-                  {{ app.patientName }} <span style="color: var(--accent-cyan); margin-left: 4px;">ℹ️</span>
+                  {{ app.patientName }} <span
+                    style="background: var(--brand-navy); color: #ffffff; border-radius: 4px; padding: 1px 5px; font-size: 0.7rem; font-weight: 900; margin-left: 4px; display: inline-block; vertical-align: middle; line-height: 1.1;">i</span>
                 </a>
               </ng-container>
               <ng-template #plainPatientName>
@@ -373,56 +414,61 @@
             </td>
             <td data-label="Clinical Notes">
               <button class="btn btn-sm-outline" (click)="openPatientHistoryModal(app)"
-                style="border-color: var(--accent-cyan); color: var(--accent-cyan); padding: 4px 10px; font-size: 0.78rem; font-weight: 600; border-radius: 6px;">
-                📜 Notes
+                style="background: #ffffff; border: 1.5px solid var(--brand-navy); color: var(--brand-navy); padding: 5px 12px; font-size: 0.78rem; font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">
+                <lucide-icon name="file-text" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Notes
               </button>
             </td>
             <td data-label="Audit Trail">
               <button class="btn btn-sm-outline" (click)="openTimelineModal(app.appointmentId)"
-                style="border-color: #8b5cf6; color: #8b5cf6; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; border-radius: 6px;"
+                style="background: #ffffff; border: 1.5px solid var(--brand-navy); color: var(--brand-navy); padding: 5px 12px; font-size: 0.78rem; font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;"
                 title="View Audit Trail">
-                ⏱️ Timeline
+                <lucide-icon name="history" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Timeline
               </button>
             </td>
             <td data-label="Quick Actions" style="text-align: center;">
-              <button *ngIf="role === 'Patient' && (app.status === 'Completed' || app.status === 'Cancelled' || app.status === 'Rejected')"
-                class="btn btn-primary btn-sm" (click)="bookAgain(app)"
-                style="padding: 4px 10px; font-size: 0.75rem; font-weight: 600; background: var(--accent-cyan); border: none;">
-                🔄 Book Again
+              <!-- Completed Appointment: Book Followup -->
+              <button
+                *ngIf="role === 'Patient' && app.status === 'Completed'"
+                class="btn btn-primary btn-sm" (click)="bookFollowUp(app)"
+                style="padding: 5px 12px; font-size: 0.78rem; font-weight: 500; background: var(--brand-navy); border: none; border-radius: 8px; color: white; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                <lucide-icon name="calendar-sync" [size]="13" style="color: #ffffff;"></lucide-icon> Book Followup
               </button>
 
+              <!-- Cancelled or Rejected Appointment: Book Again -->
+              <button
+                *ngIf="role === 'Patient' && (app.status === 'Cancelled' || app.status === 'Rejected')"
+                class="btn btn-primary btn-sm" (click)="bookAgain(app)"
+                style="padding: 5px 12px; font-size: 0.78rem; font-weight: 500; background: var(--brand-navy); border: none; border-radius: 8px; color: white; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                <lucide-icon name="refresh-cw" [size]="13" style="color: #ffffff;"></lucide-icon> Book Again
+              </button>
+
+              <!-- Pending / Confirmed Appointment: Cancel -->
               <button
                 *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed' && app.status !== 'FollowUpProposed'"
-                class="btn btn-cancel" (click)="openCancelAppointmentConfirm(app.appointmentId)">
+                class="btn btn-cancel" (click)="openCancelAppointmentConfirm(app.appointmentId)"
+                style="background: #dc2626; color: #ffffff; border: none; padding: 5px 12px; border-radius: 8px; font-weight: 500; font-size: 0.78rem; cursor: pointer; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);">
                 Cancel
               </button>
 
-              <div *ngIf="app.status === 'RescheduleProposed'" style="display: flex; gap: 5px;">
+              <div *ngIf="app.status === 'RescheduleProposed'" style="display: flex; gap: 5px; justify-content: center;">
                 <button class="btn btn-confirm" (click)="acceptReschedule(app.appointmentId)"
-                  style="background: #10b981; border-color: #10b981; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  style="background: #059669; border: none; color: white; padding: 5px 10px; font-size: 0.75rem; font-weight: 500; border-radius: 6px; cursor: pointer;">
                   ✓ Accept
                 </button>
                 <button class="btn btn-cancel" (click)="rejectReschedule(app.appointmentId)"
-                  style="background: #ef4444; border-color: #ef4444; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  style="background: #dc2626; border: none; color: white; padding: 5px 10px; font-size: 0.75rem; font-weight: 500; border-radius: 6px; cursor: pointer;">
                   ✕ Reject
                 </button>
               </div>
 
-              <div *ngIf="app.status === 'FollowUpProposed'" style="display: flex; gap: 5px;">
+              <div *ngIf="app.status === 'FollowUpProposed'" style="display: flex; gap: 5px; justify-content: center;">
                 <button class="btn btn-confirm" (click)="acceptFollowUp(app.appointmentId)"
-                  style="background: #10b981; border-color: #10b981; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  style="background: #059669; border: none; color: white; padding: 5px 10px; font-size: 0.75rem; font-weight: 500; border-radius: 6px; cursor: pointer;">
                   ✓ Accept
                 </button>
                 <button class="btn btn-cancel" (click)="rejectFollowUp(app.appointmentId)"
-                  style="background: #ef4444; border-color: #ef4444; color: white; padding: 4px 8px; font-size: 0.75rem; font-weight: 600;">
+                  style="background: #dc2626; border: none; color: white; padding: 5px 10px; font-size: 0.75rem; font-weight: 500; border-radius: 6px; cursor: pointer;">
                   ✕ Decline
-                </button>
-              </div>
-
-              <div *ngIf="app.status === 'Completed' && role === 'Patient'" style="display: flex; gap: 5px;">
-                <button class="btn btn-primary btn-sm" (click)="bookFollowUp(app)"
-                  style="background: var(--brand-navy); border: none; color: white; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
-                  <lucide-icon name="refresh-cw" [size]="14"></lucide-icon> Book Follow-up
                 </button>
               </div>
             </td>
@@ -432,18 +478,23 @@
     </div>
 
     <!-- Appointments Card Grid View -->
-    <div class="appointment-card-grid" *ngIf="!isDashboardLoading && filteredAppointments.length > 0 && appointmentViewMode === 'card'" style="padding: 15px;">
-      <div class="appointment-card-item" *ngFor="let app of paginatedAppointments" [style.border-left]="'5px solid ' + getStatusColor(app.status)">
+    <div class="appointment-card-grid"
+      *ngIf="!isDashboardLoading && filteredAppointments.length > 0 && appointmentViewMode === 'card'"
+      style="padding: 15px;">
+      <div class="appointment-card-item" *ngFor="let app of paginatedAppointments"
+        [style.border-left]="'5px solid ' + getStatusColor(app.status)">
         <div class="appointment-card-header">
           <div>
-            <div style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
+            <div
+              style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">
               PATIENT: <span style="color: var(--accent-cyan);">{{ app.patientName }}</span>
             </div>
             <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary); margin-top: 3px;">
               Dr. {{ app.doctorName }}
             </div>
           </div>
-          <span class="badge" [style.background]="getStatusColor(app.status)" style="color: white; padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">
+          <span class="badge" [style.background]="getStatusColor(app.status)"
+            style="color: white; padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;">
             {{ getStatusTitle(app.status) }}
           </span>
         </div>
@@ -451,55 +502,73 @@
         <div class="appointment-card-body">
           <div style="display: flex; justify-content: space-between; font-size: 0.86rem;">
             <span style="color: var(--text-secondary); font-weight: 600;">Clinic / Branch:</span>
-            <span style="font-weight: 600; color: var(--accent-cyan);">{{ app.clinicName || 'HealSync Medical Branch' }}</span>
+            <span style="font-weight: 600; color: var(--accent-cyan);">{{ app.clinicName || 'HealSync Medical Branch'
+              }}</span>
           </div>
 
           <div style="display: flex; justify-content: space-between; font-size: 0.86rem; align-items: center;">
             <span style="color: var(--text-secondary); font-weight: 600;">Date & Time:</span>
             <span style="font-weight: 700; color: var(--text-primary);">
-              {{ app.appointmentDate | date:'EEE, MMM d, y' }} {{ app.doctorAssignedTime ? (app.doctorAssignedTime | date:'shortTime') : '' }}
+              {{ app.appointmentDate | date:'EEE, MMM d, y' }} {{ app.doctorAssignedTime ? (app.doctorAssignedTime |
+              date:'shortTime') : '' }}
             </span>
           </div>
 
-          <div *ngIf="app.queueNumber" style="display: flex; justify-content: space-between; font-size: 0.86rem; align-items: center;">
+          <div *ngIf="app.queueNumber"
+            style="display: flex; justify-content: space-between; font-size: 0.86rem; align-items: center;">
             <span style="color: var(--text-secondary); font-weight: 600;">Queue Position:</span>
-            <span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem; border: 1px solid var(--accent-cyan);">
+            <span
+              style="display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem; border: 1px solid var(--accent-cyan);">
               #{{ app.queueNumber }}
             </span>
           </div>
 
-          <div *ngIf="app.comment" style="font-size: 0.82rem; background: rgba(6, 182, 212, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--accent-cyan); margin-top: 4px;">
+          <div *ngIf="app.comment"
+            style="font-size: 0.82rem; background: rgba(6, 182, 212, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--accent-cyan); margin-top: 4px;">
             <strong>Clinical Note:</strong> {{ app.comment }}
           </div>
         </div>
 
         <div class="appointment-card-footer">
           <button class="btn btn-sm-outline btn-card-half" (click)="openPatientHistoryModal(app)"
-            style="border-color: var(--accent-cyan); color: var(--accent-cyan);">
-            📜 Notes
+            style="background: #ffffff; border: 1.5px solid var(--brand-navy); color: var(--brand-navy); font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+            <lucide-icon name="file-text" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Notes
           </button>
           <button class="btn btn-sm-outline btn-card-half" (click)="openTimelineModal(app.appointmentId)"
-            style="border-color: #8b5cf6; color: #8b5cf6;"
+            style="background: #ffffff; border: 1.5px solid var(--brand-navy); color: var(--brand-navy); font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;"
             title="View Audit Trail">
-            ⏱️ Timeline
+            <lucide-icon name="history" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Timeline
           </button>
 
-          <button *ngIf="role === 'Patient' && (app.status === 'Completed' || app.status === 'Cancelled' || app.status === 'Rejected')"
+          <!-- Completed Appointment: Book Followup -->
+          <button *ngIf="role === 'Patient' && app.status === 'Completed'"
+            class="btn btn-primary btn-card-full" (click)="bookFollowUp(app)"
+            style="background: var(--brand-navy); border: none; color: #ffffff; font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+            <lucide-icon name="calendar-sync" [size]="13" style="color: #ffffff;"></lucide-icon> Book Followup
+          </button>
+
+          <!-- Cancelled / Rejected Appointment: Book Again -->
+          <button *ngIf="role === 'Patient' && (app.status === 'Cancelled' || app.status === 'Rejected')"
             class="btn btn-primary btn-card-full" (click)="bookAgain(app)"
-            style="background: var(--accent-cyan); border: none;">
-            🔄 Book Again
+            style="background: var(--brand-navy); border: none; color: #ffffff; font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+            <lucide-icon name="refresh-cw" [size]="13" style="color: #ffffff;"></lucide-icon> Book Again
           </button>
 
-          <button *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed'"
-            class="btn btn-cancel btn-card-full" (click)="openCancelAppointmentConfirm(app.appointmentId)">
+          <!-- Pending / Confirmed Appointment: Cancel -->
+          <button
+            *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed'"
+            class="btn btn-cancel btn-card-full" (click)="openCancelAppointmentConfirm(app.appointmentId)"
+            style="background: #dc2626; color: #ffffff; border: none; border-radius: 8px; font-weight: 500; padding: 8px 12px; cursor: pointer; box-shadow: 0 2px 6px rgba(220,38,38,0.25);">
             Cancel Appointment
           </button>
 
-          <div *ngIf="app.status === 'RescheduleProposed'" style="display: flex; gap: 5px;">
-            <button class="btn btn-confirm btn-sm" (click)="acceptReschedule(app.appointmentId)" style="background: #10b981; color: white;">
+          <div *ngIf="app.status === 'RescheduleProposed'" style="display: flex; gap: 5px; width: 100%;">
+            <button class="btn btn-confirm btn-sm" (click)="acceptReschedule(app.appointmentId)"
+              style="background: #059669; color: white; flex: 1; border: none; border-radius: 6px; font-weight: 500;">
               ✓ Accept
             </button>
-            <button class="btn btn-cancel btn-sm" (click)="rejectReschedule(app.appointmentId)" style="background: #ef4444; color: white;">
+            <button class="btn btn-cancel btn-sm" (click)="rejectReschedule(app.appointmentId)"
+              style="background: #dc2626; color: white; flex: 1; border: none; border-radius: 6px; font-weight: 500;">
               ✕ Reject
             </button>
           </div>
@@ -546,8 +615,11 @@
         <h4 style="font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">
           {{ historyMode ? 'No Past Records Found' : '📅 Patient Appointments Today' }}
         </h4>
-        <p style="color: var(--text-secondary); max-width: 420px; margin: 0 auto 20px auto; font-size: 0.92rem; line-height: 1.5;">
-          {{ historyMode ? 'You have no previously completed or cancelled consultation records.' : 'No medical consultations currently scheduled for today, ' + todayDayName + ', ' + todayMonth + ' ' + todayDayNumber + '. Take rest or book a new check-up!' }}
+        <p
+          style="color: var(--text-secondary); max-width: 420px; margin: 0 auto 20px auto; font-size: 0.92rem; line-height: 1.5;">
+          {{ historyMode ? 'You have no previously completed or cancelled consultation records.' : 'No medical
+          consultations currently scheduled for today, ' + todayDayName + ', ' + todayMonth + ' ' + todayDayNumber + '.
+          Take rest or book a new check-up!' }}
         </p>
 
         <div *ngIf="!historyMode && role === 'Patient'">
@@ -698,9 +770,10 @@
               <td class="bold">
                 <div>
                   <a href="javascript:void(0)" (click)="openPatientDetailsModal(app.patientId)"
-                    style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;"
+                    style="color: var(--brand-navy); font-weight: 700; text-decoration: none;"
                     title="Click to view patient profile">
-                    {{ app.patientName }} ℹ️
+                    {{ app.patientName }} <span
+                      style="background: var(--brand-navy); color: #ffffff; border-radius: 4px; padding: 1px 5px; font-size: 0.7rem; font-weight: 900; margin-left: 4px; display: inline-block; vertical-align: middle; line-height: 1.1;">i</span>
                   </a>
                 </div>
                 <span *ngIf="app.status !== 'Confirmed'" class="badge"
@@ -800,8 +873,10 @@
         <h4 style="font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">
           📅 Patient Appointments Today
         </h4>
-        <p style="color: var(--text-secondary); max-width: 420px; margin: 0 auto 15px auto; font-size: 0.92rem; line-height: 1.5;">
-          No patient consultations scheduled for today, {{ todayDayName }}, {{ todayMonth }} {{ todayDayNumber }}. Your calendar is clear! Take rest or check upcoming practice slots.
+        <p
+          style="color: var(--text-secondary); max-width: 420px; margin: 0 auto 15px auto; font-size: 0.92rem; line-height: 1.5;">
+          No patient consultations scheduled for today, {{ todayDayName }}, {{ todayMonth }} {{ todayDayNumber }}. Your
+          calendar is clear! Take rest or check upcoming practice slots.
         </p>
       </div>
     </ng-container>
@@ -835,8 +910,8 @@
         <div
           style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px; width: 100%; font-size: 0.76rem;">
           <span
-            style="color: var(--accent-cyan); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-            <span>ℹ️</span> Click to view details
+            style="color: var(--brand-navy); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+            <lucide-icon name="info" [size]="14" style="color: var(--brand-navy);"></lucide-icon> Click to view details
           </span>
           <span style="color: var(--text-muted);">
             {{ clinic.clinicType }}
@@ -1172,7 +1247,8 @@
 
   <!-- DOCTOR DASHBOARD: PATIENT VISIT HISTORY TIMELINE MODAL -->
   <div class="modal-backdrop" *ngIf="showHistoryModal">
-    <div class="modal-container" style="max-width: 880px; width: 94%; min-height: 520px; display: flex; flex-direction: column;">
+    <div class="modal-container"
+      style="max-width: 880px; width: 94%; min-height: 520px; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h3>📜 Medical History: {{ selectedPatientName }}</h3>
         <button class="close-modal" (click)="closeHistoryModal()">&times;</button>
@@ -1334,22 +1410,29 @@
                     <div style="font-size: 0.82rem;">
                       <div *ngIf="h.reason" style="color: var(--text-secondary);">
                         <strong style="color: var(--text-muted); font-size: 0.75rem;">Visit:</strong>
-                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_reason']">
+                        <div class="text-expandable-box"
+                          [class.collapsed]="!expandedNoteRows[h.appointmentId + '_reason']">
                           {{ h.reason }}
                         </div>
-                        <button *ngIf="h.reason && h.reason.length > 80" type="button" class="btn-read-more" (click)="toggleNotesRow(h.appointmentId + '_reason')">
-                          <span>{{ expandedNoteRows[h.appointmentId + '_reason'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        <button *ngIf="h.reason && h.reason.length > 80" type="button" class="btn-read-more"
+                          (click)="toggleNotesRow(h.appointmentId + '_reason')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_reason'] ? 'Show Less ▲' : 'Read More ▼'
+                            }}</span>
                         </button>
                       </div>
 
                       <div *ngIf="h.status === 'Cancelled' && h.rejectionReason"
                         style="color: #ef4444; margin-top: 4px;">
                         <strong style="font-size: 0.75rem;">Rejection:</strong>
-                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_rejection']">
+                        <div class="text-expandable-box"
+                          [class.collapsed]="!expandedNoteRows[h.appointmentId + '_rejection']">
                           {{ h.rejectionReason }}
                         </div>
-                        <button *ngIf="h.rejectionReason && h.rejectionReason.length > 80" type="button" class="btn-read-more" style="color: #ef4444;" (click)="toggleNotesRow(h.appointmentId + '_rejection')">
-                          <span>{{ expandedNoteRows[h.appointmentId + '_rejection'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        <button *ngIf="h.rejectionReason && h.rejectionReason.length > 80" type="button"
+                          class="btn-read-more" style="color: #ef4444;"
+                          (click)="toggleNotesRow(h.appointmentId + '_rejection')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_rejection'] ? 'Show Less ▲' : 'Read More ▼'
+                            }}</span>
                         </button>
                       </div>
 
@@ -1369,28 +1452,36 @@
                   <td>
                     <div
                       style="font-size: 0.82rem; background-color: var(--bg-tertiary); padding: 10px 12px; border-radius: 8px; border: 1px dashed var(--border-color); min-height: 40px;">
-                      
+
                       <div *ngIf="h.report" style="color: var(--accent-cyan); margin-bottom: 6px;">
                         <strong style="font-size: 0.75rem; text-transform: uppercase;">Report / Prescription:</strong>
-                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_report']" style="color: var(--text-primary);">
+                        <div class="text-expandable-box"
+                          [class.collapsed]="!expandedNoteRows[h.appointmentId + '_report']"
+                          style="color: var(--text-primary);">
                           {{ h.report }}
                         </div>
-                        <button *ngIf="h.report && h.report.length > 90" type="button" class="btn-read-more" (click)="toggleNotesRow(h.appointmentId + '_report')">
-                          <span>{{ expandedNoteRows[h.appointmentId + '_report'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        <button *ngIf="h.report && h.report.length > 90" type="button" class="btn-read-more"
+                          (click)="toggleNotesRow(h.appointmentId + '_report')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_report'] ? 'Show Less ▲' : 'Read More ▼'
+                            }}</span>
                         </button>
                       </div>
 
                       <div *ngIf="h.comment" style="color: var(--text-secondary); font-style: italic;">
                         <strong style="font-size: 0.75rem; text-transform: uppercase;">Note:</strong>
-                        <div class="text-expandable-box" [class.collapsed]="!expandedNoteRows[h.appointmentId + '_comment']">
+                        <div class="text-expandable-box"
+                          [class.collapsed]="!expandedNoteRows[h.appointmentId + '_comment']">
                           {{ h.comment }}
                         </div>
-                        <button *ngIf="h.comment && h.comment.length > 90" type="button" class="btn-read-more" (click)="toggleNotesRow(h.appointmentId + '_comment')">
-                          <span>{{ expandedNoteRows[h.appointmentId + '_comment'] ? 'Show Less ▲' : 'Read More ▼' }}</span>
+                        <button *ngIf="h.comment && h.comment.length > 90" type="button" class="btn-read-more"
+                          (click)="toggleNotesRow(h.appointmentId + '_comment')">
+                          <span>{{ expandedNoteRows[h.appointmentId + '_comment'] ? 'Show Less ▲' : 'Read More ▼'
+                            }}</span>
                         </button>
                       </div>
 
-                      <span *ngIf="!h.comment && !h.report" style="color: var(--text-muted); font-style: italic;">No clinical records attached.</span>
+                      <span *ngIf="!h.comment && !h.report" style="color: var(--text-muted); font-style: italic;">No
+                        clinical records attached.</span>
                     </div>
                   </td>
                 </tr>

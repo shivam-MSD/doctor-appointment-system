@@ -14,5 +14,12 @@ namespace DoctorAppointmentSystem.Application.Services
 			int page,
 			int size);
 		Task<DoctorDto> GetDoctorDetailsForPatientAsync(Guid doctorId);
+
+		// Family Member Management
+		Task<IEnumerable<FamilyMemberDetailDto>> GetFamilyMembersAsync(Guid userId);
+		Task<FamilyMemberDetailDto> CreateDependentFamilyMemberAsync(Guid userId, CreateDependentDto dto);
+		Task<object> SendFamilyLinkOtpAsync(Guid userId, SendFamilyLinkOtpDto dto);
+		Task<FamilyMemberDetailDto> VerifyFamilyLinkOtpAsync(Guid userId, VerifyFamilyLinkOtpDto dto);
+		Task DeleteFamilyMemberAsync(Guid userId, Guid familyPatientId);
 	}
 }

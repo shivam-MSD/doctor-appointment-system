@@ -13,7 +13,7 @@
       <li>
         <a class="nav-link" routerLink="/patient/dashboard" routerLinkActive="active"
           [routerLinkActiveOptions]="{exact: true}" data-tooltip="Dashboard">
-          <lucide-icon name="layout-dashboard" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="layout-dashboard" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Dashboard</span>
           <span class="badge badge-pending" style="background: #ef4444; color: white;"
             *ngIf="patientPendingActionCount > 0">
@@ -24,38 +24,44 @@
       <li>
         <a class="nav-link" routerLink="/patient/book-appointment" routerLinkActive="active"
           data-tooltip="Book Appointment">
-          <lucide-icon name="calendar-check" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="calendar-check" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Book Appointment</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/patient/history" routerLinkActive="active"
           [routerLinkActiveOptions]="{exact: true}" data-tooltip="Appointment History">
-          <lucide-icon name="history" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="history" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Appointment History</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/patient/doctors" routerLinkActive="active" data-tooltip="Find Doctors">
-          <lucide-icon name="stethoscope" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="stethoscope" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Find Doctors</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/patient/audit-logs" routerLinkActive="active" data-tooltip="Activity History">
-          <lucide-icon name="history" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="scroll-text" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Activity History</span>
         </a>
       </li>
       <li>
+        <a class="nav-link" routerLink="/patient/family" routerLinkActive="active" data-tooltip="Family Members">
+          <lucide-icon name="users" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
+          <span class="label">Family Members</span>
+        </a>
+      </li>
+      <li>
         <a class="nav-link" routerLink="/patient/profile" routerLinkActive="active" data-tooltip="My Profile">
-          <lucide-icon name="user" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="user" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">My Profile</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/settings" routerLinkActive="active" data-tooltip="Settings">
-          <lucide-icon name="settings" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="settings" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Settings</span>
         </a>
       </li>
@@ -65,26 +71,26 @@
     <ng-container *ngIf="authService.getRole() === 'Doctor'">
       <li>
         <a class="nav-link" routerLink="/doctor/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
-          <lucide-icon name="layout-dashboard" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="layout-dashboard" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/appointments" routerLinkActive="active" data-tooltip="Appointments">
-          <lucide-icon name="calendar" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="calendar" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Appointments</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/completed-appointments" routerLinkActive="active"
           data-tooltip="Completed Appointments">
-          <lucide-icon name="check-circle-2" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="check-circle-2" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Completed Appointments</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/requests" routerLinkActive="active" data-tooltip="Appointment Requests">
-          <lucide-icon name="mail" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="mail" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Appointment Requests</span>
           <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingRequestsCount > 0">
             {{ pendingRequestsCount }}
@@ -93,37 +99,37 @@
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/patients" routerLinkActive="active" data-tooltip="My Patients">
-          <lucide-icon name="clipboard-list" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="clipboard-list" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">My Patients</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/clinics" routerLinkActive="active" data-tooltip="My Clinics">
-          <lucide-icon name="building-2" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="building-2" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">My Clinics</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/admins" routerLinkActive="active" data-tooltip="Clinic Admins">
-          <lucide-icon name="users" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="users" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Clinic Admins</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/audit-logs" routerLinkActive="active" data-tooltip="Audit Logs">
-          <lucide-icon name="scroll-text" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="scroll-text" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Audit Logs</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/doctor/profile" routerLinkActive="active" data-tooltip="My Profile">
-          <lucide-icon name="user" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="user" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">My Profile</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/settings" routerLinkActive="active" data-tooltip="Settings">
-          <lucide-icon name="settings" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="settings" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Settings</span>
         </a>
       </li>
@@ -133,38 +139,38 @@
     <ng-container *ngIf="authService.getRole() === 'Admin'">
       <li>
         <a class="nav-link" routerLink="/admin/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
-          <lucide-icon name="layout-dashboard" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="layout-dashboard" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/admin/appointments" routerLinkActive="active" data-tooltip="Appointments">
-          <lucide-icon name="calendar" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="calendar" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Appointments</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/admin/completed-appointments" routerLinkActive="active"
           data-tooltip="Completed Appointments">
-          <lucide-icon name="check-circle-2" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="check-circle-2" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Completed Appointments</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/admin/audit-logs" routerLinkActive="active" data-tooltip="Audit Logs">
-          <lucide-icon name="scroll-text" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="scroll-text" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Audit Logs</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/admin/profile" routerLinkActive="active" data-tooltip="My Profile">
-          <lucide-icon name="user" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="user" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">My Profile</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/settings" routerLinkActive="active" data-tooltip="Settings">
-          <lucide-icon name="settings" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="settings" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Settings</span>
         </a>
       </li>
@@ -174,13 +180,13 @@
     <ng-container *ngIf="authService.getRole() === 'SuperAdmin'">
       <li>
         <a class="nav-link" routerLink="/superadmin/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
-          <lucide-icon name="layout-dashboard" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="layout-dashboard" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Dashboard</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/superadmin/doctors" routerLinkActive="active" data-tooltip="Doctors">
-          <lucide-icon name="stethoscope" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="stethoscope" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Doctors</span>
           <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingDoctorsCount > 0">
             {{ pendingDoctorsCount }}
@@ -189,7 +195,7 @@
       </li>
       <li>
         <a class="nav-link" routerLink="/superadmin/clinics" routerLinkActive="active" data-tooltip="Clinics">
-          <lucide-icon name="building-2" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="building-2" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Clinics</span>
           <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingClinicsCount > 0">
             {{ pendingClinicsCount }}
@@ -198,7 +204,7 @@
       </li>
       <li>
         <a class="nav-link" routerLink="/superadmin/admins" routerLinkActive="active" data-tooltip="Admins">
-          <lucide-icon name="badge-check" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="shield" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Admins</span>
           <span class="badge badge-pending" style="background: #ef4444; color: white;" *ngIf="pendingAdminsCount > 0">
             {{ pendingAdminsCount }}
@@ -207,13 +213,13 @@
       </li>
       <li>
         <a class="nav-link" routerLink="/superadmin/audit-logs" routerLinkActive="active" data-tooltip="Audit Logs">
-          <lucide-icon name="scroll-text" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="scroll-text" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Audit Logs</span>
         </a>
       </li>
       <li>
         <a class="nav-link" routerLink="/settings" routerLinkActive="active" data-tooltip="Settings">
-          <lucide-icon name="settings" [size]="18" class="icon"></lucide-icon>
+          <lucide-icon name="settings" [size]="18" class="icon" style="color: var(--brand-navy);"></lucide-icon>
           <span class="label">Settings</span>
         </a>
       </li>

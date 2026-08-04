@@ -1,0 +1,307 @@
+<div class="family-hub-container fade-in" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+  
+  <!-- INDmoney Header Section -->
+  <div style="background: linear-gradient(135deg, #1C2B4F, #243B63); color: white; padding: 28px 32px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 12px 30px rgba(28, 43, 79, 0.25); position: relative; overflow: hidden;">
+    <div style="position: absolute; right: 28px; top: 50%; transform: translateY(-50%); opacity: 0.22; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
+      <div style="display: flex; align-items: center; gap: 18px;">
+        <div style="width: 64px; height: 64px; background: white; color: var(--brand-navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+          {{ getInitials(primaryUser?.name || primaryUser?.email || 'Admin') }}
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; color: white;">
+              {{ primaryUser?.name || primaryUser?.email || 'Account Owner' }}
+            </h2>
+            <span style="background: rgba(0, 200, 150, 0.25); color: #00c896; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; border: 1px solid rgba(0, 200, 150, 0.4);">
+              Primary Admin
+            </span>
+          </div>
+          <p style="margin: 4px 0 0 0; font-size: 0.88rem; color: rgba(255, 255, 255, 0.75);">
+            Manage family healthcare profiles, book appointments & access shared medical records.
+          </p>
+        </div>
+      </div>
+
+      <button class="btn" (click)="openAddModal()"
+        style="background: #00c896; color: white; border: none; padding: 12px 24px; border-radius: 14px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0, 200, 150, 0.4);">
+        <span>➕</span> + Add Family Member
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" style="text-align: center; padding: 60px 20px;">
+    <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+    <p style="color: var(--text-secondary); margin-top: 14px; font-weight: 600;">Loading family members hub...</p>
+  </div>
+
+  <!-- Family Members Cards Grid -->
+  <div *ngIf="!isLoading">
+    
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+        <span>👨‍👩‍👧‍👦</span> Family Members ({{ familyMembers.length + 1 }})
+      </h3>
+      <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">
+        All linked members can be selected during appointment booking
+      </span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin-bottom: 30px;">
+      
+      <!-- Primary Owner Card -->
+      <div class="glass-card" style="padding: 20px; border-radius: 18px; border: 2px solid var(--brand-navy); background: rgba(36, 59, 99, 0.03); position: relative;">
+        <div style="position: absolute; top: 14px; right: 14px; background: var(--brand-navy); color: white; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: uppercase;">
+          Myself
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+          <div style="width: 48px; height: 48px; background: var(--brand-navy); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;">
+            {{ getInitials(primaryUser?.name || 'Self') }}
+          </div>
+          <div>
+            <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: var(--text-primary);">
+              {{ primaryUser?.name || 'Primary Account Owner' }}
+            </h4>
+            <small style="color: var(--text-secondary); font-weight: 600;">Account Owner • Full Access</small>
+          </div>
+        </div>
+        <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary);">
+          <span>Role: Patient Admin</span>
+          <span style="color: #00c896; font-weight: 700;">✓ Active</span>
+        </div>
+      </div>
+
+      <!-- Family Member Cards (INDmoney Green/Cyan Border Style) -->
+      <div *ngFor="let member of familyMembers" class="glass-card" 
+        style="padding: 20px; border-radius: 18px; border: 1.5px solid #00c896; background: #ffffff; transition: transform 0.2s, box-shadow 0.2s; position: relative;">
+        
+        <div style="position: absolute; top: 14px; right: 14px;">
+          <button (click)="onDeleteMember(member)" title="Remove Family Member"
+            style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 4px; border-radius: 50%; font-size: 1.1rem;">
+            🗑️
+          </button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+          <div style="width: 48px; height: 48px; background: rgba(0, 200, 150, 0.12); color: #00c896; border: 1.5px solid #00c896; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;">
+            {{ getInitials(member.fullName) }}
+          </div>
+          <div>
+            <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: var(--text-primary);">
+              {{ member.fullName }}
+            </h4>
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+              <span style="font-size: 0.8rem; font-weight: 700; color: #00c896;">
+                {{ member.relationshipType }}
+              </span>
+              <span style="font-size: 0.75rem; color: var(--text-secondary);">
+                • {{ member.age }} Yrs ({{ member.gender }})
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem;">
+          <span style="color: var(--text-secondary);">
+            {{ member.isDependent ? '👶 Dependent (No Phone)' : '🔗 Linked Account' }}
+          </span>
+          <span [style.color]="member.isVerified ? '#00c896' : '#f59e0b'" style="font-weight: 700;">
+            {{ member.isVerified ? '✓ Verified' : '⏳ Pending' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Add New Member Quick Card CTA -->
+      <div (click)="openAddModal()" class="glass-card" 
+        style="padding: 20px; border-radius: 18px; border: 2px dashed rgba(0, 200, 150, 0.4); background: rgba(0, 200, 150, 0.02); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 130px; cursor: pointer; transition: all 0.2s;"
+        onmouseenter="this.style.background='rgba(0, 200, 150, 0.06)'" onmouseleave="this.style.background='rgba(0, 200, 150, 0.02)'">
+        <div style="width: 42px; height: 42px; background: rgba(0, 200, 150, 0.15); color: #00c896; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 8px;">
+          +
+        </div>
+        <span style="font-weight: 800; font-size: 0.9rem; color: var(--brand-navy);">+ Add Family Member</span>
+        <small style="color: var(--text-secondary); font-size: 0.75rem;">Children, Spouse, Parents</small>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD FAMILY MEMBER MODAL (INDmoney Pill Tabs Design) -->
+<div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()" style="max-width: 520px; border-radius: 20px;">
+    
+    <!-- Modal Header -->
+    <div style="background: var(--brand-navy); color: white; padding: 20px 24px; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <span>➕</span> Add Family Member
+      </h3>
+      <button class="close-modal" (click)="closeAddModal()">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body" style="padding: 24px;">
+      
+      <!-- INDmoney Pill Tab Selector -->
+      <div class="ind-tabs-container" style="margin-bottom: 20px;">
+        <button class="ind-tab-btn" [class.active]="addTab === 'dependent'" (click)="addTab = 'dependent'">
+          👶 Add Dependent (No Phone)
+        </button>
+        <button class="ind-tab-btn" [class.active]="addTab === 'link'" (click)="addTab = 'link'">
+          🔗 Link Adult (Email & WhatsApp OTP)
+        </button>
+      </div>
+
+      <!-- TAB 1: ADD DEPENDENT FORM -->
+      <form *ngIf="addTab === 'dependent'" (submit)="onAddDependent(); $event.preventDefault()">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+          For children, toddlers, or elderly parents who do not have a separate phone number or email address.
+        </p>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label class="form-label">First Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="dependentForm.firstName" name="depFirstName" required placeholder="e.g. Aarav">
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Last Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="dependentForm.lastName" name="depLastName" required placeholder="e.g. Patel">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 14px;">
+          <div class="form-group col-6">
+            <label class="form-label">Relationship *</label>
+            <select class="form-control" [(ngModel)]="dependentForm.relationshipType" name="depRel">
+              <option value="Child">Child / Toddler</option>
+              <option value="Parent">Father / Mother</option>
+              <option value="Spouse">Spouse</option>
+              <option value="Grandparent">Grandparent</option>
+              <option value="Other">Other Family Member</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Date of Birth *</label>
+            <input type="date" class="form-control" [(ngModel)]="dependentForm.dob" name="depDob" required>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 14px;">
+          <div class="form-group col-6">
+            <label class="form-label">Gender *</label>
+            <select class="form-control" [(ngModel)]="dependentForm.gender" name="depGender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group col-6">
+            <label class="form-label">Blood Group (Optional)</label>
+            <select class="form-control" [(ngModel)]="dependentForm.bloodGroup" name="depBlood">
+              <option value="">Unknown</option>
+              <option value="APositive">A+</option>
+              <option value="ANegative">A-</option>
+              <option value="BPositive">B+</option>
+              <option value="BNegative">B-</option>
+              <option value="OPositive">O+</option>
+              <option value="ONegative">O-</option>
+              <option value="ABPositive">AB+</option>
+              <option value="ABNegative">AB-</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Legal Consent Declaration Checkbox -->
+        <div style="margin-top: 16px; background: rgba(36, 59, 99, 0.04); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(36, 59, 99, 0.1);">
+          <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.82rem; cursor: pointer; color: var(--text-primary);">
+            <input type="checkbox" [(ngModel)]="dependentForm.consentDeclared" name="depConsent" style="margin-top: 3px;">
+            <span>I certify that I am the legal guardian/caretaker and have full authority to book consultations and access medical records for this dependent.</span>
+          </label>
+        </div>
+
+        <div class="modal-footer" style="padding-top: 20px; padding-bottom: 0;">
+          <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting" style="background: #00c896; border: none;">
+            {{ isSubmitting ? 'Saving Dependent...' : 'Save Dependent' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- TAB 2: LINK ADULT ACCOUNT FORM (FREE EMAIL & WHATSAPP OTP) -->
+      <form *ngIf="addTab === 'link'" (submit)="otpSent ? onVerifyOtp() : onSendOtp(); $event.preventDefault()">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+          Link an adult family member (Spouse, Brother, Parent) who has their own HealSync account using FREE Email or WhatsApp OTP verification.
+        </p>
+
+        <!-- Step 1: Contact Details & Channel -->
+        <div *ngIf="!otpSent">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Target Email ID or WhatsApp Mobile Number *</label>
+            <input type="text" class="form-control" [(ngModel)]="linkForm.targetContact" name="targetContact" required placeholder="e.g. spouse@gmail.com or 9876543210">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Relationship *</label>
+            <select class="form-control" [(ngModel)]="linkForm.relationshipType" name="linkRel">
+              <option value="Spouse">Spouse</option>
+              <option value="Parent">Parent</option>
+              <option value="Sibling">Sibling</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label class="form-label">OTP Delivery Channel *</label>
+            <select class="form-control" [(ngModel)]="linkForm.channel" name="linkChannel">
+              <option value="Both">✉️ Email + 💬 WhatsApp (Recommended)</option>
+              <option value="Email">✉️ Email Only (Free)</option>
+              <option value="WhatsApp">💬 WhatsApp Only (Free Tier)</option>
+            </select>
+          </div>
+
+          <div class="modal-footer" style="padding-top: 14px; padding-bottom: 0;">
+            <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting" style="background: var(--brand-navy); border: none;">
+              {{ isSubmitting ? 'Sending OTP...' : 'Send Free OTP' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: OTP Verification Box -->
+        <div *ngIf="otpSent">
+          <div style="background: rgba(0, 200, 150, 0.08); border-left: 4px solid #00c896; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 0.85rem; color: #065f46;">
+            <span>📩 6-digit OTP code sent to <strong>{{ linkForm.targetContact }}</strong> via {{ linkForm.channel }}.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Enter 6-Digit OTP Code *</label>
+            <input type="text" class="form-control" [(ngModel)]="linkForm.otpCode" name="otpCode" maxlength="6" required placeholder="e.g. 582910" style="font-size: 1.2rem; letter-spacing: 4px; text-align: center; font-weight: 800;">
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-bottom: 20px;">
+            <span style="color: var(--text-secondary);">Didn't receive OTP?</span>
+            <button type="button" class="btn btn-link" (click)="onSendOtp()" [disabled]="otpCooldown > 0" style="font-weight: 700; color: var(--brand-navy); padding: 0; border: none; background: transparent;">
+              {{ otpCooldown > 0 ? 'Resend in ' + otpCooldown + 's' : 'Resend OTP' }}
+            </button>
+          </div>
+
+          <div class="modal-footer" style="padding-top: 14px; padding-bottom: 0;">
+            <button type="button" class="btn btn-secondary" (click)="otpSent = false">Back</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting" style="background: #00c896; border: none;">
+              {{ isSubmitting ? 'Verifying...' : 'Verify OTP & Link Account' }}
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

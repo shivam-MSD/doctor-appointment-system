@@ -43,6 +43,10 @@ export class PatientService {
     return this.http.get<any>('/api/patients/doctors', { params });
   }
 
+  getTopCities(): Observable<any[]> {
+    return this.http.get<any[]>('/api/patients/cities');
+  }
+
   getDoctorProfileById(doctorId: string): Observable<any> {
     return this.http.get<any>(`/api/patients/doctors/${doctorId}`);
   }
@@ -53,5 +57,26 @@ export class PatientService {
 
   changePassword(currentPassword: string, newPassword: string): Observable<any> {
     return this.http.post<any>('/api/users/change-password', { currentPassword, newPassword });
+  }
+
+  // Family Member Management APIs
+  getFamilyMembers(): Observable<any[]> {
+    return this.http.get<any[]>('/api/patients/family');
+  }
+
+  addDependent(dto: any): Observable<any> {
+    return this.http.post<any>('/api/patients/family/dependent', dto);
+  }
+
+  sendFamilyOtp(dto: any): Observable<any> {
+    return this.http.post<any>('/api/patients/family/send-otp', dto);
+  }
+
+  verifyFamilyOtp(dto: any): Observable<any> {
+    return this.http.post<any>('/api/patients/family/verify-otp', dto);
+  }
+
+  deleteFamilyMember(familyPatientId: string): Observable<any> {
+    return this.http.delete<any>(`/api/patients/family/${familyPatientId}`);
   }
 }

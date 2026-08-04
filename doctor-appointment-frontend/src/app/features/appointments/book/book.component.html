@@ -277,16 +277,33 @@
             <span>✓</span> {{ successMessage }}
           </div>
 
-          <!-- Patient Select -->
-          <div class="form-group" style="margin-bottom: 20px;">
-            <label class="form-label" for="patient">Select Patient *</label>
-            <select class="form-control" id="patient" name="patientId" [(ngModel)]="patientId"
-              (ngModelChange)="onDateChange()" required style="border-radius: 10px; font-weight: 600;">
-              <option value="" disabled selected>-- Choose Patient Profile --</option>
-              <option *ngFor="let p of patients" [value]="p.patientId">
-                {{ p.firstName }} {{ p.lastName }} (Self)
-              </option>
-            </select>
+          <!-- Who is this appointment for? -->
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label class="form-label" style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 10px; display: block;">
+              👤 Who is this appointment for? *
+            </label>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div *ngFor="let p of patients" (click)="patientId = p.patientId; onDateChange()"
+                [style.background]="patientId === p.patientId ? 'rgba(36, 59, 99, 0.08)' : 'rgba(255,255,255,0.02)'"
+                [style.border-color]="patientId === p.patientId ? 'var(--brand-navy)' : 'var(--border-color)'"
+                style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.2rem;">{{ p.relationshipType === 'Child' ? '👶' : (p.relationshipType === 'Parent' ? '👴' : '👤') }}</span>
+                  <div>
+                    <div style="font-weight: 800; color: var(--text-primary); font-size: 0.9rem;">
+                      {{ p.fullName || p.firstName + ' ' + (p.lastName || '') }}
+                    </div>
+                    <small style="color: var(--text-secondary); font-size: 0.75rem;">
+                      {{ p.relationshipType || 'Self' }} • {{ p.gender || 'Patient' }} {{ p.age ? '• ' + p.age + ' Yrs' : '' }}
+                    </small>
+                  </div>
+                </div>
+                <div *ngIf="patientId === p.patientId" style="background: var(--brand-navy); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">
+                  ✓
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Simple Clean Booking Window Display (Above Section Title) -->

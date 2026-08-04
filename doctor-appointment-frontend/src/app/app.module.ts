@@ -45,6 +45,7 @@ import { ResetPasswordComponent } from './features/auth/reset-password/reset-pas
 import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
 
 import { AccountSecurityComponent } from './shared/components/account-security/account-security.component';
+import { PublicHeaderComponent } from './shared/components/public-header/public-header.component';
 
 import { 
   LucideAngularModule, 
@@ -93,6 +94,7 @@ import {
     BrowserModule,
     HttpClientModule,
     FormsModule,
+    PublicHeaderComponent,
     AppRoutingModule,
     LucideAngularModule.pick({
       Calendar, CalendarClock, CalendarCheck, CalendarSync,

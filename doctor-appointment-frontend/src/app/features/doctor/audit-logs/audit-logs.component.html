@@ -59,12 +59,11 @@
               <span class="patient-name">{{ log.patientName }}</span>
             </td>
             <td>
-              <span class="badge rounded-pill" [ngClass]="{
-                  'bg-success': log.action === 'Confirmed' || log.action === 'Completed',
-                  'bg-danger': log.action === 'Cancelled' || log.action === 'Rejected',
-                  'bg-primary': log.action === 'Created',
-                  'bg-warning text-dark': log.action === 'RescheduleProposed',
-                  'bg-secondary': log.action === 'Skipped'
+              <span class="badge" [ngClass]="{
+                  'badge-confirmed': log.action === 'Confirmed' || log.action === 'Completed',
+                  'badge-cancelled': log.action === 'Cancelled' || log.action === 'Rejected',
+                  'badge-pending': log.action === 'Created' || log.action === 'RescheduleProposed',
+                  'badge-secondary': log.action === 'Skipped'
                 }">
                 {{ log.action }}
               </span>

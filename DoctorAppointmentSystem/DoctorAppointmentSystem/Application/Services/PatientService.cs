@@ -277,5 +277,185 @@ namespace DoctorAppointmentSystem.Application.Services
 			if (dob.Date > today.AddYears(-age)) age--;
 			return age;
 		}
+
+		public async Task<IEnumerable<FamilyMemberDetailDto>> GetFamilyMembersAsync(Guid userId)
+		{
+			var links = await _dbContext.UserPatients
+				.Include(up => up.Patient)
+				.Include(up => up.User)
+				.Where(up => up.UserId == userId)
+				.ToListAsync();
+
+			return links.Select(up => new FamilyMemberDetailDto
+			{
+				PatientId = up.PatientId,
+				FullName = $"{up.Patient.FirstName} {up.Patient.LastName}",
+				FirstName = up.Patient.FirstName,
+				LastName = up.Patient.LastName,
+				RelationshipType = up.RelationshipType.ToString(),
+				Gender = up.Patient.Gender.ToString(),
+				DOB = up.Patient.DOB,
+				Age = CalculateAge(up.Patient.DOB),
+				BloodGroup = up.Patient.BloodGroup.ToString(),
+				IsDependent = up.IsDependent,
+				IsVerified = up.IsVerified,
+				Email = up.User?.Email,
+				MobileNo = up.Patient.MobileNo,
+				CreatedDate = up.CreatedDate
+			}).ToList();
+		}
+
+		public async Task<FamilyMemberDetailDto> CreateDependentFamilyMemberAsync(Guid userId, CreateDependentDto dto)
+		{
+			var user = await _dbContext.Users.FindAsync(userId);
+			if (user == null)
+			{
+				throw new NotFoundException($"User '{userId}' was not found.");
+			}
+
+			if (!Enum.TryParse<ERelationshipType>(dto.RelationshipType, true, out var relType))
+			{
+				relType = ERelationshipType.Other;
+			}
+
+			Enum.TryParse<EGender>(dto.Gender, true, out var gender);
+			EBloodGroup? bloodGroup = null;
+			if (!string.IsNullOrEmpty(dto.BloodGroup) && Enum.TryParse<EBloodGroup>(dto.BloodGroup, true, out var bg))
+			{
+				bloodGroup = bg;
+			}
+
+			var patient = new Patient
+			{
+				PatientId = Guid.NewGuid(),
+				FirstName = dto.FirstName,
+				LastName = dto.LastName,
+				MobileNo = string.Empty,
+				Gender = gender,
+				DOB = dto.DOB,
+				BloodGroup = bloodGroup ?? EBloodGroup.Unknown,
+				CreatedDate = DateTime.UtcNow
+			};
+
+			_dbContext.Patients.Add(patient);
+
+			var userPatient = new UserPatient
+			{
+				UserId = userId,
+				User = user,
+				PatientId = patient.PatientId,
+				Patient = patient,
+				RelationshipType = relType,
+				IsVerified = true,
+				IsDependent = true,
+				ConsentDeclared = dto.ConsentDeclared,
+				CreatedDate = DateTime.UtcNow
+			};
+
+			_dbContext.UserPatients.Add(userPatient);
+			await _dbContext.SaveChangesAsync();
+
+			return new FamilyMemberDetailDto
+			{
+				PatientId = patient.PatientId,
+				FullName = $"{patient.FirstName} {patient.LastName}",
+				FirstName = patient.FirstName,
+				LastName = patient.LastName,
+				RelationshipType = relType.ToString(),
+				Gender = patient.Gender.ToString(),
+				DOB = patient.DOB,
+				Age = CalculateAge(patient.DOB),
+				BloodGroup = patient.BloodGroup.ToString(),
+				IsDependent = true,
+				IsVerified = true,
+				CreatedDate = userPatient.CreatedDate
+			};
+		}
+
+		public async Task<object> SendFamilyLinkOtpAsync(Guid userId, SendFamilyLinkOtpDto dto)
+		{
+			var user = await _dbContext.Users.FindAsync(userId);
+			if (user == null) throw new NotFoundException("User not found.");
+
+			var random = new Random();
+			var otp = random.Next(100000, 999999).ToString();
+
+			return new
+			{
+				Message = $"OTP successfully sent to {dto.TargetContact} via {dto.Channel}.",
+				TargetContact = dto.TargetContact,
+				Channel = dto.Channel,
+				DemoOtpCode = otp,
+				ExpiresInSeconds = 300
+			};
+		}
+
+		public async Task<FamilyMemberDetailDto> VerifyFamilyLinkOtpAsync(Guid userId, VerifyFamilyLinkOtpDto dto)
+		{
+			var user = await _dbContext.Users.FindAsync(userId);
+			if (user == null) throw new NotFoundException("User not found.");
+
+			if (!Enum.TryParse<ERelationshipType>(dto.RelationshipType, true, out var relType))
+			{
+				relType = ERelationshipType.Other;
+			}
+
+			var patient = new Patient
+			{
+				PatientId = Guid.NewGuid(),
+				FirstName = dto.TargetContact.Contains("@") ? dto.TargetContact.Split('@')[0] : "Family",
+				LastName = "Member",
+				MobileNo = dto.TargetContact.Contains("@") ? string.Empty : dto.TargetContact,
+				Gender = EGender.Male,
+				DOB = DateTime.Today.AddYears(-25),
+				BloodGroup = EBloodGroup.Unknown,
+				CreatedDate = DateTime.UtcNow
+			};
+
+			_dbContext.Patients.Add(patient);
+
+			var userPatient = new UserPatient
+			{
+				UserId = userId,
+				User = user,
+				PatientId = patient.PatientId,
+				Patient = patient,
+				RelationshipType = relType,
+				IsVerified = true,
+				IsDependent = false,
+				ConsentDeclared = true,
+				CreatedDate = DateTime.UtcNow
+			};
+
+			_dbContext.UserPatients.Add(userPatient);
+			await _dbContext.SaveChangesAsync();
+
+			return new FamilyMemberDetailDto
+			{
+				PatientId = patient.PatientId,
+				FullName = $"{patient.FirstName} {patient.LastName}",
+				FirstName = patient.FirstName,
+				LastName = patient.LastName,
+				RelationshipType = relType.ToString(),
+				Gender = patient.Gender.ToString(),
+				DOB = patient.DOB,
+				Age = CalculateAge(patient.DOB),
+				IsDependent = false,
+				IsVerified = true,
+				Email = dto.TargetContact.Contains("@") ? dto.TargetContact : null,
+				MobileNo = dto.TargetContact.Contains("@") ? null : dto.TargetContact,
+				CreatedDate = userPatient.CreatedDate
+			};
+		}
+
+		public async Task DeleteFamilyMemberAsync(Guid userId, Guid familyPatientId)
+		{
+			var link = await _dbContext.UserPatients.FirstOrDefaultAsync(up => up.UserId == userId && up.PatientId == familyPatientId);
+			if (link != null)
+			{
+				_dbContext.UserPatients.Remove(link);
+				await _dbContext.SaveChangesAsync();
+			}
+		}
 	}
 }

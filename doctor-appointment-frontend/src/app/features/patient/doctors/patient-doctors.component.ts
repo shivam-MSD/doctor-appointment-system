@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { PatientService } from '../../../core/services/patient.service';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 
@@ -35,13 +36,60 @@ export class PatientDoctorsComponent implements OnInit, OnDestroy {
   // Tracks which doctor card is expanded for biography
   expandedDoctorIds: { [id: string]: boolean } = {};
 
+  showAuthModal = false;
+  pendingBookingUrl = '';
+
   constructor(
     private patientService: PatientService,
     private appointmentService: AppointmentService,
     private notificationService: NotificationService,
     private sanitizer: DomSanitizer,
+    public authService: AuthService,
     private router: Router
   ) { }
+
+  onBookClick(doctorId: string, clinicId?: string): void {
+    const bookingPath = `/patient/book-appointment`;
+    const queryParams: any = { doctorId };
+    if (clinicId) queryParams.clinicId = clinicId;
+
+    if (this.authService.isLoggedIn()) {
+      this.closeDoctorModal();
+      this.closeBookingModal();
+      this.router.navigate([bookingPath], { queryParams });
+    } else {
+      // Save pending URL for seamless return after login
+      const url = this.router.createUrlTree([bookingPath], { queryParams }).toString();
+      this.pendingBookingUrl = url;
+      this.showAuthModal = true;
+    }
+  }
+
+  redirectToLogin(): void {
+    this.showAuthModal = false;
+    this.router.navigate(['/login'], { queryParams: { returnUrl: this.pendingBookingUrl } });
+  }
+
+  redirectToRegister(): void {
+    this.showAuthModal = false;
+    this.router.navigate(['/register'], { queryParams: { returnUrl: this.pendingBookingUrl } });
+  }
+
+  closeAuthModal(): void {
+    this.showAuthModal = false;
+  }
+
+  onCityChange(city: string): void {
+    this.cityFilter = city;
+    this.page = 1;
+    this.loadDoctors();
+  }
+
+  onSearchChange(query: string): void {
+    this.searchQuery = query;
+    this.page = 1;
+    this.loadDoctors();
+  }
 
   toggleExpand(doctorId: string): void {
     this.expandedDoctorIds[doctorId] = !this.expandedDoctorIds[doctorId];

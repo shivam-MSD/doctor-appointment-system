@@ -1,6 +1,6 @@
-<header class="navbar" style="background: var(--deep-navy); border-bottom: 1px solid rgba(255,255,255,0.08);">
+<header class="navbar" style="background: var(--bg-card); border-bottom: 1px solid var(--border-color); backdrop-filter: blur(12px);">
   <!-- Mobile Hamburger Menu Button -->
-  <button *ngIf="!isAuthPage() && (authService.currentUser$ | async)" class="mobile-menu-toggle" (click)="toggleMobileMenu.emit()" style="margin-right: 12px; border: none; background: transparent; cursor: pointer; color: #ffffff;">
+  <button *ngIf="!isAuthPage() && (authService.currentUser$ | async)" class="mobile-menu-toggle" (click)="toggleMobileMenu.emit()" style="margin-right: 12px; border: none; background: transparent; cursor: pointer; color: var(--text-primary);">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="3" y1="12" x2="21" y2="12"></line>
       <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -8,22 +8,22 @@
     </svg>
   </button>
 
-  <div class="brand">
-    <div class="logo" style="background: #ffffff; color: var(--brand-navy); font-weight: 900; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">✙</div>
-    <div class="title" style="color: #ffffff; font-weight: 800; font-size: 1.25rem; letter-spacing: -0.3px;">HealSync</div>
+  <div class="brand" style="display: flex; align-items: center; gap: 10px;">
+    <img src="assets/healsync-logo-navy.svg" alt="HealSync Logo" style="width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);" />
+    <div class="title" style="color: var(--text-primary); font-weight: 800; font-size: 1.3rem; letter-spacing: -0.3px;">HealSync</div>
   </div>
 
   <div class="actions">
     <!-- Live Date & Time Clock -->
-    <div class="header-clock hide-on-mobile" *ngIf="authService.currentUser$ | async" style="color: #ffffff; opacity: 0.95;">
-      <span class="clock-date" style="color: #ffffff; font-weight: 600;">{{ currentDateTime | date:'EEEE, MMM d, y' }}</span>
-      <span class="clock-separator" style="color: rgba(255,255,255,0.6); margin: 0 6px;">•</span>
-      <span class="clock-time" style="color: #ffffff; font-weight: 700;">{{ currentDateTime | date:'h:mm:ss a' }}</span>
+    <div class="header-clock hide-on-mobile" *ngIf="authService.currentUser$ | async" style="color: var(--text-primary); background: rgba(36, 59, 99, 0.06); border: 1px solid rgba(36, 59, 99, 0.15); border-radius: 20px; padding: 6px 14px;">
+      <span class="clock-date" style="color: var(--text-primary); font-weight: 600;">{{ currentDateTime | date:'EEEE, MMM d, y' }}</span>
+      <span class="clock-separator" style="color: var(--brand-navy); margin: 0 6px;">•</span>
+      <span class="clock-time" style="color: var(--brand-navy); font-weight: 700;">{{ currentDateTime | date:'h:mm:ss a' }}</span>
     </div>
 
     <!-- Theme Toggle Switcher -->
     <button class="icon-btn" (click)="toggleTheme()" title="Toggle Light/Dark Theme">
-      <lucide-icon [name]="themeService.getCurrentTheme() === 'dark' ? 'sun' : 'moon'" [size]="18" style="color: #ffffff;"></lucide-icon>
+      <lucide-icon [name]="themeService.getCurrentTheme() === 'dark' ? 'sun' : 'moon'" [size]="18" style="color: var(--brand-navy);"></lucide-icon>
     </button>
 
     <!-- User Information & Session Controls -->
@@ -31,8 +31,8 @@
       <!-- Notification Bell -->
       <div class="notification-container" style="position: relative; margin-right: 8px;">
         <button class="icon-btn" (click)="toggleNotificationsPanel()" title="Notifications" style="position: relative;">
-          <lucide-icon name="bell" [size]="18" style="color: #ffffff;"></lucide-icon>
-          <span class="badge" *ngIf="getUnreadCount() > 0" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; border: 1.5px solid var(--deep-navy);">
+          <lucide-icon name="bell" [size]="18" style="color: var(--brand-navy);"></lucide-icon>
+          <span class="badge" *ngIf="getUnreadCount() > 0" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; border: 1.5px solid var(--bg-card);">
             {{ getUnreadCount() }}
           </span>
         </button>
@@ -57,11 +57,11 @@
 
       <!-- Role Badge Indicator & Profile Avatar -->
       <div class="profile-container" style="position: relative; display: flex; align-items: center; gap: 10px;">
-        <span class="role-badge-header hide-on-mobile" style="background: rgba(255, 255, 255, 0.15); color: #ffffff; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(255, 255, 255, 0.25); letter-spacing: 0.5px;">
+        <span class="role-badge-header hide-on-mobile" style="background: rgba(36, 59, 99, 0.1); color: var(--brand-navy); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(36, 59, 99, 0.2); letter-spacing: 0.5px;">
           {{ user.role | uppercase }}
         </span>
         <button class="profile-avatar-btn" (click)="toggleProfilePanel()" title="Profile Menu">
-          <div class="avatar-circle" style="background: #ffffff; color: var(--brand-navy); border: 1.5px solid rgba(255,255,255,0.6); font-weight: 800;">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
+          <div class="avatar-circle" style="background: var(--brand-navy); color: #ffffff; border: 1.5px solid rgba(36, 59, 99, 0.4); font-weight: 800;">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
         </button>
 
         <!-- Dropdown panel -->

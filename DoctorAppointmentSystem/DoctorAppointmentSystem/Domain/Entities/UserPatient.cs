@@ -46,6 +46,33 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		public bool IsVerified { get; set; }
 
 		/// <summary>
+		/// Gets or sets a value indicating whether the family member is a dependent without phone/email.
+		/// </summary>
+		public bool IsDependent { get; set; } = true;
+
+		/// <summary>
+		/// Gets or sets the 6-digit OTP code for family link verification.
+		/// </summary>
+		[MaxLength(10)]
+		public string? VerificationOtp { get; set; }
+
+		/// <summary>
+		/// Gets or sets the UTC expiry timestamp for the OTP code.
+		/// </summary>
+		public DateTime? OtpExpiryTime { get; set; }
+
+		/// <summary>
+		/// Gets or sets the OTP delivery channel string ("Email", "WhatsApp", "Both").
+		/// </summary>
+		[MaxLength(20)]
+		public string? OtpChannel { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether legal guardian consent declaration was accepted.
+		/// </summary>
+		public bool ConsentDeclared { get; set; } = true;
+
+		/// <summary>
 		/// Gets or sets the UTC creation timestamp when the relationship mapping was created.
 		/// </summary>
 		[Required]

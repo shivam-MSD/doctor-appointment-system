@@ -1,0 +1,105 @@
+# 👨‍👩‍👧‍👦 Implementation Plan: Family Member Management System
+
+Implement a comprehensive, production-grade **Family Member Appointment & Medical Record System** matching Practo / Apollo 24/7. Supports zero-friction dependent management (for kids & elderly without phones) and dual-channel (Email + WhatsApp) OTP verification for linking adult family accounts.
+
+---
+
+## 🎯 Architectural Overview & Dual-Flow Design
+
+```
+                               ┌──────────────────────────────────────────────┐
+                               │           ADD FAMILY MEMBER FLOW             │
+                               └──────────────────────┬───────────────────────┘
+                                                      │
+                       ┌──────────────────────────────┴──────────────────────────────┐
+                       ▼                                                             ▼
+        ┌─────────────────────────────┐                               ┌─────────────────────────────┐
+        │  OPTION A: ADD DEPENDENT    │                               │ OPTION B: LINK ADULT MEMBER │
+        │  (Children, Elderly Parents)│                               │ (Spouse, Adult Siblings)    │
+        └──────────────┬──────────────┘                               └──────────────┬──────────────┘
+                       │                                                             │
+         • NO Phone/Email needed                                        • Enters Email ID or Phone Number
+         • Instant Save with Legal Guardian                            • System sends 6-digit OTP via
+           Consent Declaration                                            FREE Email + FREE WhatsApp API
+         • Managed 100% under Primary Owner                            • Verification completes link request
+```
+
+---
+
+## 🛠️ Proposed Changes
+
+### 1. Domain & Database Layer (.NET Core)
+
+#### [MODIFY] [UserPatient.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/UserPatient.cs)
+- Add tracking fields for dependent status, OTP verification codes, and channel used:
+  - `bool IsDependent { get; set; } = true;`
+  - `string? VerificationOtp { get; set; }`
+  - `DateTime? OtpExpiryTime { get; set; }`
+  - `string? OtpChannel { get; set; }` // "Email", "WhatsApp", or "Both"
+  - `bool ConsentDeclared { get; set; } = true;`
+
+#### [NEW] [IEmailService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/IEmailService.cs) & [EmailService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Infrastructure/Services/EmailService.cs)
+- Implement FREE SMTP / SendGrid / Brevo transactional email sender for 6-digit Family Link OTP emails.
+
+#### [NEW] [IWhatsAppService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/IWhatsAppService.cs) & [WhatsAppService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Infrastructure/Services/WhatsAppService.cs)
+- Implement Meta WhatsApp Cloud API client (using 1,000 free monthly tier) to send OTP messages to WhatsApp numbers.
+
+---
+
+### 2. Application Layer & DTOs (.NET Core)
+
+#### [NEW] [FamilyMemberDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/FamilyMemberDTOs.cs)
+- `CreateDependentDto`: `{ FullName, Relation, DOB, Gender, BloodGroup, ConsentDeclared }`
+- `SendFamilyLinkOtpDto`: `{ TargetEmailOrPhone, Channel }` // "Email", "WhatsApp", "Both"
+- `VerifyFamilyLinkOtpDto`: `{ TargetEmailOrPhone, OtpCode, Relation }`
+- `FamilyMemberDto`: Full response object carrying family patient details and verification status.
+
+#### [MODIFY] [PatientsController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/PatientsController.cs)
+- `POST /api/patients/family/dependent`: Add dependent family member instantly without OTP.
+- `POST /api/patients/family/send-otp`: Dispatch OTP to target Email and/or WhatsApp.
+- `POST /api/patients/family/verify-otp`: Verify OTP and link existing adult member.
+- `GET /api/patients/family`: Retrieve list of all family members associated with primary account.
+- `DELETE /api/patients/family/{id}`: Remove family member from account.
+
+---
+
+### 3. Frontend Angular Layer (`doctor-appointment-frontend`)
+
+#### [NEW] [family-members.component.ts/html/css](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/family-members/family-members.component.ts)
+- Build a dedicated **Family Members Portal** under Patient navigation:
+  - List of family cards with relation badges (`Son`, `Daughter`, `Father`, `Mother`, `Spouse`).
+  - **"➕ Add Family Member" Modal** with INDmoney pill tab switcher:
+    - **Tab 1: Add Dependent** (instant form + legal guardian checkbox).
+    - **Tab 2: Link Adult Account** (Email/WhatsApp selector + OTP input box with resend timer).
+
+#### [MODIFY] [book.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/appointments/book/book.component.html)
+- Add **"Who is this appointment for?"** patient selector step:
+  - `🔘 Myself (Shivam Patel)`
+  - `🔘 Aarav Patel (Son, 5 Yrs)`
+  - `🔘 Rameshbhai Patel (Father, 72 Yrs)`
+  - `➕ Add New Family Member`
+- Pass `PatientId` of selected family member to booking payload.
+
+#### [MODIFY] [dashboard.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/dashboard/dashboard.component.html) & [doctor-appointments.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/doctor/appointments/doctor-appointments.component.html)
+- Display family member relationship tag on doctor queue cards (`"Patient: Aarav Patel (Son of Shivam Patel)"`).
+- Filter patient history and prescriptions by selected family member.
+
+---
+
+## 🧪 Verification Plan
+
+### Automated Tests
+- Run `.NET Core` controller unit tests for dependent creation and OTP generation.
+- Execute Angular build verification: `npx ng build --configuration=development`.
+
+### Manual Verification
+1. **Dependent Flow**:
+   - Add a dependent child ("Aarav Patel", 4 Yrs) without entering phone or email.
+   - Verify child appears instantly under family members.
+2. **Linked Adult Flow**:
+   - Request family link for adult member via Email & WhatsApp.
+   - Verify 6-digit OTP code dispatched via Email and Meta WhatsApp API.
+   - Enter OTP and confirm account link.
+3. **Appointment Booking Flow**:
+   - Book appointment selecting "Aarav Patel (Son)".
+   - Verify doctor dashboard shows "Aarav Patel (Son)" on live queue.

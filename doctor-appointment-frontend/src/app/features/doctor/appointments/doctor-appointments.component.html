@@ -278,9 +278,9 @@
                 <td data-label="Patient" [style.border-left]="'4px solid ' + getStatusColor(app.status)"
                   style="padding-left: 12px;">
                   <a href="javascript:void(0)" (click)="openPatientDetailsModal(app)"
-                    style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;"
+                    style="color: var(--brand-navy); font-weight: 700; text-decoration: none;"
                     title="Click to view patient profile">
-                    {{ app.patientName }} ℹ️
+                    {{ app.patientName }} <span style="background: var(--brand-navy); color: #ffffff; border-radius: 4px; padding: 1px 5px; font-size: 0.7rem; font-weight: 900; margin-left: 4px; display: inline-block; vertical-align: middle; line-height: 1.1;">i</span>
                   </a>
                 </td>
                 <td data-label="Clinic / Location" style="color: var(--accent-cyan); font-weight: 600;">{{
@@ -322,10 +322,10 @@
                 </td>
                 <td
                   style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; min-width: 200px;">
-                  <button class="btn btn-sm-outline" (click)="openTimelineModal(app.appointmentId)"
-                    style="border: 1px solid #8b5cf6; color: #8b5cf6; padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.05); cursor: pointer; width: 100%; font-weight: 600;"
+                  <button class="btn btn-timeline" (click)="openTimelineModal(app.appointmentId)"
+                    style="padding: 6px 10px; font-size: 0.75rem; width: 100%; font-weight: 500;"
                     title="View Audit Trail">
-                    ⏱️ Timeline
+                    <lucide-icon name="history" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Timeline
                   </button>
 
                   <!-- Assign Time / Edit Time button for Pending/Confirmed -->

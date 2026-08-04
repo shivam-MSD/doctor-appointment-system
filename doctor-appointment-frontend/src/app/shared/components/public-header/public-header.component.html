@@ -1,0 +1,61 @@
+<div class="practo-top-header" style="background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.08); padding: 12px 24px; sticky; top: 0; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+  <div style="max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+    
+    <!-- Brand Logo -->
+    <a routerLink="/" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+      <img src="assets/healsync-logo-navy.svg" alt="HealSync Logo" style="width: 38px; height: 38px; border-radius: 10px; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);" />
+      <div>
+        <span style="font-size: 1.3rem; font-weight: 900; color: var(--brand-navy, #243B63); letter-spacing: -0.5px;">HealSync</span>
+        <span style="font-size: 0.65rem; color: #00c896; font-weight: 800; text-transform: uppercase; display: block; margin-top: -4px;">Health Directory</span>
+      </div>
+    </a>
+
+    <!-- Practo Dual-Input Search Bar: City Selector + Keyword Search -->
+    <div style="display: flex; align-items: center; background: rgba(0,0,0,0.03); border: 1.5px solid rgba(0,0,0,0.1); border-radius: 14px; padding: 4px 6px; flex: 1; max-width: 650px; min-width: 300px;">
+      
+      <!-- 📍 City Picker Dropdown -->
+      <div style="display: flex; align-items: center; gap: 6px; padding: 0 10px; border-right: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;">
+        <span style="font-size: 1.1rem; color: #00c896;">📍</span>
+        <select [(ngModel)]="selectedCity" (ngModelChange)="onCitySelect($event)"
+          style="border: none; background: transparent; font-weight: 700; font-size: 0.88rem; color: var(--text-primary); cursor: pointer; outline: none; padding-right: 4px;">
+          <option *ngFor="let c of cities" [value]="c.Code || c.code">
+            {{ c.Name || c.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- 🔍 Search Box (Doctors, Clinics, Specializations) -->
+      <div style="display: flex; align-items: center; gap: 8px; flex: 1; padding: 0 10px;">
+        <span style="font-size: 1rem; color: var(--text-secondary);">🔍</span>
+        <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()"
+          placeholder="Search doctors, specializations, clinics..."
+          style="border: none; background: transparent; width: 100%; font-size: 0.88rem; outline: none; font-weight: 600; color: var(--text-primary);">
+      </div>
+
+    </div>
+
+    <!-- Auth Actions CTA -->
+    <div style="display: flex; align-items: center; gap: 12px;">
+      
+      <ng-container *ngIf="!isLoggedIn">
+        <a routerLink="/login" class="btn" style="background: transparent; color: var(--brand-navy); border: 1.5px solid var(--brand-navy); padding: 8px 18px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; text-decoration: none;">
+          Login
+        </a>
+        <a routerLink="/register" class="btn" style="background: #00c896; color: white; border: none; padding: 8px 18px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; text-decoration: none; box-shadow: 0 4px 12px rgba(0, 200, 150, 0.3);">
+          Register
+        </a>
+      </ng-container>
+
+      <ng-container *ngIf="isLoggedIn">
+        <a routerLink="/dashboard" class="btn" style="background: var(--brand-navy); color: white; padding: 8px 18px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; text-decoration: none;">
+          My Dashboard
+        </a>
+        <button (click)="onLogout()" class="btn" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;">
+          Logout
+        </button>
+      </ng-container>
+
+    </div>
+
+  </div>
+</div>

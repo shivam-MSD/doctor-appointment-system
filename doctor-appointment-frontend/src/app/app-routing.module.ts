@@ -38,6 +38,7 @@ const routes: Routes = [
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'account/security', component: AccountSecurityComponent },
+  { path: 'find-doctors', component: PatientDoctorsComponent },
 
   // Dedicated Portal Routes
   { path: 'patient/login', component: LoginComponent, data: { role: 'Patient' } },
@@ -58,6 +59,7 @@ const routes: Routes = [
 
       // Patient Routes
       { path: 'patient/dashboard', component: DashboardComponent, data: { expectedRole: 'Patient', loginRoute: '/login' } },
+      { path: 'patient/family', loadComponent: () => import('./features/family-members/family-members.component').then(m => m.FamilyMembersComponent), data: { expectedRole: 'Patient', loginRoute: '/login' } },
       { path: 'patient/history', component: DashboardComponent, data: { expectedRole: 'Patient', loginRoute: '/login', historyOnly: true } },
       { path: 'patient/book-appointment', component: BookComponent, data: { expectedRole: 'Patient', loginRoute: '/login' } },
       { path: 'patient/profile', component: ProfileComponent, data: { expectedRole: 'Patient', loginRoute: '/login' } },

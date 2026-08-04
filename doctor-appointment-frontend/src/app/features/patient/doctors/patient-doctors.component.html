@@ -1,3 +1,5 @@
+<app-public-header [selectedCity]="cityFilter" [searchQuery]="searchQuery" (cityChange)="onCityChange($any($event))" (searchChange)="onSearchChange($any($event))"></app-public-header>
+
 <div class="dashboard-wrapper">
   <!-- Greeting Banner -->
   <div class="glass-card welcome-card" style="border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9));">
@@ -5,7 +7,7 @@
       <h2 style="font-weight: 800; color: var(--text-primary);">🩺 Find a Medical Specialist</h2>
       <p style="color: var(--text-secondary);">Search and browse verified clinical doctors registered on HealSync.</p>
     </div>
-    <div class="role-badge" style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy); font-weight: 700;">Doctor Directory</div>
+    <div class="role-badge" style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy); font-weight: 700;">Public Doctor Directory</div>
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">
@@ -399,13 +401,13 @@
                   🔴 Not Available
                 </button>
 
-                <!-- Bookable: normal navigation link -->
-                <a *ngIf="isClinicBookable(clinic)" [routerLink]="['/patient/book-appointment']"
-                  [queryParams]="{ doctorId: selectedDoctorForModal.doctorId, clinicId: clinic.clinicId }"
-                  class="btn btn-primary" (click)="closeDoctorModal()"
-                  style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; height: auto; margin-top: 4px;">
+                <!-- Bookable: calls onBookClick (intercepts login if unauthenticated) -->
+                <button *ngIf="isClinicBookable(clinic)" type="button"
+                  (click)="onBookClick(selectedDoctorForModal.doctorId, clinic.clinicId)"
+                  class="btn btn-primary"
+                  style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; height: auto; margin-top: 4px; border: none; cursor: pointer;">
                   <span>📅</span> Book at this Branch
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -501,12 +503,12 @@
           </div>
 
           <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
-            <a *ngIf="isClinicBookable(clinic)" [routerLink]="['/patient/book-appointment']"
-              [queryParams]="{ doctorId: selectedDoctorForBooking.doctorId, clinicId: clinic.clinicId }"
-              class="btn btn-primary" (click)="closeBookingModal()"
-              style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; text-decoration: none;">
+            <button *ngIf="isClinicBookable(clinic)" type="button"
+              (click)="onBookClick(selectedDoctorForBooking.doctorId, clinic.clinicId)"
+              class="btn btn-primary"
+              style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;">
               Select & Proceed &rarr;
-            </a>
+            </button>
             <span *ngIf="!isClinicBookable(clinic)"
               style="font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 6px 12px;">
               Unavailable for Booking
@@ -518,5 +520,37 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" (click)="closeBookingModal()">Cancel</button>
     </div>
+  </div>
+
+<!-- AUTH INTERCEPT MODAL (PRACTO / APOLLO STYLE) -->
+<div class="modal-backdrop" *ngIf="showAuthModal" (click)="closeAuthModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()" style="max-width: 440px; border-radius: 20px; text-align: center; padding: 28px 24px;">
+    
+    <div style="width: 64px; height: 64px; background: rgba(0, 200, 150, 0.12); color: #00c896; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 16px auto;">
+      🔐
+    </div>
+
+    <h3 style="margin: 0 0 8px 0; font-weight: 800; color: var(--brand-navy); font-size: 1.25rem;">
+      Login to Complete Your Booking
+    </h3>
+
+    <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;">
+      You're just one step away! Please log in to your HealSync patient account to confirm your appointment reservation.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <button (click)="redirectToLogin()" class="btn" style="background: var(--brand-navy); color: white; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; width: 100%;">
+        🔑 Login & Continue
+      </button>
+
+      <button (click)="redirectToRegister()" class="btn" style="background: #00c896; color: white; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(0, 200, 150, 0.3);">
+        ✨ New to HealSync? Create Free Account
+      </button>
+
+      <button (click)="closeAuthModal()" class="btn" style="background: transparent; color: var(--text-secondary); padding: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-top: 4px;">
+        Cancel & Continue Browsing
+      </button>
+    </div>
+
   </div>
 </div>

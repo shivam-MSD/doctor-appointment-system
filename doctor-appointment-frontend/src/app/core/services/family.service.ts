@@ -1,21 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Patient } from '../models/patient.model';
 
 @Injectable({ providedIn: 'root' })
 export class FamilyService {
   constructor(private http: HttpClient) {}
 
-  addFamilyMember(memberDto: any): Observable<{ verificationId: string; message: string }> {
-    return this.http.post<{ verificationId: string; message: string }>('/api/family/add', memberDto);
+  getFamilyMembers(): Observable<any[]> {
+    return this.http.get<any[]>('/api/patients/family');
   }
 
-  verifyFamilyOtp(verificationId: string, otpCode: string): Observable<Patient> {
-    return this.http.post<Patient>('/api/family/verify', { verificationId, otpCode });
+  addDependent(dto: any): Observable<any> {
+    return this.http.post<any>('/api/patients/family/dependent', dto);
   }
 
-  getFamilyMembers(): Observable<Patient[]> {
-    return this.http.get<Patient[]>('/api/family');
+  sendFamilyOtp(dto: any): Observable<any> {
+    return this.http.post<any>('/api/patients/family/send-otp', dto);
+  }
+
+  verifyFamilyOtp(dto: any): Observable<any> {
+    return this.http.post<any>('/api/patients/family/verify-otp', dto);
+  }
+
+  deleteFamilyMember(id: string): Observable<any> {
+    return this.http.delete<any>(`/api/patients/family/${id}`);
   }
 }

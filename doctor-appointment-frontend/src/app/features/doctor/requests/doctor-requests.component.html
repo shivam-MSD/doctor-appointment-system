@@ -158,9 +158,9 @@
                 [style.border-left]="'4px solid ' + getStatusColor(request.status)">
                 <td class="bold">
                   <a href="javascript:void(0)" (click)="openPatientDetailsModal(request.patientId)"
-                    style="color: var(--accent-cyan); font-weight: 700; text-decoration: none;"
+                    style="color: var(--brand-navy); font-weight: 700; text-decoration: none;"
                     title="Click to view patient profile">
-                    {{ request.patientName }} ℹ️
+                    {{ request.patientName }} <span style="background: var(--brand-navy); color: #ffffff; border-radius: 4px; padding: 1px 5px; font-size: 0.7rem; font-weight: 900; margin-left: 4px; display: inline-block; vertical-align: middle; line-height: 1.1;">i</span>
                   </a>
                 </td>
                 <td style="color: var(--accent-cyan); font-weight: 600;">{{ request.clinicName || 'Direct' }}</td>
