@@ -33,11 +33,9 @@ namespace DoctorAppointmentSystem.Application.DTOs
 	public class RegisterDto
 	{
 		/// <summary>
-		/// Gets or sets the email address for the new account.
+		/// Gets or sets the email address for the new account (Optional if MobileNo is provided).
 		/// </summary>
-		[Required]
-		[EmailAddress]
-		public string Email { get; set; }
+		public string? Email { get; set; }
 
 		/// <summary>
 		/// Gets or sets the initial password string (minimum 6 characters).
@@ -66,17 +64,65 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		public string LastName { get; set; }
 
 		/// <summary>
-		/// Gets or sets the primary mobile contact number of the registering patient.
+		/// Gets or sets the primary mobile contact number for WhatsApp / SMS (Optional if Email is provided).
 		/// </summary>
-		[Required]
-		[Phone]
-		public string MobileNo { get; set; }
+		public string? MobileNo { get; set; }
 
 		/// <summary>
 		/// Gets or sets the target account role ("Patient").
 		/// </summary>
 		[Required]
 		public string Role { get; set; }
+
+		/// <summary>
+		/// Gets or sets the Email OTP code if email was verified during registration.
+		/// </summary>
+		public string? EmailOtpCode { get; set; }
+
+		/// <summary>
+		/// Gets or sets the WhatsApp OTP code if mobile was verified during registration.
+		/// </summary>
+		public string? WhatsAppOtpCode { get; set; }
+	}
+
+	/// <summary>
+	/// Request payload to request OTP dispatch via Email or WhatsApp.
+	/// </summary>
+	public class SendAuthOtpDto
+	{
+		[Required]
+		public string TargetIdentifier { get; set; } // Email ID or Mobile No
+
+		[Required]
+		public string Channel { get; set; } // "Email" or "WhatsApp"
+
+		public string Purpose { get; set; } = "Registration"; // "Registration", "Login", "ProfileUpdate"
+	}
+
+	/// <summary>
+	/// Request payload to verify an OTP sent via Email or WhatsApp.
+	/// </summary>
+	public class VerifyAuthOtpDto
+	{
+		[Required]
+		public string TargetIdentifier { get; set; }
+
+		[Required]
+		public string OtpCode { get; set; }
+
+		public string Purpose { get; set; } = "Registration";
+	}
+
+	/// <summary>
+	/// Request payload for passwordless login using WhatsApp OTP.
+	/// </summary>
+	public class WhatsAppLoginDto
+	{
+		[Required]
+		public string MobileNo { get; set; }
+
+		[Required]
+		public string OtpCode { get; set; }
 	}
 
 	/// <summary>
@@ -310,5 +356,32 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		/// Gets or sets a value indicating whether the user must change their temporary password immediately.
 		/// </summary>
 		public bool RequiresPasswordChange { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the account is active.
+		/// </summary>
+		public bool IsActive { get; set; } = true;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether Two-Factor Authentication OTP is required.
+		/// </summary>
+		public bool RequiresTwoFactor { get; set; }
+
+		/// <summary>
+		/// List of channels where 2FA OTP was dispatched ("Email", "WhatsApp").
+		/// </summary>
+		public string[]? TwoFactorChannels { get; set; }
+	}
+
+	/// <summary>
+	/// Payload for verifying a 2FA OTP code.
+	/// </summary>
+	public class VerifyTwoFactorDto
+	{
+		[Required]
+		public Guid UserId { get; set; }
+
+		[Required]
+		public string OtpCode { get; set; }
 	}
 }

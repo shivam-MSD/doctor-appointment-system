@@ -578,10 +578,18 @@ namespace DoctorAppointmentSystem.Application.Services
 			var today = DateTime.Today;
 			if (isHistory)
 			{
-				query = query.Where(app => app.AppointmentDate < today);
+				// History includes all past appointments OR any completed, cancelled, or rejected appointments (today/future)
+				// Excludes active upcoming appointments (Confirmed, Pending, RescheduleProposed) which belong on the Dashboard
+				query = query.Where(app => 
+					app.AppointmentDate < today || 
+					app.EAppointmentStatus == EAppointmentStatus.Completed || 
+					app.EAppointmentStatus == EAppointmentStatus.Cancelled || 
+					app.EAppointmentStatus == EAppointmentStatus.Rejected
+				);
 			}
 			else
 			{
+				// Active Dashboard: Only show appointments on or after today
 				query = query.Where(app => app.AppointmentDate >= today);
 			}
 
@@ -2187,10 +2195,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		private static int CalculateAge(DateTime dob)
 		{
+			if (dob == default || dob.Year < 1900) return 0;
 			var today = DateTime.Today;
 			var age = today.Year - dob.Year;
 			if (dob.Date > today.AddYears(-age)) age--;
-			return age;
+			return age < 0 ? 0 : age;
 		}
 	}
 }

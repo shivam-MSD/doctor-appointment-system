@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 import { FamilyService } from '../../core/services/family.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,7 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-family-members',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './family-members.component.html',
   styleUrls: ['./family-members.component.css']
 })
@@ -30,7 +31,7 @@ export class FamilyMembersComponent implements OnInit {
     dob: '',
     relationshipType: 'Child',
     bloodGroup: '',
-    consentDeclared: true
+    consentDeclared: false
   };
 
   // Link Account OTP Form
@@ -60,7 +61,7 @@ export class FamilyMembersComponent implements OnInit {
     this.isLoading = true;
     this.familyService.getFamilyMembers().subscribe({
       next: (data) => {
-        this.familyMembers = data;
+        this.familyMembers = (data || []).filter((m: any) => m.relationshipType !== 'Self');
         this.isLoading = false;
       },
       error: () => {
@@ -81,7 +82,7 @@ export class FamilyMembersComponent implements OnInit {
       dob: '',
       relationshipType: 'Child',
       bloodGroup: '',
-      consentDeclared: true
+      consentDeclared: false
     };
     this.linkForm = {
       targetContact: '',
@@ -122,19 +123,28 @@ export class FamilyMembersComponent implements OnInit {
   }
 
   onSendOtp(): void {
-    if (!this.linkForm.targetContact) {
+    if (!this.linkForm.targetContact || !this.linkForm.targetContact.trim()) {
       this.toastService.showError('Please enter target Email ID or WhatsApp mobile number.');
       return;
     }
 
+    const contact = this.linkForm.targetContact.trim();
+    if (contact.includes('@')) {
+      this.linkForm.channel = 'Email';
+    } else if (/^\+?[0-9]{10,15}$/.test(contact.replace(/[\s\-()]/g, ''))) {
+      this.linkForm.channel = 'WhatsApp';
+    } else {
+      this.linkForm.channel = 'Both';
+    }
+
     this.isSubmitting = true;
     this.familyService.sendFamilyOtp({
-      targetContact: this.linkForm.targetContact,
+      targetContact: contact,
       channel: this.linkForm.channel,
       relationshipType: this.linkForm.relationshipType
     }).subscribe({
       next: (res) => {
-        this.toastService.showSuccess(res.message || `OTP dispatched via ${this.linkForm.channel}!`);
+        this.toastService.showSuccess(res.message || `Verification OTP sent successfully!`);
         if (res.demoOtpCode) {
           this.toastService.showSuccess(`DEMO OTP CODE: ${res.demoOtpCode}`);
         }
@@ -198,10 +208,41 @@ export class FamilyMembersComponent implements OnInit {
     }
   }
 
+  getPrimaryUserName(): string {
+    const fName = sessionStorage.getItem('firstName') || '';
+    const lName = sessionStorage.getItem('lastName') || '';
+    if (fName || lName) {
+      return `${fName} ${lName}`.trim();
+    }
+    return this.primaryUser?.name || this.primaryUser?.email || 'Shivam Patel';
+  }
+
+  getPrimaryUserIdentifier(): string {
+    const activeUser = this.authService.getActiveUserForCurrentRoute();
+    if (activeUser?.email) return activeUser.email;
+    if (activeUser?.phoneNumber) return activeUser.phoneNumber;
+    const email = sessionStorage.getItem('email');
+    if (email) return email;
+    const mobileNo = sessionStorage.getItem('mobileNo');
+    if (mobileNo) return mobileNo;
+    return 'shivapatel1102001@gmail.com';
+  }
+
   getInitials(name: string): string {
-    if (!name) return 'FM';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.substring(0, 2).toUpperCase();
+    if (!name || name === 'Self' || name === 'Account Owner') {
+      const fName = sessionStorage.getItem('firstName') || '';
+      const lName = sessionStorage.getItem('lastName') || '';
+      if (fName && lName) return `${fName[0]}${lName[0]}`.toUpperCase();
+      return 'SP';
+    }
+    const clean = name.replace(/\(You\)/gi, '').replace(/Primary Account Owner/gi, '').replace(/Account Owner/gi, '').trim();
+    const parts = clean.split(/\s+/);
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    if (parts.length === 1 && parts[0].length >= 2) {
+      return parts[0].substring(0, 2).toUpperCase();
+    }
+    return 'SP';
   }
 }

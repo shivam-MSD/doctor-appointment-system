@@ -1,0 +1,51 @@
+# Complete Implementation Plan - Comprehensive Notification Matrix (WhatsApp & Email) for Doctor, Admin, and Patient Roles
+
+This document outlines the design and implementation plan for sending complete, automated WhatsApp and Email notifications across all key system lifecycle events for **Doctors**, **Super Admins / Clinic Admins**, and **Patients**.
+
+---
+
+## 📋 Catalog of Admin Notifications
+
+### Super Admin Notifications
+1. **New Doctor Registration & License Verification Submitted:** Alerts Super Admin when a doctor submits their medical license for verification.
+2. **New Clinic Creation Request Submitted:** Alerts Super Admin when a new clinic/branch is requested.
+3. **System Security & High-Risk Role Change Alerts:** Alerts Super Admin on administrative privilege changes.
+
+### Clinic Admin Notifications
+1. **Doctor Emergency Unavailability / Schedule Lock Alert:** Notifies Clinic Admin when a doctor marks emergency leave so patient appointments can be rescheduled.
+2. **Daily Clinic Booking Volume Summary:** Morning summary of total appointments booked for the day.
+3. **High Appointment Cancellation Rate Alert:** Alerts Clinic Admin if multiple appointments are cancelled in a single day.
+
+---
+
+## 🛠️ Proposed Technical Changes
+
+### 1. `WhatsAppService.cs` & `IWhatsAppService.cs`
+- Add dedicated helper methods for Admin & Doctor notification dispatches:
+  - `SendWhatsAppAdminAlertAsync(string mobileNo, string alertTitle, string alertBody)`
+  - `SendWhatsAppClinicRequestStatusAsync(string mobileNo, string clinicName, string status, string reason)`
+  - `SendWhatsAppLicenseVerificationStatusAsync(string mobileNo, string doctorName, string status, string reason)`
+  - `SendWhatsAppEmergencyLeaveAlertAsync(string mobileNo, string doctorName, string dateStr)`
+
+### 2. `EmailService.cs` & `IEmailService.cs`
+- Add HTML template email dispatchers for:
+  - Doctor License Approval / Rejection Emails.
+  - Clinic Approval / Rejection Emails.
+  - Admin Alert Notifications.
+
+### 3. Service Layer Integration
+- **`DoctorService.cs`:** Trigger Doctor License verification status notifications (WhatsApp + Email) upon Super Admin approval/rejection.
+- **`ClinicService.cs`:** Trigger Clinic creation and status approval/rejection notifications (WhatsApp + Email) to Doctor & Super Admin.
+- **`AppointmentService.cs`:** Trigger Emergency Cancellation alerts to Doctor & Clinic Admin.
+
+---
+
+## 🧪 Verification Plan
+
+### Automated Verification
+- Run `dotnet build DoctorAppointmentSystem/DoctorAppointmentSystem.csproj` to confirm 0 compilation errors across all services.
+
+### Manual Verification
+- Test Clinic creation request $\rightarrow$ Verify Admin & Doctor notification logs.
+- Test Doctor License approval $\rightarrow$ Verify WhatsApp + Email notification logs.
+- Test Appointment booking & cancellation $\rightarrow$ Verify Patient & Doctor notifications.

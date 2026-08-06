@@ -17,6 +17,23 @@ export class RegisterComponent implements OnInit, OnDestroy {
   role = 'Patient'; // Default role
   errorMessage = '';
   successMessage = '';
+
+  // Email Inline Verification State
+  emailOtpSent = false;
+  emailOtpCode = '';
+  isEmailVerified = false;
+  isSendingEmailOtp = false;
+  isVerifyingEmailOtp = false;
+  emailError = '';
+
+  // WhatsApp Inline Verification State
+  whatsAppOtpSent = false;
+  whatsAppOtpCode = '';
+  isWhatsAppVerified = false;
+  isSendingWhatsAppOtp = false;
+  isVerifyingWhatsAppOtp = false;
+  whatsAppError = '';
+
   step: 'register' | 'otp' = 'register';
   otp = '';
   isSubmitting = false;
@@ -183,6 +200,106 @@ export class RegisterComponent implements OnInit, OnDestroy {
         } else {
           this.errorMessage = err?.error?.detail || 'Failed to resend verification OTP. Please try again.';
         }
+      }
+    });
+  }
+
+  onSendEmailOtp(): void {
+    if (!this.email || !this.email.includes('@')) {
+      this.emailError = 'Please enter a valid email address.';
+      return;
+    }
+
+    this.isSendingEmailOtp = true;
+    this.emailError = '';
+
+    this.authService.sendAuthOtp({
+      targetIdentifier: this.email,
+      channel: 'Email',
+      purpose: 'Registration'
+    }).subscribe({
+      next: (res) => {
+        this.isSendingEmailOtp = false;
+        this.emailOtpSent = true;
+      },
+      error: (err) => {
+        this.isSendingEmailOtp = false;
+        this.emailError = err?.error?.detail || 'This email address is already registered. Try logging in instead.';
+      }
+    });
+  }
+
+  onVerifyEmailOtp(): void {
+    if (!this.emailOtpCode || this.emailOtpCode.length !== 6) {
+      this.emailError = 'Please enter a valid 6-digit OTP code.';
+      return;
+    }
+
+    this.isVerifyingEmailOtp = true;
+    this.emailError = '';
+
+    this.authService.verifyAuthOtp({
+      targetIdentifier: this.email,
+      otpCode: this.emailOtpCode,
+      purpose: 'Registration'
+    }).subscribe({
+      next: () => {
+        this.isVerifyingEmailOtp = false;
+        this.isEmailVerified = true;
+      },
+      error: (err) => {
+        this.isVerifyingEmailOtp = false;
+        this.emailError = err?.error?.detail || 'Invalid OTP code. Please try again.';
+      }
+    });
+  }
+
+  onSendWhatsAppOtp(): void {
+    if (!this.mobileNo || this.mobileNo.length < 10) {
+      this.whatsAppError = 'Please enter a valid WhatsApp mobile number (min 10 digits).';
+      return;
+    }
+
+    this.isSendingWhatsAppOtp = true;
+    this.whatsAppError = '';
+
+    this.authService.sendAuthOtp({
+      targetIdentifier: this.mobileNo,
+      channel: 'WhatsApp',
+      purpose: 'Registration'
+    }).subscribe({
+      next: (res) => {
+        this.isSendingWhatsAppOtp = false;
+        this.whatsAppOtpSent = true;
+      },
+      error: (err) => {
+        this.isSendingWhatsAppOtp = false;
+        this.whatsAppError = err?.error?.detail || 'This WhatsApp number is already registered. Try logging in instead.';
+      }
+    });
+  }
+
+  onVerifyWhatsAppOtp(): void {
+    if (!this.whatsAppOtpCode || this.whatsAppOtpCode.length !== 6) {
+      this.whatsAppError = 'Please enter a valid 6-digit OTP code.';
+      return;
+    }
+
+    this.isVerifyingWhatsAppOtp = true;
+    this.whatsAppError = '';
+
+    this.authService.verifyAuthOtp({
+      targetIdentifier: this.mobileNo,
+      otpCode: this.whatsAppOtpCode,
+      purpose: 'Registration'
+    }).subscribe({
+      next: () => {
+        this.isVerifyingWhatsAppOtp = false;
+        this.isWhatsAppVerified = true;
+      },
+      error: (err) => {
+        this.isVerifyingWhatsAppOtp = false;
+        this.whatsAppError = err?.error?.detail || 'Invalid OTP code. Please try again.';
       }
     });
   }

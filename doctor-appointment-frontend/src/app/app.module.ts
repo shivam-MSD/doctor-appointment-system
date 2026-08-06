@@ -49,7 +49,7 @@ import { PublicHeaderComponent } from './shared/components/public-header/public-
 
 import { 
   LucideAngularModule, 
-  Calendar, CalendarClock, CalendarCheck, CalendarSync,
+  Calendar, CalendarPlus, CalendarClock, CalendarCheck, CalendarSync,
   TrendingUp, Hourglass, Clock, CheckCircle2, Moon, Sun, Bell, 
   LayoutDashboard, ClipboardList, History, Stethoscope, ScrollText, 
   User, UserCircle, Users, Search, Eye, FileText, Plus, PlusCircle, 
@@ -97,7 +97,7 @@ import {
     PublicHeaderComponent,
     AppRoutingModule,
     LucideAngularModule.pick({
-      Calendar, CalendarClock, CalendarCheck, CalendarSync,
+      Calendar, CalendarPlus, CalendarClock, CalendarCheck, CalendarSync,
       TrendingUp, Hourglass, Clock, CheckCircle2, Moon, Sun, Bell, 
       LayoutDashboard, ClipboardList, History, Stethoscope, ScrollText, 
       User, UserCircle, Users, Search, Eye, FileText, Plus, PlusCircle, 

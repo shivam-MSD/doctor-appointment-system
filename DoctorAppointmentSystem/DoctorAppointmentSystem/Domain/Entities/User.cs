@@ -62,5 +62,10 @@ namespace DoctorAppointmentSystem.Domain.Entities
 		/// Gets or sets the UTC timestamp of the user's most recent successful login session.
 		/// </summary>
 		public DateTime LastLoginDate { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether Two-Factor Authentication (2FA) is enabled for the account.
+		/// </summary>
+		public bool IsTwoFactorEnabled { get; set; } = false;
 	}
 }

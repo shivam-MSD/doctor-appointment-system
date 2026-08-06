@@ -112,5 +112,26 @@ namespace DoctorAppointmentSystem.Controllers
 			var result = await _userService.UpdateMyPatientProfileAsync(userId, dto);
 			return Ok(result);
 		}
+
+		[HttpGet("2fa-status")]
+		public async Task<IActionResult> GetTwoFactorStatus([FromHeader(Name = "X-User-Id")] Guid userId)
+		{
+			if (userId == Guid.Empty) return BadRequest("Missing required X-User-Id header.");
+			var isEnabled = await _userService.GetTwoFactorStatusAsync(userId);
+			return Ok(new { isTwoFactorEnabled = isEnabled });
+		}
+
+		[HttpPost("toggle-2fa")]
+		public async Task<IActionResult> ToggleTwoFactor([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] ToggleTwoFactorDto dto)
+		{
+			if (userId == Guid.Empty) return BadRequest("Missing required X-User-Id header.");
+			var isEnabled = await _userService.ToggleTwoFactorAsync(userId, dto.Enabled);
+			return Ok(new { isTwoFactorEnabled = isEnabled, message = isEnabled ? "2FA Authentication enabled!" : "2FA Authentication disabled." });
+		}
+	}
+
+	public class ToggleTwoFactorDto
+	{
+		public bool Enabled { get; set; }
 	}
 }

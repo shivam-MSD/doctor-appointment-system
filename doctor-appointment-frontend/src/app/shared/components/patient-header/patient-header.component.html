@@ -2,7 +2,7 @@
 <div class="glass-card welcome-card" *ngIf="showWelcomeBanner"
   style="padding: 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9)); box-shadow: 0 10px 30px rgba(36, 59, 99, 0.06); border-radius: 16px;">
   <div class="welcome-text" style="display: flex; align-items: center; gap: 16px;">
-    <div style="background: var(--brand-navy); color: white; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);">
+    <div style="background: var(--brand-navy); color: white; width: 48px; height: 48px; min-width: 48px; min-height: 48px; border-radius: 50% !important; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; flex-shrink: 0; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);">
       {{ firstName ? firstName.charAt(0).toUpperCase() : 'P' }}
     </div>
     <div>
@@ -24,91 +24,104 @@
 </div>
 
 <!-- TOP SECTION: Metrics -->
-<div class="metrics-row"
-  style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 30px;">
-  
-  <!-- Today's Appointments -->
-  <div class="glass-card metric-card" (click)="onStatClick('Confirmed')"
-    style="display: flex; align-items: center; gap: 15px; padding: 18px; border-left: 4px solid var(--brand-navy); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
-    title="Click to view Today's Appointments">
-    <div
-      style="background: rgba(36, 59, 99, 0.08); width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
-      <lucide-icon name="calendar" [size]="22" style="color: var(--brand-navy);"></lucide-icon>
+<div class="glass-card metrics-section-card"
+  style="background: #ffffff; border: 1.5px solid rgba(36, 59, 99, 0.12); border-radius: 18px; box-shadow: 0 8px 30px rgba(36, 59, 99, 0.08); padding: 18px; margin-bottom: 24px;">
+  <div class="metrics-row"
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 0;">
+    
+    <!-- Today's Appointments -->
+    <div class="glass-card metric-card" (click)="onStatClick('Confirmed')"
+      style="display: flex; align-items: center; gap: 12px; padding: 14px; border-left: 4px solid var(--brand-navy); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+      title="Click to view Today's Appointments">
+      <div
+        style="background: rgba(36, 59, 99, 0.08); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; flex-shrink: 0;">
+        <lucide-icon name="calendar" [size]="20" style="color: var(--brand-navy);"></lucide-icon>
+      </div>
+      <div>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary); font-weight: 800;">
+          <ng-container *ngIf="isPatientStatsLoading; else todayLoaded">
+            <div class="skeleton-box" style="height: 24px; width: 36px; display: inline-block; vertical-align: middle;"></div>
+          </ng-container>
+          <ng-template #todayLoaded>{{ patientTotalToday }}</ng-template>
+        </h2>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Today's Appointments</p>
+      </div>
     </div>
-    <div>
-      <h2 style="margin: 0; font-size: 1.7rem; color: var(--text-primary);">
-        <ng-container *ngIf="isPatientStatsLoading; else todayLoaded">...</ng-container>
-        <ng-template #todayLoaded>{{ patientTotalToday }}</ng-template>
-      </h2>
-      <p style="margin: 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Today's Appointments</p>
-    </div>
-  </div>
 
-  <!-- Upcoming -->
-  <div class="glass-card metric-card" (click)="onStatClick('Confirmed')"
-    style="display: flex; align-items: center; gap: 15px; padding: 18px; border-left: 4px solid #3b82f6; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
-    title="Click to view Upcoming Appointments">
-    <div
-      style="background: rgba(59, 130, 246, 0.1); width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
-      <lucide-icon name="trending-up" [size]="22" style="color: #3b82f6;"></lucide-icon>
+    <!-- Upcoming -->
+    <div class="glass-card metric-card" (click)="onStatClick('Confirmed')"
+      style="display: flex; align-items: center; gap: 12px; padding: 14px; border-left: 4px solid #3b82f6; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+      title="Click to view Upcoming Appointments">
+      <div
+        style="background: rgba(59, 130, 246, 0.1); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; flex-shrink: 0;">
+        <lucide-icon name="trending-up" [size]="20" style="color: #3b82f6;"></lucide-icon>
+      </div>
+      <div>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary); font-weight: 800;">
+          <ng-container *ngIf="isPatientStatsLoading; else upcomingLoaded">
+            <div class="skeleton-box" style="height: 24px; width: 36px; display: inline-block; vertical-align: middle;"></div>
+          </ng-container>
+          <ng-template #upcomingLoaded>{{ patientTotalUpcoming }}</ng-template>
+        </h2>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Upcoming</p>
+      </div>
     </div>
-    <div>
-      <h2 style="margin: 0; font-size: 1.7rem; color: var(--text-primary);">
-        <ng-container *ngIf="isPatientStatsLoading; else upcomingLoaded">...</ng-container>
-        <ng-template #upcomingLoaded>{{ patientTotalUpcoming }}</ng-template>
-      </h2>
-      <p style="margin: 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Upcoming</p>
-    </div>
-  </div>
 
-  <!-- Pending -->
-  <div class="glass-card metric-card" (click)="onStatClick('Pending')"
-    style="display: flex; align-items: center; gap: 15px; padding: 18px; border-left: 4px solid #f59e0b; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
-    title="Click to view Pending Appointments">
-    <div
-      style="background: rgba(245, 158, 11, 0.1); width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
-      <lucide-icon name="hourglass" [size]="22" style="color: #f59e0b;"></lucide-icon>
+    <!-- Pending -->
+    <div class="glass-card metric-card" (click)="onStatClick('Pending')"
+      style="display: flex; align-items: center; gap: 12px; padding: 14px; border-left: 4px solid #f59e0b; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+      title="Click to view Pending Appointments">
+      <div
+        style="background: rgba(245, 158, 11, 0.1); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; flex-shrink: 0;">
+        <lucide-icon name="hourglass" [size]="20" style="color: #f59e0b;"></lucide-icon>
+      </div>
+      <div>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary); font-weight: 800;">
+          <ng-container *ngIf="isPatientStatsLoading; else pendingLoaded">
+            <div class="skeleton-box" style="height: 24px; width: 36px; display: inline-block; vertical-align: middle;"></div>
+          </ng-container>
+          <ng-template #pendingLoaded>{{ patientTotalPending }}</ng-template>
+        </h2>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Pending</p>
+      </div>
     </div>
-    <div>
-      <h2 style="margin: 0; font-size: 1.7rem; color: var(--text-primary);">
-        <ng-container *ngIf="isPatientStatsLoading; else pendingLoaded">...</ng-container>
-        <ng-template #pendingLoaded>{{ patientTotalPending }}</ng-template>
-      </h2>
-      <p style="margin: 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Pending</p>
-    </div>
-  </div>
 
-  <!-- Completed -->
-  <div class="glass-card metric-card" (click)="onStatClick('Completed')"
-    style="display: flex; align-items: center; gap: 15px; padding: 18px; border-left: 4px solid #00c896; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
-    title="Click to view Completed Appointments">
-    <div
-      style="background: rgba(0, 200, 150, 0.1); width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
-      <lucide-icon name="check-circle-2" [size]="22" style="color: #00c896;"></lucide-icon>
+    <!-- Completed -->
+    <div class="glass-card metric-card" (click)="onStatClick('Completed')"
+      style="display: flex; align-items: center; gap: 12px; padding: 14px; border-left: 4px solid #00c896; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+      title="Click to view Completed Appointments">
+      <div
+        style="background: rgba(0, 200, 150, 0.1); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; flex-shrink: 0;">
+        <lucide-icon name="check-circle-2" [size]="20" style="color: #00c896;"></lucide-icon>
+      </div>
+      <div>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary); font-weight: 800;">
+          <ng-container *ngIf="isPatientStatsLoading; else completedLoaded">
+            <div class="skeleton-box" style="height: 24px; width: 36px; display: inline-block; vertical-align: middle;"></div>
+          </ng-container>
+          <ng-template #completedLoaded>{{ patientTotalCompleted }}</ng-template>
+        </h2>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Completed</p>
+      </div>
     </div>
-    <div>
-      <h2 style="margin: 0; font-size: 1.7rem; color: var(--text-primary);">
-        <ng-container *ngIf="isPatientStatsLoading; else completedLoaded">...</ng-container>
-        <ng-template #completedLoaded>{{ patientTotalCompleted }}</ng-template>
-      </h2>
-      <p style="margin: 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Completed</p>
-    </div>
-  </div>
 
-  <!-- Rescheduled -->
-  <div class="glass-card metric-card" (click)="onStatClick('RescheduleProposed')"
-    style="display: flex; align-items: center; gap: 15px; padding: 18px; border-left: 4px solid #ef4444; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
-    title="Click to view Rescheduled Requests">
-    <div
-      style="background: rgba(239, 68, 68, 0.1); width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
-      <lucide-icon name="calendar-clock" [size]="22" style="color: #ef4444;"></lucide-icon>
-    </div>
-    <div>
-      <h2 style="margin: 0; font-size: 1.7rem; color: var(--text-primary);">
-        <ng-container *ngIf="isPatientStatsLoading; else rescheduledLoaded">...</ng-container>
-        <ng-template #rescheduledLoaded>{{ patientTotalRescheduled }}</ng-template>
-      </h2>
-      <p style="margin: 0; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Rescheduled</p>
+    <!-- Rescheduled -->
+    <div class="glass-card metric-card" (click)="onStatClick('RescheduleProposed')"
+      style="display: flex; align-items: center; gap: 12px; padding: 14px; border-left: 4px solid #ef4444; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+      title="Click to view Rescheduled Requests">
+      <div
+        style="background: rgba(239, 68, 68, 0.1); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; flex-shrink: 0;">
+        <lucide-icon name="calendar-clock" [size]="20" style="color: #ef4444;"></lucide-icon>
+      </div>
+      <div>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary); font-weight: 800;">
+          <ng-container *ngIf="isPatientStatsLoading; else rescheduledLoaded">
+            <div class="skeleton-box" style="height: 24px; width: 36px; display: inline-block; vertical-align: middle;"></div>
+          </ng-container>
+          <ng-template #rescheduledLoaded>{{ patientTotalRescheduled }}</ng-template>
+        </h2>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600;">Rescheduled</p>
+      </div>
     </div>
   </div>
 </div>

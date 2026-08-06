@@ -16,7 +16,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   notifications: NotificationDto[] = [];
   showNotificationsPanel = false;
   showProfilePanel = false;
+  selectedCity: string = localStorage.getItem('user_preferred_city') || 'Vadodara';
   currentDateTime: Date = new Date();
+
+  onCitySelected(city: string): void {
+    this.selectedCity = city;
+    localStorage.setItem('user_preferred_city', city);
+    window.dispatchEvent(new CustomEvent('cityChanged', { detail: city }));
+  }
   private signalrSub?: Subscription;
   private refreshSub?: Subscription;
   private clockSub?: Subscription;
@@ -97,11 +104,57 @@ export class HeaderComponent implements OnInit, OnDestroy {
   loadNotifications(): void {
     this.notificationService.getNotifications().subscribe({
       next: (data) => {
-        this.notifications = data;
+        this.notifications = this.deduplicateNotifications(data);
         this.cdr.detectChanges();
       },
       error: (err) => console.error('Failed to load notifications', err)
     });
+  }
+
+  deduplicateNotifications(items: NotificationDto[]): NotificationDto[] {
+    const seen = new Set<string>();
+    return items.filter(item => {
+      const key = item.notificationId ? item.notificationId : `${item.message}_${item.createdDate}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  getNotificationIcon(message: string): string {
+    if (!message) return 'bell';
+    const msg = message.toLowerCase();
+    if (msg.includes('approved') || msg.includes('confirmed') || msg.includes('completed')) return 'check-circle-2';
+    if (msg.includes('cancelled') || msg.includes('rejected') || msg.includes('declined')) return 'x-circle';
+    if (msg.includes('reschedule') || msg.includes('proposed') || msg.includes('time')) return 'calendar-clock';
+    return 'bell';
+  }
+
+  getNotificationIconColor(message: string): string {
+    if (!message) return '#243B63';
+    const msg = message.toLowerCase();
+    if (msg.includes('approved') || msg.includes('confirmed') || msg.includes('completed')) return '#059669';
+    if (msg.includes('cancelled') || msg.includes('rejected') || msg.includes('declined')) return '#dc2626';
+    if (msg.includes('reschedule') || msg.includes('proposed') || msg.includes('time')) return '#b45309';
+    return '#243B63';
+  }
+
+  getTimeAgo(dateInput: string | Date): string {
+    if (!dateInput) return '';
+    const date = new Date(dateInput);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   getUnreadCount(): number {

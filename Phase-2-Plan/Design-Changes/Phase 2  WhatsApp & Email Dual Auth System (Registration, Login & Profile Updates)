@@ -1,0 +1,104 @@
+# Implementation Plan - WhatsApp & Email Dual Auth System (Registration, Login & Profile Updates)
+
+This plan outlines the architecture for integrating **WhatsApp Cloud API OTP Service**, enabling **Email OR WhatsApp Number Registration & Login**, and providing **Profile Update Options** for contact info with security verification and audit logging.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> - **Meta WhatsApp Cloud API Service:** We will create an extensible `IWhatsAppService` / `WhatsAppService` configured via `appsettings.json` (Phone Number ID, Access Token, Template Name). In development mode, if API credentials are not provided, it falls back cleanly to console output + demo OTP response.
+> - **At Least One Channel Required:** Registration allows Email only, WhatsApp only, or Both — but requires at least one verified contact method.
+> - **Independent OTP Verification:** If registering or updating with **Both**, two distinct 6-digit OTPs are dispatched and both must be verified.
+> - **Security Audit Log:** When updating Email or WhatsApp in Profile, the previous contact details are archived in `AuditLogs` for security, and an informational alert is sent to the old channel.
+
+---
+
+## Open Questions
+
+> [!NOTE]
+> 1. **Meta WhatsApp Credentials:** Do you already have Meta WhatsApp Cloud API credentials (Phone Number ID & Permanent Access Token), or should we start with the dev fallback mode that logs OTPs and allows testing immediately?
+> 2. **Password vs Passwordless OTP Login:** For WhatsApp Login, should users log in via **WhatsApp 6-Digit OTP** directly (passwordless), while Email login supports both Password and Email OTP?
+
+---
+
+## Proposed Changes
+
+### 1. WhatsApp Cloud API Infrastructure Layer (.NET Core)
+
+#### [NEW] [IWhatsAppService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/IWhatsAppService.cs)
+#### [NEW] [WhatsAppService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Infrastructure/Services/WhatsAppService.cs)
+- Implement `SendOtpAsync(string phoneNumber, string otpCode, string purpose)` using HTTP POST to Meta's WhatsApp Cloud API endpoint (`graph.facebook.com/v18.0/{PhoneNumberId}/messages`).
+- Include fallback logging for development when API keys are unconfigured.
+
+#### [MODIFY] [appsettings.json](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/appsettings.json)
+- Add `WhatsAppSettings`: `{ ApiUrl, AccessToken, PhoneNumberId, TemplateName }`.
+
+---
+
+### 2. Application Layer & DTO Extensions
+
+#### [MODIFY] [AuthDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/AuthDTOs.cs)
+- Add `SendAuthOtpDto`: `{ TargetIdentifier, Channel, Purpose }` (`"Email"`, `"WhatsApp"`, `"Both"`).
+- Add `VerifyAuthOtpDto`: `{ TargetIdentifier, OtpCode, Purpose }`.
+- Add `WhatsAppLoginDto`: `{ MobileNo, OtpCode }`.
+- Update `RegisterDto`: Make `Email` and `MobileNo` conditionally required (at least one must be provided).
+
+#### [MODIFY] [PatientDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/PatientDTOs.cs)
+- Add `UpdateContactInfoDto`: `{ NewEmail?, NewMobileNo?, EmailOtp?, MobileOtp? }`.
+
+---
+
+### 3. Auth & User Services (.NET Core)
+
+#### [MODIFY] [AuthService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AuthService.cs)
+- Update `RegisterAsync`:
+  1. Validate that at least one channel is filled.
+  2. Check existing DB records for Email / Mobile conflicts. If duplicate exists, throw clear exception (*"This email/WhatsApp is already registered. Please log in."*).
+  3. Dispatch Email OTP / WhatsApp OTP to requested channels.
+- Implement `LoginWithWhatsAppOtpAsync`: Verify WhatsApp OTP from Redis cache, load User, and generate JWT token.
+
+#### [MODIFY] [PatientService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/PatientService.cs)
+- Implement `InitiateUpdateContactInfoAsync` & `ConfirmUpdateContactInfoAsync`:
+  1. Verify uniqueness of new Email / WhatsApp number.
+  2. Send OTP to the **NEW** Email/WhatsApp address.
+  3. Upon verification, replace active contact info on `User` & `Patient`.
+  4. Write log to `AuditLogs` (*"Email updated from old@domain.com to new@domain.com"*).
+  5. Send security alert notification to old channel.
+
+---
+
+### 4. Frontend Angular UI & Integration
+
+#### [MODIFY] [login.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/login/login.component.html)
+#### [MODIFY] [login.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/login/login.component.ts)
+- Add tab selector for `[Email & Password]` vs `[WhatsApp OTP Login]`.
+- Implement WhatsApp number entry $\rightarrow$ Send OTP $\rightarrow$ Verify & Login.
+
+#### [MODIFY] [register.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/register/register.component.html)
+#### [MODIFY] [register.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/register/register.component.ts)
+- Update registration form to allow optional Email / WhatsApp input (with validation ensuring at least one is provided).
+- Support dual-channel OTP verification step before final submission.
+
+#### [MODIFY] [profile.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/profile/profile.component.html)
+#### [MODIFY] [profile.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/profile/profile.component.ts)
+- Add contact management modal for adding/updating Email or WhatsApp number with OTP modal dialog.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Build backend solution to verify C# signatures: `dotnet build` in `DoctorAppointmentSystem`.
+- Build frontend to verify Angular templates: `npx ng build` in `doctor-appointment-frontend`.
+
+### Manual Verification
+1. **Registration:**
+   - Test sign up with Email only $\rightarrow$ Verify Email OTP $\rightarrow$ Account created.
+   - Test sign up with WhatsApp only $\rightarrow$ Verify WhatsApp OTP $\rightarrow$ Account created.
+   - Test sign up with Both $\rightarrow$ Verify Both OTPs $\rightarrow$ Account created.
+   - Verify duplicate Email/WhatsApp registration block error messages.
+2. **Login:**
+   - Test login via WhatsApp number + 6-digit OTP $\rightarrow$ JWT issued.
+3. **Profile Settings:**
+   - Update WhatsApp number on profile $\rightarrow$ Verify OTP sent to new number $\rightarrow$ Contact updated & audit log generated.

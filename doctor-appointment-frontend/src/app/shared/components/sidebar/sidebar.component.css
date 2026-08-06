@@ -214,22 +214,27 @@ body.light-theme .sidebar-toggle-btn:hover {
 }
 
 .sidebar.collapsed .nav-link {
-  justify-content: center;
-  padding: 12px 0;
+  justify-content: center !important;
+  padding: 12px 0 !important;
   position: relative;
-  border-left: 4px solid transparent;
+  border-left: none !important;
   border-radius: 10px;
   overflow: visible !important;
+  width: 100%;
 }
 
 .sidebar.collapsed .nav-link:hover {
-  border-left: 4px solid #63a3bf !important;
-  padding-left: 0;
+  border-left: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  background: rgba(36, 59, 99, 0.08) !important;
 }
 
 .sidebar.collapsed .nav-link.active {
-  border-left: 4px solid #63a3bf !important;
-  padding-left: 0;
+  border-left: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  background: var(--brand-navy, #243B63) !important;
 }
 
 .nav-link .badge {

@@ -346,6 +346,23 @@ namespace DoctorAppointmentSystem.Application.Services
 			return await GetMyPatientProfileAsync(userId);
 		}
 
+		public async Task<bool> GetTwoFactorStatusAsync(Guid userId)
+		{
+			var user = await _dbContext.Users.FindAsync(userId);
+			if (user == null) throw new NotFoundException("User account not found.");
+			return user.IsTwoFactorEnabled;
+		}
+
+		public async Task<bool> ToggleTwoFactorAsync(Guid userId, bool enabled)
+		{
+			var user = await _dbContext.Users.FindAsync(userId);
+			if (user == null) throw new NotFoundException("User account not found.");
+
+			user.IsTwoFactorEnabled = enabled;
+			await _dbContext.SaveChangesAsync();
+			return user.IsTwoFactorEnabled;
+		}
+
 		private string HashPassword(string password)
 		{
 			using var sha256 = SHA256.Create();

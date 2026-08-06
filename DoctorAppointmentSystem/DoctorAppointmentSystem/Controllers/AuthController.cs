@@ -145,5 +145,50 @@ namespace DoctorAppointmentSystem.Controllers
 			await _authService.UpdatePasswordAsync(userId, dto);
 			return Ok(new { message = "Password updated successfully." });
 		}
+
+		/// <summary>
+		/// Dispatches an OTP code via Email or WhatsApp.
+		/// </summary>
+		[HttpPost("send-otp")]
+		public async Task<IActionResult> SendAuthOtp([FromBody] SendAuthOtpDto dto)
+		{
+			System.Diagnostics.Debugger.Launch();
+			await _authService.SendAuthOtpAsync(dto);
+			return Ok(new { message = $"OTP dispatched successfully via {dto.Channel}!" });
+		}
+
+		/// <summary>
+		/// Verifies an OTP code sent via Email or WhatsApp.
+		/// </summary>
+		[HttpPost("verify-otp")]
+		public async Task<IActionResult> VerifyAuthOtp([FromBody] VerifyAuthOtpDto dto)
+		{
+			var isValid = await _authService.VerifyAuthOtpAsync(dto);
+			if (!isValid)
+			{
+				return BadRequest(new { detail = "The OTP code entered is invalid or has expired." });
+			}
+			return Ok(new { valid = true, message = "OTP verified successfully!" });
+		}
+
+		/// <summary>
+		/// Passwordless login via WhatsApp mobile number + OTP.
+		/// </summary>
+		[HttpPost("login-whatsapp")]
+		public async Task<IActionResult> LoginWithWhatsApp([FromBody] WhatsAppLoginDto dto)
+		{
+			var response = await _authService.LoginWithWhatsAppOtpAsync(dto);
+			return Ok(response);
+		}
+
+		/// <summary>
+		/// Verifies a 2FA OTP code and completes authentication.
+		/// </summary>
+		[HttpPost("verify-2fa")]
+		public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorDto dto)
+		{
+			var response = await _authService.VerifyTwoFactorAsync(dto);
+			return Ok(response);
+		}
 	}
 }

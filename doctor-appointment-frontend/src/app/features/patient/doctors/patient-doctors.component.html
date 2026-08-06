@@ -1,13 +1,17 @@
-<app-public-header [selectedCity]="cityFilter" [searchQuery]="searchQuery" (cityChange)="onCityChange($any($event))" (searchChange)="onSearchChange($any($event))"></app-public-header>
-
 <div class="dashboard-wrapper">
   <!-- Greeting Banner -->
-  <div class="glass-card welcome-card" style="border-left: 5px solid var(--brand-navy); background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245, 245, 248, 0.9));">
+  <div class="glass-card welcome-card"
+    style="border-left: 5px solid var(--brand-navy); background: #ffffff; box-shadow: 0 4px 18px rgba(36, 59, 99, 0.06);">
     <div class="welcome-text">
-      <h2 style="font-weight: 800; color: var(--text-primary);">🩺 Find a Medical Specialist</h2>
-      <p style="color: var(--text-secondary);">Search and browse verified clinical doctors registered on HealSync.</p>
+      <h2 style="font-weight: 800; color: var(--brand-navy); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+        <lucide-icon name="stethoscope" [size]="24" style="color: var(--brand-navy);"></lucide-icon>
+        <span>Find a Medical Specialist</span>
+      </h2>
+      <p style="color: var(--brand-navy); opacity: 0.85; font-weight: 600; margin: 0;">Search and browse verified clinical doctors registered on HealSync.</p>
     </div>
-    <div class="role-badge" style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy); font-weight: 700;">Public Doctor Directory</div>
+    <div class="role-badge" style="background: rgba(36, 59, 99, 0.08) !important; color: var(--brand-navy) !important; font-weight: 800; border: 1px solid rgba(36, 59, 99, 0.2) !important; font-size: 0.72rem; padding: 4px 12px; border-radius: 12px; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
+      Public Doctor Directory
+    </div>
   </div>
 
   <div *ngIf="errorMessage" class="error-banner">
@@ -16,7 +20,7 @@
 
   <!-- Filters Row -->
   <div class="glass-card">
-    <h3 class="section-title" style="display: flex; align-items: center; gap: 8px; font-weight: 800;">
+    <h3 class="section-title" style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--brand-navy);">
       <lucide-icon name="search" [size]="18" style="color: var(--brand-navy);"></lucide-icon> Search & Location Filters
     </h3>
     <form (submit)="onFilterChange(); $event.preventDefault()" class="filter-form">
@@ -51,7 +55,8 @@
 
       <div class="filter-actions">
         <button type="button" class="btn btn-secondary" (click)="clearFilters()">Reset</button>
-        <button type="submit" class="btn btn-primary" style="background: var(--brand-navy); border: none;">Filter</button>
+        <button type="submit" class="btn btn-primary"
+          style="background: var(--brand-navy); border: none;">Filter</button>
       </div>
     </form>
   </div>
@@ -83,27 +88,39 @@
   <div class="doctors-list" *ngIf="!isDoctorsLoading && doctors.length > 0">
     <div class="glass-card doctor-card" *ngFor="let doctor of doctors">
       <div class="doctor-avatar-section">
-        <div [className]="'doctor-avatar-placeholder ' + getSpecialtyClass(doctor.specializationName)"
-          [innerHTML]="getSpecialtySvg(doctor.specializationName)"></div>
-        <span class="badge-specialization">{{ doctor.specializationName }}</span>
+        <div
+          style="width: 56px; height: 56px; background: rgba(36, 59, 99, 0.08); border: 1.5px solid rgba(36, 59, 99, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto;">
+          <lucide-icon name="stethoscope" [size]="26" style="color: var(--brand-navy);"></lucide-icon>
+        </div>
+        <span class="badge-specialization"
+          style="background: rgba(36, 59, 99, 0.08) !important; color: var(--brand-navy) !important; font-weight: 700; border: 1px solid rgba(36, 59, 99, 0.18) !important;">
+          {{ doctor.specializationName }}
+        </span>
       </div>
 
       <div class="doctor-details-section">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
           <h3 class="doctor-name" style="margin: 0;">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</h3>
-          <span style="background: rgba(0, 200, 150, 0.12); color: #00c896; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px;">
-            <lucide-icon name="badge-check" [size]="14"></lucide-icon> VERIFIED PRACTITIONER
+          <span
+            style="background: rgba(0, 200, 150, 0.12) !important; color: #00c896 !important; border: 1px solid rgba(0, 200, 150, 0.3) !important; font-size: 0.72rem; font-weight: 800; padding: 3px 8px !important; border-radius: 12px; display: inline-flex !important; align-items: center; gap: 5px; width: fit-content !important; max-width: fit-content !important; white-space: nowrap !important; flex-shrink: 0; line-height: 1;">
+            <span style="width: 14px; height: 14px; background: #00c896; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <lucide-icon name="check" [size]="10" style="color: #ffffff !important; stroke-width: 3.5;"></lucide-icon>
+            </span>
+            Verified
           </span>
         </div>
-        <p class="doctor-qualification">{{ doctor.qualification }} &bull; {{ doctor.yearsOfExperience }} Years Experience</p>
+        <p class="doctor-qualification">{{ doctor.qualification }} &bull; {{ doctor.yearsOfExperience }} Years
+          Experience</p>
 
         <div class="doctor-meta" style="margin-top: 8px;">
           <div class="meta-item" *ngIf="doctor.city || doctor.state">
             <lucide-icon name="map-pin" [size]="15" style="color: var(--brand-navy); margin-right: 4px;"></lucide-icon>
-            <span><strong>Location:</strong> {{ doctor.city }}{{ doctor.city && doctor.state ? ', ' : '' }}{{ doctor.state }}</span>
+            <span><strong>Location:</strong> {{ doctor.city }}{{ doctor.city && doctor.state ? ', ' : '' }}{{
+              doctor.state }}</span>
           </div>
           <div class="meta-item" *ngIf="doctor.aboutDoctor">
-            <lucide-icon name="file-text" [size]="15" style="color: var(--brand-navy); margin-right: 4px;"></lucide-icon>
+            <lucide-icon name="file-text" [size]="15"
+              style="color: var(--brand-navy); margin-right: 4px;"></lucide-icon>
             <span class="about-text">
               "{{ isExpanded(doctor.doctorId) || doctor.aboutDoctor.length <= 150 ? doctor.aboutDoctor :
                 (doctor.aboutDoctor | slice:0:150) + '...' }}" <button type="button" class="read-more-btn"
@@ -118,7 +135,8 @@
       <div class="doctor-action-section">
         <div class="fee-badge">
           <span class="fee-label">Consultation Fee</span>
-          <span class="fee-val" style="color: var(--brand-navy); font-weight: 800;">Rs. {{ doctor.consultationFee }}</span>
+          <span class="fee-val" style="color: var(--brand-navy); font-weight: 800;">Rs. {{ doctor.consultationFee
+            }}</span>
         </div>
         <div class="action-buttons-row" style="display: flex; gap: 8px; width: 100%;">
           <button type="button" class="btn btn-secondary detail-btn" (click)="openDoctorModal(doctor)"
@@ -137,7 +155,8 @@
     <!-- Pagination Footer -->
     <div class="premium-pagination" *ngIf="totalCount > 0" style="margin-top: 20px;">
       <span class="pagination-info">
-        Showing <strong>{{ (page - 1) * size + 1 }}</strong> to <strong>{{ Math.min(page * size, totalCount) }}</strong> of <strong>{{ totalCount }}</strong> doctors
+        Showing <strong>{{ (page - 1) * size + 1 }}</strong> to <strong>{{ Math.min(page * size, totalCount) }}</strong>
+        of <strong>{{ totalCount }}</strong> doctors
       </span>
 
       <div class="pagination-controls">
@@ -155,11 +174,13 @@
   <!-- Empty State -->
   <ng-container *ngIf="!isDoctorsLoading && doctors.length === 0">
     <div class="glass-card empty-state" style="text-align: center; padding: 40px;">
-      <div style="background: rgba(36, 59, 99, 0.08); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+      <div
+        style="background: rgba(36, 59, 99, 0.08); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
         <lucide-icon name="stethoscope" [size]="32" style="color: var(--brand-navy);"></lucide-icon>
       </div>
       <h4 style="font-weight: 800; color: var(--text-primary);">No Doctors Found</h4>
-      <p style="color: var(--text-secondary);">Try resetting the search criteria or trying a different location or specialization.</p>
+      <p style="color: var(--text-secondary);">Try resetting the search criteria or trying a different location or
+        specialization.</p>
       <button class="btn btn-secondary" style="margin-top: 15px;" (click)="clearFilters()">Reset All Filters</button>
     </div>
   </ng-container>
@@ -344,11 +365,11 @@
               </div>
 
               <!-- Contact Details -->
-              <div
-                style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-top: 4px; line-height: 1.5;">
-                <span style="color: var(--accent-cyan); font-size: 1rem; flex-shrink: 0;">📞</span>
-                <span>Contact Number: <strong style="color: var(--text-primary);">{{ clinic.contactNumber || 'N/A'
-                    }}</strong></span>
+              <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                <a [href]="'tel:' + (clinic.contactNumber || '')" style="color: #ffffff !important; text-decoration: none !important; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; background: #00c896 !important; border-radius: 8px !important; border: none !important; font-size: 0.82rem !important; font-weight: 800 !important; box-shadow: 0 4px 12px rgba(0, 200, 150, 0.3) !important;">
+                  <lucide-icon name="phone" [size]="13" style="color: #ffffff !important;"></lucide-icon>
+                  <span>Call {{ clinic.contactNumber || 'N/A' }}</span>
+                </a>
               </div>
 
               <!-- Google Maps Location Link -->
@@ -403,8 +424,7 @@
 
                 <!-- Bookable: calls onBookClick (intercepts login if unauthenticated) -->
                 <button *ngIf="isClinicBookable(clinic)" type="button"
-                  (click)="onBookClick(selectedDoctorForModal.doctorId, clinic.clinicId)"
-                  class="btn btn-primary"
+                  (click)="onBookClick(selectedDoctorForModal.doctorId, clinic.clinicId)" class="btn btn-primary"
                   style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; height: auto; margin-top: 4px; border: none; cursor: pointer;">
                   <span>📅</span> Book at this Branch
                 </button>
@@ -504,8 +524,7 @@
 
           <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
             <button *ngIf="isClinicBookable(clinic)" type="button"
-              (click)="onBookClick(selectedDoctorForBooking.doctorId, clinic.clinicId)"
-              class="btn btn-primary"
+              (click)="onBookClick(selectedDoctorForBooking.doctorId, clinic.clinicId)" class="btn btn-primary"
               style="font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;">
               Select & Proceed &rarr;
             </button>
@@ -522,35 +541,41 @@
     </div>
   </div>
 
-<!-- AUTH INTERCEPT MODAL (PRACTO / APOLLO STYLE) -->
-<div class="modal-backdrop" *ngIf="showAuthModal" (click)="closeAuthModal()">
-  <div class="modal-container" (click)="$event.stopPropagation()" style="max-width: 440px; border-radius: 20px; text-align: center; padding: 28px 24px;">
-    
-    <div style="width: 64px; height: 64px; background: rgba(0, 200, 150, 0.12); color: #00c896; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 16px auto;">
-      🔐
+  <!-- AUTH INTERCEPT MODAL (PRACTO / APOLLO STYLE) -->
+  <div class="modal-backdrop" *ngIf="showAuthModal" (click)="closeAuthModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()"
+      style="max-width: 440px; border-radius: 20px; text-align: center; padding: 28px 24px;">
+
+      <div
+        style="width: 64px; height: 64px; background: rgba(0, 200, 150, 0.12); color: #00c896; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 16px auto;">
+        🔐
+      </div>
+
+      <h3 style="margin: 0 0 8px 0; font-weight: 800; color: var(--brand-navy); font-size: 1.25rem;">
+        Login to Complete Your Booking
+      </h3>
+
+      <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;">
+        You're just one step away! Please log in to your HealSync patient account to confirm your appointment
+        reservation.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button (click)="redirectToLogin()" class="btn"
+          style="background: var(--brand-navy); color: white; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; width: 100%;">
+          🔑 Login & Continue
+        </button>
+
+        <button (click)="redirectToRegister()" class="btn"
+          style="background: #00c896; color: white; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(0, 200, 150, 0.3);">
+          ✨ New to HealSync? Create Free Account
+        </button>
+
+        <button (click)="closeAuthModal()" class="btn"
+          style="background: transparent; color: var(--text-secondary); padding: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-top: 4px;">
+          Cancel & Continue Browsing
+        </button>
+      </div>
+
     </div>
-
-    <h3 style="margin: 0 0 8px 0; font-weight: 800; color: var(--brand-navy); font-size: 1.25rem;">
-      Login to Complete Your Booking
-    </h3>
-
-    <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;">
-      You're just one step away! Please log in to your HealSync patient account to confirm your appointment reservation.
-    </p>
-
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <button (click)="redirectToLogin()" class="btn" style="background: var(--brand-navy); color: white; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; width: 100%;">
-        🔑 Login & Continue
-      </button>
-
-      <button (click)="redirectToRegister()" class="btn" style="background: #00c896; color: white; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; border: none; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(0, 200, 150, 0.3);">
-        ✨ New to HealSync? Create Free Account
-      </button>
-
-      <button (click)="closeAuthModal()" class="btn" style="background: transparent; color: var(--text-secondary); padding: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-top: 4px;">
-        Cancel & Continue Browsing
-      </button>
-    </div>
-
   </div>
-</div>

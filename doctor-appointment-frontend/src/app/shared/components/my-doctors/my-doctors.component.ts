@@ -70,8 +70,24 @@ export class MyDoctorsComponent implements OnInit {
   }
 
   openDoctorInfo(doc: any): void {
-    this.selectedDoctorForInfo = doc;
+    this.selectedDoctorForInfo = { ...doc };
     document.body.style.overflow = 'hidden';
+
+    // If city or state is missing/N/A, auto-populate from clinics API
+    if (!this.selectedDoctorForInfo.city || this.selectedDoctorForInfo.city === 'N/A') {
+      this.patientService.getClinicsByDoctorId(doc.doctorId).subscribe({
+        next: (clinics: any[]) => {
+          if (clinics && clinics.length > 0) {
+            const firstClinic = clinics[0];
+            if (this.selectedDoctorForInfo) {
+              this.selectedDoctorForInfo.city = firstClinic.city || 'Vadodara';
+              this.selectedDoctorForInfo.state = firstClinic.state || 'Gujarat';
+            }
+          }
+        },
+        error: () => {}
+      });
+    }
   }
 
   closeDoctorInfo(): void {

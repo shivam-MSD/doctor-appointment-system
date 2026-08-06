@@ -30,18 +30,21 @@ export class ToastService {
   public extractErrorMessage(err: any, defaultMessage: string = 'An unexpected error occurred'): string {
     if (!err) return defaultMessage;
 
-    // Intercept HTTP 500-level server errors globally
-    if (err?.status >= 500) {
-      return 'Our servers are experiencing a temporary issue. Please try again in a few moments.';
-    }
-
     let messageToInspect = '';
     if (typeof err === 'string') {
       messageToInspect = err;
     } else if (err?.error) {
       const errBody = err.error;
 
-      if (errBody.errors && typeof errBody.errors === 'object') {
+      if (typeof errBody === 'string') {
+        messageToInspect = errBody;
+      } else if (errBody.message) {
+        messageToInspect = errBody.message;
+      } else if (errBody.detail) {
+        messageToInspect = errBody.detail;
+      } else if (errBody.title) {
+        messageToInspect = errBody.title;
+      } else if (errBody.errors && typeof errBody.errors === 'object') {
         const messages: string[] = [];
         for (const prop in errBody.errors) {
           if (Object.prototype.hasOwnProperty.call(errBody.errors, prop)) {
@@ -58,29 +61,27 @@ export class ToastService {
         }
       }
 
-      if (!messageToInspect) {
-        messageToInspect = errBody.detail || errBody.title || errBody.message || JSON.stringify(errBody);
+      if (!messageToInspect && typeof errBody === 'object') {
+        messageToInspect = JSON.stringify(errBody);
       }
     } else if (err?.message) {
       messageToInspect = err.message;
-    } else {
+    } else if (typeof err === 'object') {
       messageToInspect = JSON.stringify(err);
     }
 
-    const lower = messageToInspect.toLowerCase();
-    if (
-      lower.includes('internal server error') ||
-      lower.includes('system.exception') ||
-      lower.includes('nullreferenceexception') ||
-      lower.includes('argumentexception') ||
-      lower.includes('sqlexception') ||
-      lower.includes('npgsql') ||
-      lower.includes('unhandled exception')
-    ) {
-      return 'Our servers are experiencing a temporary issue. Please try again in a few moments.';
+    if (messageToInspect) {
+      if (err?.status) {
+        return `[HTTP ${err.status}] ${messageToInspect}`;
+      }
+      return messageToInspect;
     }
 
-    return messageToInspect;
+    if (err?.status) {
+      return `[HTTP ${err.status}] Server returned error status ${err.status}.`;
+    }
+
+    return defaultMessage;
   }
 
   private addToast(type: 'success' | 'error', title: string, message: string, duration: number): void {

@@ -21,5 +21,9 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<object> SendFamilyLinkOtpAsync(Guid userId, SendFamilyLinkOtpDto dto);
 		Task<FamilyMemberDetailDto> VerifyFamilyLinkOtpAsync(Guid userId, VerifyFamilyLinkOtpDto dto);
 		Task DeleteFamilyMemberAsync(Guid userId, Guid familyPatientId);
+
+		// Contact Info Updates (Email & WhatsApp)
+		Task<object> InitiateUpdateContactInfoAsync(Guid userId, InitiateContactUpdateDto dto);
+		Task<PatientDto> ConfirmUpdateContactInfoAsync(Guid userId, ConfirmContactUpdateDto dto);
 	}
 }

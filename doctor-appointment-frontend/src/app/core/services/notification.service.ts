@@ -118,6 +118,10 @@ export class NotificationService {
       .catch(err => console.error('Error starting SignalR connection:', err));
   }
 
+  notifyDataRefresh(dataArea: string = 'All'): void {
+    this.refreshSource.next(dataArea);
+  }
+
   stopConnection(): void {
     if (this.hubConnection) {
       this.hubConnection.stop()

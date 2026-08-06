@@ -176,14 +176,18 @@ h6 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  background: #243B63;
   color: #ffffff;
-  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+  border: none;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(36, 59, 99, 0.25);
 }
 
 .btn-primary:hover {
+  background: #1C2B4F;
+  color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 6px 20px rgba(28, 43, 79, 0.4);
 }
 
 .btn-secondary {
@@ -889,15 +893,16 @@ body.light-theme .welcome-card {
 }
 
 body.light-theme .welcome-text h2 {
-  background: linear-gradient(to right, #0f172a, var(--accent-cyan)) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: var(--brand-navy) !important;
+  color: var(--brand-navy) !important;
 }
 
 body.light-theme .role-badge {
-  background: rgba(6, 182, 212, 0.08) !important;
-  border: 1px solid rgba(6, 182, 212, 0.25) !important;
-  color: #0891b2 !important;
+  background: rgba(36, 59, 99, 0.08) !important;
+  border: 1px solid rgba(36, 59, 99, 0.2) !important;
+  color: var(--brand-navy) !important;
 }
 
 /* -------------------------------------
@@ -1731,13 +1736,33 @@ table tbody tr {
   transform: translateY(-1px);
 }
 
-/* Universal Notes & Timeline Button Styling & Hover Effects */
+/* /* Global Top Loader Progress Bar (Brand Navy Theme) */
+.global-loader-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: rgba(36, 59, 99, 0.15);
+  z-index: 999999;
+  overflow: hidden;
+}
+
+.global-loader-progress {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #1C2B4F, #243B63, #38bdf8, #243B63);
+  background-size: 200% 100%;
+  animation: global-loader-anim 1.5s infinite linear;
+}
+
+/* Universal Notes & Timeline Button Styling & Hover Effects (Strict 6px border-radius) */
 .btn-notes, .btn-timeline, .btn-sm-outline {
   background: #ffffff !important;
   border: 1.5px solid var(--brand-navy, #243B63) !important;
   color: var(--brand-navy, #243B63) !important;
   font-weight: 500 !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   transition: all 0.2s ease-in-out !important;
 }
 
@@ -1746,31 +1771,49 @@ table tbody tr {
   color: #ffffff !important;
   border-color: var(--brand-navy, #243B63) !important;
   box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25) !important;
-  transform: translateY(-1px);
 }
 
 .btn-notes:hover lucide-icon, .btn-timeline:hover lucide-icon, .btn-sm-outline:hover lucide-icon {
   color: #ffffff !important;
 }
 
-/* Global Top Loader Progress Bar */
-.global-loader-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background-color: rgba(6, 182, 212, 0.15);
-  z-index: 999999;
-  overflow: hidden;
+/* Tier 2 Secondary Outline Buttons (Book Followup, Book Again, Doctor Details) - Strict 6px Radius */
+.btn-secondary-outline {
+  background: #ffffff !important;
+  border: 1.5px solid var(--brand-navy, #243B63) !important;
+  color: var(--brand-navy, #243B63) !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer;
 }
 
-.global-loader-progress {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #06b6d4, #3b82f6, #06b6d4);
-  background-size: 200% 100%;
-  animation: global-loader-anim 1.5s infinite linear;
+.btn-secondary-outline:hover {
+  background: var(--brand-navy, #243B63) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25) !important;
+}
+
+.btn-secondary-outline:hover lucide-icon {
+  color: #ffffff !important;
+}
+
+/* Tier 4 Destructive Red Outline Buttons (Cancel) - High Contrast & Light Red Tint Hover - Strict 6px Radius */
+.btn-destructive-outline, .btn-cancel-outline {
+  background: #ffffff !important;
+  border: 1.5px solid #dc2626 !important;
+  color: #dc2626 !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer;
+}
+
+.btn-destructive-outline:hover, .btn-cancel-outline:hover {
+  background: #fee2e2 !important;
+  border-color: #dc2626 !important;
+  color: #dc2626 !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
 }
 
 @keyframes global-loader-anim {
@@ -1912,7 +1955,7 @@ button[disabled] {
 }
 
 /* ==========================================================================
-   GLOBAL STATUS BADGES DESIGN SYSTEM (PAD: 6px 14px, FONT WEIGHT 500)
+   GLOBAL STATUS BADGES DESIGN SYSTEM (DESATURATED SOFT PASTELS)
    ========================================================================== */
 .badge,
 .status-badge,
@@ -1929,28 +1972,32 @@ button[disabled] {
 
 .badge-confirmed,
 .status-confirmed {
-  background: #00c896 !important;
-  color: #ffffff !important;
+  background: rgba(0, 200, 150, 0.14) !important;
+  color: #008966 !important;
+  border: 1px solid rgba(0, 200, 150, 0.3) !important;
 }
 
 .badge-pending,
 .status-pending {
-  background: #f59e0b !important;
-  color: #ffffff !important;
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 
 .badge-completed,
 .status-completed {
-  background: var(--brand-navy, #243B63) !important;
-  color: #ffffff !important;
+  background: rgba(36, 59, 99, 0.12) !important;
+  color: var(--brand-navy, #243B63) !important;
+  border: 1px solid rgba(36, 59, 99, 0.25) !important;
 }
 
 .badge-cancelled,
 .status-cancelled,
 .badge-rejected,
 .status-rejected {
-  background: #ef4444 !important;
-  color: #ffffff !important;
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #b91c1c !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
 /* ==========================================================================
@@ -2152,4 +2199,418 @@ input:checked+.slider-toggle {
 
 input:checked+.slider-toggle:before {
   transform: translateX(20px);
+}
+
+/* Global Application Button Typography (Font-Weight 500) */
+button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-cancel,
+.btn-update-contact,
+.submit-btn,
+.action-btn {
+  font-weight: 500 !important;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ==========================================
+   GLOBAL LONG TEXT & NAME TRUNCATION UTILITIES
+   ========================================== */
+.text-truncate-custom {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.text-break-word {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+td.truncate-cell,
+th.truncate-cell {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   GLOBAL PREMIUM DROPDOWN / SELECT SYSTEM (App-Wide Theme Standard)
+   ========================================================================== */
+
+/* Standardize ALL Select Elements Across Whole Application */
+select,
+.form-control select,
+select.form-control,
+select.form-select,
+select.premium-input,
+select.filter-select,
+select.custom-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: #ffffff !important;
+  /* Premium Custom Chevron SVG Arrow (Navy Blue) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23101F42' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px 16px !important;
+  border: 1.5px solid rgba(36, 59, 99, 0.22) !important;
+  border-radius: 12px !important;
+  padding: 10px 40px 10px 14px !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: var(--brand-navy) !important;
+  box-shadow: 0 2px 10px rgba(36, 59, 99, 0.05) !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  outline: none !important;
+}
+
+/* Hover & Focus States for All Select Dropdowns */
+select:hover,
+select.form-control:hover,
+select.form-select:hover {
+  border-color: var(--brand-navy) !important;
+  background-color: rgba(36, 59, 99, 0.02) !important;
+}
+
+select:focus,
+select.form-control:focus,
+select.form-select:focus,
+select.premium-input:focus {
+  border-color: var(--brand-navy) !important;
+  box-shadow: 0 0 0 3px rgba(36, 59, 99, 0.15) !important;
+  background-color: #ffffff !important;
+}
+
+/* Dropdown Menu Options Styling (Light Mode & Brand Theme) */
+select option {
+  background-color: #ffffff !important;
+  color: var(--brand-navy) !important;
+  font-weight: 700 !important;
+  font-size: 0.88rem !important;
+  padding: 12px 14px !important;
+  border-bottom: 1px solid rgba(36, 59, 99, 0.06);
+}
+
+select option:hover,
+select option:focus,
+select option:active,
+select option:checked {
+  background-color: rgba(36, 59, 99, 0.12) !important;
+  color: var(--brand-navy) !important;
+  font-weight: 800 !important;
+}
+
+/* ==========================================================================
+   UNIVERSAL CALENDAR BOOKLET COMPONENT SYSTEM
+   ========================================================================== */
+.calendar-booklet-card {
+  margin: 0 auto 16px auto !important;
+  width: 100% !important;
+  max-width: 250px !important;
+  box-shadow: 0 10px 28px rgba(36, 59, 99, 0.12) !important;
+  border: 1.5px solid rgba(36, 59, 99, 0.2) !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  transition: all 0.3s ease;
+}
+
+.calendar-booklet-binder {
+  background: var(--brand-navy) !important;
+  padding: 10px 16px !important;
+  font-size: 0.82rem !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px !important;
+}
+
+.calendar-booklet-binder span:last-child {
+  font-size: 0.65rem !important;
+  letter-spacing: 0.8px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+}
+
+.calendar-booklet-body {
+  padding: 16px 20px !important;
+  text-align: center !important;
+  background: #ffffff !important;
+}
+
+.calendar-booklet-day-num {
+  font-size: 2.8rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  margin: 4px 0 6px 0 !important;
+  color: var(--brand-navy) !important;
+}
+
+.calendar-booklet-day-name {
+  font-size: 0.8rem !important;
+  padding: 4px 14px !important;
+  font-weight: 800 !important;
+  color: var(--brand-navy) !important;
+  background: rgba(36, 59, 99, 0.08) !important;
+  border-radius: 8px !important;
+  display: inline-block !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+/* ==========================================================================
+   UNIVERSAL RESPONSIVE MOBILE UI & GRID LAYOUT SYSTEM (<768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+
+  /* 2-Column Grid Layout for ALL Filter Controls Across ALL Pages */
+  .filter-controls,
+  .filter-form,
+  .filters-grid,
+  .filters-wrapper,
+  .filter-row,
+  .filter-input-group,
+  .filter-select-group {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .filter-controls > *,
+  .filter-form > *,
+  .filters-grid > *,
+  .filters-wrapper > *,
+  .filter-row > *,
+  .filter-col,
+  .filter-group {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Filter Actions / Search Buttons spanned full width if odd */
+  .filter-btn,
+  .filter-actions,
+  .filter-col.flex-2 {
+    grid-column: span 2 !important;
+  }
+
+  /* Compact Filter Selects & Search Inputs */
+  .filter-select,
+  .form-control.filter-select,
+  select.filter-select,
+  input[type="date"].filter-select,
+  .filter-col input,
+  .filter-col select,
+  .filter-group input,
+  .filter-group select,
+  .search-box input,
+  .search-bar input {
+    padding: 6px 10px !important;
+    font-size: 0.78rem !important;
+    height: 36px !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Compact Tabs & Toggle Containers */
+  .tabs-container,
+  .ind-tabs-container {
+    padding: 2px !important;
+    border-radius: 8px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+  }
+
+  .tabs-container .btn,
+  .ind-tab-btn {
+    padding: 4px 6px !important;
+    font-size: 0.72rem !important;
+    border-radius: 6px !important;
+    flex: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  /* Soft Ambient Border & Light Shadow for Mobile Glass Cards Across All Pages */
+  .glass-card,
+  .dashboard-card,
+  .card-box,
+  .booking-card,
+  .premium-glass-card,
+  .doctor-card,
+  .clinic-card,
+  .member-card,
+  .profile-card,
+  .table-card {
+    background: #ffffff !important;
+    border: 1.5px solid rgba(36, 59, 99, 0.12) !important;
+    box-shadow: 0 6px 20px rgba(36, 59, 99, 0.06) !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Stat Cards 2-Column Grid on Mobile */
+  .metrics-row,
+  .metrics-grid,
+  .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .metric-card,
+  .stat-card {
+    background: #ffffff !important;
+    border: 1.5px solid rgba(36, 59, 99, 0.12) !important;
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 14px rgba(36, 59, 99, 0.05) !important;
+  }
+
+  .metric-card h2,
+  .stat-card h2 {
+    font-size: 1.35rem !important;
+  }
+
+  .metric-card p,
+  .stat-card p {
+    font-size: 0.75rem !important;
+  }
+
+  /* General Component Font & Size Scaling Across All Portals */
+  h1, .h1 { font-size: 1.35rem !important; }
+  h2, .h2 { font-size: 1.15rem !important; }
+  h3, .h3 { font-size: 1.02rem !important; }
+  h4, .h4 { font-size: 0.92rem !important; }
+  p, span, label, input, button, select {
+    font-size: 0.82rem;
+  }
+
+  /* Compact Action Buttons on Mobile */
+  .btn {
+    padding: 8px 14px !important;
+    font-size: 0.82rem !important;
+    border-radius: 8px !important;
+  }
+
+  .btn-sm, .btn-sm-outline {
+    padding: 5px 10px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Status Color Key Legend on Mobile */
+  .status-legend {
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 0.72rem !important;
+  }
+}
+
+/* ==========================================================================
+   UNIVERSAL GROUNDED SECTION CARDS & ELEVATED CONTAINER SYSTEM (DESKTOP + MOBILE)
+   ========================================================================== */
+.table-card,
+.glass-card,
+.premium-glass-card,
+.dashboard-card,
+.section-card {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(36, 59, 99, 0.12) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 30px rgba(36, 59, 99, 0.08) !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease;
+}
+
+/* Stat Cards / Metrics Container System */
+.metrics-row,
+.metrics-grid,
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card,
+.stat-card {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(36, 59, 99, 0.12) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 6px 20px rgba(36, 59, 99, 0.06) !important;
+  padding: 16px 18px !important;
+  transition: all 0.2s ease !important;
+}
+
+.metric-card:hover,
+.stat-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 25px rgba(36, 59, 99, 0.12) !important;
+}
+
+/* ==========================================================================
+   UNIVERSAL ANIMATED SKELETON SHIMMER SYSTEM
+   ========================================================================== */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-box,
+.skeleton-shimmer,
+.skeleton-card,
+.skeleton-line {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.6) 25%,
+    rgba(241, 245, 249, 0.95) 37%,
+    rgba(226, 232, 240, 0.6) 63%
+  ) !important;
+  background-size: 400% 100% !important;
+  animation: shimmer 1.4s infinite ease-in-out !important;
+  border-radius: 8px !important;
 }

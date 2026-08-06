@@ -42,4 +42,19 @@ namespace DoctorAppointmentSystem.Application.DTOs
 		[Phone]
 		public string EmergencyContactNumber { get; set; }
 	}
+
+	public class InitiateContactUpdateDto
+	{
+		public string? NewEmail { get; set; }
+		public string? NewMobileNo { get; set; }
+		public string Channel { get; set; } = "Both"; // "Email", "WhatsApp", "Both"
+	}
+
+	public class ConfirmContactUpdateDto
+	{
+		public string? NewEmail { get; set; }
+		public string? NewMobileNo { get; set; }
+		public string? EmailOtp { get; set; }
+		public string? MobileOtp { get; set; }
+	}
 }

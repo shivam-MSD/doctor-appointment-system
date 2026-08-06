@@ -68,12 +68,46 @@ namespace DoctorAppointmentSystem.Application.Services
 					CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
 				};
 				await _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", dto);
+				await _hubContext.Clients.All.SendAsync("RefreshData", "Appointments");
 
 				// Dispatch background Web Push Lockscreen alert for mobile devices (when app is closed)
 				var webPushService = _serviceProvider.GetService<IWebPushService>();
 				if (webPushService != null)
 				{
 					await webPushService.SendPushNotificationAsync(userId.ToString(), "HealSync Appointment Alert", message);
+				}
+
+				// Dispatch WhatsApp Alert to Patient, Doctor, or Admin if mobile number exists
+				var whatsAppService = _serviceProvider.GetService<IWhatsAppService>();
+				if (whatsAppService != null)
+				{
+					// 1. Check Patient mobile
+					var userPatient = await _dbContext.UserPatients
+						.Include(up => up.Patient)
+						.FirstOrDefaultAsync(up => up.UserId == userId && up.RelationshipType == ERelationshipType.Self);
+
+					if (userPatient?.Patient?.MobileNo != null)
+					{
+						await whatsAppService.SendWhatsAppAlertAsync(userPatient.Patient.MobileNo, message);
+					}
+					else
+					{
+						// 2. Check Doctor mobile
+						var doctor = await _dbContext.Doctors.FirstOrDefaultAsync(d => EF.Property<Guid>(d, "UserId") == userId);
+						if (doctor?.MobileNo != null)
+						{
+							await whatsAppService.SendWhatsAppAlertAsync(doctor.MobileNo, message);
+						}
+						else
+						{
+							// 3. Admin mobile check
+							var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+							if (user?.Email != null)
+							{
+								Console.WriteLine($"[Admin Notification] User {user.Email}: {message}");
+							}
+						}
+					}
 				}
 			}
 			catch (Exception ex)
@@ -99,6 +133,7 @@ namespace DoctorAppointmentSystem.Application.Services
 					.ToListAsync();
 
 				var notificationsToPush = new List<(Guid UserId, NotificationDto Dto)>();
+				var whatsAppService = _serviceProvider.GetService<IWhatsAppService>();
 
 				foreach (var user in users)
 				{
@@ -120,6 +155,16 @@ namespace DoctorAppointmentSystem.Application.Services
 						CreatedDate = DateTime.SpecifyKind(notification.CreatedDate, DateTimeKind.Utc)
 					};
 					notificationsToPush.Add((user.UserId, dto));
+
+					// Dispatch WhatsApp alert to role members
+					if (whatsAppService != null)
+					{
+						var doc = await _dbContext.Doctors.FirstOrDefaultAsync(d => EF.Property<Guid>(d, "UserId") == user.UserId);
+						if (doc?.MobileNo != null)
+						{
+							await whatsAppService.SendWhatsAppAlertAsync(doc.MobileNo, message);
+						}
+					}
 				}
 
 				await _dbContext.SaveChangesAsync();

@@ -9,8 +9,23 @@
   </button>
 
   <div class="brand" style="display: flex; align-items: center; gap: 10px;">
-    <img src="assets/healsync-logo-navy.svg" alt="HealSync Logo" style="width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);" />
+    <img src="assets/healsync-logo-navy.svg" class="brand-logo-img" alt="HealSync Logo" style="width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);" />
     <div class="title" style="color: var(--text-primary); font-weight: 800; font-size: 1.3rem; letter-spacing: -0.3px;">HealSync</div>
+    
+    <!-- Tata Neu-Style Header City Selector (Only visible for Patient role) -->
+    <div class="header-city-selector hide-on-mobile" *ngIf="(authService.currentUser$ | async)?.role === 'Patient' || (authService.currentUser$ | async)?.role === 'patient'" style="display: flex; align-items: center; background: rgba(36, 59, 99, 0.06); border: 1px solid rgba(36, 59, 99, 0.18); border-radius: 20px; padding: 4px 12px; margin-left: 8px; gap: 6px; cursor: pointer;">
+      <lucide-icon name="map-pin" [size]="14" style="color: var(--brand-navy);"></lucide-icon>
+      <select [(ngModel)]="selectedCity" (change)="onCitySelected(selectedCity)" style="background: transparent; border: none; font-size: 0.82rem; font-weight: 700; color: var(--brand-navy); outline: none; cursor: pointer;">
+        <option value="">All Cities</option>
+        <option value="Vadodara">Vadodara</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="Ahmedabad">Ahmedabad</option>
+        <option value="Surat">Surat</option>
+        <option value="Delhi">Delhi</option>
+        <option value="Pune">Pune</option>
+        <option value="Bangalore">Bangalore</option>
+      </select>
+    </div>
   </div>
 
   <div class="actions">
@@ -20,11 +35,6 @@
       <span class="clock-separator" style="color: var(--brand-navy); margin: 0 6px;">•</span>
       <span class="clock-time" style="color: var(--brand-navy); font-weight: 700;">{{ currentDateTime | date:'h:mm:ss a' }}</span>
     </div>
-
-    <!-- Theme Toggle Switcher -->
-    <button class="icon-btn" (click)="toggleTheme()" title="Toggle Light/Dark Theme">
-      <lucide-icon [name]="themeService.getCurrentTheme() === 'dark' ? 'sun' : 'moon'" [size]="18" style="color: var(--brand-navy);"></lucide-icon>
-    </button>
 
     <!-- User Information & Session Controls -->
     <ng-container *ngIf="authService.currentUser$ | async as user; else authLinks">
@@ -39,26 +49,61 @@
 
         <!-- Dropdown panel -->
         <div class="notifications-panel" *ngIf="showNotificationsPanel">
-          <div class="panel-header">
-            <h4>Notifications</h4>
-            <button class="btn btn-link" *ngIf="getUnreadCount() > 0" (click)="markAllAsRead()">Mark all read</button>
+          <div class="panel-header" style="padding: 14px 16px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.08)); display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">Notifications</h4>
+              <span *ngIf="getUnreadCount() > 0" style="background: rgba(36, 59, 99, 0.1); color: var(--brand-navy); font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">{{ getUnreadCount() }} new</span>
+            </div>
+            <button class="btn btn-link" (click)="markAllAsRead()" style="font-size: 0.78rem; color: var(--brand-navy); font-weight: 600; text-decoration: none; padding: 0; cursor: pointer;">Mark all read</button>
           </div>
-          <div class="panel-body">
-            <div *ngIf="notifications.length === 0" class="text-muted text-center">
-              No notifications yet.
+          
+          <div class="panel-body" style="max-height: 360px; overflow-y: auto; padding: 0;">
+            <div *ngIf="notifications.length === 0" class="empty-notifications" style="padding: 32px 16px; text-align: center; color: var(--text-secondary);">
+              <lucide-icon name="bell-off" [size]="28" style="color: var(--text-secondary); opacity: 0.5; margin-bottom: 8px;"></lucide-icon>
+              <p style="margin: 0; font-size: 0.88rem; font-weight: 500;">No notifications yet.</p>
+              <span style="font-size: 0.78rem; opacity: 0.7;">We'll notify you when appointment updates arrive.</span>
             </div>
-            <div *ngFor="let notification of notifications" class="notification-item" [style.opacity]="notification.isRead ? 0.6 : 1">
-              <p [innerHTML]="notification.message"></p>
-              <span class="text-muted">{{ notification.createdDate | date:'short' }}</span>
+            
+            <div *ngFor="let notification of notifications" class="notification-item" 
+              [ngStyle]="{
+                'background': notification.isRead ? 'transparent' : 'rgba(36, 59, 99, 0.05)',
+                'border-bottom': '1px solid var(--border-color, rgba(0,0,0,0.06))',
+                'padding': '12px 16px',
+                'display': 'flex',
+                'align-items': 'flex-start',
+                'gap': '12px',
+                'position': 'relative'
+              }">
+              
+              <!-- Unread Dot Indicator -->
+              <span *ngIf="!notification.isRead" style="position: absolute; left: 6px; top: 18px; width: 6px; height: 6px; border-radius: 50%; background: var(--brand-navy);"></span>
+
+              <!-- Type Icon -->
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(36, 59, 99, 0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                <lucide-icon [name]="getNotificationIcon(notification.message)" [size]="16" [style.color]="getNotificationIconColor(notification.message)"></lucide-icon>
+              </div>
+
+              <!-- Message Content -->
+              <div style="flex: 1;">
+                <p style="margin: 0 0 4px 0; font-size: 0.84rem; line-height: 1.4; color: var(--text-primary);" [style.font-weight]="notification.isRead ? '400' : '600'" [innerHTML]="notification.message"></p>
+                <span style="font-size: 0.72rem; color: var(--text-secondary); opacity: 0.8; font-weight: 500;">{{ getTimeAgo(notification.createdDate) }}</span>
+              </div>
             </div>
+          </div>
+
+          <!-- Panel Footer -->
+          <div class="panel-footer" style="padding: 10px 16px; border-top: 1px solid var(--border-color, rgba(0,0,0,0.08)); text-align: center; background: rgba(0,0,0,0.02);">
+            <a routerLink="/patient/audit-logs" (click)="showNotificationsPanel = false" style="font-size: 0.78rem; color: var(--brand-navy); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+              View Activity History <lucide-icon name="arrow-right" [size]="13"></lucide-icon>
+            </a>
           </div>
         </div>
       </div>
 
       <!-- Role Badge Indicator & Profile Avatar -->
       <div class="profile-container" style="position: relative; display: flex; align-items: center; gap: 10px;">
-        <span class="role-badge-header hide-on-mobile" style="background: rgba(36, 59, 99, 0.1); color: var(--brand-navy); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(36, 59, 99, 0.2); letter-spacing: 0.5px;">
-          {{ user.role | uppercase }}
+        <span class="role-badge-header hide-on-mobile" style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy); border: 1px solid rgba(36, 59, 99, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">
+          {{ user.role }}
         </span>
         <button class="profile-avatar-btn" (click)="toggleProfilePanel()" title="Profile Menu">
           <div class="avatar-circle" style="background: var(--brand-navy); color: #ffffff; border: 1.5px solid rgba(36, 59, 99, 0.4); font-weight: 800;">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
@@ -71,9 +116,19 @@
             <div class="profile-info-content">
               <h4>{{ user.firstName }} {{ user.lastName }}</h4>
               <span class="role-badge" style="background: rgba(36, 59, 99, 0.1); color: var(--brand-navy); font-weight: 700;">{{ user.role }}</span>
+              <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; word-break: break-all;">
+                ✉️ {{ user.email || user.phoneNumber || 'shivapatel1102001@gmail.com' }}
+              </p>
             </div>
           </div>
-          <div class="profile-menu">
+          <div class="profile-menu" style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0;">
+            <button class="btn profile-menu-item" (click)="toggleTheme()" style="width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text-primary); font-weight: 500; padding: 8px 12px; border-radius: 6px;">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <lucide-icon [name]="themeService.getCurrentTheme() === 'dark' ? 'sun' : 'moon'" [size]="16" style="color: var(--brand-navy);"></lucide-icon>
+                {{ themeService.getCurrentTheme() === 'dark' ? 'Light Mode' : 'Dark Mode' }}
+              </span>
+              <span style="font-size: 0.7rem; opacity: 0.7; text-transform: uppercase; font-weight: 700; background: rgba(36, 59, 99, 0.08); padding: 2px 6px; border-radius: 4px; color: var(--brand-navy);">{{ themeService.getCurrentTheme() }}</span>
+            </button>
             <button class="btn profile-menu-item" (click)="logout()" style="color: var(--status-cancelled); width: 100%; text-align: left; display: flex; align-items: center; gap: 8px;">
               <lucide-icon name="x-circle" [size]="16"></lucide-icon> Logout
             </button>

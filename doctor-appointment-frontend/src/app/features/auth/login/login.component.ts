@@ -16,6 +16,20 @@ export class LoginComponent implements OnInit {
   selectedRole: 'Patient' | 'Doctor' | 'Admin' | 'SuperAdmin' = 'Patient';
   isFixedRole = false;
 
+  // Login Mode Toggle
+  loginMode: 'password' | 'whatsapp' = 'password';
+  whatsAppMobileNo = '';
+  whatsAppOtpCode = '';
+  whatsAppOtpSent = false;
+  isSendingWhatsAppOtp = false;
+
+  // 2FA Dialog state
+  showTwoFactorModal = false;
+  twoFactorUserId = '';
+  twoFactorChannels: string[] = [];
+  twoFactorOtp = '';
+  twoFactorError = '';
+
   // Verification Dialog state
   showVerificationModal = false;
   verificationEmail = '';
@@ -148,15 +162,22 @@ export class LoginComponent implements OnInit {
 
     this.isLoading = true;
     this.authService.login({ email: this.email, password: this.password, role: this.selectedRole }).subscribe({
-      next: (user) => {
+      next: (res) => {
         this.isLoading = false;
-        if (user.role !== this.selectedRole) {
+        if (res.requiresTwoFactor) {
+          this.twoFactorUserId = res.userId;
+          this.twoFactorChannels = res.twoFactorChannels || ['Email'];
+          this.showTwoFactorModal = true;
+          this.toastService.showSuccess(`2FA Code dispatched to ${this.twoFactorChannels.join(' & ')}!`);
+          return;
+        }
+        if (res.role !== this.selectedRole) {
           this.authService.logout();
           this.errorMessage = `Unauthorized access. Invalid credentials for the ${this.getPortalTitle()}.`;
           return;
         }
         this.toastService.showSuccess('Logged in successfully!');
-        this.redirectToRoleDashboard(user.role);
+        this.redirectToRoleDashboard(res.role);
       },
       error: (err) => {
         this.isLoading = false;
@@ -200,5 +221,84 @@ export class LoginComponent implements OnInit {
     this.showVerificationModal = false;
     this.verificationError = '';
     this.verificationSuccess = '';
+  }
+
+  onSendWhatsAppOtp(): void {
+    if (!this.whatsAppMobileNo || this.whatsAppMobileNo.length < 10) {
+      this.toastService.showError('Please enter a valid WhatsApp mobile number (min 10 digits).');
+      return;
+    }
+
+    this.isSendingWhatsAppOtp = true;
+    this.errorMessage = '';
+
+    this.authService.sendAuthOtp({
+      targetIdentifier: this.whatsAppMobileNo,
+      channel: 'WhatsApp',
+      purpose: 'Login'
+    }).subscribe({
+      next: (res) => {
+        this.isSendingWhatsAppOtp = false;
+        this.whatsAppOtpSent = true;
+        this.toastService.showSuccess(res.message || 'OTP dispatched to your WhatsApp number!');
+      },
+      error: (err) => {
+        this.isSendingWhatsAppOtp = false;
+        this.errorMessage = this.toastService.extractErrorMessage(err, 'Failed to send WhatsApp OTP.');
+        this.toastService.showError(this.errorMessage);
+      }
+    });
+  }
+
+  onWhatsAppLogin(): void {
+    if (!this.whatsAppMobileNo || !this.whatsAppOtpCode) {
+      this.toastService.showError('Please enter your WhatsApp mobile number and 6-digit OTP code.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.authService.loginWithWhatsApp({
+      mobileNo: this.whatsAppMobileNo,
+      otpCode: this.whatsAppOtpCode
+    }).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.toastService.showSuccess('Logged in successfully via WhatsApp!');
+        this.redirectToRoleDashboard(res.role || 'Patient');
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = this.toastService.extractErrorMessage(err, 'WhatsApp Login failed.');
+        this.toastService.showError(this.errorMessage);
+      }
+    });
+  }
+
+  onVerifyTwoFactor(): void {
+    if (!this.twoFactorOtp || this.twoFactorOtp.length !== 6) {
+      this.twoFactorError = 'Please enter a valid 6-digit 2FA code.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.twoFactorError = '';
+
+    this.authService.verifyTwoFactor({
+      userId: this.twoFactorUserId,
+      otpCode: this.twoFactorOtp
+    }).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.showTwoFactorModal = false;
+        this.toastService.showSuccess('2FA Verification successful! Logged in.');
+        this.redirectToRoleDashboard(res.role || 'Patient');
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.twoFactorError = err?.error?.detail || 'Invalid 2FA security code. Please try again.';
+      }
+    });
   }
 }

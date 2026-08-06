@@ -13,7 +13,24 @@
       <button type="button" class="tab-btn" [class.active]="selectedRole === 'Doctor'" (click)="selectRole('Doctor')">🩺 Doctor</button>
     </div>
 
-    <form #loginForm="ngForm" (submit)="onSubmit(loginForm); $event.preventDefault()">
+    <!-- Login Method Selector (Password vs WhatsApp OTP) -->
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; background: rgba(0,0,0,0.04); padding: 4px; border-radius: 12px;">
+      <button type="button" (click)="loginMode = 'password'; errorMessage = ''"
+        [style.background]="loginMode === 'password' ? 'var(--brand-navy)' : 'transparent'"
+        [style.color]="loginMode === 'password' ? '#fff' : 'var(--text-secondary)'"
+        style="flex: 1; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">
+        🔐 Email & Password
+      </button>
+      <button type="button" (click)="loginMode = 'whatsapp'; errorMessage = ''"
+        [style.background]="loginMode === 'whatsapp' ? '#00c896' : 'transparent'"
+        [style.color]="loginMode === 'whatsapp' ? '#fff' : 'var(--text-secondary)'"
+        style="flex: 1; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">
+        💬 WhatsApp OTP
+      </button>
+    </div>
+
+    <!-- Mode 1: Email & Password Form -->
+    <form *ngIf="loginMode === 'password'" #loginForm="ngForm" (submit)="onSubmit(loginForm); $event.preventDefault()">
       <!-- Success Message Banner -->
       <div class="success-banner" *ngIf="successMessage">
         <span>✓</span> {{ successMessage }}
@@ -51,6 +68,52 @@
       <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="isLoading">
         <span *ngIf="isLoading" class="btn-spinner"></span>
         <span>{{ isLoading ? 'Logging in...' : 'Log In' }}</span>
+      </button>
+    </form>
+
+    <!-- Mode 2: WhatsApp OTP Form -->
+    <form *ngIf="loginMode === 'whatsapp'" (submit)="onWhatsAppLogin(); $event.preventDefault()">
+      <div class="success-banner" *ngIf="successMessage">
+        <span>✓</span> {{ successMessage }}
+      </div>
+
+      <div class="error-banner" *ngIf="errorMessage">
+        <span>⚠️</span> {{ errorMessage }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">WhatsApp Mobile Number *</label>
+        <div style="display: flex; gap: 8px;">
+          <input 
+            class="form-control" 
+            type="tel" 
+            name="waMobile" 
+            [(ngModel)]="whatsAppMobileNo" 
+            placeholder="e.g. +919876543210" 
+            required>
+          <button type="button" (click)="onSendWhatsAppOtp()" [disabled]="isSendingWhatsAppOtp"
+            class="btn" style="background: #00c896; color: white; border: none; font-weight: 700; white-space: nowrap; padding: 0 16px; border-radius: 10px;">
+            {{ isSendingWhatsAppOtp ? 'Sending...' : (whatsAppOtpSent ? 'Resend' : 'Send OTP') }}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="whatsAppOtpSent">
+        <label class="form-label">6-Digit WhatsApp OTP Code *</label>
+        <input 
+          class="form-control code-input" 
+          type="text" 
+          name="waOtp" 
+          [(ngModel)]="whatsAppOtpCode" 
+          placeholder="Enter 6-digit OTP code" 
+          maxlength="6"
+          required>
+      </div>
+
+      <button class="btn w-100 submit-btn" type="submit" [disabled]="isLoading || !whatsAppOtpSent"
+        style="background: #00c896; color: white; border: none; font-weight: 800;">
+        <span *ngIf="isLoading" class="btn-spinner"></span>
+        <span>{{ isLoading ? 'Verifying OTP...' : 'Login with WhatsApp' }}</span>
       </button>
     </form>
 
@@ -93,6 +156,51 @@
         </div>
 
         <button class="btn btn-primary w-100 submit-btn" type="submit">Verify & Log In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2FA Authentication OTP Modal -->
+  <div class="modal-backdrop" *ngIf="showTwoFactorModal" (click)="showTwoFactorModal = false">
+    <div class="glass-card modal-content" (click)="$event.stopPropagation()" style="max-width: 440px; border-radius: 20px; position: relative; padding: 32px 28px; background: #ffffff !important; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); border: 1px solid rgba(226, 232, 240, 0.8);">
+      
+      <!-- Clean Close Button inside top-right corner -->
+      <button type="button" (click)="showTwoFactorModal = false" style="position: absolute; top: 16px; right: 16px; border: none; background: #f1f5f9; color: #64748b; font-size: 1.3rem; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 20;">&times;</button>
+      
+      <!-- Clean Modal Title Block -->
+      <div class="tfa-modal-header" style="text-align: center; margin-bottom: 24px; background: transparent !important; border: none !important; padding: 0 !important;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+          <span style="font-size: 1.8rem;">🛡️</span>
+        </div>
+        <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #0f172a !important;">2FA Security Verification</h3>
+        <p style="margin: 6px 0 0 0; font-size: 0.88rem; color: #64748b !important; line-height: 1.4;">
+          Password verified! Enter the 6-digit security code sent to your
+          <strong style="color: #0f172a;">{{ twoFactorChannels.join(' and ') }}</strong>.
+        </p>
+      </div>
+
+      <form (submit)="onVerifyTwoFactor(); $event.preventDefault()">
+        <div class="error-banner" *ngIf="twoFactorError" style="margin-bottom: 16px;">
+          <span>⚠️</span> {{ twoFactorError }}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="twoFactorOtp" style="color: #1e293b; font-weight: 600; font-size: 0.9rem;">6-Digit Security Code *</label>
+          <input 
+            class="form-control code-input" 
+            type="text" 
+            id="twoFactorOtp" 
+            name="twoFactorOtp" 
+            [(ngModel)]="twoFactorOtp" 
+            placeholder="Enter 6-digit OTP" 
+            maxlength="6"
+            style="text-align: center; font-size: 1.3rem; letter-spacing: 6px; padding: 12px; border-radius: 10px;"
+            required>
+        </div>
+
+        <button class="btn btn-primary w-100" type="submit" [disabled]="isLoading" style="font-weight: 500; padding: 12px; font-size: 0.95rem; border-radius: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: #ffffff;">
+          {{ isLoading ? 'Verifying 2FA Code...' : 'Verify Code & Log In' }}
+        </button>
       </form>
     </div>
   </div>

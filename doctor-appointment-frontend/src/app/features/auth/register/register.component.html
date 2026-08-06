@@ -45,16 +45,71 @@
         </div>
       </div>
 
+      <!-- Email Field with Inline OTP Verification -->
       <div class="form-group">
-        <label class="form-label" for="email">Email Address</label>
-        <input 
-          class="form-control" 
-          type="email" 
-          id="email" 
-          name="email" 
-          [(ngModel)]="email" 
-          placeholder="name@example.com" 
-          required>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label class="form-label mb-0" for="email">Email Address (Optional*)</label>
+          <span *ngIf="isEmailVerified" style="color: #10b981; font-weight: 800; font-size: 0.85rem;">✓ Verified</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input 
+            class="form-control" 
+            type="email" 
+            id="email" 
+            name="email" 
+            [(ngModel)]="email" 
+            placeholder="name@example.com" 
+            [disabled]="isEmailVerified">
+          <button type="button" *ngIf="!isEmailVerified" (click)="onSendEmailOtp()" [disabled]="isSendingEmailOtp || !email"
+            class="btn" style="background: var(--brand-navy); color: white; border: none; font-size: 0.8rem; font-weight: 700; padding: 0 14px; border-radius: 10px; white-space: nowrap;">
+            {{ isSendingEmailOtp ? 'Sending...' : (emailOtpSent ? 'Resend' : 'Send OTP') }}
+          </button>
+        </div>
+        <div *ngIf="emailError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;">⚠️ {{ emailError }}</div>
+
+        <!-- Email OTP Code Box -->
+        <div *ngIf="emailOtpSent && !isEmailVerified" style="display: flex; gap: 8px; margin-top: 8px;">
+          <input class="form-control" type="text" name="emailOtpCode" [(ngModel)]="emailOtpCode" placeholder="Enter 6-digit Email OTP" maxlength="6" style="text-align: center; font-weight: 700; letter-spacing: 2px;">
+          <button type="button" (click)="onVerifyEmailOtp()" [disabled]="isVerifyingEmailOtp || !emailOtpCode"
+            class="btn" style="background: #10b981; color: white; border: none; font-size: 0.8rem; font-weight: 700; padding: 0 16px; border-radius: 10px;">
+            {{ isVerifyingEmailOtp ? 'Verifying...' : 'Verify' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- WhatsApp Field with Inline OTP Verification -->
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label class="form-label mb-0" for="mobileNo">WhatsApp Number (Optional*)</label>
+          <span *ngIf="isWhatsAppVerified" style="color: #10b981; font-weight: 800; font-size: 0.85rem;">✓ Verified</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input 
+            class="form-control" 
+            type="tel" 
+            id="mobileNo" 
+            name="mobileNo" 
+            [(ngModel)]="mobileNo" 
+            placeholder="+919876543210" 
+            [disabled]="isWhatsAppVerified">
+          <button type="button" *ngIf="!isWhatsAppVerified" (click)="onSendWhatsAppOtp()" [disabled]="isSendingWhatsAppOtp || !mobileNo"
+            class="btn" style="background: #00c896; color: white; border: none; font-size: 0.8rem; font-weight: 700; padding: 0 14px; border-radius: 10px; white-space: nowrap;">
+            {{ isSendingWhatsAppOtp ? 'Sending...' : (whatsAppOtpSent ? 'Resend' : 'Send OTP') }}
+          </button>
+        </div>
+        <div *ngIf="whatsAppError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;">⚠️ {{ whatsAppError }}</div>
+
+        <!-- WhatsApp OTP Code Box -->
+        <div *ngIf="whatsAppOtpSent && !isWhatsAppVerified" style="display: flex; gap: 8px; margin-top: 8px;">
+          <input class="form-control" type="text" name="waOtpCode" [(ngModel)]="whatsAppOtpCode" placeholder="Enter 6-digit WhatsApp OTP" maxlength="6" style="text-align: center; font-weight: 700; letter-spacing: 2px;">
+          <button type="button" (click)="onVerifyWhatsAppOtp()" [disabled]="isVerifyingWhatsAppOtp || !whatsAppOtpCode"
+            class="btn" style="background: #10b981; color: white; border: none; font-size: 0.8rem; font-weight: 700; padding: 0 16px; border-radius: 10px;">
+            {{ isVerifyingWhatsAppOtp ? 'Verifying...' : 'Verify' }}
+          </button>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
+          *At least one channel (Email or WhatsApp) must be verified to create your account.
+        </div>
       </div>
 
       <div class="form-group">
@@ -84,20 +139,8 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="mobileNo">Mobile Number</label>
-        <input 
-          class="form-control" 
-          type="tel" 
-          id="mobileNo" 
-          name="mobileNo" 
-          [(ngModel)]="mobileNo" 
-          placeholder="+1 555-0199" 
-          required>
-      </div>
-
-      <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="registerForm.invalid || !passwordsMatch || isSubmitting">
-        <span *ngIf="!isSubmitting">Sign Up</span>
+      <button class="btn btn-primary w-100 submit-btn" type="submit" [disabled]="registerForm.invalid || !passwordsMatch || (!isEmailVerified && !isWhatsAppVerified) || isSubmitting">
+        <span *ngIf="!isSubmitting">Create Account</span>
         <span *ngIf="isSubmitting">Signing up...</span>
       </button>
     </form>

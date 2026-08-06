@@ -1,0 +1,94 @@
+# Implementation Plan - 2FA Authentication & Registration OTP Verification
+
+This plan outlines the implementation of **2FA Authentication (Email & WhatsApp Dual Delivery)** and the **Registration Form OTP Verification Upgrade**.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> - **2FA Master Toggle in Settings:** A new toggle `Two-Factor Authentication (2FA)` will be added to the Security Settings page for Patients, Doctors, and Admins (SuperAdmin exempted).
+> - **Simultaneous Dual Channel 2FA Delivery:** If 2FA is enabled and a user has **both** Email and WhatsApp on file, the system will generate **ONE** OTP code and send it to **BOTH** channels simultaneously.
+> - **Registration Dual Channel OTP Verification:** On the registration page, each channel (Email, WhatsApp) has an inline `Send OTP` + `Verify` flow. Duplicate checks trigger immediately when `Send OTP` is clicked. `Create Account` requires at least 1 verified channel.
+
+---
+
+## Proposed Changes
+
+### 1. Database Domain Layer (.NET Core)
+
+#### [MODIFY] [User.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Domain/Entities/User.cs)
+- Add property: `public bool IsTwoFactorEnabled { get; set; } = false;`
+
+---
+
+### 2. Application Layer DTOs & Services (.NET Core)
+
+#### [MODIFY] [AuthDTOs.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/DTOs/AuthDTOs.cs)
+- Add `VerifyTwoFactorDto`: `{ UserId / TargetIdentifier, OtpCode }`.
+- Update `AuthResponseDto`: Add `RequiresTwoFactor`, `TwoFactorChannels` (`["Email", "WhatsApp"]`).
+
+#### [MODIFY] [AuthService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/AuthService.cs)
+- **Login Flow Update:**
+  1. Verify password.
+  2. If `user.IsTwoFactorEnabled` is `true` (and not SuperAdmin):
+     - Generate single 6-digit 2FA OTP code.
+     - Store in Redis cache (`2fa_otp:{userId}`).
+     - If user has verified Email $\rightarrow$ Enqueue Email OTP.
+     - If user has verified WhatsApp $\rightarrow$ Dispatch WhatsApp OTP.
+     - Return `{ requiresTwoFactor = true, userId = user.UserId, sentTo = ["Email", "WhatsApp"] }`.
+- Implement `VerifyTwoFactorAsync`: Verify 2FA OTP code and generate JWT token upon success.
+
+#### [MODIFY] [UserService.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Application/Services/UserService.cs)
+- Implement `ToggleTwoFactorAsync(Guid userId, bool enabled)` to update `user.IsTwoFactorEnabled`.
+
+---
+
+### 3. API Controllers (.NET Core)
+
+#### [MODIFY] [AuthController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/AuthController.cs)
+- Add endpoint: `POST /api/Auth/verify-2fa`
+
+#### [MODIFY] [UsersController.cs](file:///d:/shivam/doctor-appointment-system/DoctorAppointmentSystem/DoctorAppointmentSystem/Controllers/UsersController.cs)
+- Add endpoint: `POST /api/Users/toggle-2fa`
+
+---
+
+### 4. Frontend Angular UI & Components
+
+#### [MODIFY] [register.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/register/register.component.html)
+#### [MODIFY] [register.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/register/register.component.ts)
+- Add inline `[Send OTP]` and `[Verify]` buttons for Email and WhatsApp number fields.
+- Immediate duplicate check on `[Send OTP]` click.
+- Render `✓ Verified` badge upon successful verification.
+- Enable `[Create Account]` button only when at least 1 channel is verified.
+
+#### [MODIFY] [login.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/login/login.component.html)
+#### [MODIFY] [login.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/auth/login/login.component.ts)
+- Support 2FA modal dialog upon password validation if `requiresTwoFactor` is true.
+- Display explicit message showing where OTP was dispatched (*"We've sent a 6-digit security code to your Email (a***@gmail.com) and WhatsApp (+91 98***76)"*).
+
+#### [MODIFY] [settings.component.html](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/settings/settings.component.html)
+#### [MODIFY] [settings.component.ts](file:///d:/shivam/doctor-appointment-system/doctor-appointment-frontend/src/app/features/settings/settings.component.ts)
+- Add `Two-Factor Authentication (2FA)` toggle switch under Security Settings with explicit channel list preview.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Run `dotnet build` in `DoctorAppointmentSystem/DoctorAppointmentSystem.csproj`.
+- Run `npx ng build` in `doctor-appointment-frontend`.
+
+### Manual Verification
+1. **Registration Flow:**
+   - Test Email `[Send OTP]` $\rightarrow$ Verify `[Verify]` $\rightarrow$ `✓ Verified` badge.
+   - Test WhatsApp `[Send OTP]` $\rightarrow$ Verify `[Verify]` $\rightarrow$ `✓ Verified` badge.
+   - Test duplicate Email / WhatsApp number inline error messages.
+2. **2FA Settings Toggle:**
+   - Toggle 2FA `ON` in Settings $\rightarrow$ Saved to DB.
+3. **2FA Login Testing:**
+   - **User 1 (Email only):** Login $\rightarrow$ 2FA OTP sent to Email only.
+   - **User 2 (WhatsApp only):** Login $\rightarrow$ 2FA OTP sent to WhatsApp only.
+   - **User 3 (Both Email & WhatsApp):** Login $\rightarrow$ **Same** 2FA OTP sent to BOTH Email & WhatsApp simultaneously.
+   - Verify 2FA OTP code on login modal $\rightarrow$ Successful JWT login.

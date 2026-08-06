@@ -112,31 +112,41 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   private loadPatientCompletion(): void {
-    const profileId = sessionStorage.getItem('profileId');
-    if (!profileId) return;
-
-    this.patientService.getPatientProfile(profileId).subscribe({
+    this.patientService.getPatientSelfProfile().subscribe({
       next: (data: any) => {
         const stats = this.calculatePatientStats(data);
         this.profileCompletionValue = stats.percentage;
         this.profileCompletionLoaded = true;
         sessionStorage.setItem('profileCompletion', stats.percentage.toString());
+      },
+      error: () => {
+        const cached = sessionStorage.getItem('profileCompletion');
+        if (cached) {
+          this.profileCompletionValue = parseInt(cached, 10) || 100;
+          this.profileCompletionLoaded = true;
+        }
       }
     });
   }
 
   private calculatePatientStats(data: any): { percentage: number } {
     let completed = 0;
-    if (data.firstName && data.firstName.trim()) completed += 15;
-    if (data.lastName && data.lastName.trim()) completed += 15;
-    if (data.mobileNo && data.mobileNo.trim()) completed += 15;
-    if (data.gender) completed += 15;
-    if (data.dob && data.dob !== '0001-01-01') completed += 15;
-    if (data.bloodGroup) completed += 15;
-    if (data.emergencyContactName && data.emergencyContactName.trim() &&
-        data.emergencyContactNumber && data.emergencyContactNumber.trim()) {
-      completed += 10;
-    }
+    const fName = data?.firstName || '';
+    const lName = data?.lastName || '';
+    const mob = data?.mobileNo || data?.mobile || '';
+    const gen = data?.gender || '';
+    const birthDate = data?.dob ? data.dob.split('T')[0] : '';
+    const bGroup = data?.bloodGroup || '';
+    const emName = data?.emergencyContactName || '';
+    const emNum = data?.emergencyContactNumber || '';
+
+    if (fName && fName.trim()) completed += 15;
+    if (lName && lName.trim()) completed += 15;
+    if (mob && mob.trim() && mob !== 'Not Added') completed += 15;
+    if (gen) completed += 15;
+    if (birthDate && birthDate !== '0001-01-01' && birthDate !== '0001-01-01T00:00:00') completed += 15;
+    if (bGroup) completed += 15;
+    if (emName && emName.trim() && emNum && emNum.trim()) completed += 10;
     return { percentage: Math.min(completed, 100) };
   }
 
@@ -148,6 +158,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const role = this.authService.getRole();
     if (role !== 'Patient') return false;
     return this.profileCompletionLoaded && this.profileCompletionValue < 100;
+  }
+
+  getProfileLink(): string {
+    const role = this.authService.getRole();
+    if (role === 'Patient') return '/patient/profile';
+    if (role === 'Doctor') return '/doctor/profile';
+    if (role === 'Admin') return '/admin/profile';
+    return '/patient/profile';
   }
 
   ngOnDestroy(): void {

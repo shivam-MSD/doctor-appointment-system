@@ -12,5 +12,8 @@ namespace DoctorAppointmentSystem.Application.Services
 		Task<AdminProfileDto> UpdateAdminProfileAsync(Guid userId, AdminProfileDto dto);
 		Task<PatientDto> GetMyPatientProfileAsync(Guid userId);
 		Task<PatientDto> UpdateMyPatientProfileAsync(Guid userId, PatientUpdateDto dto);
+
+		Task<bool> GetTwoFactorStatusAsync(Guid userId);
+		Task<bool> ToggleTwoFactorAsync(Guid userId, bool enabled);
 	}
 }

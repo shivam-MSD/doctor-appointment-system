@@ -19,30 +19,32 @@
 .profile-header {
   text-align: center;
   margin-bottom: 28px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
-  border: 1px solid rgba(6, 182, 212, 0.15);
+  background: linear-gradient(135deg, #1C2B4F 0%, #0f172a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 40px;
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  color: #ffffff;
 }
 
 .header-icon {
   font-size: 2.2rem;
-  color: var(--accent-cyan);
+  color: #ffffff;
   display: block;
   margin-bottom: 8px;
-  text-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
 }
 
 .profile-header h2 {
   font-size: 1.6rem;
-  color: var(--text-primary);
+  color: #ffffff;
   margin-bottom: 4px;
+  font-weight: 600;
 }
 
 .profile-header p {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 @media (max-width: 640px) {
@@ -69,13 +71,13 @@
 
 .section-title {
   font-size: 1.15rem;
-  color: var(--accent-cyan);
-  border-bottom: 1px solid var(--border-color);
+  color: #1e3a8a;
+  border-bottom: 2px solid rgba(30, 58, 138, 0.15);
   padding-bottom: 12px;
   margin: 0 0 20px 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-weight: 700;
+  font-weight: 800;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -84,9 +86,10 @@
 .form-section-card {
   padding: 32px 40px;
   margin-bottom: 24px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 16px;
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(30, 58, 138, 0.12);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
 }
 
 .form-row {
@@ -236,7 +239,7 @@
 
 .circle-bg {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 255, 255, 0.2);
   stroke-width: 2.8;
 }
 
@@ -244,7 +247,7 @@
   fill: none;
   stroke-width: 2.8;
   stroke-linecap: round;
-  stroke: var(--accent-cyan);
+  stroke: #10b981;
   transition: stroke-dasharray 0.4s ease;
 }
 
@@ -252,6 +255,7 @@
   font-size: 1.6rem;
   position: relative;
   z-index: 10;
+  color: #ffffff;
 }
 
 .form-actions {
@@ -264,7 +268,70 @@
   flex: 1;
 }
 
+/* Modern Contact Update CTA Button & WhatsApp Note */
+.btn-update-contact {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  padding: 5px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+}
 
+.btn-update-contact:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+}
 
+.wa-hint-note {
+  font-size: 0.78rem;
+  color: #0f172a;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.35;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+}
 
+.contact-display-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0f172a;
+}
 
+.contact-value {
+  flex: 1;
+  font-family: monospace, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.verified-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}

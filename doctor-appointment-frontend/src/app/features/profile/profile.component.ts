@@ -4,6 +4,7 @@ import { PatientService } from '../../core/services/patient.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AppointmentService } from '../../core/services/appointment.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-profile',
@@ -17,6 +18,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   // Demographics Fields
   firstName = '';
   lastName = '';
+  email = '';
   mobileNo = '';
   gender = '';
   dob = '';
@@ -68,14 +70,25 @@ export class ProfileComponent implements OnInit, OnDestroy {
   showChangePasswordToggle = false;
   showChangeConfirmPasswordToggle = false;
 
+  // Contact Info Update Fields (Email & WhatsApp Number)
+  updateType: 'whatsapp' | 'email' = 'whatsapp';
+  showContactModal = false;
+  contactStep: 'input' | 'otp' = 'input';
+  newEmail = '';
+  newMobileNo = '';
+  emailOtp = '';
+  mobileOtp = '';
+  isSubmittingContact = false;
+
   resendCooldown = 0;
   cooldownInterval: any;
 
   constructor(
     private patientService: PatientService,
-    private authService: AuthService,
+    public authService: AuthService,
     private toastService: ToastService,
     private appointmentService: AppointmentService,
+    private notificationService: NotificationService,
     private route: ActivatedRoute
   ) {}
 
@@ -130,6 +143,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         next: (data: any) => {
           this.firstName = data.firstName;
           this.lastName = data.lastName;
+          this.email = data.email || this.authService.getAnyActiveUser()?.email || '';
           this.mobileNo = data.mobileNo;
           this.gender = data.gender || 'Male';
           this.dob = data.dob ? data.dob.split('T')[0] : '';
@@ -312,6 +326,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           sessionStorage.setItem('profileCompletion', this.completionStats.percentage.toString());
         }
         
+        this.notificationService.notifyDataRefresh('Profile');
         this.toastService.showSuccess('Profile updated successfully!');
       },
       error: (err: any) => {
@@ -334,15 +349,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
     let completed = 0;
     const left: string[] = [];
 
-    if (data.firstName && data.firstName.trim()) completed += 15; else left.push('First Name');
-    if (data.lastName && data.lastName.trim()) completed += 15; else left.push('Last Name');
-    if (data.mobileNo && data.mobileNo.trim()) completed += 15; else left.push('Mobile Number');
-    if (data.gender) completed += 15; else left.push('Gender Selection');
-    if (data.dob && data.dob !== '0001-01-01') completed += 15; else left.push('Date of Birth');
-    if (data.bloodGroup) completed += 15; else left.push('Blood Group');
+    const fName = this.firstName || data?.firstName || '';
+    const lName = this.lastName || data?.lastName || '';
+    const mob = this.mobileNo || data?.mobileNo || data?.mobile || '';
+    const gen = this.gender || data?.gender || '';
+    const birthDate = this.dob || (data?.dob ? data.dob.split('T')[0] : '');
+    const bGroup = this.bloodGroup || data?.bloodGroup || '';
+    const emName = this.emergencyContactName || data?.emergencyContactName || '';
+    const emNum = this.emergencyContactNumber || data?.emergencyContactNumber || '';
 
-    if (data.emergencyContactName && data.emergencyContactName.trim() && 
-        data.emergencyContactNumber && data.emergencyContactNumber.trim()) {
+    if (fName && fName.trim()) completed += 15; else left.push('First Name');
+    if (lName && lName.trim()) completed += 15; else left.push('Last Name');
+    if (mob && mob.trim() && mob !== 'Not Added') completed += 15; else left.push('Mobile Number');
+    if (gen) completed += 15; else left.push('Gender Selection');
+    if (birthDate && birthDate !== '0001-01-01' && birthDate !== '0001-01-01T00:00:00') completed += 15; else left.push('Date of Birth');
+    if (bGroup) completed += 15; else left.push('Blood Group');
+
+    if (emName && emName.trim() && emNum && emNum.trim()) {
       completed += 10;
     } else {
       left.push('Emergency Contact Details');
@@ -419,8 +442,162 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.startCooldown();
       },
       error: (err) => {
-        this.toastService.showError(err?.error?.detail || 'Failed to resend OTP. Please try again.');
+        this.toastService.showError(err, 'Failed to resend OTP.');
         this.isChangingPassword = false;
+      }
+    });
+  }
+
+  mobileValidationError: string = '';
+
+  /*
+  ================================================================================
+  🌍 FUTURE MULTI-COUNTRY CODE EXPANSION MATRIX (PRESERVED FOR FUTURE USE)
+  ================================================================================
+  public readonly INTERNATIONAL_COUNTRY_CODES = [
+    { code: '+91',  name: 'India', flag: '🇮🇳', length: 10, pattern: /^[6-9]\d{9}$/ },
+    { code: '+1',   name: 'United States / Canada', flag: '🇺🇸', length: 10, pattern: /^[2-9]\d{9}$/ },
+    { code: '+44',  name: 'United Kingdom', flag: '🇬🇧', length: 10, pattern: /^7\d{9}$/ },
+    { code: '+971', name: 'United Arab Emirates', flag: '🇦🇪', length: 9, pattern: /^5\d{8}$/ },
+    { code: '+61',  name: 'Australia', flag: '🇦🇺', length: 9, pattern: /^4\d{8}$/ },
+    { code: '+49',  name: 'Germany', flag: '🇩🇪', length: 10, pattern: /^1[5-7]\d{8,9}$/ },
+    { code: '+65',  name: 'Singapore', flag: '🇸🇬', length: 8, pattern: /^[89]\d{7}$/ },
+    { code: '+966', name: 'Saudi Arabia', flag: '🇸🇦', length: 9, pattern: /^5\d{8}$/ }
+  ];
+  ================================================================================
+  */
+
+  onMobileInputChanged(): void {
+    if (!this.newMobileNo) {
+      this.mobileValidationError = '';
+      return;
+    }
+
+    // Auto-strip non-digits
+    this.newMobileNo = this.newMobileNo.replace(/\D/g, '');
+
+    if (this.newMobileNo.length > 0 && !/^[6-9]/.test(this.newMobileNo)) {
+      this.mobileValidationError = 'Indian mobile number must start with 6, 7, 8, or 9.';
+    } else if (this.newMobileNo.length > 0 && this.newMobileNo.length < 10) {
+      this.mobileValidationError = `Please enter remaining ${10 - this.newMobileNo.length} digit(s) (10 digits required).`;
+    } else {
+      this.mobileValidationError = '';
+    }
+  }
+
+  openContactModal(): void {
+    this.openWhatsAppModal();
+  }
+
+  openWhatsAppModal(): void {
+    this.updateType = 'whatsapp';
+    this.showContactModal = true;
+    this.contactStep = 'input';
+    this.newEmail = '';
+    this.newMobileNo = '';
+    this.emailOtp = '';
+    this.mobileOtp = '';
+    this.mobileValidationError = '';
+  }
+
+  openEmailModal(): void {
+    this.updateType = 'email';
+    this.showContactModal = true;
+    this.contactStep = 'input';
+    this.newEmail = '';
+    this.newMobileNo = '';
+    this.emailOtp = '';
+    this.mobileOtp = '';
+    this.mobileValidationError = '';
+  }
+
+  closeContactModal(): void {
+    this.showContactModal = false;
+    this.mobileValidationError = '';
+  }
+
+  onInitiateContactUpdate(): void {
+    if (this.updateType === 'whatsapp') {
+      if (!this.newMobileNo || !this.newMobileNo.trim()) {
+        this.mobileValidationError = 'Please enter a 10-digit WhatsApp mobile number.';
+        return;
+      }
+
+      const cleanNum = this.newMobileNo.trim().replace(/\D/g, '');
+
+      if (cleanNum.length !== 10) {
+        this.mobileValidationError = 'Mobile number must be exactly 10 digits long.';
+        return;
+      }
+
+      if (!/^[6-9]\d{9}$/.test(cleanNum)) {
+        this.mobileValidationError = 'Invalid Indian mobile number. Must start with 6, 7, 8, or 9.';
+        return;
+      }
+
+      const existingClean = (this.mobileNo || '').replace(/\D/g, '');
+      if (existingClean && cleanNum && (cleanNum === existingClean || cleanNum.endsWith(existingClean) || existingClean.endsWith(cleanNum))) {
+        this.toastService.showError('Please enter a different WhatsApp number to update.');
+        return;
+      }
+    } else {
+      if (!this.newEmail || !this.newEmail.trim()) {
+        this.toastService.showError('Please enter a new Email address.');
+        return;
+      }
+    }
+
+    this.isSubmittingContact = true;
+    this.authService.initiateContactUpdate({
+      newEmail: this.updateType === 'email' ? this.newEmail.trim() : '',
+      newMobileNo: this.updateType === 'whatsapp' ? this.newMobileNo.trim() : ''
+    }).subscribe({
+      next: (res) => {
+        this.toastService.showSuccess(res.message || 'Verification OTP sent!');
+        this.contactStep = 'otp';
+        this.isSubmittingContact = false;
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to initiate contact update.');
+        this.isSubmittingContact = false;
+      }
+    });
+  }
+
+  onConfirmContactUpdate(): void {
+    if (this.updateType === 'whatsapp' && (!this.mobileOtp || this.mobileOtp.trim().length !== 6)) {
+      this.toastService.showError('Please enter valid 6-digit WhatsApp OTP code.');
+      return;
+    }
+    if (this.updateType === 'email' && (!this.emailOtp || this.emailOtp.trim().length !== 6)) {
+      this.toastService.showError('Please enter valid 6-digit Email OTP code.');
+      return;
+    }
+
+    this.isSubmittingContact = true;
+    this.authService.confirmContactUpdate({
+      newEmail: this.updateType === 'email' ? this.newEmail.trim() : '',
+      newMobileNo: this.updateType === 'whatsapp' ? this.newMobileNo.trim() : '',
+      emailOtp: this.updateType === 'email' ? this.emailOtp.trim() : '',
+      mobileOtp: this.updateType === 'whatsapp' ? this.mobileOtp.trim() : ''
+    }).subscribe({
+      next: (res) => {
+        this.toastService.showSuccess(res.message || 'Contact detail updated successfully!');
+        this.closeContactModal();
+        this.isSubmittingContact = false;
+        if (this.updateType === 'email' && res.email) this.email = res.email;
+        if (this.updateType === 'whatsapp' && res.mobileNo) this.mobileNo = res.mobileNo;
+
+        // Recalculate profile completion after successful update
+        if (this.role === 'Patient') {
+          this.completionStats = this.calculateStats({});
+          sessionStorage.setItem('profileCompletion', this.completionStats.percentage.toString());
+        }
+        this.notificationService.notifyDataRefresh('Profile');
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Verification failed. Please check OTP code.');
+        this.isSubmittingContact = false;
       }
     });
   }

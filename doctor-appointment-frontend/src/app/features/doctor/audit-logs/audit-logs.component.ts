@@ -91,6 +91,35 @@ export class AuditLogsComponent implements OnInit, OnDestroy {
     });
   }
 
+  searchTerm: string = '';
+  selectedActionFilter: string = '';
+
+  formatAction(action: string): string {
+    if (!action) return '';
+    if (action === 'RescheduleProposed') return 'Reschedule Proposed';
+    return action;
+  }
+
+  getActionIcon(action: string): string {
+    if (action === 'Confirmed' || action === 'Completed') return '✓';
+    if (action === 'Cancelled' || action === 'Rejected') return '✕';
+    if (action === 'RescheduleProposed') return '⟳';
+    if (action === 'Created') return '+';
+    return '•';
+  }
+
+  get filteredLogs(): any[] {
+    return this.logs.filter(log => {
+      const matchesSearch = !this.searchTerm || 
+        (log.patientName && log.patientName.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
+        (log.actorName && log.actorName.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
+        (log.notes && log.notes.toLowerCase().includes(this.searchTerm.toLowerCase()));
+      
+      const matchesAction = !this.selectedActionFilter || log.action === this.selectedActionFilter;
+      return matchesSearch && matchesAction;
+    });
+  }
+
   onClinicChange(): void {
     this.currentPage = 1;
     this.loadLogs();

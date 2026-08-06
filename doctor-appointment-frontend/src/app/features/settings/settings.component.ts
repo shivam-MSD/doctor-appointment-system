@@ -38,6 +38,11 @@ export class SettingsComponent implements OnInit {
   doctorSlotDuration = 20;
   patientModePreference = 'auto';
 
+  // 2FA Authentication Settings
+  isTwoFactorEnabled = false;
+  userEmail = '';
+  userMobileNo = '';
+
   constructor(
     public authService: AuthService,
     private toastService: ToastService,
@@ -52,6 +57,43 @@ export class SettingsComponent implements OnInit {
     
     const tonePref = localStorage.getItem('healsync_sound_tone');
     if (tonePref) this.selectedSoundTone = tonePref;
+
+    this.loadTwoFactorStatus();
+  }
+
+  loadTwoFactorStatus(): void {
+    const activeUser = this.authService.getAnyActiveUser();
+    if (activeUser) {
+      this.userEmail = activeUser.email || '';
+      this.userMobileNo = activeUser.mobileNo || '';
+    }
+
+    if (this.userRole !== 'SuperAdmin') {
+      this.authService.getTwoFactorStatus().subscribe({
+        next: (res) => {
+          this.isTwoFactorEnabled = res.isTwoFactorEnabled;
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  onToggleTwoFactor(): void {
+    if (this.userRole === 'SuperAdmin') {
+      this.toastService.showError('SuperAdmin accounts are exempt from 2FA settings.');
+      return;
+    }
+
+    const nextState = !this.isTwoFactorEnabled;
+    this.authService.toggleTwoFactor(nextState).subscribe({
+      next: (res) => {
+        this.isTwoFactorEnabled = res.isTwoFactorEnabled;
+        this.toastService.showSuccess(res.message || (res.isTwoFactorEnabled ? '2FA enabled!' : '2FA disabled.'));
+      },
+      error: (err) => {
+        this.toastService.showError(err, 'Failed to update 2FA status.');
+      }
+    });
   }
 
   toggleSound(): void {

@@ -121,5 +121,21 @@ namespace DoctorAppointmentSystem.Controllers
 			await _patientService.DeleteFamilyMemberAsync(userId, familyPatientId);
 			return Ok(new { Message = "Family member removed successfully." });
 		}
+
+		[HttpPost("initiate-contact-update")]
+		public async Task<IActionResult> InitiateContactUpdate([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] InitiateContactUpdateDto dto)
+		{
+			if (userId == Guid.Empty) return BadRequest("Missing required X-User-Id header.");
+			var result = await _patientService.InitiateUpdateContactInfoAsync(userId, dto);
+			return Ok(result);
+		}
+
+		[HttpPost("confirm-contact-update")]
+		public async Task<IActionResult> ConfirmContactUpdate([FromHeader(Name = "X-User-Id")] Guid userId, [FromBody] ConfirmContactUpdateDto dto)
+		{
+			if (userId == Guid.Empty) return BadRequest("Missing required X-User-Id header.");
+			var result = await _patientService.ConfirmUpdateContactInfoAsync(userId, dto);
+			return Ok(result);
+		}
 	}
 }

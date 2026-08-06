@@ -8,30 +8,35 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, var(--bg-card), rgba(6, 182, 212, 0.05));
+  background: #ffffff;
+  border-left: 5px solid var(--brand-navy) !important;
+  box-shadow: 0 4px 18px rgba(36, 59, 99, 0.06);
 }
 
 .welcome-text h2 {
-  font-size: 1.6rem;
-  color: var(--text-primary);
+  font-size: 1.5rem;
+  color: var(--brand-navy) !important;
+  font-weight: 800;
   margin-bottom: 6px;
 }
 
 .welcome-text p {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--brand-navy) !important;
+  opacity: 0.85;
+  font-weight: 600;
 }
 
 .role-badge {
   font-family: var(--font-display);
-  background: rgba(6, 182, 212, 0.1);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  background: rgba(36, 59, 99, 0.08) !important;
+  color: var(--brand-navy) !important;
+  border: 1px solid rgba(36, 59, 99, 0.2) !important;
   padding: 6px 16px;
-  border-radius: 8px;
-  font-weight: 700;
+  border-radius: 12px;
+  font-weight: 800;
   text-transform: uppercase;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   letter-spacing: 0.05em;
 }
 
@@ -64,12 +69,12 @@
 
 .section-title {
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  color: var(--accent-cyan);
+  color: var(--brand-navy) !important;
   margin-bottom: 16px;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   padding-bottom: 6px;
 }
 
@@ -109,10 +114,10 @@
 
 .badge-specialization {
   font-size: 0.75rem;
-  font-weight: 600;
-  background: rgba(6, 182, 212, 0.1);
-  color: var(--accent-cyan);
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  font-weight: 700;
+  background: rgba(36, 59, 99, 0.08) !important;
+  color: var(--brand-navy) !important;
+  border: 1px solid rgba(36, 59, 99, 0.18) !important;
   padding: 4px 10px;
   border-radius: 20px;
   text-transform: uppercase;

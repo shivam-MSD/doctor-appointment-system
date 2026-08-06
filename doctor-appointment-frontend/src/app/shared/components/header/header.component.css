@@ -139,25 +139,60 @@
 }
 
 .notifications-panel {
+  position: fixed;
+  right: 24px;
+  top: 64px;
+  width: 360px;
+  z-index: 99999;
+  padding: 0;
+  background: var(--bg-card-solid, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.notifications-panel::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  right: 88px;
+  border-width: 0 7px 7px 7px;
+  border-style: solid;
+  border-color: transparent transparent var(--bg-card-solid, #ffffff) transparent;
+  z-index: 10000;
+}
+
+.profile-panel {
   position: absolute;
   right: 0;
-  top: 52px;
-  width: 340px;
-  max-height: 480px;
-  overflow-y: auto;
-  z-index: 1001;
-  padding: 16px;
-  background: var(--bg-card-solid);
-  border: 1px solid var(--border-color);
+  top: 48px;
+  width: 250px;
+  z-index: 99999;
+  padding: 12px;
+  background: var(--bg-card-solid, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  animation: dropdownFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-panel::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  right: 14px;
+  border-width: 0 7px 7px 7px;
+  border-style: solid;
+  border-color: transparent transparent var(--bg-card-solid, #ffffff) transparent;
+  z-index: 10000;
 }
 
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
 
   to {
@@ -320,55 +355,69 @@
 @media (max-width: 768px) {
   .navbar {
     padding: 0 12px;
+    height: 60px;
   }
-  
+
+  .mobile-menu-toggle {
+    margin-right: 4px !important;
+  }
+
   .brand {
-    gap: 6px;
+    gap: 4px !important;
+  }
+
+  .brand-logo-img {
+    display: none !important;
   }
 
   .logo {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
   }
 
   .title {
     font-size: 1.1rem;
+    font-weight: 800;
   }
 
   .actions {
-    gap: 10px;
+    gap: 6px;
+  }
+
+  .header-clock {
+    display: none !important;
+  }
+
+  .role-badge-header {
+    display: none !important;
   }
 
   .icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
   }
 
-  .theme-icon {
-    font-size: 0.9rem;
-  }
-
-  .profile-avatar-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
+  .avatar-circle {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.82rem !important;
   }
 
   .notifications-panel {
     position: fixed;
-    top: 70px;
-    left: 16px;
-    right: 16px;
+    top: 60px;
+    left: 12px;
+    right: 12px;
     width: auto;
-    max-height: calc(100vh - 100px);
-    box-shadow: none !important;
+    max-height: calc(100vh - 80px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
   }
-  
+
   .profile-panel {
     position: fixed;
-    top: 70px;
-    right: 16px;
+    top: 60px;
+    right: 12px;
     left: auto;
-    width: 250px;
-    box-shadow: none !important;
+    width: 240px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
   }
 }

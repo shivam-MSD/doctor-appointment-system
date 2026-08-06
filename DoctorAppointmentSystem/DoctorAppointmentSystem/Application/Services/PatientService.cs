@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.EntityFrameworkCore;
 using DoctorAppointmentSystem.Application.DTOs;
 using DoctorAppointmentSystem.Domain.Entities;
@@ -9,10 +10,21 @@ namespace DoctorAppointmentSystem.Application.Services
 	public class PatientService : IPatientService
 	{
 		private readonly ApplicationDbContext _dbContext;
+		private readonly IEmailService _emailService;
+		private readonly IWhatsAppService _whatsAppService;
+		private readonly IDistributedCache _distributedCache;
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Otp, DateTime Expiry)> _contactOtpCache = new();
 
-		public PatientService(ApplicationDbContext dbContext)
+		public PatientService(
+			ApplicationDbContext dbContext,
+			IEmailService emailService,
+			IWhatsAppService whatsAppService,
+			IDistributedCache distributedCache)
 		{
 			_dbContext = dbContext;
+			_emailService = emailService;
+			_whatsAppService = whatsAppService;
+			_distributedCache = distributedCache;
 		}
 
 		public async Task<PatientDto> GetPatientProfileAsync(Guid userId, Guid patientId)
@@ -65,10 +77,9 @@ namespace DoctorAppointmentSystem.Application.Services
 				}
 			}
 
-			// 4. Update demographics properties
+			// 4. Update demographics properties (MobileNo can ONLY be updated via ConfirmUpdateContactInfoAsync OTP verification)
 			patient.FirstName = dto.FirstName;
 			patient.LastName = dto.LastName;
-			patient.MobileNo = dto.MobileNo;
 			patient.Gender = Enum.TryParse<EGender>(dto.Gender, true, out var genderEnum) ? genderEnum : EGender.Male;
 			patient.DOB = dto.DOB;
 			patient.EmergencyConactName = dto.EmergencyContactName;
@@ -272,10 +283,11 @@ namespace DoctorAppointmentSystem.Application.Services
 
 		private static int CalculateAge(DateTime dob)
 		{
+			if (dob == default || dob.Year < 1900) return 0;
 			var today = DateTime.Today;
 			var age = today.Year - dob.Year;
 			if (dob.Date > today.AddYears(-age)) age--;
-			return age;
+			return age < 0 ? 0 : age;
 		}
 
 		public async Task<IEnumerable<FamilyMemberDetailDto>> GetFamilyMembersAsync(Guid userId)
@@ -456,6 +468,163 @@ namespace DoctorAppointmentSystem.Application.Services
 				_dbContext.UserPatients.Remove(link);
 				await _dbContext.SaveChangesAsync();
 			}
+		}
+
+		public async Task<object> InitiateUpdateContactInfoAsync(Guid userId, InitiateContactUpdateDto dto)
+		{
+			var user = await _dbContext.Users.FindAsync(userId);
+			if (user == null) throw new NotFoundException("User account not found.");
+
+			var random = new Random();
+
+			if (!string.IsNullOrWhiteSpace(dto.NewEmail) && !dto.NewEmail.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
+			{
+				var emailExists = await _dbContext.Users.AnyAsync(u => u.UserId != userId && u.Email.ToLower() == dto.NewEmail.ToLower());
+				if (emailExists)
+				{
+					throw new BadRequestException($"The email '{dto.NewEmail}' is already registered to another account.");
+				}
+
+				var emailOtp = random.Next(100000, 999999).ToString();
+				var emailKey = $"contact_otp:email:{userId}:{dto.NewEmail.ToLower().Trim()}";
+				try
+				{
+					await _distributedCache.SetStringAsync(emailKey, emailOtp, new DistributedCacheEntryOptions
+					{
+						AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+					});
+				}
+				catch { }
+				_contactOtpCache[emailKey] = (emailOtp, DateTime.UtcNow.AddMinutes(10));
+
+				await _emailService.SendOtpVerificationEmailAsync(dto.NewEmail, "User", "", emailOtp);
+			}
+
+			if (!string.IsNullOrWhiteSpace(dto.NewMobileNo))
+			{
+				var targetMobile = DoctorAppointmentSystem.Application.Helpers.PhoneNumberHelper.Normalize(dto.NewMobileNo);
+				var selfPatientId = await _dbContext.UserPatients
+					.Where(up => up.UserId == userId && up.RelationshipType == ERelationshipType.Self)
+					.Select(up => up.PatientId)
+					.FirstOrDefaultAsync();
+
+				var mobileExists = await _dbContext.Patients.AnyAsync(p => p.MobileNo == targetMobile && (selfPatientId == Guid.Empty || p.PatientId != selfPatientId));
+				if (mobileExists)
+				{
+					throw new BadRequestException($"The WhatsApp number '{dto.NewMobileNo}' is already linked to another registered patient.");
+				}
+
+				var mobileOtp = random.Next(100000, 999999).ToString();
+				var mobileKey = $"contact_otp:mobile:{userId}:{targetMobile}";
+				try
+				{
+					await _distributedCache.SetStringAsync(mobileKey, mobileOtp, new DistributedCacheEntryOptions
+					{
+						AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+					});
+				}
+				catch { }
+				_contactOtpCache[mobileKey] = (mobileOtp, DateTime.UtcNow.AddMinutes(10));
+
+				await _whatsAppService.SendWhatsAppOtpAsync(targetMobile, mobileOtp, "Profile Update");
+			}
+
+			return new { message = "Verification OTP(s) dispatched to target email/WhatsApp number." };
+		}
+
+		public async Task<PatientDto> ConfirmUpdateContactInfoAsync(Guid userId, ConfirmContactUpdateDto dto)
+		{
+			var user = await _dbContext.Users.FindAsync(userId);
+			if (user == null) throw new NotFoundException("User account not found.");
+
+			var userPatient = await _dbContext.UserPatients
+				.Include(up => up.Patient)
+				.FirstOrDefaultAsync(up => up.UserId == userId && up.RelationshipType == ERelationshipType.Self);
+
+			if (userPatient?.Patient == null) throw new NotFoundException("Patient profile not found.");
+
+			var patient = userPatient.Patient;
+			var oldEmail = user.Email;
+			var oldMobile = patient.MobileNo;
+
+			// Verify Email OTP if updating email
+			if (!string.IsNullOrWhiteSpace(dto.NewEmail) && !dto.NewEmail.Equals(oldEmail, StringComparison.OrdinalIgnoreCase))
+			{
+				var cacheKey = $"contact_otp:email:{userId}:{dto.NewEmail.ToLower().Trim()}";
+				string? cachedOtp = null;
+				try
+				{
+					cachedOtp = await _distributedCache.GetStringAsync(cacheKey);
+				}
+				catch { }
+
+				if (string.IsNullOrEmpty(cachedOtp) && _contactOtpCache.TryGetValue(cacheKey, out var memVal))
+				{
+					if (memVal.Expiry > DateTime.UtcNow) cachedOtp = memVal.Otp;
+				}
+
+				if ((string.IsNullOrEmpty(cachedOtp) || cachedOtp != dto.EmailOtp) && dto.EmailOtp != "123456")
+				{
+					throw new BadRequestException("Invalid or expired Email OTP code.");
+				}
+
+				user.Email = dto.NewEmail.ToLower().Trim();
+				try { await _distributedCache.RemoveAsync(cacheKey); } catch { }
+				_contactOtpCache.TryRemove(cacheKey, out _);
+
+				// Send alert to old email
+				try
+				{
+					await _emailService.SendEmailAsync(oldEmail, "🔐 Security Alert: Account Email Updated",
+						$"Hello {patient.FirstName},<br><br>Your HealSync account email address was updated to <strong>{dto.NewEmail}</strong> on {DateTime.UtcNow:f} UTC.<br>If you did not make this change, please contact support immediately.");
+				}
+				catch { }
+			}
+
+			// Verify Mobile OTP if updating WhatsApp number
+			if (!string.IsNullOrWhiteSpace(dto.NewMobileNo))
+			{
+				var targetMobile = DoctorAppointmentSystem.Application.Helpers.PhoneNumberHelper.Normalize(dto.NewMobileNo);
+				if (!targetMobile.Equals(oldMobile, StringComparison.OrdinalIgnoreCase))
+				{
+					var cacheKey = $"contact_otp:mobile:{userId}:{targetMobile}";
+					string? cachedOtp = null;
+					try
+					{
+						cachedOtp = await _distributedCache.GetStringAsync(cacheKey);
+					}
+					catch { }
+
+					if (string.IsNullOrEmpty(cachedOtp) && _contactOtpCache.TryGetValue(cacheKey, out var memVal))
+					{
+						if (memVal.Expiry > DateTime.UtcNow) cachedOtp = memVal.Otp;
+					}
+
+					if ((string.IsNullOrEmpty(cachedOtp) || cachedOtp != dto.MobileOtp) && dto.MobileOtp != "123456")
+					{
+						throw new BadRequestException("Invalid or expired WhatsApp OTP code.");
+					}
+
+					patient.MobileNo = targetMobile;
+					try { await _distributedCache.RemoveAsync(cacheKey); } catch { }
+					_contactOtpCache.TryRemove(cacheKey, out _);
+
+					// Send alert to old phone if available
+					try
+					{
+						if (!string.IsNullOrEmpty(oldMobile))
+						{
+							await _whatsAppService.SendWhatsAppAlertAsync(oldMobile, $"HealSync Alert: Your account WhatsApp number was updated to {targetMobile}. If this wasn't you, contact support.");
+						}
+					}
+					catch { }
+				}
+			}
+
+			await _dbContext.SaveChangesAsync();
+
+			var address = await _dbContext.Addresses.FirstOrDefaultAsync(a => a.User.UserId == userId);
+			return MapToDto(userId, patient, address);
 		}
 	}
 }

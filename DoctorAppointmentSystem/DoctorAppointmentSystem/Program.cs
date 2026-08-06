@@ -132,6 +132,8 @@ builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IPatient
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAdminService, DoctorAppointmentSystem.Application.Services.AdminService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IAppointmentService, DoctorAppointmentSystem.Application.Services.AppointmentService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IClinicService, DoctorAppointmentSystem.Application.Services.ClinicService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IWhatsAppService, DoctorAppointmentSystem.Application.Services.WhatsAppService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IEmailService, DoctorAppointmentSystem.Application.Services.EmailService>();
 builder.Services.AddScoped<DoctorAppointmentSystem.Application.Services.IOtpService, DoctorAppointmentSystem.Application.Services.OtpService>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<object>, Microsoft.AspNetCore.Identity.PasswordHasher<object>>();
@@ -199,10 +201,34 @@ app.MapHub<DoctorAppointmentSystem.Application.Hubs.NotificationHub>("/notificat
 using (var scope = app.Services.CreateScope())
 {
 	var db = scope.ServiceProvider.GetRequiredService<DoctorAppointmentSystem.Persistent.Context.ApplicationDbContext>();
-	if (db.Database.IsSqlServer())
+	try
 	{
-		db.Database.Migrate();
+		Console.WriteLine($"[Database Init] Provider Name: '{db.Database.ProviderName}'");
+		await db.Database.ExecuteSqlRawAsync(@"
+			ALTER TABLE IF EXISTS doctorappointment.""Users"" ADD COLUMN IF NOT EXISTS ""IsTwoFactorEnabled"" boolean NOT NULL DEFAULT false;
+			ALTER TABLE IF EXISTS ""Users"" ADD COLUMN IF NOT EXISTS ""IsTwoFactorEnabled"" boolean NOT NULL DEFAULT false;
+			ALTER TABLE IF EXISTS doctorappointment.""UserPatients"" ADD COLUMN IF NOT EXISTS ""ConsentDeclared"" boolean NOT NULL DEFAULT true;
+			ALTER TABLE IF EXISTS doctorappointment.""UserPatients"" ADD COLUMN IF NOT EXISTS ""IsDependent"" boolean NOT NULL DEFAULT false;
+			ALTER TABLE IF EXISTS doctorappointment.""UserPatients"" ADD COLUMN IF NOT EXISTS ""OtpChannel"" character varying(20);
+			ALTER TABLE IF EXISTS doctorappointment.""UserPatients"" ADD COLUMN IF NOT EXISTS ""OtpExpiryTime"" timestamp with time zone;
+			ALTER TABLE IF EXISTS doctorappointment.""UserPatients"" ADD COLUMN IF NOT EXISTS ""VerificationOtp"" character varying(10);
+		");
+		Console.WriteLine("[Database Init] Successfully executed raw DDL schema column checks.");
 	}
+	catch (Exception ex)
+	{
+		Console.WriteLine($"[Database Init Error] Postgres raw DDL schema check info: {ex.Message}");
+	}
+
+	try
+	{
+		await db.Database.MigrateAsync();
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine($"Database Migration Info: {ex.Message}");
+	}
+
 	await DoctorAppointmentSystem.Persistent.DbInitializer.SeedAsync(db);
 }
 

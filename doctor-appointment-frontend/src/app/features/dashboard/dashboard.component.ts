@@ -117,9 +117,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
   patientTotalUpcoming = 0; // Excludes today
   patientTotalPending = 0;
 
+  get todayRemainingAppointments(): Appointment[] {
+    if (this.role !== 'Patient' || !this.appointments || this.appointments.length === 0) return [];
+    const todayStr = new Date().toISOString().split('T')[0];
+    return this.appointments.filter(a => {
+      if (!a.appointmentDate) return false;
+      const isToday = a.appointmentDate.startsWith(todayStr);
+      const isActive = a.status === 'Confirmed' || a.status === 'Pending' || a.status === 'RescheduleProposed' || a.status === 'FollowUpProposed';
+      return isToday && isActive;
+    });
+  }
+
+  get todayAppointment(): Appointment | null {
+    const list = this.todayRemainingAppointments;
+    return list.length > 0 ? list[0] : null;
+  }
+
+  get remainingTodayCount(): number {
+    return this.todayRemainingAppointments.length;
+  }
+
   get nextUpcomingAppointment(): Appointment | null {
     if (this.role !== 'Patient' || !this.appointments || this.appointments.length === 0) return null;
-    const upcoming = this.appointments.filter(a => a.status === 'Confirmed' || a.status === 'Pending' || a.status === 'RescheduleProposed');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const upcoming = this.appointments.filter(a => {
+      if (a.status !== 'Confirmed' && a.status !== 'Pending' && a.status !== 'RescheduleProposed') return false;
+      // Exclude today's visits if there are remaining today visits displayed in the Today card
+      const isToday = a.appointmentDate && a.appointmentDate.startsWith(todayStr);
+      return !isToday;
+    });
     return upcoming.length > 0 ? upcoming[0] : null;
   }
 
@@ -147,7 +173,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   bookFollowUp(app: Appointment): void {
     if (app.doctorId) {
       this.router.navigate(['/patient/book-appointment'], {
-        queryParams: { doctorId: app.doctorId, clinicId: app.clinicId || '' }
+        queryParams: {
+          doctorId: app.doctorId,
+          clinicId: app.clinicId || '',
+          isFollowUp: true,
+          previousVisitDate: app.appointmentDate || ''
+        }
       });
     }
   }
@@ -292,6 +323,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     this.loadDashboardData();
 
+    // Set default view mode: 'card' for small screen, 'table' for desktop
+    if (typeof window !== 'undefined') {
+      this.appointmentViewMode = window.innerWidth <= 768 ? 'card' : 'table';
+    }
+
     // Listen for silent refresh signals to update the dashboard automatically in real-time
     this.signalrSub = this.notificationService.refreshData$.subscribe({
       next: (area) => {
@@ -315,7 +351,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.role === 'Patient') {
       this.appointmentService.getPatientDashboard(this.statusFilter, this.historyMode, 1, 1000).subscribe({
         next: (res) => {
-          this.appointments = res.items;
+          if (!this.historyMode) {
+            // Dashboard Upcoming widget: show active/upcoming appointments
+            // Filter out Cancelled & Rejected (they belong on the Appointment History page)
+            this.appointments = res.items.filter(a => a.status !== 'Cancelled' && a.status !== 'Rejected');
+          } else {
+            this.appointments = res.items;
+          }
           this.isDashboardLoading = false;
         },
         error: () => {

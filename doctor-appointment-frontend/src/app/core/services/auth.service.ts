@@ -286,4 +286,56 @@ export class AuthService {
   updatePassword(otp: string, newPassword: string): Observable<any> {
     return this.http.post<any>('/api/auth/update-password', { otp, newPassword });
   }
+
+  sendAuthOtp(payload: { targetIdentifier: string; channel: string; purpose?: string }): Observable<any> {
+    return this.http.post<any>('/api/auth/send-otp', payload);
+  }
+
+  verifyAuthOtp(payload: { targetIdentifier: string; otpCode: string; purpose?: string }): Observable<any> {
+    return this.http.post<any>('/api/auth/verify-otp', payload);
+  }
+
+  loginWithWhatsApp(payload: { mobileNo: string; otpCode: string }): Observable<any> {
+    return this.http.post<any>('/api/auth/login-whatsapp', payload).pipe(
+      tap((res) => {
+        if (res && res.token) {
+          const userObj = { ...res, role: res.role || 'Patient' };
+          const key = `healsync_auth_${userObj.role}`;
+          sessionStorage.setItem(key, JSON.stringify(userObj));
+          localStorage.setItem(key, JSON.stringify(userObj));
+          this.currentUserSubject.next(userObj);
+        }
+      })
+    );
+  }
+
+  initiateContactUpdate(payload: { newEmail?: string; newMobileNo?: string; channel?: string }): Observable<any> {
+    return this.http.post<any>('/api/patients/initiate-contact-update', payload);
+  }
+
+  confirmContactUpdate(payload: { newEmail?: string; newMobileNo?: string; emailOtp?: string; mobileOtp?: string }): Observable<any> {
+    return this.http.post<any>('/api/patients/confirm-contact-update', payload);
+  }
+
+  verifyTwoFactor(payload: { userId: string; otpCode: string }): Observable<any> {
+    return this.http.post<any>('/api/auth/verify-2fa', payload).pipe(
+      tap((res) => {
+        if (res && res.token) {
+          const userObj = { ...res, role: res.role || 'Patient' };
+          const key = `healsync_auth_${userObj.role}`;
+          sessionStorage.setItem(key, JSON.stringify(userObj));
+          localStorage.setItem(key, JSON.stringify(userObj));
+          this.currentUserSubject.next(userObj);
+        }
+      })
+    );
+  }
+
+  getTwoFactorStatus(): Observable<any> {
+    return this.http.get<any>('/api/users/2fa-status');
+  }
+
+  toggleTwoFactor(enabled: boolean): Observable<any> {
+    return this.http.post<any>('/api/users/toggle-2fa', { enabled });
+  }
 }

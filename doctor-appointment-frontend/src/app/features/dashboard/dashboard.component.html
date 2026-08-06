@@ -116,14 +116,74 @@
   <app-patient-header *ngIf="role === 'Patient'" [firstName]="firstName"
     (statClick)="onPatientStatClick($event)"></app-patient-header>
 
-  <!-- PATIENT FEATURED NEXT UPCOMING APPOINTMENT CARD -->
-  <div *ngIf="role === 'Patient' && !historyMode && nextUpcomingAppointment" class="glass-card"
-    style="margin-bottom: 24px; padding: 22px; border-left: 5px solid #00c896; background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240, 253, 244, 0.8)); box-shadow: 0 12px 35px rgba(0, 200, 150, 0.08); border-radius: 18px;">
+  <!-- PATIENT SINGLE DYNAMIC FEATURED HERO SLOT -->
+  <!-- Case A: Today's Visit (Higher priority if remaining visits today exist) -->
+  <div *ngIf="role === 'Patient' && !historyMode && remainingTodayCount > 0 && todayAppointment" class="glass-card"
+    style="margin-bottom: 24px; padding: 22px; border-left: 5px solid #00c896; background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(236, 253, 245, 0.95)); box-shadow: 0 12px 35px rgba(0, 200, 150, 0.12); border-radius: 18px;">
     <div
       style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
       <div style="display: flex; align-items: center; gap: 10px;">
         <span
-          style="background: rgba(0, 200, 150, 0.15); color: #00c896; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase;">
+          style="background: rgba(0, 200, 150, 0.18); color: #008966; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid rgba(0, 200, 150, 0.3);">
+          📅 TODAY'S VISIT ({{ remainingTodayCount }} REMAINING)
+        </span>
+        <span style="font-size: 0.85rem; color: #008966; font-weight: 700;">
+          {{ remainingTodayCount === 1 ? 'You have 1 appointment scheduled for today.' : ('You have ' + remainingTodayCount + ' appointments scheduled for today — Next: Dr. ' + todayAppointment.doctorName) }}
+        </span>
+      </div>
+      <span class="badge" [style.background]="getStatusColor(todayAppointment.status)"
+        style="color: white; padding: 5px 12px; border-radius: 20px; font-weight: 700; font-size: 0.78rem;">
+        {{ getPatientBadgeText(todayAppointment.status) }}
+      </span>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div
+          style="background: #008966; color: white; width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(0, 200, 150, 0.3);">
+          <lucide-icon name="calendar-check" [size]="26" style="color: #ffffff;"></lucide-icon>
+        </div>
+        <div>
+          <h3 style="margin: 0 0 3px 0; font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">
+            Dr. {{ todayAppointment.doctorName }}
+          </h3>
+          <p style="margin: 0; font-size: 0.88rem; color: #008966; font-weight: 700;">
+            {{ todayAppointment.doctorSpecialization || 'Specialist' }}
+          </p>
+          <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">
+            📍 {{ todayAppointment.clinicName || 'Practice Location' }}
+          </p>
+        </div>
+      </div>
+
+      <div
+        style="display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.9); padding: 12px 18px; border-radius: 14px; border: 1px solid rgba(0,200,150,0.2);">
+        <div>
+          <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+            Today's Time & Queue</div>
+          <div style="font-size: 0.95rem; font-weight: 800; color: #008966; margin-top: 2px;">
+            ⏰ {{ todayAppointment.doctorAssignedTime ? (todayAppointment.doctorAssignedTime | date:'shortTime') : 'Time Pending' }}
+          </div>
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); margin-top: 1px;">
+            Queue Position: #{{ todayAppointment.queueNumber || '-' }}
+          </div>
+        </div>
+        <button class="btn btn-secondary-outline" (click)="openDoctorDetailsModal(todayAppointment.doctorId)"
+          style="padding: 10px 16px; border-radius: 6px; font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          <lucide-icon name="eye" [size]="15" style="color: var(--brand-navy);"></lucide-icon> Doctor Details
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case B: Next Upcoming Visit (Fallback when NO appointments remain today) -->
+  <div *ngIf="role === 'Patient' && !historyMode && remainingTodayCount === 0 && nextUpcomingAppointment" class="glass-card"
+    style="margin-bottom: 24px; padding: 22px; border-left: 5px solid var(--brand-navy, #243B63); background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(241, 245, 249, 0.98)); box-shadow: 0 10px 30px rgba(36, 59, 99, 0.08); border-radius: 18px;">
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span
+          style="background: rgba(36, 59, 99, 0.08); color: var(--brand-navy, #243B63); font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; border: 1px solid rgba(36, 59, 99, 0.15);">
           ⚡ Next Upcoming Visit
         </span>
         <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">
@@ -168,9 +228,9 @@
             date:'shortTime') : 'Time Pending Clinic Assignment' }}
           </div>
         </div>
-        <button class="btn btn-primary" (click)="openDoctorDetailsModal(nextUpcomingAppointment.doctorId)"
-          style="background: var(--brand-navy); border: none; padding: 10px 16px; border-radius: 10px; font-weight: 500; font-size: 0.85rem; color: white; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 4px 12px rgba(36, 59, 99, 0.25);">
-          <lucide-icon name="eye" [size]="15" style="color: #ffffff;"></lucide-icon> Doctor Details
+        <button class="btn btn-secondary-outline" (click)="openDoctorDetailsModal(nextUpcomingAppointment.doctorId)"
+          style="padding: 10px 16px; border-radius: 6px; font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+          <lucide-icon name="eye" [size]="15" style="color: var(--brand-navy);"></lucide-icon> Doctor Details
         </button>
       </div>
     </div>
@@ -426,27 +486,27 @@
               </button>
             </td>
             <td data-label="Quick Actions" style="text-align: center;">
-              <!-- Completed Appointment: Book Followup -->
+              <!-- Completed Appointment: Book Followup (Tier 2 Secondary Outline) -->
               <button
                 *ngIf="role === 'Patient' && app.status === 'Completed'"
-                class="btn btn-primary btn-sm" (click)="bookFollowUp(app)"
-                style="padding: 5px 12px; font-size: 0.78rem; font-weight: 500; background: var(--brand-navy); border: none; border-radius: 8px; color: white; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
-                <lucide-icon name="calendar-sync" [size]="13" style="color: #ffffff;"></lucide-icon> Book Followup
+                class="btn btn-secondary-outline" (click)="bookFollowUp(app)"
+                style="padding: 5px 12px; font-size: 0.78rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                <lucide-icon name="calendar-sync" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Book Followup
               </button>
 
-              <!-- Cancelled or Rejected Appointment: Book Again -->
+              <!-- Cancelled or Rejected Appointment: Book Again (Tier 2 Secondary Outline) -->
               <button
                 *ngIf="role === 'Patient' && (app.status === 'Cancelled' || app.status === 'Rejected')"
-                class="btn btn-primary btn-sm" (click)="bookAgain(app)"
-                style="padding: 5px 12px; font-size: 0.78rem; font-weight: 500; background: var(--brand-navy); border: none; border-radius: 8px; color: white; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
-                <lucide-icon name="refresh-cw" [size]="13" style="color: #ffffff;"></lucide-icon> Book Again
+                class="btn btn-secondary-outline" (click)="bookAgain(app)"
+                style="padding: 5px 12px; font-size: 0.78rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                <lucide-icon name="refresh-cw" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Book Again
               </button>
 
-              <!-- Pending / Confirmed Appointment: Cancel -->
+              <!-- Pending / Confirmed Appointment: Cancel (Tier 4 Destructive Red Outline) -->
               <button
                 *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed' && app.status !== 'FollowUpProposed'"
-                class="btn btn-cancel" (click)="openCancelAppointmentConfirm(app.appointmentId)"
-                style="background: #dc2626; color: #ffffff; border: none; padding: 5px 12px; border-radius: 8px; font-weight: 500; font-size: 0.78rem; cursor: pointer; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);">
+                class="btn btn-destructive-outline" (click)="openCancelAppointmentConfirm(app.appointmentId)"
+                style="padding: 5px 12px; font-size: 0.78rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
                 Cancel
               </button>
 
@@ -540,25 +600,25 @@
             <lucide-icon name="history" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Timeline
           </button>
 
-          <!-- Completed Appointment: Book Followup -->
+          <!-- Completed Appointment: Book Followup (Tier 2 Secondary Outline) -->
           <button *ngIf="role === 'Patient' && app.status === 'Completed'"
-            class="btn btn-primary btn-card-full" (click)="bookFollowUp(app)"
-            style="background: var(--brand-navy); border: none; color: #ffffff; font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
-            <lucide-icon name="calendar-sync" [size]="13" style="color: #ffffff;"></lucide-icon> Book Followup
+            class="btn btn-secondary-outline btn-card-full" (click)="bookFollowUp(app)"
+            style="font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; padding: 8px 12px;">
+            <lucide-icon name="calendar-sync" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Book Followup
           </button>
 
-          <!-- Cancelled / Rejected Appointment: Book Again -->
+          <!-- Cancelled / Rejected Appointment: Book Again (Tier 2 Secondary Outline) -->
           <button *ngIf="role === 'Patient' && (app.status === 'Cancelled' || app.status === 'Rejected')"
-            class="btn btn-primary btn-card-full" (click)="bookAgain(app)"
-            style="background: var(--brand-navy); border: none; color: #ffffff; font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
-            <lucide-icon name="refresh-cw" [size]="13" style="color: #ffffff;"></lucide-icon> Book Again
+            class="btn btn-secondary-outline btn-card-full" (click)="bookAgain(app)"
+            style="font-weight: 500; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; padding: 8px 12px;">
+            <lucide-icon name="refresh-cw" [size]="13" style="color: var(--brand-navy);"></lucide-icon> Book Again
           </button>
 
-          <!-- Pending / Confirmed Appointment: Cancel -->
+          <!-- Pending / Confirmed Appointment: Cancel (Tier 4 Destructive Red Outline) -->
           <button
             *ngIf="app.status !== 'Cancelled' && app.status !== 'Completed' && app.status !== 'Rejected' && app.status !== 'RescheduleProposed'"
-            class="btn btn-cancel btn-card-full" (click)="openCancelAppointmentConfirm(app.appointmentId)"
-            style="background: #dc2626; color: #ffffff; border: none; border-radius: 8px; font-weight: 500; padding: 8px 12px; cursor: pointer; box-shadow: 0 2px 6px rgba(220,38,38,0.25);">
+            class="btn btn-destructive-outline btn-card-full" (click)="openCancelAppointmentConfirm(app.appointmentId)"
+            style="font-weight: 500; padding: 8px 12px; cursor: pointer;">
             Cancel Appointment
           </button>
 
@@ -598,13 +658,13 @@
 
 
 
-    <!-- Empty State with Calendar Booklet Design -->
+    <!-- Empty State with Universal Calendar Booklet Design -->
     <ng-container *ngIf="!isDashboardLoading && filteredAppointments.length === 0">
       <div class="calendar-booklet-empty-state">
         <div class="calendar-booklet-card">
           <div class="calendar-booklet-binder">
-            <span>📅 {{ todayMonth }} {{ todayYear }}</span>
-            <span style="font-size: 0.72rem; letter-spacing: 0.5px; opacity: 0.9;">TODAY</span>
+            <span><lucide-icon name="calendar" [size]="14" style="color: #ffffff; margin-right: 4px;"></lucide-icon>{{ todayMonth }} {{ todayYear }}</span>
+            <span>TODAY</span>
           </div>
           <div class="calendar-booklet-body">
             <div class="calendar-booklet-day-num">{{ todayDayNumber }}</div>
@@ -612,20 +672,18 @@
           </div>
         </div>
 
-        <h4 style="font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">
-          {{ historyMode ? 'No Past Records Found' : '📅 Patient Appointments Today' }}
+        <h4 style="font-weight: 800; margin-bottom: 6px; color: var(--brand-navy);">
+          {{ historyMode ? 'No Past Records Found' : (role === 'Patient' ? '📅 Today\'s Appointments' : '📅 Patient Appointments Today') }}
         </h4>
         <p
-          style="color: var(--text-secondary); max-width: 420px; margin: 0 auto 20px auto; font-size: 0.92rem; line-height: 1.5;">
-          {{ historyMode ? 'You have no previously completed or cancelled consultation records.' : 'No medical
-          consultations currently scheduled for today, ' + todayDayName + ', ' + todayMonth + ' ' + todayDayNumber + '.
-          Take rest or book a new check-up!' }}
+          style="color: var(--text-secondary); max-width: 440px; margin: 0 auto 20px auto; font-size: 0.92rem; line-height: 1.5; font-weight: 600;">
+          {{ historyMode ? 'You have no previously completed or cancelled consultation records.' : (role === 'Patient' ? 'No medical consultations currently scheduled for today, ' + todayDayName + ', ' + todayMonth + ' ' + todayDayNumber + '. Take rest or book a new check-up!' : 'No patient consultations scheduled for today, ' + todayDayName + ', ' + todayMonth + ' ' + todayDayNumber + '. Your calendar is clear!') }}
         </p>
 
         <div *ngIf="!historyMode && role === 'Patient'">
           <a routerLink="/patient/doctors" class="btn btn-primary"
-            style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; font-weight: 600; text-decoration: none; border-radius: 8px; background: var(--accent-cyan); border: none;">
-            ➕ Schedule New Appointment
+            style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; font-weight: 700; text-decoration: none; border-radius: 12px; background: var(--brand-navy); color: #ffffff; border: none; box-shadow: 0 4px 14px rgba(16, 31, 66, 0.25);">
+            <lucide-icon name="plus" [size]="18" style="color: #ffffff;"></lucide-icon> Schedule New Appointment
           </a>
         </div>
       </div>
@@ -684,35 +742,41 @@
         <div>
           <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">📅 Patient
             Appointments Today</h3>
-          <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">Your daily scheduled check-up
-            queue sorted chronologically.</p>
+          <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">Your daily scheduled check-up queue sorted chronologically.</p>
         </div>
 
         <div class="filters-row" style="display: flex; gap: 10px;">
           <div class="tabs-container"
-            style="display: flex; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px; gap: 4px;">
-            <button class="btn" [style.background]="consultationFilter === '' ? 'var(--accent-cyan)' : 'transparent'"
+            style="display: flex; background: rgba(36, 59, 99, 0.08); padding: 4px; border-radius: 10px; gap: 4px;">
+            <button class="btn" [style.background]="consultationFilter === '' ? 'var(--brand-navy)' : 'transparent'"
               [style.color]="consultationFilter === '' ? 'white' : 'var(--text-secondary)'"
               (click)="consultationFilter = ''; onFilterChange()"
-              style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">All</button>
+              style="border: none; padding: 6px 14px; font-size: 0.8rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;">All</button>
             <button class="btn"
-              [style.background]="consultationFilter === 'InPerson' ? 'var(--accent-cyan)' : 'transparent'"
+              [style.background]="consultationFilter === 'InPerson' ? 'var(--brand-navy)' : 'transparent'"
               [style.color]="consultationFilter === 'InPerson' ? 'white' : 'var(--text-secondary)'"
               (click)="consultationFilter = 'InPerson'; onFilterChange()"
-              style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">In-Person</button>
+              style="border: none; padding: 6px 14px; font-size: 0.8rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;">In-Person</button>
             <button class="btn"
-              [style.background]="consultationFilter === 'VideoCall' ? 'var(--accent-cyan)' : 'transparent'"
+              [style.background]="consultationFilter === 'VideoCall' ? 'var(--brand-navy)' : 'transparent'"
               [style.color]="consultationFilter === 'VideoCall' ? 'white' : 'var(--text-secondary)'"
               (click)="consultationFilter = 'VideoCall'; onFilterChange()"
-              style="border: none; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 600;">Video</button>
+              style="border: none; padding: 6px 14px; font-size: 0.8rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Video</button>
           </div>
-          <!-- <input type="date" class="form-control filter-select" [(ngModel)]="dateFilter"
-            (ngModelChange)="onFilterChange()"> -->
         </div>
       </div>
     </div>
 
-    <div class="status-legend"
+    <!-- SKELETON LOADER FOR PATIENT APPOINTMENTS TODAY -->
+    <div *ngIf="isDashboardLoading" style="padding: 24px;">
+      <div *ngFor="let i of [1, 2, 3]" style="display: flex; gap: 16px; margin-bottom: 14px; align-items: center;">
+        <div style="width: 140px; height: 42px; background: rgba(0,0,0,0.06); border-radius: 10px; animation: pulse 1.5s infinite;"></div>
+        <div style="flex: 1; height: 42px; background: rgba(0,0,0,0.06); border-radius: 10px; animation: pulse 1.5s infinite;"></div>
+        <div style="width: 100px; height: 42px; background: rgba(0,0,0,0.06); border-radius: 10px; animation: pulse 1.5s infinite;"></div>
+      </div>
+    </div>
+
+    <div class="status-legend" *ngIf="!isDashboardLoading"
       style="display: flex; gap: 15px; align-items: center; font-size: 0.8rem; font-weight: 600; padding: 10px 20px 10px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.01);">
       <span style="color: var(--text-secondary);">Status Color Key:</span>
       <span style="display: flex; align-items: center; gap: 6px;"><span
@@ -799,41 +863,26 @@
                   📜 History
                 </button>
               </td>
-              <td>
-                <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;"
-                  *ngIf="app.status === 'Pending' || app.status === 'Confirmed'; else processedText">
-                  <button class="btn btn-sm-outline"
-                    (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)"
-                    style="background: #0284c7; color: white; border: none; font-size: 0.76rem; font-weight: 600;">
-                    {{ app.status === 'Pending' ? '✓ Confirm & Assign Time' : (app.doctorAssignedTime ? 'Edit Time' :
-                    'Assign Time') }}
+              <td style="text-align: center;">
+                <!-- Action Controls -->
+                <div style="display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                  <button *ngIf="app.status === 'Pending'" class="btn btn-sm-outline" (click)="openAssignTimeModal(app.appointmentId, app.appointmentDate)"
+                    style="background: #0284c7; color: white; border: none; font-size: 0.76rem; font-weight: 600; border-radius: 6px; padding: 4px 10px;"
+                    title="Confirm Appointment & Assign Time">
+                    ✓ Confirm
                   </button>
-                  <button class="btn btn-reschedule" (click)="openRescheduleModal(app.appointmentId)"
-                    style="background: #ec4899; border: none; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600; border-radius: 6px;">
-                    📅 Reschedule
-                  </button>
-                  <button *ngIf="app.status === 'Pending'" class="btn btn-cancel"
-                    (click)="openRejectConfirm(app.appointmentId)"
-                    style="background: #ef4444; border-color: #ef4444; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
-                    ✕ Reject
-                  </button>
-                  <button *ngIf="app.status === 'Confirmed'" class="btn btn-confirm"
-                    (click)="openCompleteConfirm(app.appointmentId)"
-                    style="background: #10b981; border-color: #10b981; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
+                  <button *ngIf="app.status === 'Confirmed'" class="btn btn-sm-outline" (click)="openCompleteConfirm(app.appointmentId)"
+                    style="background: #10b981; color: white; border: none; font-size: 0.76rem; font-weight: 600; border-radius: 6px; padding: 4px 10px;"
+                    title="Complete Consultation">
                     ✓ Complete
                   </button>
-                  <button *ngIf="app.status === 'Confirmed'" class="btn btn-cancel"
-                    (click)="openNoShowConfirm(app.appointmentId)"
-                    style="background: #ef4444; border-color: #ef4444; color: white; padding: 5px 10px; font-size: 0.76rem; font-weight: 600;">
-                    ⏳ Skip / Late
+                  <button *ngIf="app.status === 'Pending' || app.status === 'Confirmed'" class="btn btn-sm-outline"
+                    (click)="openRejectConfirm(app.appointmentId)"
+                    style="background: #ef4444; color: white; border: none; font-size: 0.76rem; font-weight: 600; border-radius: 6px; padding: 4px 10px;"
+                    title="Reject Appointment">
+                    ✗ Reject
                   </button>
                 </div>
-                <ng-template #processedText>
-                  <div
-                    style="text-align: center; font-size: 0.82rem; font-style: italic; color: var(--text-secondary);">
-                    Processed
-                  </div>
-                </ng-template>
               </td>
             </tr>
 
@@ -856,13 +905,13 @@
       </div>
     </div>
 
-    <!-- Empty State with Calendar Booklet Design -->
+    <!-- Empty State with Universal Calendar Booklet Design -->
     <ng-container *ngIf="!isDashboardLoading && appointments.length === 0">
       <div class="calendar-booklet-empty-state">
         <div class="calendar-booklet-card">
           <div class="calendar-booklet-binder">
-            <span>📅 {{ todayMonth }} {{ todayYear }}</span>
-            <span style="font-size: 0.72rem; letter-spacing: 0.5px; opacity: 0.9;">TODAY</span>
+            <span><lucide-icon name="calendar" [size]="14" style="color: #ffffff; margin-right: 4px;"></lucide-icon>{{ todayMonth }} {{ todayYear }}</span>
+            <span>TODAY</span>
           </div>
           <div class="calendar-booklet-body">
             <div class="calendar-booklet-day-num">{{ todayDayNumber }}</div>
@@ -870,11 +919,11 @@
           </div>
         </div>
 
-        <h4 style="font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">
+        <h4 style="font-weight: 800; margin-bottom: 6px; color: var(--brand-navy);">
           📅 Patient Appointments Today
         </h4>
         <p
-          style="color: var(--text-secondary); max-width: 420px; margin: 0 auto 15px auto; font-size: 0.92rem; line-height: 1.5;">
+          style="color: var(--text-secondary); max-width: 440px; margin: 0 auto 15px auto; font-size: 0.92rem; line-height: 1.5; font-weight: 600;">
           No patient consultations scheduled for today, {{ todayDayName }}, {{ todayMonth }} {{ todayDayNumber }}. Your
           calendar is clear! Take rest or check upcoming practice slots.
         </p>
@@ -888,7 +937,15 @@
     <p style="margin: 4px 0 16px 0; font-size: 0.82rem; color: var(--text-secondary);">
       Select any card below to open the complete details view for that clinic branch and its assigned administrator.
     </p>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+
+    <!-- SKELETON LOADER FOR ACTIVE PRACTICE LOCATIONS -->
+    <div *ngIf="isDashboardLoading" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+      <div *ngFor="let i of [1, 2]"
+        style="height: 110px; background: rgba(0, 0, 0, 0.05); border-radius: 12px; animation: pulse 1.5s infinite;">
+      </div>
+    </div>
+
+    <div *ngIf="!isDashboardLoading" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
       <div *ngFor="let clinic of doctorClinics" (click)="openClinicDetailsModal(clinic)"
         class="glass-card compact-clinic-item"
         style="padding: 16px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; border-radius: 12px; cursor: pointer; transition: all 0.2s;"

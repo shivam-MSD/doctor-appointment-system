@@ -75,5 +75,25 @@ namespace DoctorAppointmentSystem.Application.Services
 		/// <param name="userId">Authenticated user ID.</param>
 		/// <param name="dto">Update password payload containing OTP and NewPassword.</param>
 		Task UpdatePasswordAsync(Guid userId, UpdatePasswordDto dto);
+
+		/// <summary>
+		/// Dispatches an OTP via Email or WhatsApp for registration, login, or profile updates.
+		/// </summary>
+		Task SendAuthOtpAsync(SendAuthOtpDto dto);
+
+		/// <summary>
+		/// Verifies an OTP code sent via Email or WhatsApp.
+		/// </summary>
+		Task<bool> VerifyAuthOtpAsync(VerifyAuthOtpDto dto);
+
+		/// <summary>
+		/// Authenticates user passwordlessly via WhatsApp mobile number and valid OTP.
+		/// </summary>
+		Task<AuthResponseDto> LoginWithWhatsAppOtpAsync(WhatsAppLoginDto dto);
+
+		/// <summary>
+		/// Completes 2FA login verification using 6-digit OTP code.
+		/// </summary>
+		Task<AuthResponseDto> VerifyTwoFactorAsync(VerifyTwoFactorDto dto);
 	}
 }

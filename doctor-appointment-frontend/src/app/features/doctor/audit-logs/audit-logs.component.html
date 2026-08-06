@@ -26,6 +26,22 @@
     </div>
   </div>
 
+  <!-- Search & Filter Controls Bar -->
+  <div class="glass-panel" style="padding: 16px 20px; border-radius: 14px; margin-bottom: 20px; background: #ffffff; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 260px;">
+      <input type="text" class="form-control" [(ngModel)]="searchTerm" placeholder="🔍 Search logs by patient, doctor or notes..." style="border-radius: 10px; font-size: 0.88rem; padding: 10px 14px;">
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <select class="form-select" [(ngModel)]="selectedActionFilter" style="border-radius: 10px; font-size: 0.88rem; padding: 10px 14px; min-width: 180px;">
+        <option value="">All Action Types</option>
+        <option value="Confirmed">✓ Confirmed</option>
+        <option value="Cancelled">✕ Cancelled</option>
+        <option value="Created">+ Created</option>
+        <option value="RescheduleProposed">⟳ Reschedule Proposed</option>
+      </select>
+    </div>
+  </div>
+
   <!-- Loading State -->
   <div *ngIf="isLoading" class="text-center my-5 fade-in">
     <div class="spinner-border text-primary" role="status">
@@ -35,7 +51,7 @@
   </div>
 
   <!-- Logs Table -->
-  <div *ngIf="!isLoading" class="table-card glass-panel fade-in mt-4">
+  <div *ngIf="!isLoading" class="table-card glass-panel fade-in">
     <div class="table-responsive">
       <table class="table custom-table mb-0">
         <thead>
@@ -49,14 +65,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of logs" class="align-middle">
+          <tr *ngFor="let log of filteredLogs" class="align-middle">
             <td>
-              <div class="fw-bold text-dark">{{ log.timestamp | date:'MMM dd, yyyy' }}</div>
+              <div class="fw-bold text-dark">{{ log.timestamp | date:'EEE, MMM dd, yyyy' }}</div>
               <div class="text-muted small"><i class="far fa-clock me-1"></i>{{ log.timestamp | date:'shortTime' }}
               </div>
             </td>
             <td>
-              <span class="patient-name">{{ log.patientName }}</span>
+              <span class="patient-name fw-bold">{{ log.patientName }}</span>
             </td>
             <td>
               <span class="badge" [ngClass]="{
@@ -64,24 +80,25 @@
                   'badge-cancelled': log.action === 'Cancelled' || log.action === 'Rejected',
                   'badge-pending': log.action === 'Created' || log.action === 'RescheduleProposed',
                   'badge-secondary': log.action === 'Skipped'
-                }">
-                {{ log.action }}
+                }" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 8px;">
+                <span>{{ getActionIcon(log.action) }}</span>
+                <span>{{ formatAction(log.action) }}</span>
               </span>
             </td>
             <td>{{ log.actorName || 'System' }}</td>
             <td>
-              <span class="badge bg-light text-dark border">{{ log.actorRole || 'System' }}</span>
+              <span class="badge bg-light text-dark border" style="font-weight: 700;">{{ log.actorRole || 'System' }}</span>
             </td>
-            <td class="text-muted small text-wrap" style="max-width: 300px;">
+            <td class="text-muted small" style="max-width: 320px; word-break: break-word; line-height: 1.45;">
               {{ log.notes || '-' }}
             </td>
           </tr>
-          <tr *ngIf="logs.length === 0">
+          <tr *ngIf="filteredLogs.length === 0">
             <td colspan="6" class="text-center py-5">
               <div class="empty-state">
                 <i class="fas fa-clipboard-list text-muted mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
                 <h5 class="text-muted">No audit logs found</h5>
-                <p class="text-muted small mb-0">There is no activity to display yet.</p>
+                <p class="text-muted small mb-0">There is no activity matching your filters.</p>
               </div>
             </td>
           </tr>
